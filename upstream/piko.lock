@@ -1,0 +1,8 @@
+repository=https://github.com/crimera/piko.git
+revision=a0ed9a5ae782fe66e02294e5a49d235e2f139b24
+tag=v3.10.0
+license=GPL-3.0
+notice=GPLv3 section 7(b) retained NOTICE
+target_package=com.twitter.android
+target_x_version=12.19.1-release.0
+patch_bundle=Morphe
