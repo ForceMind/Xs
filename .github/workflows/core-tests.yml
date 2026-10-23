@@ -1,19 +1,43 @@
-name: xs-core-tests
+name: xs-ci
 on:
   push:
     branches: [main]
   pull_request:
   workflow_dispatch:
+
+permissions:
+  contents: read
+
 jobs:
-  java-core:
+  core:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
-      - name: Compile and test dependency-free core
+      - name: Compile JVM code and check real SQLite
         run: bash scripts/test-core.sh
+  android-library:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - name: Install Android SDK 35
+        run: sdkmanager --install "platforms;android-35" "build-tools;35.0.0"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Compile independent Android archive AAR
+        run: gradle --no-daemon :xs-runtime:assembleDebug
+      - name: Upload Android library (not an APK)
+        uses: actions/upload-artifact@v4
+        with:
+          name: xs-runtime-debug-aar
+          path: xs-runtime/build/outputs/aar/*.aar
+          if-no-files-found: error
