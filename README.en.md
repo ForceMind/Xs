@@ -6,7 +6,7 @@
 
 Our goal is to retain the familiar experience of reading, posting, replying, reposting, messaging, and notifications while giving users better ways to organize and find content.
 
-> Early development. The local archive core, Android storage layer, and tests exist. **There is not yet an installable modified X APK**, nor a verified integration with X or on-device end-to-end test.
+> Early development. The local archive core, Android storage, native archive Activity, and tests exist. **There is not yet an installable modified X APK**, nor a verified integration with X or on-device end-to-end test.
 
 ## Planned capabilities
 
@@ -14,10 +14,10 @@ Our goal is to retain the familiar experience of reading, posting, replying, rep
 | --- | --- | --- |
 | Cleaner UI | Reduce promoted content, noisy recommendations and repetitive subscription prompts | Planned; not integrated |
 | Reading history | Record each deliberate post open with its own timestamp | Storage implemented; client event hook pending |
-| Visit timeline | Revisit posts by the time they were opened | Storage implemented; UI in progress |
-| Fast local search | Search text, author, dates and categories | Query core implemented; UI in progress |
+| Visit timeline | Revisit posts by the time they were opened | Storage and native UI implemented; client entry pending |
+| Fast local search | Search text, author, dates and categories | Query core and native UI implemented; client entry pending |
 | My content | Distinguish original posts, replies, quotes and reposts | Data model prepared; client hook pending |
-| Local folders | User-defined categories that work offline | Storage implemented; UI in progress |
+| Local folders | User-defined categories that work offline | Storage and native UI implemented; client entry pending |
 | Account isolation | Separate local indexes for different X accounts | Core implemented; device verification pending |
 
 ## Principles

@@ -180,7 +180,13 @@ public final class XsArchiveDatabase extends SQLiteOpenHelper {
         values.put("account_id", accountId);
         values.put("category_id", categoryId);
         values.put("label", name);
-        db.insertWithOnConflict("categories", null, values, SQLiteDatabase.CONFLICT_REPLACE);
+        // REPLACE first deletes the old row and cascades away all folder assignments.
+        // INSERT IGNORE + UPDATE preserves the existing category primary key and links.
+        db.insertWithOnConflict("categories", null, values, SQLiteDatabase.CONFLICT_IGNORE);
+        ContentValues rename = new ContentValues();
+        rename.put("label", name);
+        db.update("categories", rename, "account_id=? AND category_id=?",
+                  new String[]{accountId, categoryId});
     }
 
     public boolean assignCategory(String accountId, String postId, String categoryId) {

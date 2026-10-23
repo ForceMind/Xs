@@ -17,7 +17,7 @@ Existing X Android client (user-authorized test installation)
          |
          +-- Android SQLite, app-private data [implemented]
          |      posts, visits, actions, categories, FTS4
-         +-- XsHistoryActivity [planned for M1]
+         +-- XsHistoryActivity [implemented as library; client integration pending]
                 history, local search, categories, privacy controls
 ```
 

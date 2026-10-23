@@ -3,6 +3,8 @@ package dev.forcemind.xs.android;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 
 import java.nio.charset.StandardCharsets;
@@ -55,7 +57,7 @@ public final class XsCaptureBridge {
     }
 
     /** Logout/switch gap: stop recording until an authenticated ID is rebound. */
-    public static void unbindAccount() {
+    public static synchronized void unbindAccount() {
         session = null;
     }
 
@@ -86,7 +88,7 @@ public final class XsCaptureBridge {
      * Invoke ONLY after a deliberate transition to a post detail, once for each
      * intentional open; never during timeline bind, impression or prefetch.
      */
-    public static void onPostOpened(String postUrl, String authorHandle,
+    public static synchronized void onPostOpened(String postUrl, String authorHandle,
                                     String visibleText, Long publishedAtMs,
                                     long openedAtMs) {
         final Session active = session;
@@ -109,7 +111,7 @@ public final class XsCaptureBridge {
      * Reserved for verified self-content events. Action time must be a real
      * observed timestamp or null; visiting a repost is NOT a repost action.
      */
-    public static void onPersonalAction(String postUrl, String actionType,
+    public static synchronized void onPersonalAction(String postUrl, String actionType,
                                         String authorHandle, String visibleText,
                                         Long publishedAtMs, Long actionAtMs,
                                         long observedAtMs) {
@@ -125,6 +127,37 @@ public final class XsCaptureBridge {
                 Log.w(TAG, "Local action archive failed; original app unaffected");
             }
         });
+    }
+
+    public interface ClearCallback {
+        void onComplete(boolean success);
+    }
+
+    /**
+     * Serialize account erasure with all already-enqueued capture events.
+     * Stops future recording first. Completes on the main thread.
+     */
+    public static synchronized boolean clearActiveAccount(Context context,
+                                                           ClearCallback callback) {
+        final Session active = session;
+        final XsArchiveDatabase database = store;
+        if (context == null || active == null || database == null) return false;
+        setRecordingEnabled(context, false);
+        IO.execute(() -> {
+            boolean result;
+            try {
+                database.clearAccount(active.accountId);
+                result = true;
+            } catch (RuntimeException error) {
+                Log.w(TAG, "Local archive erase failed");
+                result = false;
+            }
+            final boolean ok = result;
+            if (callback != null) {
+                new Handler(Looper.getMainLooper()).post(() -> callback.onComplete(ok));
+            }
+        });
+        return true;
     }
 
     /** To be called from a future internal menu/settings integration. */

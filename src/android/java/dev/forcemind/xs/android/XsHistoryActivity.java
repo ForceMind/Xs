@@ -502,20 +502,24 @@ public final class XsHistoryActivity extends Activity {
             .setMessage(tr("仅删除当前账号在本机的历史、分类和搜索索引，不影响 X 服务器数据。",
                 "Deletes only this account's on-device Xs history, folders and indexes. X data is untouched."))
             .setNegativeButton(tr("取消", "Cancel"), null)
-            .setPositiveButton(tr("清空", "Erase"), (d, n) -> worker.execute(() -> {
-                try {
-                    archive.clearAccount(owner);
-                    runOnUiThread(() -> {
-                        if (owner.equals(account)) {
-                            selectedFolder = null;
-                            refresh();
-                        }
-                    });
-                } catch (RuntimeException ignored) {
-                    runOnUiThread(() -> Toast.makeText(this,
-                        tr("清空失败", "Unable to erase"), Toast.LENGTH_SHORT).show());
+            .setPositiveButton(tr("清空", "Erase"), (d, n) -> {
+                recorder.setEnabled(false);
+                boolean started = XsCaptureBridge.clearActiveAccount(this, success -> {
+                    if (owner.equals(account)) {
+                        selectedFolder = null;
+                        refreshRecordingState();
+                        refresh();
+                    }
+                    Toast.makeText(this, success ?
+                        tr("已清空当前账号的本地归档", "Local archive erased") :
+                        tr("清空失败", "Unable to erase"), Toast.LENGTH_SHORT).show();
+                });
+                if (!started) {
+                    refreshRecordingState();
+                    Toast.makeText(this, tr("清空未开始", "Erase was not started"),
+                        Toast.LENGTH_SHORT).show();
                 }
-            })).show();
+            }).show();
     }
 
     private void openPost(String postId) {

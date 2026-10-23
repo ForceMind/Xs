@@ -13,8 +13,8 @@
 ## M1 — useful offline archive layer
 
 - [ ] Build Android Library AAR in CI.
-- [ ] Implement native History / Search / Categories Activity.
-- [ ] Add explicit per-account opt-in capture state and clear-local-data controls.
+- [x] Implement native History / Search / Categories Activity.
+- [x] Add explicit per-account opt-in capture state and clear-local-data controls.
 - [ ] Add dated visits/search/category CRUD Android instrumentation tests.
 - [ ] Verify the database and UI against a real emulator or device.
 
