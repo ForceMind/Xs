@@ -1,74 +1,67 @@
-# Xs — X Local Enhancement
+# Xs · 更纯粹、更好用的 X
 
-Android-first, local-first enhancement project for the existing X client.
-**Xs is not a separate social-network client** and does not host an alternative X backend.
+[简体中文](README.md) | [English](README.en.md)
 
-## Product direction
+**Xs 是独立研发的 Android 本地增强工程。** 它面向现有 X（原 Twitter）客户端，不重做社交网络，也不建设新的账号、信息流或后端服务。
 
-Preserve familiar X login, feed, posting, messaging and navigation. Add an
-opt-in, per-account local history and knowledge-management layer:
+我们希望保留 X 熟悉的浏览、发帖、回复、转帖、私信和通知体验，同时让用户能够更高效地使用和整理内容。
 
-- Hide promotional clutter and unnecessary membership upsell UI through a
-  version-checked upstream patch configuration.
-- Record **deliberately opened** posts as events, not just a list of unique URLs.
-- Search locally by keywords, author and date. Keep post-publication time separate
-  from visit time and repost/action time.
-- Organize saved posts, original posts, replies and reposts with local categories.
-- Keep content and history on the device; no new remote backend or credential export.
+> 项目处于早期研发阶段。目前提供本地历史索引核心、Android 存储层和测试；**尚未提供可安装的 X 增强版 APK**，尚未完成 X 客户端注入与实机验证。
 
-## Project status — M0 foundation
+## 目标功能
 
-**Implemented in this repository:**
-- Piko/Morphe architecture and GPLv3 attribution research, pinned upstream revision.
-- A pure Java URL normalizer, parameterized local-search SQL builder and SQLite schema.
-- Android SQLite persistence/bridge source code designed for inclusion in a patch extension.
-- Minimal dependency-free Java regression tests and CI workflow.
+| 能力 | 具体体验 | 当前状态 |
+| --- | --- | --- |
+| 界面精简 | 隐藏广告、冗余推荐及不必要的订阅提示 | 设计中，尚未接入 |
+| 浏览历史 | 记录主动打开的帖子，每次打开都保留独立时间 | 本地核心已实现；客户端事件接入待完成 |
+| 时间轴 | 按阅读时间回看打开过的帖子 | 数据层已实现；界面开发中 |
+| 本地搜索 | 按正文、作者、时间段、分类搜索 | 数据层已实现；界面开发中 |
+| 个人帖子管理 | 按原创、回复、引用、转帖管理自己的内容 | 数据模型已预留；客户端事件接入待完成 |
+| 文件夹与分类 | 自定义分类并整理帖子，离线保存 | 数据层已实现；界面开发中 |
+| 多账号隔离 | 不同 X 账号使用独立本地索引 | 数据层已实现；端侧验证待完成 |
 
-**Not implemented or verified yet:** hook to X's in-app post-detail navigation,
-a visible X-integrated history screen, end-to-end Morphe patch compilation, an APKM,
-device testing, or actual ad filtering in Xs. Upstream Piko already has separately
-documented ad and Premium-removal patches. Do not infer we ship them in this commit.
+## 产品原则
 
-## Layout
+- **依托现有 X 客户端**：不把 Xs 做成另一套独立社交客户端。
+- **本地优先**：新增阅读记录、分类和搜索索引留在设备上。
+- **明确记录语义**：主动打开帖子才算“打开历史”；刷到、预加载与打开是不同事件。
+- **时间准确**：区分帖子发布时间、转帖操作时间及本地阅读时间；未知数据不伪造。
+- **隐私优先**：默认不录制；不收集登录令牌、密码、私信或任意网络响应。
+- **独立实现**：Xs 维护自己的数据模型、存储、界面和版本适配代码。
 
-- docs/research/piko.md — actual Piko structures and migration map.
-- docs/product.md — confirmed scope, event semantics and UX.
-- docs/architecture.md — schema, integration layers and privacy.
-- docs/roadmap.md — prioritized development gates.
-- upstream/piko.lock — exact upstream revision.
-- scripts/fetch-piko.sh — retrieve upstream source separately.
-- src/main/java — testable standalone Java core, no Android dependency.
-- src/android/java — Android-specific SQLite storage and event bridge.
-- tests/java — standalone regression tests.
-- .github/workflows — Java core smoke-test CI.
+## 工程结构
 
-## Core tests
+```text
+xs-runtime/           Android Library 工程（原生归档界面与存储）
+src/main/java/        不依赖 Android 的链接识别、查询与 Schema
+src/android/java/     Android SQLite、事件桥接与 UI
+tests/                JVM + SQLite 校验
+scripts/              测试脚本
+docs/                 需求、架构和里程碑
+.github/workflows/    持续集成
+```
 
-    ./scripts/test-core.sh
+## 验证本地核心
 
-Requires a JDK with javac (Java 17+ recommended). Does not require an APK,
-Android SDK, X account, third-party API, or network.
+需要 JDK 17+ 与 Python 3：
 
-## Upstream and licensing
+```bash
+git clone https://github.com/ForceMind/Xs.git
+cd Xs
+bash scripts/test-core.sh
+```
 
-Reference: https://github.com/crimera/piko (GPL-3.0).
-Pinned upstream commit: a0ed9a5ae782fe66e02294e5a49d235e2f139b24 (release v3.10.0).
-Only independent Xs sources and the standard GPLv3 license text are stored here;
-Piko's Java/Kotlin patch sources are **not copied**. Any future incorporation of
-Piko source must retain attribution/NOTICE and comply with GPLv3, including its
-additional section 7(b) attribution notice. See upstream/NOTICE.md.
+Android 模块构建说明见 [架构文档](docs/architecture.md)。Android Library 仅供后续集成，不是可直接安装的 X APK。
 
-For research/development on software you are permitted to inspect.
-X is a trademark of its respective owner; Xs is independent and unaffiliated.
-Patched APKs, account tokens and user content must never be checked into Git.
+## 开发计划
 
-## Reproducible Piko source checkout
+- [产品要求](docs/product.md)
+- [技术架构](docs/architecture.md)
+- [研发路线](docs/roadmap.md)
+- [M1 集成跟踪](https://github.com/ForceMind/Xs/issues/1)
 
-Piko is referenced as a pinned Git submodule at third_party/piko. To retrieve
-its complete source tree into a normal Xs checkout:
+先完成 Android 本地归档界面、离线搜索和分类管理，再对指定 X 版本建立可验证的事件接口与独立补丁适配。实际可安装版本须经过真实设备测试。
 
-    git submodule update --init --recursive
+## 许可与声明
 
-Or run scripts/fetch-piko.sh from the repository root. The submodule is
-upstream GPL-3.0 source, not a bundled proprietary X APKM. Its source code
-and history remain independently maintained and attributed.
+采用 [GNU GPL v3.0](LICENSE)。Xs 是非官方独立项目，与 X Corp. 无关联。X 名称及商标归其权利人所有。使用和分发对第三方客户端的修改时，须自行遵守适用法律、授权和服务条款；本仓库不包含 X 官方安装包或登录凭证。

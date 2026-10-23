@@ -1,76 +1,72 @@
-# Xs technical architecture
+# Xs — independent technical architecture
 
-## Boundary
+## Scope and state
 
-Original X APKM + compatible Morphe/Piko patches
-                  |
-       verified post-detail event hook (NOT YET IMPLEMENTED)
-                  |
-           XsCaptureBridge [Java]
-                  | single background executor
-            XsArchiveDatabase
-                  |
-          app-private Android SQLite
-          [posts / history_events / user_actions /
-           categories / post_categories / posts_fts]
-                  |
-        future X-integrated History/Search UI
+Xs owns its entire Java and Android implementation. No third-party patch source,
+application archive, branding, or proprietary client code is vendored.
 
-The hook is intentionally missing until its exact app version and lifecycle
-are validated. Xs's Java core and Android persistence are implemented independently
-of obfuscated X classes, minimizing breakage across upstream updates.
+```text
+Existing X Android client (user-authorized test installation)
+  |
+  +-- Independent, version-verified integration adapter [NOT IMPLEMENTED]
+  |      - exact post-detail open event
+  |      - trusted authenticated account identity
+  |      - optional navigation entry and UI filtering
+  |
+  +-- XsCaptureBridge [implemented; invocation hook missing]
+         |
+         +-- Android SQLite, app-private data [implemented]
+         |      posts, visits, actions, categories, FTS4
+         +-- XsHistoryActivity [planned for M1]
+                history, local search, categories, privacy controls
+```
 
-## Storage model
+The GitHub repository's `xs-runtime` Gradle module builds a standalone
+**Android library AAR** for later inclusion in an authorized test client build;
+that AAR is not a complete client and does not by itself patch X.
 
-- posts: composite (account_id, post_id), last_seen and first_seen, optional
-  body/author and original publication timestamp, open_count.
-- history_events: append-only account-scoped opening events. Event time is not
-  a post publication time.
-- user_actions: optional self-post/reply/quote/repost/bookmark events; action_at_ms
-  may be NULL when X's source does not provide the historical action timestamp.
-- categories: per-account locally named user categories.
-- post_categories: unique mapping with composite foreign keys.
-- posts_fts: FTS4 index synchronized by triggers. FTS results never replace
-  canonical rows; Unicode CJK substring search falls back to parameterized LIKE.
-- No tables for tokens, sessions, private messages or general network captures.
+## Data architecture
 
-## Account boundary and operation
+- `posts`: (account_id, post_id) canonical key, optional author/body, optional
+  publication time, first/last local encounter, visit count.
+- `history_events`: append-only `OPEN_POST` records scoped to account.
+- `user_actions`: authored/reply/quote/repost/bookmark events; optional
+  real action time, distinct from original post publication and local visit.
+- `categories` and `post_categories`: user-defined, account-scoped labels.
+- `posts_fts`: trigger-maintained FTS4 index with substring fallback for CJK
+  or queries containing punctuation.
 
-The caller must provide a trusted stable authenticated account ID. This is a
-security-sensitive boundary and cannot safely be guessed from the post author,
-handle or device username. The bridge will not record until initialized with
-that value. Record calls are always explicitly scoped to that account.
+ArchiveSearch generates parameterized SQLite queries: limit 1-200,
+bounded query length, escaped LIKE, constrained FTS expressions. For FTS,
+filter by account as a separate condition to prevent cross-account results.
 
-Android data lives in the host app's private database directory. This is
-sandbox storage, **not end-to-end encryption** or automatically a private export.
-A future encrypted export needs a separate key-management plan.
+All database operations must avoid the Android UI thread. Failure in the local
+archive should never crash or block the host app. Default event capture is off;
+the authenticated account identity must be established explicitly.
 
-A single-threaded executor avoids synchronous disk writes on the UI thread.
-The database transaction upserts one post, increments open_count and appends
-one view event atomically. DB errors must not crash the host X application.
+## Native library build
 
-All queries are parameterized. Search accepts a bounded limit/offset and
-rejects invalid ranges. Non-Latin/punctuation search uses escaped LIKE terms.
-English FTS terms are generated as safe prefix tokens, not arbitrary raw MATCH
-syntax. This is a v1 tradeoff, not multilingual semantic indexing.
+Gradle / Android SDK (compileSdk 35, minSdk 26), JDK 17:
 
-## Build/integration boundary
+```bash
+gradle :xs-runtime:assembleDebug
+```
 
-- src/main/java compiles with Java 8 language features and no dependencies.
-- src/android/java imports Android SQLite APIs and cannot be validated with
-  the pure JVM test alone.
-- Injecting the bridge requires both a runtime extension inclusion and a
-  separately version-verified Morphe fingerprint/hook.
-- Piko is fetched as an external pinned upstream revision; GPLv3 and NOTICE
-  obligations apply to any derivative distribution. We do not ship an APK.
-- Android privacy: disable automatic backup for the archive or explicitly
-  document where Android backup includes it, before a release.
+CI runs independent Java/SQLite tests and an Android AAR compilation job.
+An Android AAR does not contain an installer, an X patcher, or a working hook.
 
-## Version upgrade checklist
+## Safety and privacy
 
-1. Verify Piko target APKM version and source SHA.
-2. Confirm X post-detail enter/exit methods on a user-owned test installation.
-3. Confirm callback fires exactly once; test account changes.
-4. Confirm SQLite migrations preserve events and categories.
-5. Validate post open, offline query, category, deletion and logout.
-6. Validate ad/up-sell filters separately; do not weaken authentication.
+No credential, cookie, token, private message, or arbitrary traffic recording.
+SQLite lives in app-private storage and is not inherently encrypted. A future
+shipping integration must verify Android backup exclusion, account switching,
+migration behavior, export encryption and deletion semantics.
+
+## Separate build gates
+
+1. Build independent runtime AAR.
+2. Design and validate a version-scoped adapter on a permitted test install.
+3. Integrate AAR, manifest and resources into the host application.
+4. Verify native archive entry points, complete event semantics and installation.
+5. Verify UI filtering independently from recording and other client features.
+6. Publish an installable artifact only after device tests and license review.

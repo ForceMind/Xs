@@ -1,49 +1,36 @@
-# Xs product requirements — confirmed scope
+# Xs 产品要求 / Product requirements
 
-## Identity and non-goals
+## 定位
 
-Xs enhances the installed X Android client. It is not a separate reader, an X API
-proxy, a self-hosted website, an alternative backend, or a standalone account manager.
+Xs 是面向现有 X Android 客户端的独立增强项目。保持原本的账号、信息流、发帖、私信、通知与多媒体体验；新增的历史、搜索和分类完全本地管理，不建立额外社交服务端。
 
-Preserve X's primary features: account session, feed, posts, replies, reposts,
-bookmarks, media, notifications and DMs. We only add optional local features.
+## MVP — 必要功能
 
-## M1 features
+1. **界面精简**：允许关闭广告展示、冗余推荐和反复出现的订阅营销入口；不能伪造付费权限，也不能绕过身份验证。
+2. **帖子主动打开记录**：进入帖子详情页且真实呈现，才记录 `OPEN_POST` 事件；信息流曝光、预取、后台加载不计入。
+3. **时间线**：每次主动打开保留独立事件；同一帖子仅存储一份去重的元信息；准确区分首次打开、最近打开和阅读次数。
+4. **本地搜索**：按正文、作者、分类、账号、阅读时间或发布时间检索；英文前缀全文索引、中文基础子串查询。
+5. **个人内容类型**：原创、回复、引用、转帖、收藏分别建模；没有真实操作时间时 `action_at_ms = NULL`。
+6. **本地分类**：可新增、重命名类别，帖子可以属于多个类别；不修改 X 服务器数据。
+7. **设置与隐私**：逐账号显式开启记录、关闭记录、清空本地内容；禁止抓取私信、登录凭证或任意服务端响应。
 
-1. Clean UI: disable promotional cards and Premium upsells using available
-   version-compatible patch options. Do not bypass purchased feature gates.
-2. Post-open history: only count an intentional transition to post details.
-   Do **not** call feed impressions or background prefetches an 'open'.
-3. Timeline: store every distinct open event with precise timestamp and source.
-   Multiple visits to the same post remain separate events; the post is deduplicated.
-4. Personal content: distinguish original/reply/quote from repost actions.
-   Publication time, repost time, and read time are separate nullable fields.
-5. Local search: full-text/indexed search for simple Latin terms and substring
-   fallback for CJK and punctuation; filter by account, category and time basis.
-6. Local organization: add user-defined folders/tags and notes without editing X.
+## 时间概念
 
-## Data and default UX
+- `published_at_ms`: 原帖的真实发布时间，可空。
+- `action_at_ms`: 个人转帖、回复等实际发生时间，可空。
+- `event_at_ms`: 本设备主动打开详情页的时间，必填。
+- 每个账号以已验证的稳定账号 ID 标识；不得将被浏览帖子的作者 ID 作为当前账号 ID。
 
-- Recording is an explicit per-account user preference; no remote service.
-- Default only deliberate post details; optional feed impression recording may
-  come later with a clear switch and separate event type.
-- A date view may group by visit date or content publish date. Unknown
-  publication dates remain unknown and must not be synthesized.
-- Search results open the original X post; missing/deleted posts can still
-  retain saved local metadata.
-- Include clear-history, export and import controls in the future UI.
-- No account passwords, bearer tokens, cookies, DM bodies, private-account
-  scraped data, or unrelated app traffic in the local index.
-- Account key is a stable authenticated account ID, never a display handle;
-  switching accounts must not mix histories.
+## M1 验收标准
 
-## Acceptance criteria for a first usable APK
+- Android 存储及归档 Activity 构建成功；独立于 X 安装包可做单元验证。
+- 经验证的客户端适配器可明确识别帖子详情打开，而非列表重新绑定。
+- 每次打开增加一条阅读事件；连续加载/旋转屏幕不会误增。
+- 搜索和分类离线可用；重启后数据保留；账号切换无串读。
+- 清空选定账号时不影响其他账号或原生 X 数据。
+- 可在真实安装的兼容 X 版本完成登录、浏览、打开记录和界面操作验证。
+- 未完成真实 APK 实测前不得宣称“已发布增强客户端”。
 
-- Runs on a pinned, explicitly verified X build.
-- Opens a post and creates exactly one local OPEN_POST event per actual action.
-- Returning to the feed does not create another open event.
-- Reopening the same post creates a second event, but one post record.
-- History and search work offline and do not leak across local X accounts.
-- Category changes persist after force-close/restart.
-- Clean-up controls do not remove original X account data.
-- No extra background upload or authentication interception.
+## Non-goals
+
+不运营新的社交后端，不索取 X token，不修改私信或账号安全逻辑，不上传用户阅读数据，不宣称能够恢复未曾保存的历史浏览记录。

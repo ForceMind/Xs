@@ -1,38 +1,40 @@
-# Roadmap and delivery gates
+# Xs development roadmap
 
-## M0 — foundation (this commit)
+## M0 — independent foundation
 
-- [x] Confirm upstream Piko v3.10.0 / X 12.19.1-release.0 and architecture.
-- [x] Pin Piko upstream revision; preserve license and attribution.
-- [x] Implement standalone post URL parser, local search query builder and schema.
-- [x] Implement Android SQLite recording and account-scoped search bridge source.
-- [x] Add no-network Java regression tests and CI configuration.
-- [ ] Verify Android runtime against actual Android SDK; no device available.
+- [x] Define original-client enhancement, local-first scope and privacy boundaries.
+- [x] Implement Android-independent URL parser, SQLite schema and local query builder.
+- [x] Implement Android SQLite data store and recording bridge (no client hooks yet).
+- [x] Add JVM, SQL trigger, referential-integrity and account-isolation tests.
+- [x] Add CI.
+- [x] Provide Chinese and English README.
+- [x] Remove all external-source submodules and implement independent core.
 
-## M1 — first real enhanced APKM
+## M1 — useful offline archive layer
 
-- [ ] Integrate Xs Android runtime into Piko's extension packaging.
-- [ ] Use an authorized test install to identify version-stable post-detail hook.
-- [ ] Use that hook to call XsCaptureBridge.onPostOpened exactly once per open.
-- [ ] Add user setting, app lifecycle initialization and account switch handling.
-- [ ] Integrate history page and search into X settings/sidebar.
-- [ ] Build Morphe patch bundle, install and complete actual device tests.
-- [ ] Validate removal of ads and Premium upsell through upstream patches.
+- [ ] Build Android Library AAR in CI.
+- [ ] Implement native History / Search / Categories Activity.
+- [ ] Add explicit per-account opt-in capture state and clear-local-data controls.
+- [ ] Add dated visits/search/category CRUD Android instrumentation tests.
+- [ ] Verify the database and UI against a real emulator or device.
 
-## M2 — personal content management
+## M2 — X client integration
 
-- [ ] Index own posts/replies/quotes/reposts as separate action types.
-- [ ] Add folders, tags, notes and batch categorization in native UI.
-- [ ] Add search filters for publish/repost/open time and type.
-- [ ] Add opt-in encrypted export/import and clear-history controls.
-- [ ] FTS Chinese tokenizer research and large archive performance benchmarks.
+- [ ] Research compatible client versions using authorized test builds.
+- [ ] Implement independent version-verified post-detail and account lifecycle adapter.
+- [ ] Inject runtime and manifest entry into an authorized test app build.
+- [ ] Integrate history navigation without replacing the original client.
+- [ ] Implement optional UI filtering for ads, recommendations and upsell surfaces.
+- [ ] Test client login, browsing, post-open semantics, navigation and upgrades.
 
-## M3 — reliability
+## M3 — personal posts and release readiness
 
-- [ ] Explicit compatibility table and repeatable build/checksums.
-- [ ] Schema upgrades, storage quota and retention settings.
-- [ ] CI with Android instrumentation and no-account fixture tests.
-- [ ] Crash recovery, per-account isolation and permission security review.
+- [ ] Record original posts/replies/quotes/reposts separately from visiting.
+- [ ] Add advanced date basis and action filters, batch categories and notes.
+- [ ] Add secure backups, migrations and retention controls.
+- [ ] Add benchmarks, localization and device compatibility matrix.
+- [ ] Produce documented reproducible installs and release QA.
 
-Completion means tested code and a real build, not merely documents or a patch
-description. Do not mark M1 complete from a stub or unverified fingerprint.
+Do not mark any APK-, hook-, login-, or on-device milestone complete until tested
+against a specific supported build. Core code and AAR alone are not a usable
+enhanced X application.
