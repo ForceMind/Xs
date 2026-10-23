@@ -16,4 +16,3 @@ local.properties
 .env
 *.log
 .DS_Store
-third_party/piko/

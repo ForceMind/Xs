@@ -61,3 +61,14 @@ additional section 7(b) attribution notice. See upstream/NOTICE.md.
 For research/development on software you are permitted to inspect.
 X is a trademark of its respective owner; Xs is independent and unaffiliated.
 Patched APKs, account tokens and user content must never be checked into Git.
+
+## Reproducible Piko source checkout
+
+Piko is referenced as a pinned Git submodule at third_party/piko. To retrieve
+its complete source tree into a normal Xs checkout:
+
+    git submodule update --init --recursive
+
+Or run scripts/fetch-piko.sh from the repository root. The submodule is
+upstream GPL-3.0 source, not a bundled proprietary X APKM. Its source code
+and history remain independently maintained and attributed.

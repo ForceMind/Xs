@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
-# Download Piko separately; do not modify upstream sources in the Xs repository.
-UPSTREAM="https://github.com/crimera/piko.git"
-RELEASE="a0ed9a5ae782fe66e02294e5a49d235e2f139b24"
-DIR="${1:-third_party/piko}"
-if [[ -e "$DIR" ]]; then echo "Destination already exists: $DIR" >&2; exit 1; fi
-git clone --no-checkout "$UPSTREAM" "$DIR"
-git -C "$DIR" checkout --detach "$RELEASE"
-echo "Checked out Piko at $(git -C "$DIR" rev-parse HEAD)"
-echo "Keep upstream LICENSE and NOTICE intact when copying/deriving code."
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
+git submodule sync -- third_party/piko
+git submodule update --init --recursive -- third_party/piko
+EXPECTED="a0ed9a5ae782fe66e02294e5a49d235e2f139b24"
+ACTUAL="$(git -C third_party/piko rev-parse HEAD)"
+if [[ "$ACTUAL" != "$EXPECTED" ]]; then
+  echo "Upstream revision mismatch: $ACTUAL" >&2
+  exit 1
+fi
+echo "Verified Piko at $ACTUAL; preserve its LICENSE and NOTICE on reuse."

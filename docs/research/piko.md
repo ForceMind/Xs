@@ -75,3 +75,10 @@ GPLv3 LICENSE and original NOTICE.
 - Avoid disabling authentication, payment verification or security protections.
 
 Source paths are case-sensitive; the pinned commit is necessary for reproducibility.
+
+## Linked complete upstream source
+
+Xs contains a Git submodule at third_party/piko pointing to the exact
+revision above, rather than an untracked fork or source copy. It makes the
+full Piko patches and extension source browsable from the Xs repository,
+while avoiding divergence and keeping its original LICENSE and NOTICE.
