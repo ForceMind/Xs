@@ -49,11 +49,14 @@ the authenticated account identity must be established explicitly.
 Gradle / Android SDK (compileSdk 35, minSdk 26), JDK 17:
 
 ```bash
-gradle :xs-runtime:assembleDebug
+gradle :xs-runtime:assembleDebug :dev-harness:assembleDebug
 ```
 
 CI runs independent Java/SQLite tests and an Android AAR compilation job.
-An Android AAR does not contain an installer, an X patcher, or a working hook.
+The independent AAR does not contain an installer, X patcher, or working hook.
+The separate `dev-harness` APK is strictly a development fixture that seeds
+offline synthetic posts and exercises the Activity and database without X login.
+It is not a second social client and must not be distributed as an enhanced X.
 
 ## Safety and privacy
 

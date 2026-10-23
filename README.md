@@ -33,6 +33,7 @@
 
 ```text
 xs-runtime/           Android Library 工程（原生归档界面与存储）
+dev-harness/           仅开发验证的离线模拟数据宿主（并非 X）
 src/main/java/        不依赖 Android 的链接识别、查询与 Schema
 src/android/java/     Android SQLite、事件桥接与 UI
 tests/                JVM + SQLite 校验
@@ -51,7 +52,7 @@ cd Xs
 bash scripts/test-core.sh
 ```
 
-Android 模块构建说明见 [架构文档](docs/architecture.md)。Android Library 仅供后续集成，不是可直接安装的 X APK。
+Android 模块构建说明见 [架构文档](docs/architecture.md)。其中 `xs-runtime` 产出 AAR；`dev-harness` 产出**仅供开发验证的模拟数据 APK**，并不是经过修改的 X 客户端。两者都不能替代真实的 X 集成验收。
 
 ## 开发计划
 

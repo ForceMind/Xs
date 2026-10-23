@@ -36,10 +36,16 @@ jobs:
         with:
           gradle-version: '8.9'
       - name: Compile independent Android archive AAR
-        run: gradle --no-daemon :xs-runtime:assembleDebug
+        run: gradle --no-daemon :xs-runtime:assembleDebug :dev-harness:assembleDebug
       - name: Upload Android library (not an APK)
         uses: actions/upload-artifact@v4
         with:
           name: xs-runtime-debug-aar
           path: xs-runtime/build/outputs/aar/*.aar
+          if-no-files-found: error
+      - name: Upload development test host (NOT X)
+        uses: actions/upload-artifact@v4
+        with:
+          name: xs-dev-harness-only
+          path: dev-harness/build/outputs/apk/debug/*.apk
           if-no-files-found: error

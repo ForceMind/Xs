@@ -33,6 +33,7 @@ Our goal is to retain the familiar experience of reading, posting, replying, rep
 
 ```text
 xs-runtime/           Android library (native history UI + local database)
+dev-harness/          Offline synthetic-data host for testing only (NOT X)
 src/main/java/        Android-independent URL, query and schema core
 src/android/java/     Android SQLite, capture bridge and UI
 tests/                JVM and SQLite regression tests
@@ -51,7 +52,7 @@ cd Xs
 bash scripts/test-core.sh
 ```
 
-See [architecture](docs/architecture.md) for the Android library build. An Android Library is not an installable patched X APK.
+See [architecture](docs/architecture.md) for the Android library build. The `xs-runtime` output is an AAR. `dev-harness` produces a **synthetic-data test APK** for validating the native archive screen; it is NOT a modified X client. Neither substitutes for a real integration test.
 
 ## Development
 
