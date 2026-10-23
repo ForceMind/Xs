@@ -17,6 +17,8 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+      - name: Check bilingual docs and independent source tree
+        run: bash scripts/check-project.sh
       - name: Compile JVM code and check real SQLite
         run: bash scripts/test-core.sh
   android-library:
