@@ -15,8 +15,9 @@
 - [x] Build Android Library AAR in CI.
 - [x] Implement native History / Search / Categories Activity.
 - [x] Add explicit per-account opt-in capture state and clear-local-data controls.
-- [ ] Add dated visits/search/category CRUD Android instrumentation tests.
-- [ ] Verify the database and UI against a real emulator or device (dev-harness APK available for testing).
+- [x] Add dated visits/search/category CRUD Android instrumentation tests (CI run pending green confirmation).
+- [ ] Verify the database and UI in Android emulator instrumentation (job added; confirmation pending).
+- [x] Add opt-in separately captured feed-visible events, SQL v1→v2 migration, accurate event dates, and paged search/history UI.
 
 ## M2 — X client integration
 

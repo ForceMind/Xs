@@ -134,6 +134,30 @@ public class ArchiveIntegrationTest {
         }
     }
 
+    @Test public void largeHistoryCanPageWithoutLosingEarlierVisits() {
+        for (int i = 0; i < 165; i++) {
+            assertTrue(store.recordOpened("A", "https://x.com/demo/status/" + (10000 + i),
+                "demo", "same content " + i, null, 100000L + i));
+        }
+        try (Cursor first = store.timeline("A", null, 80, "OPEN_POST", 0);
+             Cursor middle = store.timeline("A", null, 80, "OPEN_POST", 80);
+             Cursor last = store.timeline("A", null, 80, "OPEN_POST", 160)) {
+            assertEquals(80, first.getCount());
+            assertEquals(80, middle.getCount());
+            assertEquals(5, last.getCount());
+            assertTrue(first.moveToFirst());
+            assertEquals("10164", first.getString(1));
+            assertTrue(last.moveToFirst());
+            assertEquals("10004", last.getString(1));
+        }
+        ArchiveSearch.Filter query = new ArchiveSearch.Filter();
+        query.limit = 80;
+        query.offset = 160;
+        try (Cursor end = store.search("A", query)) {
+            assertEquals(5, end.getCount());
+        }
+    }
+
     @Test public void nativeArchiveActivityLoads() {
         XsCaptureBridge.bindAuthenticatedAccount(app, "dev-only");
         Intent intent = new Intent(app, XsHistoryActivity.class)

@@ -13,9 +13,10 @@ Our goal is to retain the familiar experience of reading, posting, replying, rep
 | Feature | Experience | Current status |
 | --- | --- | --- |
 | Cleaner UI | Reduce promoted content, noisy recommendations and repetitive subscription prompts | Planned; not integrated |
-| Reading history | Record each deliberate post open with its own timestamp | Storage implemented; client event hook pending |
+| Reading history | Each deliberate open creates a separate event, preserving precise visit times | Storage and native screen implemented; X hook pending |
+| Feed snapshots | Separate opt-in; only confirmed on-screen visibility for ≥1.2s, with deduplication and source | On-device policy implemented; X visibility hook pending |
 | Visit timeline | Revisit posts by the time they were opened | Storage and native UI implemented; client entry pending |
-| Fast local search | Search text, author, dates and categories | Query core and native UI implemented; client entry pending |
+| Fast local search | Search words, accounts, categories, actions and five date bases; 80-row incremental pages | Local query and native UI implemented; X navigation hook pending |
 | My content | Distinguish original posts, replies, quotes and reposts | Data model prepared; client hook pending |
 | Local folders | User-defined categories that work offline | Storage and native UI implemented; client entry pending |
 | Account isolation | Separate local indexes for different X accounts | Core implemented; device verification pending |
@@ -24,8 +25,8 @@ Our goal is to retain the familiar experience of reading, posting, replying, rep
 
 - **Enhance the original client** rather than build a parallel social application.
 - **Local-first**: new history, organization and indexes remain on the device.
-- **Precise events**: post-detail opens differ from feed impressions or background prefetch.
-- **Honest timestamps**: post publication, repost actions and local visits are distinct. Unknown times stay unknown.
+- **Precise events**: post-detail opens and genuinely visible feed posts are separate opt-ins; prefetch never counts as reading.
+- **Honest timestamps**: post publication, repost actions, local opens and feed visibility are distinct. Unknown times stay unknown.
 - **Privacy by default**: capture is opt-in; no credentials, session tokens, DMs, or arbitrary traffic capture.
 - **Independent codebase**: Xs maintains its own models, storage, UI and future version adapters.
 
@@ -50,6 +51,8 @@ Requires JDK 17+ and Python 3:
 git clone https://github.com/ForceMind/Xs.git
 cd Xs
 bash scripts/test-core.sh
+# Requires Android SDK + JDK 17 + Gradle 8.9 to build developer artifacts:
+gradle :xs-runtime:assembleDebug :dev-harness:assembleDebug
 ```
 
 See [architecture](docs/architecture.md) for the Android library build. The `xs-runtime` output is an AAR. `dev-harness` produces a **synthetic-data test APK** for validating the native archive screen; it is NOT a modified X client. Neither substitutes for a real integration test.
