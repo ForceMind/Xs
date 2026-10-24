@@ -7,6 +7,8 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.TypedValue;
@@ -41,6 +43,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public final class XsHistoryActivity extends Activity {
     private enum Mode { HISTORY, FEED, SEARCH, FOLDERS }
+    private static final int PAGE_SIZE = 80;
 
     private static final class Row {
         final String id;
@@ -59,6 +62,12 @@ public final class XsHistoryActivity extends Activity {
     private final ExecutorService worker = Executors.newSingleThreadExecutor();
     private final AtomicInteger requested = new AtomicInteger();
     private final List<Row> visible = new ArrayList<>();
+    private final List<Map<String,String>> displayedData = new ArrayList<>();
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private final Runnable delayedSearch = this::refresh;
+    private SimpleAdapter listAdapter;
+    private Button loadMoreButton;
+    private int nextOffset;
     private XsArchiveDatabase archive;
     private Mode mode = Mode.HISTORY;
     private String account;
@@ -173,7 +182,10 @@ public final class XsHistoryActivity extends Activity {
         query.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
             @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
-                if (mode == Mode.SEARCH) refresh();
+                if (mode == Mode.SEARCH) {
+                    mainHandler.removeCallbacks(delayedSearch);
+                    mainHandler.postDelayed(delayedSearch, 250);
+                }
             }
             @Override public void afterTextChanged(Editable s) {}
         });
@@ -195,6 +207,11 @@ public final class XsHistoryActivity extends Activity {
         typeFilter.setOnClickListener(v -> chooseActionType());
 
         results = new ListView(this);
+        listAdapter = new SimpleAdapter(this, displayedData,
+            android.R.layout.simple_list_item_2,
+            new String[]{"title", "detail"},
+            new int[]{android.R.id.text1, android.R.id.text2});
+        results.setAdapter(listAdapter);
         root.addView(results, new LinearLayout.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
         results.setOnItemClickListener((parent, view, position, id) -> {
@@ -215,6 +232,10 @@ public final class XsHistoryActivity extends Activity {
             return true;
         });
 
+        loadMoreButton = button(tr("加载更多", "Load more"));
+        loadMoreButton.setVisibility(View.GONE);
+        loadMoreButton.setOnClickListener(v -> loadPage(true));
+        root.addView(loadMoreButton);
         LinearLayout controls = horizontal();
         Button addFolder = button(tr("新建分类", "New folder"));
         Button erase = button(tr("清空本地记录", "Clear local history"));
@@ -267,15 +288,25 @@ public final class XsHistoryActivity extends Activity {
 
     /** Never run database queries on the UI thread. */
     private void refresh() {
+        loadPage(false);
+    }
+
+    private void loadPage(boolean append) {
         int request = requested.incrementAndGet();
+        int offset = append ? nextOffset : 0;
+        if (loadMoreButton != null) {
+            loadMoreButton.setEnabled(false);
+            if (!append) loadMoreButton.setVisibility(View.GONE);
+        }
         final String owner = account;
         final Mode selectedMode = mode;
         final String searchText = query.getText().toString();
         final Long after = minTime;
         final String folder = selectedFolder;
         final String type = actionType;
+        final ArchiveSearch.DateField basis = dateBasis;
         if (owner == null) {
-            showRows(new ArrayList<>());
+            showRows(new ArrayList<>(), false);
             return;
         }
         worker.execute(() -> {
@@ -290,14 +321,14 @@ public final class XsHistoryActivity extends Activity {
                     }
                 } else if (selectedMode == Mode.HISTORY || selectedMode == Mode.FEED) {
                     boolean reading = selectedMode == Mode.HISTORY;
-                    try (Cursor cursor = archive.timeline(owner, after, 200,
-                            reading ? "OPEN_POST" : "FEED_VISIBLE")) {
+                    try (Cursor cursor = archive.timeline(owner, after, PAGE_SIZE,
+                            reading ? "OPEN_POST" : "FEED_VISIBLE", offset)) {
                         while (cursor.moveToNext()) {
                             String postId = cursor.getString(1);
                             long openedAt = cursor.getLong(2);
                             rows.add(new Row(postId,
                                 headline(cursor.getString(4), cursor.getString(5), postId),
-                                date(openedAt) + (reading ? " · Open" :
+                                date(openedAt) + (reading ? tr(" · 已打开", " · Opened") :
                                     " · " + cursor.getString(7)) + "  ·  #" + postId, false));
                         }
                     }
@@ -307,8 +338,9 @@ public final class XsHistoryActivity extends Activity {
                     filter.categoryId = folder;
                     filter.actionType = type;
                     filter.fromMs = after;
-                    filter.dateField = dateBasis;
-                    filter.limit = 200;
+                    filter.dateField = basis;
+                    filter.limit = PAGE_SIZE;
+                    filter.offset = offset;
                     try (Cursor cursor = archive.search(owner, filter)) {
                         while (cursor.moveToNext()) {
                             String postId = cursor.getString(1);
@@ -334,35 +366,37 @@ public final class XsHistoryActivity extends Activity {
             }
             runOnUiThread(() -> {
                 if (requested.get() == request && selectedMode == mode && !isFinishing()) {
-                    showRows(rows);
+                    showRows(rows, append);
+                    nextOffset = offset + rows.size();
+                    loadMoreButton.setVisibility(
+                        selectedMode != Mode.FOLDERS && rows.size() == PAGE_SIZE
+                            ? View.VISIBLE : View.GONE);
+                    loadMoreButton.setEnabled(true);
                 }
             });
         });
     }
 
-    private void showRows(List<Row> rows) {
-        visible.clear();
-        visible.addAll(rows);
-        List<Map<String, String>> data = new ArrayList<>();
+    private void showRows(List<Row> rows, boolean append) {
+        if (!append) {
+            visible.clear();
+            displayedData.clear();
+        }
         for (Row row : rows) {
+            visible.add(row);
             Map<String, String> values = new HashMap<>();
             values.put("title", row.headline);
             values.put("detail", row.detail);
-            data.add(values);
+            displayedData.add(values);
         }
-        SimpleAdapter adapter = new SimpleAdapter(this, data,
-            android.R.layout.simple_list_item_2,
-            new String[]{"title", "detail"},
-            new int[]{android.R.id.text1, android.R.id.text2});
-        results.setAdapter(adapter);
-        results.setEmptyView(null);
-        if (rows.isEmpty()) {
+        listAdapter.notifyDataSetChanged();
+        if (visible.isEmpty()) {
             status.setText(account == null ?
                 tr("等待接入当前 X 账号", "Waiting for X account integration") :
                 tr("本地暂时没有匹配的记录", "No matching local records"));
         } else if (account != null) {
             status.setText(tr("当前账号 · 仅本机 · ", "Active account · on-device · ") +
-                rows.size() + tr(" 条结果", " results"));
+                visible.size() + tr(" 条结果", " results"));
         }
     }
 
@@ -371,7 +405,7 @@ public final class XsHistoryActivity extends Activity {
             new String[]{"全部时间", "最近 24 小时", "最近 7 天", "最近 30 天"} :
             new String[]{"All time", "Last 24 hours", "Last 7 days", "Last 30 days"};
         new AlertDialog.Builder(this)
-            .setTitle(tr("阅读时间", "Date range"))
+            .setTitle(tr("筛选时间", "Date range"))
             .setSingleChoiceItems(names, dateChoice, (dialog, which) -> {
                 dateChoice = which;
                 long now = System.currentTimeMillis();
@@ -638,6 +672,7 @@ public final class XsHistoryActivity extends Activity {
     @Override
     protected void onDestroy() {
         requested.incrementAndGet();
+        mainHandler.removeCallbacks(delayedSearch);
         worker.execute(() -> archive.close());
         worker.shutdown();
         super.onDestroy();

@@ -195,6 +195,12 @@ public final class XsArchiveDatabase extends SQLiteOpenHelper {
      */
     public Cursor timeline(String accountId, Long afterMs, int requestedLimit,
                            String eventType) {
+        return timeline(accountId, afterMs, requestedLimit, eventType, 0);
+    }
+
+    public Cursor timeline(String accountId, Long afterMs, int requestedLimit,
+                           String eventType, int offset) {
+        if (offset < 0) throw new IllegalArgumentException("Negative timeline offset");
         if (!"OPEN_POST".equals(eventType) && !"FEED_VISIBLE".equals(eventType)) {
             throw new IllegalArgumentException("Unsupported history event type");
         }
@@ -211,8 +217,9 @@ public final class XsArchiveDatabase extends SQLiteOpenHelper {
             sql.append(" AND e.event_at_ms>=?");
             args.add(Long.toString(afterMs));
         }
-        sql.append(" ORDER BY e.event_at_ms DESC, e.id DESC LIMIT ?");
+        sql.append(" ORDER BY e.event_at_ms DESC, e.id DESC LIMIT ? OFFSET ?");
         args.add(Integer.toString(Math.max(1, Math.min(200, requestedLimit))));
+        args.add(Integer.toString(offset));
         return getReadableDatabase().rawQuery(sql.toString(),
                                                args.toArray(new String[0]));
     }
