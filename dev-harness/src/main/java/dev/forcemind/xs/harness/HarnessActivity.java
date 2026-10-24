@@ -71,14 +71,50 @@ public final class HarnessActivity extends Activity {
         root.addView(seed);
         seed.setOnClickListener(v -> seedSampleData());
 
+        Button simulateOpen = new Button(this);
+        simulateOpen.setText("Simulate real post OPEN · 模拟主动打开");
+        root.addView(simulateOpen);
+        simulateOpen.setOnClickListener(v -> {
+            if (!XsCaptureBridge.isRecordingEnabled()) {
+                Toast.makeText(this, "Enable opened-post recording in Xs archive first",
+                    Toast.LENGTH_LONG).show();
+                return;
+            }
+            String id = Long.toString(2112345678901234999L);
+            XsCaptureBridge.onPostOpened("https://x.com/example/status/" + id,
+                "xs_fixture", "Bridge event: deliberate post open / 主动打开",
+                System.currentTimeMillis() - 300000L, System.currentTimeMillis());
+            Toast.makeText(this, "Enqueued one local open event", Toast.LENGTH_SHORT).show();
+        });
+
+        Button simulateFeed = new Button(this);
+        simulateFeed.setText("Simulate confirmed FEED visibility · 模拟时间线浏览");
+        root.addView(simulateFeed);
+        simulateFeed.setOnClickListener(v -> {
+            if (!XsCaptureBridge.isFeedRecordingEnabled()) {
+                Toast.makeText(this, "Enable feed recording in Xs archive first",
+                    Toast.LENGTH_LONG).show();
+                return;
+            }
+            XsCaptureBridge.onFeedPostVisible(
+                "https://x.com/example/status/2112345678901234998",
+                "home_following", "xs_fixture",
+                "Bridge event: visible feed post / 实际看到的信息流",
+                System.currentTimeMillis() - 3600000L,
+                true, 0.95, 1400L, System.currentTimeMillis());
+            Toast.makeText(this, "Sent confirmed visible feed event",
+                Toast.LENGTH_SHORT).show();
+        });
+
         Button archive = new Button(this);
         archive.setText("Open native archive · 查看归档界面");
         root.addView(archive);
         archive.setOnClickListener(v -> XsCaptureBridge.openLocalArchive(this));
 
         TextView note = new TextView(this);
-        note.setText("Tip: long press an archived post to place it in a local " +
-            "folder; use the Search tab for Chinese/English queries.");
+        note.setText("Enable each recording switch inside Archive, return here to " +
+            "simulate events, then reopen Archive. These are synthetic bridge events. " +
+            "Long press a post to organize it; search works offline.");
         root.addView(note, new LinearLayout.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
