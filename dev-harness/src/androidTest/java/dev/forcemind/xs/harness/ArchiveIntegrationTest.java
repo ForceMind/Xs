@@ -15,6 +15,9 @@ import dev.forcemind.xs.android.XsHistoryActivity;
 import dev.forcemind.xs.core.ArchiveSchema;
 import dev.forcemind.xs.core.ArchiveSearch;
 
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
+import dev.forcemind.xs.android.XsArchiveImporter;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -155,6 +158,44 @@ public class ArchiveIntegrationTest {
         query.offset = 160;
         try (Cursor end = store.search("A", query)) {
             assertEquals(5, end.getCount());
+        }
+    }
+
+    @Test public void officialPostsJsImportsOfflineWithoutFakeVisits() throws Exception {
+        String json = "window.YTD.tweets.part0 = [" +
+            "{\"tweet\":{\"id_str\":\"401\",\"full_text\":\"Standalone test original\"," +
+            "\"created_at\":\"Sat Jan 02 03:04:05 +0000 2021\"}}," +
+            "{\"tweet\":{\"id_str\":\"402\",\"full_text\":\"reply body\"," +
+            "\"in_reply_to_status_id_str\":\"100\"," +
+            "\"created_at\":\"Sat Jan 02 03:04:06 +0000 2021\"}}," +
+            "{\"tweet\":{\"id_str\":\"403\",\"full_text\":\"RT @someone: repost\"," +
+            "\"created_at\":\"Sat Jan 02 03:04:07 +0000 2021\"}}]";
+        byte[] bytes = json.getBytes(StandardCharsets.UTF_8);
+        XsArchiveImporter.Result first = XsArchiveImporter.importJs(
+            new ByteArrayInputStream(bytes), "A", store, 2000000000000L);
+        assertEquals(3, first.parsed);
+        assertEquals(3, first.inserted);
+        XsArchiveImporter.Result again = XsArchiveImporter.importJs(
+            new ByteArrayInputStream(bytes), "A", store, 2000000000001L);
+        assertEquals(0, again.inserted);
+
+        try (Cursor views = store.timeline("A", null, 50, "OPEN_POST")) {
+            assertEquals(0, views.getCount());
+        }
+        ArchiveSearch.Filter q = new ArchiveSearch.Filter();
+        q.actionType = "REPOST";
+        q.dateField = ArchiveSearch.DateField.ACTION;
+        try (Cursor posts = store.search("A", q)) {
+            assertTrue(posts.moveToFirst());
+            assertEquals("403", posts.getString(1));
+            assertTrue(posts.isNull(8)); // unknown repost action time stays unknown
+            assertEquals(0, posts.getInt(7));
+        }
+        q.actionType = "REPLY";
+        try (Cursor posts = store.search("A", q)) {
+            assertTrue(posts.moveToFirst());
+            assertEquals("402", posts.getString(1));
+            assertFalse(posts.isNull(8));
         }
     }
 

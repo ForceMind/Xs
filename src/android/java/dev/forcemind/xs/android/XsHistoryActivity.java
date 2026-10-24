@@ -26,6 +26,8 @@ import android.widget.Toast;
 import dev.forcemind.xs.core.ArchiveSearch;
 
 import java.text.DateFormat;
+import java.io.InputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -44,6 +46,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public final class XsHistoryActivity extends Activity {
     private enum Mode { HISTORY, FEED, SEARCH, FOLDERS }
     private static final int PAGE_SIZE = 80;
+    private static final int REQUEST_POSTS_JS = 7167;
 
     private static final class Row {
         final String id;
@@ -236,6 +239,11 @@ public final class XsHistoryActivity extends Activity {
         loadMoreButton.setVisibility(View.GONE);
         loadMoreButton.setOnClickListener(v -> loadPage(true));
         root.addView(loadMoreButton);
+        Button importPosts = button(tr("导入本人历史帖子（tweets.js）",
+                                       "Import my old posts (tweets.js)"));
+        root.addView(importPosts);
+        importPosts.setOnClickListener(v -> chooseImportFile());
+
         LinearLayout controls = horizontal();
         Button addFolder = button(tr("新建分类", "New folder"));
         Button erase = button(tr("清空本地记录", "Clear local history"));
@@ -398,6 +406,68 @@ public final class XsHistoryActivity extends Activity {
             status.setText(tr("当前账号 · 仅本机 · ", "Active account · on-device · ") +
                 visible.size() + tr(" 条结果", " results"));
         }
+    }
+
+    /**
+     * Local-only import from the data/tweets.js or tweets-partN.js within an
+     * official X account archive, after user confirmation of account ownership.
+     */
+    private void chooseImportFile() {
+        if (account == null) {
+            Toast.makeText(this, tr("请先接入当前账号", "Account not bound"),
+                Toast.LENGTH_SHORT).show();
+            return;
+        }
+        new AlertDialog.Builder(this)
+            .setTitle(tr("导入本人历史帖子", "Import my X posts"))
+            .setMessage(tr(
+                "请先解压 X 官方账号档案，选择 data/tweets.js、tweet.js 或分段文件。" +
+                "请确认这些帖子属于当前账号；只读取你选择的帖子文件，不会上传。",
+                "Extract your official X data archive and select data/tweets.js, " +
+                "tweet.js or a split part. Confirm it belongs to the active account. " +
+                "Only the selected post file is read locally; nothing is uploaded."))
+            .setNegativeButton(tr("取消", "Cancel"), null)
+            .setPositiveButton(tr("选择文件", "Choose file"), (dialog, which) -> {
+                Intent pick = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                pick.addCategory(Intent.CATEGORY_OPENABLE);
+                pick.setType("*/*");
+                try {
+                    startActivityForResult(pick, REQUEST_POSTS_JS);
+                } catch (ActivityNotFoundException noPicker) {
+                    Toast.makeText(this,
+                        tr("设备没有可用的文件选择器", "No document picker available"),
+                        Toast.LENGTH_LONG).show();
+                }
+            }).show();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode != REQUEST_POSTS_JS || resultCode != RESULT_OK ||
+            data == null || data.getData() == null || account == null) return;
+        final String owner = account;
+        final Uri selectedFile = data.getData();
+        worker.execute(() -> {
+            try (InputStream input = getContentResolver().openInputStream(selectedFile)) {
+                if (input == null) throw new IOException("Cannot open archive posts document");
+                XsArchiveImporter.Result result =
+                    XsArchiveImporter.importJs(input, owner, archive, System.currentTimeMillis());
+                runOnUiThread(() -> {
+                    if (!isFinishing() && owner.equals(account)) {
+                        setMode(Mode.SEARCH);
+                    }
+                    Toast.makeText(this, tr("本地导入完成：", "Local import complete: ") +
+                        result.inserted + tr(" 条新记录", " new records"),
+                        Toast.LENGTH_LONG).show();
+                });
+            } catch (IOException | RuntimeException failure) {
+                runOnUiThread(() -> Toast.makeText(this,
+                    tr("无法导入：请检查是否为有效的 tweets.js 且小于 16MB",
+                       "Import failed: choose a valid tweets.js part under 16 MiB"),
+                    Toast.LENGTH_LONG).show());
+            }
+        });
     }
 
     private void chooseDate() {

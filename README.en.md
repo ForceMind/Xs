@@ -17,7 +17,7 @@ Our goal is to retain the familiar experience of reading, posting, replying, rep
 | Feed snapshots | Separate opt-in; only confirmed on-screen visibility for ≥1.2s, with deduplication and source | On-device policy implemented; X visibility hook pending |
 | Visit timeline | Revisit posts by the time they were opened | Storage and native UI implemented; client entry pending |
 | Fast local search | Search words, accounts, categories, actions and five date bases; 80-row incremental pages | Local query and native UI implemented; X navigation hook pending |
-| My content | Distinguish original posts, replies, quotes and reposts | Data model prepared; client hook pending |
+| My content | Import posts from the official archive's `tweets.js` / `tweet.js`, including original posts, replies, quotes and identifiable reposts | Local importer implemented; automatic client sync pending |
 | Local folders | User-defined categories that work offline | Storage and native UI implemented; client entry pending |
 | Account isolation | Separate local indexes for different X accounts | Core implemented; device verification pending |
 
@@ -54,6 +54,8 @@ bash scripts/test-core.sh
 # Requires Android SDK + JDK 17 + Gradle 8.9 to build developer artifacts:
 gradle :xs-runtime:assembleDebug :dev-harness:assembleDebug
 ```
+
+You can extract `data/tweets.js` (or `tweet.js` / individual split parts) from your own official X archive, then choose **Import my old posts** in Xs's archive screen. The current importer reads **one file under 16 MiB** at a time, entirely offline. Confirm that the file belongs to the active account. Reimporting does not duplicate the same action or fabricate reading history.
 
 See [architecture](docs/architecture.md) for the Android library build. The `xs-runtime` output is an AAR. `dev-harness` produces a **synthetic-data test APK** for validating the native archive screen; it is NOT a modified X client. Neither substitutes for a real integration test.
 

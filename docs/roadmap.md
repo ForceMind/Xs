@@ -18,6 +18,8 @@
 - [x] Add dated visits/search/category CRUD Android instrumentation tests (CI run pending green confirmation).
 - [ ] Verify the database and UI in Android emulator instrumentation (job added; confirmation pending).
 - [x] Add opt-in separately captured feed-visible events, SQL v1→v2 migration, accurate event dates, and paged search/history UI.
+- [x] Add offline import for a user-selected official posts JS export (one bounded part at a time).
+- [ ] Extend importer to multipart/ZIP streams and verify ownership metadata when available.
 
 ## M2 — X client integration
 
