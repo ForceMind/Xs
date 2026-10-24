@@ -54,6 +54,20 @@ public final class CoreSmokeTest {
         f.actionType = "REPOST";
         q = ArchiveSearch.build("user-2", f);
         yes(q.sql.contains("p.published_at_ms DESC"));
+        yes(q.sql.contains(" AS date_sort_ms"));
+        f.dateField = ArchiveSearch.DateField.LAST_OPENED;
+        q = ArchiveSearch.build("user-2", f);
+        yes(q.sql.contains("p.last_opened_at_ms DESC"));
+        f.dateField = ArchiveSearch.DateField.FEED_SEEN;
+        q = ArchiveSearch.build("user-2", f);
+        yes(q.sql.contains("p.last_feed_seen_at_ms DESC"));
+        f.dateField = ArchiveSearch.DateField.ACTION;
+        q = ArchiveSearch.build("user-2", f);
+        yes(q.sql.contains("MAX(a.action_at_ms)"));
+        yes(q.sql.contains("a.action_type='REPOST'"));
+        f.actionType = "REPOST' OR 1=1 --";
+        expectInvalid(() -> ArchiveSearch.build("user-2", f));
+        f.actionType = "REPOST";
         yes(q.sql.contains("user_actions"));
         eq("user-2", q.args[0]);
 
@@ -65,7 +79,9 @@ public final class CoreSmokeTest {
         f.offset = -1;
         expectInvalid(() -> ArchiveSearch.build("user-2", f));
         expectInvalid(() -> ArchiveSearch.build("", new ArchiveSearch.Filter()));
+        yes(ArchiveSchema.VERSION == 2);
         yes(ArchiveSchema.CREATE.length >= 10);
+        yes(ArchiveSchema.MIGRATE_1_TO_2.length > 1);
         boolean fts = false, cascade = false;
         for (String ddl : ArchiveSchema.CREATE) {
             if (ddl.contains("VIRTUAL TABLE") && ddl.contains("fts4")) fts = true;

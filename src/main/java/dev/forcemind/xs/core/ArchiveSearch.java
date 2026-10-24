@@ -1,7 +1,6 @@
 package dev.forcemind.xs.core;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.regex.Pattern;
@@ -12,7 +11,7 @@ public final class ArchiveSearch {
         Pattern.compile("[A-Za-z0-9]+(?:[ \\t]+[A-Za-z0-9]+)*");
     private static final int MAX_QUERY_CHARS = 256;
 
-    public enum DateField { LAST_OPENED, PUBLISHED }
+    public enum DateField { LAST_SEEN, LAST_OPENED, FEED_SEEN, PUBLISHED, ACTION }
 
     public static final class Filter {
         public String keyword;
@@ -20,7 +19,7 @@ public final class ArchiveSearch {
         public String actionType;
         public Long fromMs;
         public Long toMs;
-        public DateField dateField = DateField.LAST_OPENED;
+        public DateField dateField = DateField.LAST_SEEN;
         public boolean openedOnly = false;
         public int limit = 50;
         public int offset = 0;
@@ -38,6 +37,12 @@ public final class ArchiveSearch {
 
     private ArchiveSearch() {}
 
+    private static boolean validActionType(String type) {
+        return "ORIGINAL".equals(type) || "REPLY".equals(type) ||
+               "QUOTE".equals(type) || "REPOST".equals(type) ||
+               "BOOKMARK".equals(type);
+    }
+
     public static Query build(String accountId, Filter filter) {
         if (accountId == null || accountId.trim().isEmpty()) {
             throw new IllegalArgumentException("account ID required");
@@ -48,12 +53,33 @@ public final class ArchiveSearch {
             throw new IllegalArgumentException("Invalid date range");
         }
         if (filter.offset < 0) throw new IllegalArgumentException("Negative offset");
-        String dateColumn = filter.dateField == DateField.PUBLISHED ?
-                "p.published_at_ms" : "p.last_seen_at_ms";
+        if (filter.dateField == null) throw new IllegalArgumentException("Date basis required");
+        if (filter.actionType != null && !filter.actionType.isEmpty() &&
+            !validActionType(filter.actionType)) {
+            throw new IllegalArgumentException("Unsupported personal action type");
+        }
+
+        String dateColumn;
+        switch (filter.dateField) {
+            case LAST_OPENED: dateColumn = "p.last_opened_at_ms"; break;
+            case FEED_SEEN: dateColumn = "p.last_feed_seen_at_ms"; break;
+            case PUBLISHED: dateColumn = "p.published_at_ms"; break;
+            case ACTION:
+                // A strict allowlist ensures an action type cannot inject SQL.
+                String onlyAction = filter.actionType == null ||
+                    filter.actionType.isEmpty() ? "" :
+                    " AND a.action_type='" + filter.actionType + "'";
+                dateColumn = "(SELECT MAX(a.action_at_ms) FROM user_actions a " +
+                    "WHERE a.account_id=p.account_id AND a.post_id=p.post_id" +
+                    onlyAction + ")";
+                break;
+            default: dateColumn = "p.last_seen_at_ms"; break;
+        }
         StringBuilder sql = new StringBuilder(
             "SELECT p.account_id, p.post_id, p.author_handle, p.body, " +
             "p.published_at_ms, p.first_seen_at_ms, p.last_seen_at_ms, " +
-            "p.opened_count FROM posts p WHERE p.account_id = ?");
+            "p.opened_count, " + dateColumn + " AS date_sort_ms " +
+            "FROM posts p WHERE p.account_id = ?");
         List<String> args = new ArrayList<>();
         args.add(accountId);
 

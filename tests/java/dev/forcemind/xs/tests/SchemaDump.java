@@ -11,5 +11,9 @@ public final class SchemaDump {
             System.out.println(Base64.getEncoder().encodeToString(
                 ddl.getBytes(StandardCharsets.UTF_8)));
         }
+        for (String migration : ArchiveSchema.MIGRATE_1_TO_2) {
+            System.out.println("MIGRATE:" + Base64.getEncoder().encodeToString(
+                migration.getBytes(StandardCharsets.UTF_8)));
+        }
     }
 }

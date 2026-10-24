@@ -7,12 +7,19 @@ import sys
 
 def main() -> None:
     lines = [line.strip() for line in sys.stdin if line.strip()]
-    assert len(lines) >= 10, "Unexpected missing schema statements"
+    ddl = [
+        base64.b64decode(line, validate=True).decode("utf-8")
+        for line in lines if not line.startswith("MIGRATE:")
+    ]
+    migration = [
+        base64.b64decode(line.partition(":")[2], validate=True).decode("utf-8")
+        for line in lines if line.startswith("MIGRATE:")
+    ]
+    assert len(ddl) >= 10 and len(migration) >= 5
     con = sqlite3.connect(":memory:")
     con.execute("PRAGMA foreign_keys = ON")
-    for encoded in lines:
-        ddl = base64.b64decode(encoded, validate=True).decode("utf-8")
-        con.executescript(ddl + ";")
+    for statement in ddl:
+        con.executescript(statement + ";")
 
     post = ("account-A", "42", "alice", "Agent notes AI", 1234, 1600, 2000)
     con.execute(
@@ -78,7 +85,52 @@ def main() -> None:
     assert con.execute(
         "SELECT count(*) FROM posts WHERE account_id='account-B'"
     ).fetchone()[0] == 1
-    print("PASS SQLite DDL, FTS triggers, foreign keys and account isolation")
+    # Reconstruct an earlier v1 install from the corresponding v2 DDL and
+    # verify that migrations preserve every account's posts and event history.
+    old = sqlite3.connect(":memory:")
+    old.execute("PRAGMA foreign_keys = ON")
+    for statement in ddl:
+        if any(token in statement for token in (
+            "idx_posts_open_time", "idx_posts_feed_time",
+            "idx_actions_by_post", "uniq_actions_known", "uniq_actions_unknown"
+        )):
+            continue
+        old_statement = statement.replace(
+            "last_opened_at_ms INTEGER, ", ""
+        ).replace("last_feed_seen_at_ms INTEGER, ", "")
+        old.executescript(old_statement + ";")
+    old.execute(
+        "INSERT INTO posts(account_id, post_id, body, first_seen_at_ms, last_seen_at_ms) "
+        "VALUES ('account-A', '88', 'historical post', 1, 2)"
+    )
+    old.execute(
+        "INSERT INTO history_events(account_id, post_id, event_type, event_at_ms, source) "
+        "VALUES ('account-A', '88', 'OPEN_POST', 2, 'post_detail')"
+    )
+    for _ in range(2):
+        old.execute(
+            "INSERT INTO user_actions(account_id, post_id, action_type, action_at_ms, source) "
+            "VALUES ('account-A', '88', 'REPOST', NULL, 'verified_self_activity')"
+        )
+    for statement in migration:
+        old.executescript(statement + ";")
+    assert old.execute(
+        "SELECT last_opened_at_ms, opened_count FROM posts "
+        "WHERE account_id='account-A' AND post_id='88'"
+    ).fetchone() == (2, 0)
+    assert old.execute(
+        "SELECT count(*) FROM user_actions WHERE account_id='account-A'"
+    ).fetchone()[0] == 1
+    old.execute(
+        "INSERT OR IGNORE INTO user_actions(account_id, post_id, action_type, source) "
+        "VALUES ('account-A', '88', 'REPOST', 'verified_self_activity')"
+    )
+    assert old.execute("SELECT count(*) FROM user_actions").fetchone()[0] == 1
+    assert old.execute(
+        "SELECT body FROM posts WHERE account_id='account-A' "
+        "AND post_id='88'"
+    ).fetchone()[0] == 'historical post'
+    print("PASS SQLite v2 DDL, deduped actions, v1 migration, FTS and account isolation")
 
 
 if __name__ == "__main__":

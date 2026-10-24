@@ -37,7 +37,11 @@ public final class XsArchiveDatabase extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        // Never delete an existing archive merely to pass an app upgrade.
+        if (oldVersion == 1 && newVersion == 2) {
+            for (String sql : ArchiveSchema.MIGRATE_1_TO_2) db.execSQL(sql);
+            return;
+        }
+        // Fail safely rather than deleting existing history for an unsupported version.
         throw new IllegalStateException("Xs migration required: " +
                                         oldVersion + " -> " + newVersion);
     }
@@ -54,9 +58,10 @@ public final class XsArchiveDatabase extends SQLiteOpenHelper {
             insertPostIfMissing(db, accountId, id, author, text, publishedAtMs, openedAtMs);
             db.execSQL(
                 "UPDATE posts SET opened_count=opened_count+1, " +
-                "last_seen_at_ms=MAX(last_seen_at_ms, ?) " +
+                "last_seen_at_ms=MAX(last_seen_at_ms, ?), " +
+                "last_opened_at_ms=MAX(COALESCE(last_opened_at_ms, 0), ?) " +
                 "WHERE account_id=? AND post_id=?",
-                new Object[]{openedAtMs, accountId, id});
+                new Object[]{openedAtMs, openedAtMs, accountId, id});
             updateKnownMetadata(db, accountId, id, author, text, publishedAtMs);
             ContentValues event = new ContentValues();
             event.put("account_id", accountId);
@@ -88,6 +93,9 @@ public final class XsArchiveDatabase extends SQLiteOpenHelper {
         try {
             insertPostIfMissing(db, accountId, id, author, text, publishedAtMs, observedAtMs);
             updateKnownMetadata(db, accountId, id, author, text, publishedAtMs);
+            db.execSQL("UPDATE posts SET last_seen_at_ms=MAX(last_seen_at_ms, ?) " +
+                       "WHERE account_id=? AND post_id=?",
+                       new Object[]{observedAtMs, accountId, id});
             ContentValues values = new ContentValues();
             values.put("account_id", accountId);
             values.put("post_id", id);
@@ -95,7 +103,8 @@ public final class XsArchiveDatabase extends SQLiteOpenHelper {
             if (actionAtMs == null) values.putNull("action_at_ms");
             else values.put("action_at_ms", actionAtMs);
             values.put("source", "verified_self_activity");
-            db.insertOrThrow("user_actions", null, values);
+            // Idempotent when refreshing an existing action: keep its original timestamp.
+            db.insertWithOnConflict("user_actions", null, values, SQLiteDatabase.CONFLICT_IGNORE);
             db.setTransactionSuccessful();
             return true;
         } finally {
