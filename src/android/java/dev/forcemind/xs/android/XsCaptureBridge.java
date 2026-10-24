@@ -214,6 +214,18 @@ public final class XsCaptureBridge {
         return true;
     }
 
+    /**
+     * Refuses a pending erase if the active account changed while the UI was
+     * processing a prior import or category edit.
+     */
+    public static synchronized boolean clearAccountIfActive(Context context,
+                                                            String expectedAccountId,
+                                                            ClearCallback callback) {
+        Session current = session;
+        return current != null && current.accountId.equals(expectedAccountId) &&
+               clearActiveAccount(context, callback);
+    }
+
     /** To be called from a future internal menu/settings integration. */
     public static void openLocalArchive(Context context) {
         if (context == null) return;

@@ -71,6 +71,7 @@ public final class XsHistoryActivity extends Activity {
     private SimpleAdapter listAdapter;
     private Button loadMoreButton;
     private int nextOffset;
+    private boolean clearing;
     private XsArchiveDatabase archive;
     private Mode mode = Mode.HISTORY;
     private String account;
@@ -413,6 +414,7 @@ public final class XsHistoryActivity extends Activity {
      * official X account archive, after user confirmation of account ownership.
      */
     private void chooseImportFile() {
+        if (clearing) return;
         if (account == null) {
             Toast.makeText(this, tr("请先接入当前账号", "Account not bound"),
                 Toast.LENGTH_SHORT).show();
@@ -445,7 +447,7 @@ public final class XsHistoryActivity extends Activity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode != REQUEST_POSTS_JS || resultCode != RESULT_OK ||
-            data == null || data.getData() == null || account == null) return;
+            data == null || data.getData() == null || account == null || clearing) return;
         final String owner = account;
         final Uri selectedFile = data.getData();
         worker.execute(() -> {
@@ -552,7 +554,7 @@ public final class XsHistoryActivity extends Activity {
     }
 
     private void organizePost(String postId) {
-        if (account == null) return;
+        if (account == null || clearing) return;
         final String owner = account;
         worker.execute(() -> {
             List<String> ids = new ArrayList<>();
@@ -616,6 +618,7 @@ public final class XsHistoryActivity extends Activity {
     }
 
     private void showFolderEditor(String existingId, String initialName) {
+        if (clearing) return;
         if (account == null) {
             Toast.makeText(this, tr("等待接入账号", "Account not bound"),
                 Toast.LENGTH_SHORT).show();
@@ -654,7 +657,7 @@ public final class XsHistoryActivity extends Activity {
     }
 
     private void confirmErase() {
-        if (account == null) return;
+        if (account == null || clearing) return;
         String owner = account;
         new AlertDialog.Builder(this)
             .setTitle(tr("清空本地归档？", "Erase local archive?"))
@@ -662,22 +665,35 @@ public final class XsHistoryActivity extends Activity {
                 "Deletes only this account's on-device Xs history, folders and indexes. X data is untouched."))
             .setNegativeButton(tr("取消", "Cancel"), null)
             .setPositiveButton(tr("清空", "Erase"), (d, n) -> {
+                clearing = true;
                 recorder.setEnabled(false);
-                boolean started = XsCaptureBridge.clearActiveAccount(this, success -> {
-                    if (owner.equals(account)) {
-                        selectedFolder = null;
-                        refreshRecordingState();
-                        refresh();
+                feedRecorder.setEnabled(false);
+                // UI worker queues this AFTER any pending local import/category edit.
+                // Bridge IO then queues deletion AFTER prior capture events.
+                worker.execute(() -> {
+                    boolean started = XsCaptureBridge.clearAccountIfActive(
+                        this, owner, success -> {
+                            clearing = false;
+                            if (owner.equals(account) && !isFinishing()) {
+                                selectedFolder = null;
+                                refreshRecordingState();
+                                refresh();
+                            }
+                            Toast.makeText(this, success ?
+                                tr("已清空当前账号的本地归档", "Local archive erased") :
+                                tr("清空失败", "Unable to erase"), Toast.LENGTH_SHORT).show();
+                        });
+                    if (!started) {
+                        runOnUiThread(() -> {
+                            clearing = false;
+                            if (!isFinishing()) refreshRecordingState();
+                            Toast.makeText(this,
+                                tr("账号已变化，未清理任何数据",
+                                   "Account changed; nothing erased"),
+                                Toast.LENGTH_SHORT).show();
+                        });
                     }
-                    Toast.makeText(this, success ?
-                        tr("已清空当前账号的本地归档", "Local archive erased") :
-                        tr("清空失败", "Unable to erase"), Toast.LENGTH_SHORT).show();
                 });
-                if (!started) {
-                    refreshRecordingState();
-                    Toast.makeText(this, tr("清空未开始", "Erase was not started"),
-                        Toast.LENGTH_SHORT).show();
-                }
             }).show();
     }
 
