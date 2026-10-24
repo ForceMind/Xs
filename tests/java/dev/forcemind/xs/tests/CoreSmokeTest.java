@@ -3,6 +3,7 @@ package dev.forcemind.xs.tests;
 import dev.forcemind.xs.core.ArchiveSchema;
 import dev.forcemind.xs.core.ArchiveSearch;
 import dev.forcemind.xs.core.PostUrls;
+import dev.forcemind.xs.core.FeedCapturePolicy;
 
 /** Dependency-free JVM checks; Android SQLite integration needs device testing. */
 public final class CoreSmokeTest {
@@ -79,6 +80,21 @@ public final class CoreSmokeTest {
         f.offset = -1;
         expectInvalid(() -> ArchiveSearch.build("user-2", f));
         expectInvalid(() -> ArchiveSearch.build("", new ArchiveSearch.Filter()));
+        FeedCapturePolicy gate = new FeedCapturePolicy();
+        long now = 1720000000000L;
+        yes(!gate.shouldSave("a", "42", "home_for_you", false, 0.9, 1400, now));
+        yes(!gate.shouldSave("a", "42", "home_for_you", true, 0.5, 1400, now));
+        yes(!gate.shouldSave("a", "42", "home_for_you", true, Double.NaN, 1400, now));
+        yes(!gate.shouldSave("a", "42", "home_for_you", true, 0.9, 800, now));
+        yes(!gate.shouldSave("a", "42", "unverified", true, 0.9, 1400, now));
+        yes(gate.shouldSave("a", "42", "home_for_you", true, 0.8, 1400, now));
+        yes(!gate.shouldSave("a", "42", "home_for_you", true, 0.8, 1400, now + 150));
+        yes(gate.shouldSave("a", "42", "home_for_you", true, 0.8, 1400, now + 120001));
+        yes(gate.shouldSave("b", "42", "home_for_you", true, 0.8, 1400, now + 150));
+        yes(gate.shouldSave("a", "42", "home_following", true, 0.8, 1400, now + 150));
+        gate.reset();
+        yes(gate.shouldSave("a", "42", "home_for_you", true, 0.8, 1400, now + 500));
+
         yes(ArchiveSchema.VERSION == 2);
         yes(ArchiveSchema.CREATE.length >= 10);
         yes(ArchiveSchema.MIGRATE_1_TO_2.length > 1);

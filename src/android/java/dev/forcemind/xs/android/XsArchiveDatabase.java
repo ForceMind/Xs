@@ -112,6 +112,41 @@ public final class XsArchiveDatabase extends SQLiteOpenHelper {
         }
     }
 
+    /**
+     * Opt-in timeline capture, distinct from deliberate OPEN_POST history.
+     * The caller has already verified foreground visibility and dwell duration.
+     */
+    public boolean recordFeedVisible(String accountId, String postUrl, String source,
+                                     String author, String text, Long publishedAtMs,
+                                     long eventAtMs) {
+        String id = PostUrls.extractPostId(postUrl);
+        if (!valid(accountId) || id == null ||
+            !dev.forcemind.xs.core.FeedCapturePolicy.supportedSource(source) ||
+            eventAtMs <= 0) return false;
+        SQLiteDatabase db = getWritableDatabase();
+        db.beginTransaction();
+        try {
+            insertPostIfMissing(db, accountId, id, author, text, publishedAtMs, eventAtMs);
+            db.execSQL(
+                "UPDATE posts SET last_seen_at_ms=MAX(last_seen_at_ms, ?), " +
+                "last_feed_seen_at_ms=MAX(COALESCE(last_feed_seen_at_ms, 0), ?) " +
+                "WHERE account_id=? AND post_id=?",
+                new Object[]{eventAtMs, eventAtMs, accountId, id});
+            updateKnownMetadata(db, accountId, id, author, text, publishedAtMs);
+            ContentValues event = new ContentValues();
+            event.put("account_id", accountId);
+            event.put("post_id", id);
+            event.put("event_type", "FEED_VISIBLE");
+            event.put("event_at_ms", eventAtMs);
+            event.put("source", source);
+            db.insertOrThrow("history_events", null, event);
+            db.setTransactionSuccessful();
+            return true;
+        } finally {
+            db.endTransaction();
+        }
+    }
+
     private static boolean validAction(String type) {
         return "ORIGINAL".equals(type) || "REPLY".equals(type) ||
                "QUOTE".equals(type) || "REPOST".equals(type) ||
@@ -149,16 +184,29 @@ public final class XsArchiveDatabase extends SQLiteOpenHelper {
         return getReadableDatabase().rawQuery(q.sql, q.args);
     }
 
-    /** Query append-only visits; offset/limits and time window are per-account. */
+    /** Older API returns deliberate opens only, never mixed with feed impressions. */
     public Cursor timeline(String accountId, Long afterMs, int requestedLimit) {
+        return timeline(accountId, afterMs, requestedLimit, "OPEN_POST");
+    }
+
+    /**
+     * Query one explicitly selected event type. Never silently mix screen opens
+     * and feed impressions: they carry different user meaning.
+     */
+    public Cursor timeline(String accountId, Long afterMs, int requestedLimit,
+                           String eventType) {
+        if (!"OPEN_POST".equals(eventType) && !"FEED_VISIBLE".equals(eventType)) {
+            throw new IllegalArgumentException("Unsupported history event type");
+        }
         requireAccount(accountId);
         StringBuilder sql = new StringBuilder(
             "SELECT e.id, e.post_id, e.event_at_ms, e.event_type, " +
-            "p.author_handle, p.body, p.published_at_ms " +
+            "p.author_handle, p.body, p.published_at_ms, e.source " +
             "FROM history_events e JOIN posts p ON e.account_id=p.account_id " +
-            "AND e.post_id=p.post_id WHERE e.account_id=?");
+            "AND e.post_id=p.post_id WHERE e.account_id=? AND e.event_type=?");
         List<String> args = new ArrayList<>();
         args.add(accountId);
+        args.add(eventType);
         if (afterMs != null) {
             sql.append(" AND e.event_at_ms>=?");
             args.add(Long.toString(afterMs));

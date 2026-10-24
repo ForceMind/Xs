@@ -40,7 +40,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * verified client integration. No X APIs, account tokens or network requests.
  */
 public final class XsHistoryActivity extends Activity {
-    private enum Mode { HISTORY, SEARCH, FOLDERS }
+    private enum Mode { HISTORY, FEED, SEARCH, FOLDERS }
 
     private static final class Row {
         final String id;
@@ -66,12 +66,15 @@ public final class XsHistoryActivity extends Activity {
     private String actionType;
     private Long minTime;
     private int dateChoice;
+    private ArchiveSearch.DateField dateBasis = ArchiveSearch.DateField.LAST_SEEN;
     private boolean zh;
 
     private TextView status;
     private EditText query;
     private ListView results;
     private Switch recorder;
+    private Switch feedRecorder;
+    private Button basisFilter;
     private Button folderFilter;
     private Button dateFilter;
     private Button typeFilter;
@@ -127,6 +130,14 @@ public final class XsHistoryActivity extends Activity {
         recorder.setText(tr("记录主动打开的帖子（仅本机）",
                             "Save deliberate post opens (on-device only)"));
         recorder.setChecked(false);
+        feedRecorder.setOnCheckedChangeListener(null);
+        feedRecorder.setEnabled(hasAccount);
+        feedRecorder.setChecked(hasAccount && XsCaptureBridge.isFeedRecordingEnabled());
+        feedRecorder.setOnCheckedChangeListener((view, enabled) -> {
+            if (!XsCaptureBridge.setFeedRecordingEnabled(this, enabled)) {
+                refreshRecordingState();
+            }
+        });
         recorder.setOnCheckedChangeListener((view, enabled) -> {
             if (!XsCaptureBridge.setRecordingEnabled(this, enabled)) {
                 refreshRecordingState();
@@ -138,15 +149,29 @@ public final class XsHistoryActivity extends Activity {
         });
         root.addView(recorder);
 
+        feedRecorder = new Switch(this);
+        feedRecorder.setText(tr("记录实际浏览的信息流（需停留 ≥1.2 秒）",
+                                "Save visible feed posts (≥1.2s dwell)"));
+        feedRecorder.setChecked(false);
+        feedRecorder.setOnCheckedChangeListener((view, enabled) -> {
+            if (!XsCaptureBridge.setFeedRecordingEnabled(this, enabled)) {
+                refreshRecordingState();
+            }
+        });
+        root.addView(feedRecorder);
+
         LinearLayout tabs = horizontal();
-        Button history = button(tr("历史", "History"));
+        Button history = button(tr("打开历史", "Opens"));
+        Button feed = button(tr("刷过的", "Feed"));
         Button search = button(tr("搜索", "Search"));
         Button folders = button(tr("分类", "Folders"));
         tabs.addView(history, weighted());
+        tabs.addView(feed, weighted());
         tabs.addView(search, weighted());
         tabs.addView(folders, weighted());
         root.addView(tabs);
         history.setOnClickListener(v -> setMode(Mode.HISTORY));
+        feed.setOnClickListener(v -> setMode(Mode.FEED));
         search.setOnClickListener(v -> setMode(Mode.SEARCH));
         folders.setOnClickListener(v -> setMode(Mode.FOLDERS));
 
@@ -170,6 +195,9 @@ public final class XsHistoryActivity extends Activity {
         filters.addView(folderFilter, weighted());
         filters.addView(typeFilter, weighted());
         root.addView(filters);
+        basisFilter = button(tr("排序：收录时间", "Sort: saved"));
+        root.addView(basisFilter);
+        basisFilter.setOnClickListener(v -> chooseDateBasis());
         dateFilter.setOnClickListener(v -> chooseDate());
         folderFilter.setOnClickListener(v -> chooseFolder());
         typeFilter.setOnClickListener(v -> chooseActionType());
@@ -233,6 +261,7 @@ public final class XsHistoryActivity extends Activity {
         folderFilter.setVisibility(next == Mode.SEARCH ? View.VISIBLE : View.GONE);
         typeFilter.setVisibility(next == Mode.SEARCH ? View.VISIBLE : View.GONE);
         dateFilter.setVisibility(next == Mode.FOLDERS ? View.GONE : View.VISIBLE);
+        basisFilter.setVisibility(next == Mode.SEARCH ? View.VISIBLE : View.GONE);
         refresh();
     }
 
@@ -259,14 +288,17 @@ public final class XsHistoryActivity extends Activity {
                                 tr("长按重命名或删除", "Long press to rename or delete"), true));
                         }
                     }
-                } else if (selectedMode == Mode.HISTORY) {
-                    try (Cursor cursor = archive.timeline(owner, after, 200)) {
+                } else if (selectedMode == Mode.HISTORY || selectedMode == Mode.FEED) {
+                    boolean reading = selectedMode == Mode.HISTORY;
+                    try (Cursor cursor = archive.timeline(owner, after, 200,
+                            reading ? "OPEN_POST" : "FEED_VISIBLE")) {
                         while (cursor.moveToNext()) {
                             String postId = cursor.getString(1);
                             long openedAt = cursor.getLong(2);
                             rows.add(new Row(postId,
                                 headline(cursor.getString(4), cursor.getString(5), postId),
-                                date(openedAt) + "  ·  #" + postId, false));
+                                date(openedAt) + (reading ? " · Open" :
+                                    " · " + cursor.getString(7)) + "  ·  #" + postId, false));
                         }
                     }
                 } else {
@@ -275,16 +307,19 @@ public final class XsHistoryActivity extends Activity {
                     filter.categoryId = folder;
                     filter.actionType = type;
                     filter.fromMs = after;
+                    filter.dateField = dateBasis;
                     filter.limit = 200;
                     try (Cursor cursor = archive.search(owner, filter)) {
                         while (cursor.moveToNext()) {
                             String postId = cursor.getString(1);
-                            long openedAt = cursor.getLong(6);
                             int opens = cursor.getInt(7);
+                            String at = cursor.isNull(8) ?
+                                tr("时间未知", "Unknown time") : date(cursor.getLong(8));
                             rows.add(new Row(postId,
                                 headline(cursor.getString(2), cursor.getString(3), postId),
-                                date(openedAt) + "  ·  " + tr("打开", "Opens") +
-                                    ": " + opens, false));
+                                at + "  ·  " + (opens == 0 ?
+                                    tr("已收录，未打开", "Indexed, not opened") :
+                                    tr("打开次数", "Opens") + ": " + opens), false));
                         }
                     }
                 }
@@ -349,6 +384,26 @@ public final class XsHistoryActivity extends Activity {
             })
             .setNegativeButton(tr("取消", "Cancel"), null)
             .show();
+    }
+
+    private void chooseDateBasis() {
+        String[] names = zh ?
+            new String[]{"最近收录时间", "主动打开时间", "刷到时间", "帖子发布时间", "个人操作时间"} :
+            new String[]{"Last saved", "Last opened", "Feed seen", "Published", "My action"};
+        ArchiveSearch.DateField[] choices = {
+            ArchiveSearch.DateField.LAST_SEEN,
+            ArchiveSearch.DateField.LAST_OPENED,
+            ArchiveSearch.DateField.FEED_SEEN,
+            ArchiveSearch.DateField.PUBLISHED,
+            ArchiveSearch.DateField.ACTION
+        };
+        new AlertDialog.Builder(this)
+            .setTitle(tr("查询时间依据", "Search date basis"))
+            .setItems(names, (dialog, selected) -> {
+                dateBasis = choices[selected];
+                basisFilter.setText(names[selected]);
+                refresh();
+            }).show();
     }
 
     private void chooseActionType() {

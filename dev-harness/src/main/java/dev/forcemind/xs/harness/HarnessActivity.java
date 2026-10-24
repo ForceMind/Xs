@@ -104,6 +104,15 @@ public final class HarnessActivity extends Activity {
                     db.assignCategory(owner, postId,
                         i % 2 == 0 ? "dev-reading" : "dev-product");
                 }
+                // Feed-only records demonstrate that feed views must not
+                // inflate deliberate post open counts.
+                for (int i = 0; i < 4; i++) {
+                    String id = Long.toString(2112345678901234600L + i);
+                    db.recordFeedVisible(owner, "https://x.com/example/status/" + id,
+                        i % 2 == 0 ? "home_for_you" : "home_following",
+                        "xs_fixture", "信息流测试 / Feed visibility #" + i,
+                        now - i * 86400000L, now - i * 1800000L);
+                }
                 String first = "https://x.com/example/status/2112345678901234500";
                 db.recordOpened(owner, first, "xs_fixture", EXAMPLES[0],
                     now - 20L * 86400000L, now);

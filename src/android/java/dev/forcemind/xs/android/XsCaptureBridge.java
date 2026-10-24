@@ -7,6 +7,9 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
+import dev.forcemind.xs.core.FeedCapturePolicy;
+import dev.forcemind.xs.core.PostUrls;
+
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -24,16 +27,19 @@ public final class XsCaptureBridge {
     private static final String PREFERENCES = "xs_local_archive";
     private static final ExecutorService IO = Executors.newSingleThreadExecutor();
 
+    private static final FeedCapturePolicy FEED_POLICY = new FeedCapturePolicy();
     private static volatile XsArchiveDatabase store;
     private static volatile Session session;
 
     private static final class Session {
         final String accountId;
         final boolean recordingEnabled;
+        final boolean feedRecordingEnabled;
 
-        Session(String accountId, boolean recordingEnabled) {
+        Session(String accountId, boolean recordingEnabled, boolean feedRecordingEnabled) {
             this.accountId = accountId;
             this.recordingEnabled = recordingEnabled;
+            this.feedRecordingEnabled = feedRecordingEnabled;
         }
     }
 
@@ -53,7 +59,8 @@ public final class XsCaptureBridge {
         SharedPreferences preferences = context.getApplicationContext().getSharedPreferences(
             PREFERENCES, Context.MODE_PRIVATE);
         boolean enabled = preferences.getBoolean(key(stableAccountId), false);
-        session = new Session(stableAccountId, enabled);
+        boolean feedEnabled = preferences.getBoolean(feedKey(stableAccountId), false);
+        session = new Session(stableAccountId, enabled, feedEnabled);
     }
 
     /** Logout/switch gap: stop recording until an authenticated ID is rebound. */
@@ -80,8 +87,53 @@ public final class XsCaptureBridge {
             .edit()
             .putBoolean(key(active.accountId), enabled)
             .apply();
-        session = new Session(active.accountId, enabled);
+        session = new Session(active.accountId, enabled, active.feedRecordingEnabled);
         return true;
+    }
+
+    /** Independent per-account opt-in for visible feed impressions. */
+    public static boolean isFeedRecordingEnabled() {
+        Session current = session;
+        return current != null && current.feedRecordingEnabled;
+    }
+
+    public static synchronized boolean setFeedRecordingEnabled(Context context, boolean enabled) {
+        Session current = session;
+        if (context == null || current == null) return false;
+        context.getApplicationContext()
+            .getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
+            .edit()
+            .putBoolean(feedKey(current.accountId), enabled)
+            .apply();
+        session = new Session(current.accountId, current.recordingEnabled, enabled);
+        if (!enabled) FEED_POLICY.reset();
+        return true;
+    }
+
+    /**
+     * Adapter-facing API for confirmed timeline visibility. Never call this
+     * on prefetches, list binding, background activity or partial flashes.
+     * A separate user opt-in is required, even if opening history is enabled.
+     */
+    public static synchronized void onFeedPostVisible(String postUrl, String source,
+            String authorHandle, String visibleText, Long publishedAtMs,
+            boolean appInForeground, double visibleFraction, long dwellMs, long seenAtMs) {
+        Session active = session;
+        final XsArchiveDatabase db = store;
+        if (active == null || !active.feedRecordingEnabled || db == null) return;
+        String id = PostUrls.extractPostId(postUrl);
+        if (!FEED_POLICY.shouldSave(active.accountId, id, source, appInForeground,
+                                    visibleFraction, dwellMs, seenAtMs)) return;
+        final String body = trim(visibleText, 16000);
+        final String author = trim(authorHandle, 100);
+        IO.execute(() -> {
+            try {
+                db.recordFeedVisible(active.accountId, postUrl, source, author, body,
+                                     publishedAtMs, seenAtMs);
+            } catch (RuntimeException error) {
+                Log.w(TAG, "Local feed archive failed; original app unaffected");
+            }
+        });
     }
 
     /**
@@ -143,6 +195,8 @@ public final class XsCaptureBridge {
         final XsArchiveDatabase database = store;
         if (context == null || active == null || database == null) return false;
         setRecordingEnabled(context, false);
+        setFeedRecordingEnabled(context, false);
+        FEED_POLICY.reset();
         IO.execute(() -> {
             boolean result;
             try {
@@ -173,6 +227,10 @@ public final class XsCaptureBridge {
     private static String trim(String input, int maxChars) {
         if (input == null) return null;
         return input.length() > maxChars ? input.substring(0, maxChars) : input;
+    }
+
+    private static String feedKey(String stableAccountId) {
+        return "feed_" + key(stableAccountId);
     }
 
     private static String key(String stableAccountId) {
