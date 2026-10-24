@@ -130,14 +130,6 @@ public final class XsHistoryActivity extends Activity {
         recorder.setText(tr("记录主动打开的帖子（仅本机）",
                             "Save deliberate post opens (on-device only)"));
         recorder.setChecked(false);
-        feedRecorder.setOnCheckedChangeListener(null);
-        feedRecorder.setEnabled(hasAccount);
-        feedRecorder.setChecked(hasAccount && XsCaptureBridge.isFeedRecordingEnabled());
-        feedRecorder.setOnCheckedChangeListener((view, enabled) -> {
-            if (!XsCaptureBridge.setFeedRecordingEnabled(this, enabled)) {
-                refreshRecordingState();
-            }
-        });
         recorder.setOnCheckedChangeListener((view, enabled) -> {
             if (!XsCaptureBridge.setRecordingEnabled(this, enabled)) {
                 refreshRecordingState();
@@ -239,6 +231,14 @@ public final class XsHistoryActivity extends Activity {
         recorder.setOnCheckedChangeListener(null);
         recorder.setEnabled(hasAccount);
         recorder.setChecked(hasAccount && XsCaptureBridge.isRecordingEnabled());
+        feedRecorder.setOnCheckedChangeListener(null);
+        feedRecorder.setEnabled(hasAccount);
+        feedRecorder.setChecked(hasAccount && XsCaptureBridge.isFeedRecordingEnabled());
+        feedRecorder.setOnCheckedChangeListener((view, enabled) -> {
+            if (!XsCaptureBridge.setFeedRecordingEnabled(this, enabled)) {
+                refreshRecordingState();
+            }
+        });
         recorder.setOnCheckedChangeListener((view, enabled) -> {
             if (!XsCaptureBridge.setRecordingEnabled(this, enabled)) {
                 refreshRecordingState();
