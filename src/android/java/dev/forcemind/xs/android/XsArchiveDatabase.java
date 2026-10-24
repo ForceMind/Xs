@@ -147,6 +147,52 @@ public final class XsArchiveDatabase extends SQLiteOpenHelper {
         }
     }
 
+    /**
+     * Batch-imports own posts from a user-provided archive file. This updates
+     * the local index but never creates synthetic OPEN_POST or FEED_VISIBLE
+     * events. Duplicate archive actions are ignored by v2 unique indices.
+     */
+    public int importArchivedOwnPosts(String accountId,
+                                      List<XsArchiveImporter.Record> rows,
+                                      long importedAtMs) {
+        requireAccount(accountId);
+        if (rows == null || importedAtMs <= 0) {
+            throw new IllegalArgumentException("Rows and import time required");
+        }
+        SQLiteDatabase db = getWritableDatabase();
+        int inserted = 0;
+        db.beginTransaction();
+        try {
+            for (XsArchiveImporter.Record row : rows) {
+                if (row == null || row.postId == null ||
+                    !row.postId.matches("[0-9]{1,20}") ||
+                    !validAction(row.actionType)) continue;
+                insertPostIfMissing(db, accountId, row.postId, null,
+                                    row.body, row.publishedAtMs, importedAtMs);
+                updateKnownMetadata(db, accountId, row.postId, null,
+                                    row.body, row.publishedAtMs);
+                db.execSQL("UPDATE posts SET last_seen_at_ms=MAX(last_seen_at_ms, ?) " +
+                           "WHERE account_id=? AND post_id=?",
+                           new Object[]{importedAtMs, accountId, row.postId});
+                ContentValues action = new ContentValues();
+                action.put("account_id", accountId);
+                action.put("post_id", row.postId);
+                action.put("action_type", row.actionType);
+                if (row.actionAtMs == null) action.putNull("action_at_ms");
+                else action.put("action_at_ms", row.actionAtMs);
+                action.put("source", "local_x_archive");
+                if (db.insertWithOnConflict("user_actions", null, action,
+                                            SQLiteDatabase.CONFLICT_IGNORE) != -1) {
+                    inserted++;
+                }
+            }
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+        return inserted;
+    }
+
     private static boolean validAction(String type) {
         return "ORIGINAL".equals(type) || "REPLY".equals(type) ||
                "QUOTE".equals(type) || "REPOST".equals(type) ||
