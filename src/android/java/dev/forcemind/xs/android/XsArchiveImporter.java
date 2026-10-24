@@ -110,7 +110,9 @@ public final class XsArchiveImporter {
 
             boolean repost = item.has("retweeted_status") || body.startsWith("RT @");
             boolean reply = hasIdentity(item.optString("in_reply_to_status_id_str", "")) ||
-                            hasIdentity(item.optString("in_reply_to_user_id_str", ""));
+                            hasIdentity(item.optString("in_reply_to_status_id", "")) ||
+                            hasIdentity(item.optString("in_reply_to_user_id_str", "")) ||
+                            hasIdentity(item.optString("in_reply_to_user_id", ""));
             boolean quote = item.optBoolean("is_quote_status", false) ||
                             hasIdentity(item.optString("quoted_status_id_str", ""));
             String type = repost ? "REPOST" : reply ? "REPLY" : quote ? "QUOTE" : "ORIGINAL";
