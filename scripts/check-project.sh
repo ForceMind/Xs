@@ -20,4 +20,6 @@ fi
 
 test -f src/main/java/dev/forcemind/xs/core/ArchiveSchema.java
 test -f src/android/java/dev/forcemind/xs/android/XsHistoryActivity.java
-echo "PASS bilingual documentation and independent source tree"
+python3 scripts/verify-host-allowlist.py
+python3 -m unittest discover -s tests -p "test_host_allowlist.py"
+echo "PASS bilingual documentation, independent source tree, and host compatibility checks"
