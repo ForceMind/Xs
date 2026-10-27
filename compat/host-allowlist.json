@@ -1,0 +1,5 @@
+{
+  "schemaVersion": 1,
+  "description": "No X host build has been validated. Fail closed until authorized test evidence is recorded.",
+  "hosts": []
+}
