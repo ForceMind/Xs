@@ -1,43 +1,22 @@
-# Xs development roadmap
+# Xs development roadmap — Web-first
 
-## M0 — independent foundation
+Accepted 2026-10-29. [Full plan](WEB_FIRST_PLAN.zh-CN.md) and [ADR-0001](adr/0001-web-first.md) supersede the old APK-patching route.
 
-- [x] Define original-client enhancement, local-first scope and privacy boundaries.
-- [x] Implement Android-independent URL parser, SQLite schema and local query builder.
-- [x] Implement Android SQLite data store and recording bridge (no client hooks yet).
-- [x] Add JVM, SQL trigger, referential-integrity and account-isolation tests.
-- [x] Add CI.
-- [x] Provide Chinese and English README.
-- [x] Remove all external-source submodules and implement independent core.
+## Existing foundation
 
-## M1 — useful offline archive layer
+The repository contains an independent Java/SQLite archive, URL/search/schema policies, native Android archive UI, categories, open/feed events, posts-JS import, bilingual README and synthetic/instrumentation tests. Existing code and historical test evidence are not proof of a new live web integration.
 
-- [x] Build Android Library AAR in CI.
-- [x] Implement native History / Search / Categories Activity.
-- [x] Add explicit per-account opt-in capture state and clear-local-data controls.
-- [x] Add dated visits/search/category CRUD Android instrumentation tests (CI run pending green confirmation).
-- [ ] Verify the database and UI in Android emulator instrumentation (job added; confirmation pending).
-- [x] Add opt-in separately captured feed-visible events, SQL v1→v2 migration, accurate event dates, and paged search/history UI.
-- [x] Add offline import for a user-selected official posts JS export (one bounded part at a time).
-- [ ] Extend importer to multipart/ZIP streams and verify ownership metadata when available.
+Preserve `xs-runtime`, `dev-harness`, core and data migration history. Keep old APK contracts and empty allowlist as legacy assets, not current prerequisites.
 
-## M2 — X client integration
+## Active phases — all pending at plan adoption
 
-- [ ] Research compatible client versions using authorized test builds.
-- [ ] Implement independent version-verified post-detail and account lifecycle adapter.
-- [ ] Inject runtime and manifest entry into an authorized test app build.
-- [ ] Integrate history navigation without replacing the original client.
-- [ ] Implement optional UI filtering for ads, recommendations and upsell surfaces.
-- [ ] Test client login, browsing, post-open semantics, navigation and upgrades.
+- [ ] W0: build a minimal non-instrumented browser host; validate actual X login methods, session restoration, navigation, media, upload and logout/switching. Record exact device/WebView/build evidence. Stop or narrow the route if this fails.
+- [ ] W1: implement secure navigation, runtime feature checks, native archive scopes, bounded origin/main-frame/route/schema/epoch-validated observations and a native-only settings boundary.
+- [ ] W2: deliver deliberate-open recording, native offline search/categories, duplicate prevention, persistence and return-to-original-post as one verified loop.
+- [ ] W3: separately verify feed visibility, reversible UI filtering and official-archive import integration; never invent repost or reading times.
+- [ ] W4: complete privacy review, backup/restore, non-destructive migrations, erasure/queue behavior, performance, real-device compatibility, signing/dependency provenance and distribution review.
+- [ ] W5: evaluate standard desktop-browser extension delivery; independently assess other desktop shells and iOS. Do not promise automatic code or login portability.
 
-## M3 — personal posts and release readiness
+The detailed WF-01..WF-12 work packages, dependency graph, limits and acceptance matrix are in the full plan. W0 is an internal PoC; W2 may qualify as Alpha, W3 as Beta and W4 as a release candidate only after their gates pass.
 
-- [ ] Record original posts/replies/quotes/reposts separately from visiting.
-- [ ] Add advanced date basis and action filters, batch categories and notes.
-- [ ] Add secure backups, migrations and retention controls.
-- [ ] Add benchmarks, localization and device compatibility matrix.
-- [ ] Produce documented reproducible installs and release QA.
-
-Do not mark any APK-, hook-, login-, or on-device milestone complete until tested
-against a specific supported build. Core code and AAR alone are not a usable
-enhanced X application.
+No milestone is complete because a document, AAR, mock fixture or synthetic APK exists. Do not claim new CI, emulator or live-login success without actually obtaining the matching result. No time commitment substitutes for a real exit criterion.

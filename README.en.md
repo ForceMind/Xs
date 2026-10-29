@@ -2,72 +2,67 @@
 
 [简体中文](README.md) | [English](README.en.md)
 
-**Xs is an independently developed, Android-first local enhancement project.** It is designed for the existing X (formerly Twitter) client. It is not a replacement social network, account system, feed backend, or new X client.
+**Xs is an independent, local-first enhancement project for using X.** As of 2026-10-29, the accepted route is **Web-first**: the official X website provides browsing, while a native local archive adds history, search, categories and personal-content management. Patching the official Android APK is no longer the primary route. There is no new social backend, account service or API proxy.
 
-Our goal is to retain the familiar experience of reading, posting, replying, reposting, messaging, and notifications while giving users better ways to organize and find content.
+> **This is an accepted direction, not a completed web client.** The repository contains the Java/SQLite core, Android archive UI, offline importer and tests. A WebView host, web observers, real login and end-to-end web integration remain unimplemented/unverified. There is no complete installable Xs client yet.
 
-> Early development. The local archive core, Android storage, native archive Activity, and tests exist. **There is not yet an installable modified X APK**, nor a verified integration with X or on-device end-to-end test.
+## Authoritative plan
 
-## Planned capabilities
+- [Complete Web-first product and engineering plan (Chinese)](docs/WEB_FIRST_PLAN.zh-CN.md)
+- [ADR-0001 (English)](docs/adr/0001-web-first.md)
+- [Product](docs/product.md) · [Architecture](docs/architecture.md) · [Roadmap](docs/roadmap.md)
 
-| Feature | Experience | Current status |
-| --- | --- | --- |
-| Cleaner UI | Reduce promoted content, noisy recommendations and repetitive subscription prompts | Planned; not integrated |
-| Reading history | Each deliberate open creates a separate event, preserving precise visit times | Storage and native screen implemented; X hook pending |
-| Feed snapshots | Separate opt-in; only confirmed on-screen visibility for ≥1.2s, with deduplication and source | On-device policy implemented; X visibility hook pending |
-| Visit timeline | Revisit posts by the time they were opened | Storage and native UI implemented; client entry pending |
-| Fast local search | Search words, accounts, categories, actions and five date bases; 80-row incremental pages | Local query and native UI implemented; X navigation hook pending |
-| My content | Import posts from the official archive's `tweets.js` / `tweet.js`, including original posts, replies, quotes and identifiable reposts | Local importer implemented; automatic client sync pending |
-| Local folders | User-defined categories that work offline | Storage and native UI implemented; client entry pending |
-| Account isolation | Separate local indexes for different X accounts | Core implemented; device verification pending |
+Prove real login and essential browsing before implementing capture. Test each login method separately. External browser sessions do not automatically transfer to WebView; never copy cookies or bypass provider restrictions. If the embedded route fails, evaluate an extension in a real browser rather than assuming another embedded engine fixes authentication.
+
+## Capabilities and actual state
+
+| Capability | State |
+| --- | --- |
+| History, dated search, categories | Local data layer and native UI exist; web event integration pending |
+| Feed observations | Local policy exists: at least 60% visible continuously for 1.2 seconds, separate opt-in; web visibility integration pending |
+| My-content import | Official `tweets.js` / `tweet.js` single-file/part importer exists; user confirms ownership |
+| Account/archive isolation | Existing core scopes data by account; web binding and browser-session isolation still require design and verification |
+| Cleaner interface | Web filters pending; no paid-feature unlocking or hiding security prompts |
+| Web-first host and login | Pending W0 live validation; browser compatibility documentation is not login proof |
+| Usable client APK | Not available; dev-harness is a synthetic-data development host |
 
 ## Principles
 
-- **Enhance the original client** rather than build a parallel social application.
-- **Local-first**: new history, organization and indexes remain on the device.
-- **Precise events**: post-detail opens and genuinely visible feed posts are separate opt-ins; prefetch never counts as reading.
-- **Honest timestamps**: post publication, repost actions, local opens and feed visibility are distinct. Unknown times stay unknown.
-- **Privacy by default**: capture is opt-in; no credentials, session tokens, DMs, or arbitrary traffic capture.
-- **Independent codebase**: Xs maintains its own models, storage, UI and future version adapters.
+Capture defaults off. Deliberate opens and qualified feed exposure are separate; prefetch and import never become reading events. Publication, action and local observation times remain distinct, and unknown times remain unknown. New archive data is not uploaded. X web still uses the network and WebView-managed sessions; Xs does not independently copy, export or log credentials or DMs.
 
-## Repository layout
+The website cannot read the full archive, execute SQL, access arbitrary files or enable capture. Existing SQLite must not be described as encrypted. Provider terms, account risk, backup exclusions and distribution requirements are separate gates.
+
+## Existing layout
 
 ```text
-xs-runtime/           Android library (native history UI + local database)
-dev-harness/          Offline synthetic-data host for testing only (NOT X)
-src/main/java/        Android-independent URL, query and schema core
-src/android/java/     Android SQLite, capture bridge and UI
-tests/                JVM and SQLite regression tests
-scripts/              Developer test tooling
-docs/                 Requirements, architecture and roadmap
-.github/workflows/    Continuous integration
+xs-runtime/           Android library: archive UI and storage
+dev-harness/          Offline synthetic test host (NOT X)
+src/main/java/        Platform-independent URL, query, schema and policies
+src/android/java/     Android SQLite, bridge and archive UI
+tests/                JVM, SQLite and other regressions
+scripts/              Project checks
+docs/                 Product, architecture, plans and decisions
+compat/               Legacy APK metadata checks; not a working web security gate
 ```
 
-## Run core tests
+Proposed `app-android/` and `web-enhancer/` modules still need implementation.
+
+## Test the existing core
 
 Requires JDK 17+ and Python 3:
 
 ```bash
-git clone https://github.com/ForceMind/Xs.git
-cd Xs
+bash scripts/check-project.sh
 bash scripts/test-core.sh
-# Requires Android SDK + JDK 17 + Gradle 8.9 to build developer artifacts:
-gradle :xs-runtime:assembleDebug :dev-harness:assembleDebug
+# Android SDK / JDK 17 / Gradle 8.9 environment:
+gradle --no-daemon :xs-runtime:assembleDebug :dev-harness:assembleDebug
+gradle --no-daemon :dev-harness:connectedDebugAndroidTest
 ```
 
-You can extract `data/tweets.js` (or `tweet.js` / individual split parts) from your own official X archive, then choose **Import my old posts** in Xs's archive screen. The current importer reads **one file under 16 MiB** at a time, entirely offline. Confirm that the file belongs to the active account. Reimporting does not duplicate the same action or fabricate reading history.
+The existing importer handles one user-selected posts-JS file/part of up to 16 MiB, without executing JS or inspecting other ZIP contents. Reimporting does not fabricate reading events. Multipart/ZIP expansion remains future work.
 
-See [architecture](docs/architecture.md) for the Android library build. The `xs-runtime` output is an AAR. `dev-harness` produces a **synthetic-data test APK** for validating the native archive screen; it is NOT a modified X client. Neither substitutes for a real integration test.
-
-## Development
-
-- [Product requirements](docs/product.md)
-- [Architecture](docs/architecture.md)
-- [Roadmap](docs/roadmap.md)
-- [M1 integration tracker](https://github.com/ForceMind/Xs/issues/1)
-
-First deliver the on-device archive UI, search and categories; then validate a version-specific client event integration and independent patching adapter on a test installation. No release claim before actual device validation.
+Legacy APK integration documents and the empty allowlist remain historical assets, not prerequisites for Web-first. This documentation migration adds no runtime functionality and is not evidence of a new build or live test.
 
 ## License and disclaimer
 
-Licensed under [GNU GPL v3.0](LICENSE). Xs is independent and unaffiliated with X Corp. X names and trademarks belong to their respective owners. Users must comply with applicable laws, authorization, and service terms when modifying or distributing third-party software. This repository contains no official X APK or account credentials.
+[GNU GPL v3.0](LICENSE). Xs is unaffiliated with X Corp. and includes no official X package or credentials. Evaluate applicable law, third-party authorization and terms before use or distribution. Local-only storage does not imply platform permission, zero account risk or store approval.

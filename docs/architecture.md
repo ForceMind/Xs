@@ -1,84 +1,47 @@
-# Xs — independent technical architecture
+# Xs architecture — accepted Web-first target
 
-## Scope and state
+Decision date: 2026-10-29. See [ADR-0001](adr/0001-web-first.md) and the [complete implementation plan](WEB_FIRST_PLAN.zh-CN.md). This document distinguishes the existing archive from an unimplemented target; it does not claim a working web client.
 
-Xs owns its entire Java and Android implementation. No third-party patch source,
-application archive, branding, or proprietary client code is vendored.
+## Target boundary
 
 ```text
-Existing X Android client (user-authorized test installation)
-  |
-  +-- Independent, version-verified integration adapter [NOT IMPLEMENTED]
-  |      - exact post-detail open event
-  |      - trusted authenticated account identity
-  |      - optional navigation entry and UI filtering
-  |
-  +-- XsCaptureBridge [implemented; invocation hook missing]
-         |
-         +-- Android SQLite v2, app-private data [implemented]
-         |      posts, visits, actions, categories, FTS4
-         +-- XsHistoryActivity [implemented as library; client integration pending]
-                history, local search, categories, privacy controls
+Official X web in Android WebView [W0 feasibility pending]
+  -> packaged web observer / reversible UI rules [planned]
+  -> origin + main-frame + route + schema + session gate [planned]
+  -> native capture controller and bounded queue [refactor planned]
+  -> existing native SQLite / FTS / categories / archive UI [exists]
 ```
 
-The GitHub repository's `xs-runtime` Gradle module builds a standalone
-**Android library AAR** for later inclusion in an authorized test client build;
-that AAR is not a complete client and does not by itself patch X.
+The remote website is untrusted. Even an allowed-origin message may originate from a same-origin script other than ours. Website-to-native communication accepts bounded observations only and exposes no archive reads, arbitrary SQL, filesystem, export, erasure or consent changes.
 
-## Data architecture
+Native code owns archive scopes, epochs, receipt times and user controls. Login/DM/security/unknown routes do not receive capture privileges. WebView feature detection must fail closed for enhancement, not fall back to a generic unrestricted bridge. Ordinary browsing remains available where the provider supports it.
 
-- `posts`: (account_id, post_id) canonical key, optional author/body, optional
-  publication time, first/last local encounter, visit count.
-- `history_events`: append-only `OPEN_POST` and `FEED_VISIBLE` events,
-  filtered and paged separately. A feed view never increases opened_count.
-- `user_actions`: authored/reply/quote/repost/bookmark events; optional
-  real action time, distinct from original post publication and local visit.
-- `categories` and `post_categories`: user-defined, account-scoped labels.
-- `posts.last_opened_at_ms` and `posts.last_feed_seen_at_ms`: source-specific
-  timestamps, added in version 2 with a non-destructive migration from v1.
-- `posts_fts`: trigger-maintained FTS4 index with substring fallback for CJK
-  or queries containing punctuation.
+## Existing assets retained
 
-ArchiveSearch generates parameterized SQLite queries: limit 1-200,
-bounded query length, escaped LIKE, constrained FTS expressions. For FTS,
-filter by account as a separate condition to prevent cross-account results.
+`posts`, `history_events`, `user_actions`, `categories`, `post_categories` and the trigger-maintained FTS4 index already form the local archive. The v2 model distinguishes open/feed timestamps and supports a non-destructive v1 migration. CJK/punctuation queries use the existing substring fallback; no new tokenizer is implied.
 
-Client adapter must only call onFeedPostVisible on verified foreground visibility
-(at least 60% on screen for 1.2 seconds), with a separate user opt-in. The
-process-local deduplicator suppresses repeat observations from the same source
-for two minutes, without replacing deliberate post-open events.
+`xs-runtime` builds an AAR. `dev-harness` is an offline synthetic APK, not X. `XsHistoryActivity` provides native archive management. The posts-JS importer currently handles one user-selected file/part of up to 16 MiB.
 
-All database operations must avoid the Android UI thread. Failure in the local
-archive should never crash or block the host app. Default event capture is off;
-the authenticated account identity must be established explicitly.
+The existing `bindAuthenticatedAccount` contract cannot be satisfied merely by a webpage handle. Add explicit archive scopes and binding confidence; preserve old records with tested migrations. Do not silently reinterpret unverified local identifiers as authenticated identities.
 
-## Native library build
+## Planned modules
 
-Gradle / Android SDK (compileSdk 35, minSdk 26), JDK 17:
+`app-android/`: independent browser host and native navigation.
+`web-enhancer/`: TypeScript observation and reversible style capabilities, packaged locally.
+`contracts/`: message and portable-export schemas.
+`tests/web-fixtures/`: synthetic or authorized redacted fixtures.
+`compat/web/`: tested capabilities, provider versions, language/theme and release evidence.
 
-```bash
-gradle :xs-runtime:assembleDebug :dev-harness:assembleDebug
-```
+These paths are planned. Keep current Java/storage/UI modules rather than performing a gratuitous rewrite.
 
-CI runs independent Java/SQLite tests, Android AAR compilation and emulator
-instrumentation against the synthetic development host, without an X account.
-The independent AAR does not contain an installer, X patcher, or working hook.
-The separate `dev-harness` APK is strictly a development fixture that seeds
-offline synthetic posts and exercises the Activity and database without X login.
-It is not a second social client and must not be distributed as an enhanced X.
+## Login and platform gates
 
-## Safety and privacy
+Real X login is a prerequisite, with each login method tested independently. Google OAuth embedded-user-agent restrictions are not solved by an embedded Chromium swap. A Custom Tab/browser login does not automatically move the session into WebView. No credential or cookie transfer workaround.
 
-No credential, cookie, token, private message, or arbitrary traffic recording.
-SQLite lives in app-private storage and is not inherently encrypted. A future
-shipping integration must verify Android backup exclusion, account switching,
-migration behavior, export encryption and deletion semantics.
+If the required Android path fails, evaluate a real-browser extension. Share observation logic, contracts and fixtures; do not assume Android native UI/SQLite is directly portable. Desktop and iOS are separate delivery gates.
 
-## Separate build gates
+## Privacy and release
 
-1. Build independent runtime AAR.
-2. Design and validate a version-scoped adapter on a permitted test install.
-3. Integrate AAR, manifest and resources into the host application.
-4. Verify native archive entry points, complete event semantics and installation.
-5. Verify UI filtering independently from recording and other client features.
-6. Publish an installable artifact only after device tests and license review.
+Capture defaults off; open and feed semantics stay separate. No credential/DM/arbitrary traffic capture, backend or telemetry. X web itself still performs normal network requests. SQLite is not inherently encrypted. Verify cloud/D2D backup exclusions, scope isolation, migration, deletion, queue invalidation, restore and dependency/signing provenance before release.
+
+Legacy `integration.md`, `integration-contract.md` and APK host allowlist remain historical references, superseded for the active route. Metadata validation alone is not a working runtime gate. The first implementation work is a minimal, non-instrumented login/browser proof, not additional APK patch scaffolding.
