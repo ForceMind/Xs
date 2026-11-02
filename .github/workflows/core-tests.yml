@@ -99,13 +99,22 @@ jobs:
           target: google_apis
           arch: x86_64
           disable-animations: true
-          script: gradle --no-daemon :dev-harness:connectedDebugAndroidTest :app-android:connectedDebugAndroidTest
+          script: |
+            mkdir -p app-android/build/compatibility
+            git rev-parse HEAD > app-android/build/compatibility/source-commit.txt
+            adb shell getprop ro.build.version.release > app-android/build/compatibility/android-release.txt
+            adb shell getprop ro.build.version.sdk > app-android/build/compatibility/android-api.txt
+            adb shell getprop persist.sys.locale > app-android/build/compatibility/locale.txt
+            adb shell dumpsys webviewupdate > app-android/build/compatibility/webview-provider.txt
+            adb shell cmd uimode night > app-android/build/compatibility/night-mode.txt
+            gradle --no-daemon :dev-harness:connectedDebugAndroidTest :app-android:connectedDebugAndroidTest
       - name: Upload synthetic Android test reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: xs-android-test-reports-api-${{ matrix.api-level }}
           path: |
+            app-android/build/compatibility/
             app-android/build/reports/androidTests/
             app-android/build/outputs/androidTest-results/
             dev-harness/build/reports/androidTests/

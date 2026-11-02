@@ -55,7 +55,15 @@ this is a callback simulation, not a network failure test. Instrumentation compi
 into the build job so failures surface before emulator boot. A later test initially expected an intercepted synthetic HTTP 503 to emit the network error callback;
 the API 30 emulator did not do so. The fixture now loads a successful local page and explicitly invokes
 main-frame/subframe HTTP-error callbacks while keeping the retry/status assertions. This is callback
-coverage, not an actual offline/TLS/HTTP-network test. Final rerun evidence follows. JVM tests include adversarial navigation cases.
+coverage, not an actual offline/TLS/HTTP-network test. Run [41452139505](https://github.com/ForceMind/Xs/actions/runs/41452139505) at source
+`a42131bd29464a7f36d98a3e339ae68ac29223ac` passed all jobs: 73 JVM assertions,
+SQLite regression, AAR/APK builds, Android lint and 13 tests on each of API 30 and 36
+(6 browser + 7 archive tests per emulator). Both browser HTTP and renderer loss cases remain
+callback simulations; actual back/reload and HTML/JS run inside WebView with local fixtures.
+
+A follow-up CI metadata step records Android release/API, locale, night-mode setting, exact
+WebView provider and built source commit with each emulator report. This closes an evidence gap;
+it does not turn synthetic results into live X or physical-device validation. JVM tests include adversarial navigation cases.
 New instrumented tests cover secure defaults, Activity recreation, actual synthetic HTML/JS execution,
 absence of archive creation, non-top-level navigation, automatic redirect refusal, permission denial,
 actual back/reload with intercepted synthetic HTTPS responses, an explicit HTTP-error callback,
