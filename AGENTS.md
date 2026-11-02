@@ -13,7 +13,8 @@ Do not build a replacement social network, account service, website deployment o
 - `xs-runtime`: Android AAR, not a complete installed client.
 - `dev-harness`: synthetic offline development host, not X.
 - Existing JVM/SQLite and Android instrumentation checks remain useful.
-- `app-android`, `web-enhancer`, web bridge, login and web filters are planned, not implemented by documentation.
+- `app-android`: W0 system-WebView feasibility host with no capture/bridge; see `docs/W0-EXECUTION.md` and `compat/web/W0-MATRIX.md`.
+- `web-enhancer`, web bridge, real login acceptance and web filters remain pending. Do not activate capture before the real W0 gate.
 - APK allowlist/validator and old integration contracts are historical. The metadata validator is not an implemented runtime security mechanism.
 
 ## Working order

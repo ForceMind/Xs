@@ -52,10 +52,13 @@ Initial CI run `41450267872`: JVM/SQLite (73 core assertions), APK/AAR build and
 Instrumentation compilation FAILED because Android does not expose the WebResourceError constructor.
 The callback test now uses a null unused error payload, retaining its main-frame/subframe assertions;
 this is a callback simulation, not a network failure test. Instrumentation compilation is also moved
-into the build job so failures surface before emulator boot. Final rerun evidence follows. JVM tests include adversarial navigation cases.
+into the build job so failures surface before emulator boot. A later test initially expected an intercepted synthetic HTTP 503 to emit the network error callback;
+the API 30 emulator did not do so. The fixture now loads a successful local page and explicitly invokes
+main-frame/subframe HTTP-error callbacks while keeping the retry/status assertions. This is callback
+coverage, not an actual offline/TLS/HTTP-network test. Final rerun evidence follows. JVM tests include adversarial navigation cases.
 New instrumented tests cover secure defaults, Activity recreation, actual synthetic HTML/JS execution,
 absence of archive creation, non-top-level navigation, automatic redirect refusal, permission denial,
-actual back/reload with intercepted synthetic HTTPS responses, a synthetic HTTP 503,
+actual back/reload with intercepted synthetic HTTPS responses, an explicit HTTP-error callback,
 main-frame-only error UI and a simulated renderer-loss callback. Simulating a callback is not an actual
 OS renderer kill. Existing archive instrumentation remains unchanged.
 

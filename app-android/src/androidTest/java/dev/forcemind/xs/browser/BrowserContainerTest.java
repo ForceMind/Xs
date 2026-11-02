@@ -177,14 +177,14 @@ public class BrowserContainerTest {
             });
         }
     }
-    @Test public void actualSyntheticHttpFailureDisplaysNativeRetry() throws Exception {
+    @Test public void httpFailureCallbackDisplaysNativeRetry() throws Exception {
         try (ActivityScenario<BrowserActivity> scenario = ActivityScenario.launch(BrowserActivity.class)) {
             CountDownLatch loaded = new CountDownLatch(1);
             scenario.onActivity(activity -> {
                 WebView web = activity.findViewById(R.id.browser_view);
                 web.setWebViewClient(activity.new Client() {
                     @Override public android.webkit.WebResourceResponse shouldInterceptRequest(
-                            WebView view, WebResourceRequest request) { return response(503); }
+                            WebView view, WebResourceRequest request) { return response(200); }
                     @Override public void onPageFinished(WebView view, String url) {
                         super.onPageFinished(view, url);
                         loaded.countDown();
@@ -194,6 +194,13 @@ public class BrowserContainerTest {
             });
             assertTrue(loaded.await(20, TimeUnit.SECONDS));
             scenario.onActivity(activity -> {
+                WebView web = activity.findViewById(R.id.browser_view);
+                assertEquals(View.GONE, activity.findViewById(R.id.browser_retry).getVisibility());
+                // Intercepted responses do not reliably emit the network HTTP-error callback.
+                // Exercise that platform callback explicitly, retaining the production UI assertions.
+                web.getWebViewClient().onReceivedHttpError(web, request(false), response(503));
+                assertEquals(View.GONE, activity.findViewById(R.id.browser_retry).getVisibility());
+                web.getWebViewClient().onReceivedHttpError(web, request(true), response(503));
                 assertEquals(View.VISIBLE, activity.findViewById(R.id.browser_retry).getVisibility());
                 assertEquals(activity.getString(R.string.failed),
                     ((TextView) activity.findViewById(R.id.browser_status)).getText().toString());
