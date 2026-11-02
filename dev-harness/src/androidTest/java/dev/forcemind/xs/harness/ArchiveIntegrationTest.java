@@ -199,6 +199,23 @@ public class ArchiveIntegrationTest {
         }
     }
 
+    @Test public void partialMetadataDoesNotTruncateStoredTextOrSearchIndex() {
+        String url = "https://x.com/demo/status/650";
+        assertTrue(store.recordOpened("A", url, "demo", "Long retained searchable snapshot", null, 100L));
+        assertTrue(store.recordFeedVisible("A", url, "home_following", "demo", "Long", null, 200L));
+        assertTrue(store.recordOpened("B", url, "other", "Other scope", null, 300L));
+        ArchiveSearch.Filter q = new ArchiveSearch.Filter();
+        q.keyword = "searchable";
+        try (Cursor c = store.search("A", q)) {
+            assertEquals(1, c.getCount());
+        }
+        try (Cursor c = store.search("B", q)) { assertEquals(0, c.getCount()); }
+        assertTrue(store.recordOpened("A", url, "demo", "Long retained searchable snapshot plus expansion", null, 400L));
+        q.keyword = "expansion";
+        try (Cursor c = store.search("A", q)) { assertEquals(1, c.getCount()); }
+        try (Cursor c = store.timeline("A", null, 20)) { assertEquals(2, c.getCount()); }
+    }
+
     @Test public void nativeArchiveActivityLoads() {
         XsCaptureBridge.bindAuthenticatedAccount(app, "dev-only");
         Intent intent = new Intent(app, XsHistoryActivity.class)

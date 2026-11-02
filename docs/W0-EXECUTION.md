@@ -10,8 +10,10 @@ Read AGENTS, both READMEs, the complete Web-first plan, ADR, product, architectu
 Reviewed the core schema/search/policy, Android storage/capture/import/UI and existing tests.
 The local SQLite v2, migration, FTS4/CJK fallback, category UI and importer are retained.
 The unbounded legacy capture executor is **not reused** by the W0 host; W1 must replace its
-session/queue boundary before connecting website observations. Shorter-text metadata replacement
-also needs a quality policy before W2 snapshots are connected.
+session/queue boundary before connecting website observations. Review found that a later shorter
+snapshot replaced longer stored text. This is fixed with a conservative SQLite length check and an
+instrumented FTS/scope regression. It preserves existing data without a schema migration; length is
+not a completeness score and W2 still needs explicit parsing-quality provenance.
 
 ## Implemented
 
