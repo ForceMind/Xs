@@ -6,7 +6,6 @@ import android.os.Bundle;
 import android.view.View;
 import android.view.WindowManager;
 import android.webkit.PermissionRequest;
-import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -91,13 +90,11 @@ public class BrowserContainerTest {
         try (ActivityScenario<BrowserActivity> scenario = ActivityScenario.launch(BrowserActivity.class)) {
             scenario.onActivity(activity -> {
                 WebView web = activity.findViewById(R.id.browser_view);
-                WebResourceError failure = new WebResourceError() {
-                    @Override public int getErrorCode() { return -2; }
-                    @Override public CharSequence getDescription() { return "synthetic"; }
-                };
-                web.getWebViewClient().onReceivedError(web, request(false), failure);
+                // Callback-level simulation; Android does not expose a WebResourceError constructor.
+                // Production intentionally never dereferences/logs the error payload.
+                web.getWebViewClient().onReceivedError(web, request(false), null);
                 assertEquals(View.GONE, activity.findViewById(R.id.browser_retry).getVisibility());
-                web.getWebViewClient().onReceivedError(web, request(true), failure);
+                web.getWebViewClient().onReceivedError(web, request(true), null);
                 assertEquals(View.VISIBLE, activity.findViewById(R.id.browser_retry).getVisibility());
                 assertEquals(activity.getString(R.string.failed),
                     ((TextView) activity.findViewById(R.id.browser_status)).getText().toString());
@@ -105,6 +102,11 @@ public class BrowserContainerTest {
                 assertNull(activity.findViewById(R.id.browser_view));
                 assertEquals(activity.getString(R.string.renderer_gone),
                     ((TextView) activity.findViewById(R.id.browser_status)).getText().toString());
+                activity.findViewById(R.id.browser_retry).performClick();
+                WebView recovered = activity.findViewById(R.id.browser_view);
+                assertNotNull(recovered);
+                assertNull(recovered.getUrl()); // Retry must not bypass the first-use notice.
+                assertNotNull(activity.findViewById(R.id.open_x));
             });
         }
     }

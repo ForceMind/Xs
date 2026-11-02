@@ -44,7 +44,11 @@ gradle --no-daemon :xs-runtime:assembleDebug :dev-harness:assembleDebug :app-and
 gradle --no-daemon :dev-harness:connectedDebugAndroidTest :app-android:connectedDebugAndroidTest
 ```
 
-CI results will be recorded here after execution. JVM tests include adversarial navigation cases.
+Initial CI run `41450267872`: JVM/SQLite (73 core assertions), APK/AAR build and lint PASS.
+Instrumentation compilation FAILED because Android does not expose the WebResourceError constructor.
+The callback test now uses a null unused error payload, retaining its main-frame/subframe assertions;
+this is a callback simulation, not a network failure test. Instrumentation compilation is also moved
+into the build job so failures surface before emulator boot. Final rerun evidence follows. JVM tests include adversarial navigation cases.
 New instrumented tests cover secure defaults, Activity recreation, actual synthetic HTML/JS execution,
 absence of archive creation, non-top-level navigation, automatic redirect refusal, permission denial,
 main-frame-only error UI and a simulated renderer-loss callback. Simulating a callback is not an actual
@@ -53,7 +57,7 @@ OS renderer kill. Existing archive instrumentation remains unchanged.
 ## Internal installation and validation
 
 1. Open [PR #2](https://github.com/ForceMind/Xs/pull/2) → checks → successful `xs-ci` run.
-2. Download `xs-w0-browser-poc`, unzip and install `app-android-debug.apk` on a test Android device.
+2. Download `xs-w0-browser-poc`, unzip and install `app-android-debug.apk` on a test Android device (inside `outputs/apk/debug/` in the ZIP).
    With Android platform tools: `adb install -r app-android-debug.apk`.
 3. Verify source SHA from the run and compute `sha256sum app-android-debug.apk`. Debug signing is
    ephemeral CI signing, not a production signing identity or reproducible-build proof.

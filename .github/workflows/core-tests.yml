@@ -38,7 +38,7 @@ jobs:
         with:
           gradle-version: '8.9'
       - name: Compile independent Android archive AAR
-        run: gradle --no-daemon :xs-runtime:assembleDebug :dev-harness:assembleDebug :app-android:assembleDebug :app-android:lintDebug
+        run: gradle --no-daemon :xs-runtime:assembleDebug :dev-harness:assembleDebug :app-android:assembleDebug :app-android:assembleDebugAndroidTest :dev-harness:assembleDebugAndroidTest :app-android:lintDebug
       - name: Upload Android library (not an APK)
         uses: actions/upload-artifact@v4
         with:
@@ -52,11 +52,20 @@ jobs:
           path: dev-harness/build/outputs/apk/debug/*.apk
           if-no-files-found: error
 
+      - name: Record PoC build provenance
+        run: |
+          mkdir -p app-android/build/provenance
+          git rev-parse HEAD > app-android/build/provenance/source-commit.txt
+          sha256sum app-android/build/outputs/apk/debug/*.apk > app-android/build/provenance/SHA256SUMS
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --print-certs app-android/build/outputs/apk/debug/app-android-debug.apk > app-android/build/provenance/signing-certificate.txt
+          gradle --no-daemon :app-android:dependencies --configuration debugRuntimeClasspath > app-android/build/provenance/dependencies.txt
       - name: Upload non-instrumented browser feasibility APK (NOT Alpha)
         uses: actions/upload-artifact@v4
         with:
           name: xs-w0-browser-poc
-          path: app-android/build/outputs/apk/debug/*.apk
+          path: |
+            app-android/build/outputs/apk/debug/*.apk
+            app-android/build/provenance/
           if-no-files-found: error
 
   android-instrumentation:

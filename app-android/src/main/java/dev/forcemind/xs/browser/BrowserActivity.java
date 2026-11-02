@@ -93,8 +93,12 @@ public final class BrowserActivity extends Activity {
         retry.setText(R.string.retry);
         retry.setVisibility(View.GONE);
         retry.setOnClickListener(v -> {
-            if (web == null) createWebView();
-            if (web != null) navigate(retryUrl);
+            if (web == null && !createWebView()) return;
+            if (started) navigate(retryUrl);
+            else {
+                status.setText(R.string.poc);
+                retry.setVisibility(View.GONE);
+            }
         });
         shell.addView(retry);
         if (!createWebView()) return;
@@ -132,6 +136,7 @@ public final class BrowserActivity extends Activity {
         } catch (RuntimeException unavailable) {
             web = null;
             showFailure(R.string.webview_missing);
+            retry.setVisibility(View.GONE); // Recovery requires enabling WebView and restarting the app.
             return false;
         }
         web.setId(R.id.browser_view);
@@ -157,7 +162,8 @@ public final class BrowserActivity extends Activity {
     }
 
     private void navigate(String url) {
-        if (web == null || BrowserNavigation.classify(url) != BrowserNavigation.Target.INTERNAL) return;
+        if (!started || BrowserNavigation.classify(url) != BrowserNavigation.Target.INTERNAL) return;
+        if (web == null && !createWebView()) return;
         failed = false;
         retryUrl = url;
         web.loadUrl(url);
