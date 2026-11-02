@@ -15,3 +15,5 @@ dependencyResolutionManagement {
 rootProject.name = "Xs"
 include(":xs-runtime")
 include(":dev-harness")
+
+include(":app-android")

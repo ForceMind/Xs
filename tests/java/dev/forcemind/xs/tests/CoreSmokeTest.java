@@ -4,6 +4,7 @@ import dev.forcemind.xs.core.ArchiveSchema;
 import dev.forcemind.xs.core.ArchiveSearch;
 import dev.forcemind.xs.core.PostUrls;
 import dev.forcemind.xs.core.FeedCapturePolicy;
+import dev.forcemind.xs.core.BrowserNavigation;
 
 /** Dependency-free JVM checks; Android SQLite integration needs device testing. */
 public final class CoreSmokeTest {
@@ -23,6 +24,21 @@ public final class CoreSmokeTest {
         eq(null, PostUrls.extractPostId("https://x.com/u/status/42/other/1"));
         eq(null, PostUrls.extractPostId("https://x.com/u/status/42%2Fanything"));
         eq(null, PostUrls.extractPostId("https://x.com/u/status/42?x=1\nbad"));
+
+        for (String url : new String[] {"https://x.com/home", "https://X.COM:443/i/flow/login",
+                "https://twitter.com/demo/status/42", "https://mobile.twitter.com/"}) {
+            eq(BrowserNavigation.Target.INTERNAL, BrowserNavigation.classify(url));
+        }
+        for (String url : new String[] {"https://t.co/demo", "https://accounts.google.com/",
+                "https://x.com.evil.example/", "https://example.com/?next=https://x.com"}) {
+            eq(BrowserNavigation.Target.EXTERNAL, BrowserNavigation.classify(url));
+        }
+        for (String url : new String[] {null, "", "http://x.com/", "https://x.com:444/",
+                "https://user@x.com/", "intent://x.com/", "javascript:alert(1)",
+                "file:///etc/passwd", "content://test", "https://x.com/\n", "//x.com/",
+                "https://x.com\\@evil.example/", "https://x.com /", "https://%78.com/"}) {
+            eq(BrowserNavigation.Target.BLOCKED, BrowserNavigation.classify(url));
+        }
 
         ArchiveSearch.Filter f = new ArchiveSearch.Filter();
         f.keyword = "AI agent";

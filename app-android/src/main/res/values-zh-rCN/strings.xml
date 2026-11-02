@@ -1,0 +1,28 @@
+<resources>
+    <string name="app_name">Xs · W0 验证版</string>
+    <string name="open_x">打开 X</string>
+    <string name="intro">Xs 是独立、非官方的浏览容器可行性验证版。X 网页正常连接 X，WebView 管理网页会话。当前不启用历史采集、网页桥接或过滤。登录和媒体兼容性仍需真机验证。本地数据不是备份，卸载可能丢失。</string>
+    <string name="poc">W0 · 采集关闭</string>
+    <string name="menu">菜单</string>
+    <string name="home">X 首页</string>
+    <string name="reload">刷新</string>
+    <string name="retry">重试</string>
+    <string name="loading">正在加载 X…</string>
+    <string name="ready">x.com · 采集关闭</string>
+    <string name="failed">页面无法加载，请检查网络后重试。</string>
+    <string name="blocked">已阻止此导航。</string>
+    <string name="external">在浏览器打开？</string>
+    <string name="external_body">目标站点：%1$s\n浏览器使用独立会话；在浏览器登录不会让此 WebView 同步登录。</string>
+    <string name="open">打开</string>
+    <string name="cancel">取消</string>
+    <string name="no_browser">没有可用的浏览器。</string>
+    <string name="popup">验证版禁用新窗口，请使用可用的同窗口链接。</string>
+    <string name="upload">选择要上传的媒体？</string>
+    <string name="upload_body">通过系统选择器选择图片或视频。所选媒体将交给当前 X 网页；不启用相机、麦克风或任意文件访问。</string>
+    <string name="upload_failed">未选择支持的媒体，或网页已经变化。</string>
+    <string name="renderer_gone">网页渲染进程已停止，重试可新建浏览视图。</string>
+    <string name="webview_missing">系统 WebView 不可用，请安装或启用受支持的系统 WebView 后重启 Xs。</string>
+    <string name="about">构建与兼容性</string>
+    <string name="about_body">Xs %1$s\nAndroid %2$s（API %3$d）\nWebView %4$s\n\n内部 W0 验证版，未绑定资料空间、未采集。直接登录、两步验证、Google、Apple、Passkey 均需分别验证。下载交外部浏览器；弹窗、相机、麦克风暂不支持。</string>
+    <string name="tls_failed">证书验证失败，已阻止加载。</string>
+</resources>

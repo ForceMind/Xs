@@ -38,7 +38,7 @@ jobs:
         with:
           gradle-version: '8.9'
       - name: Compile independent Android archive AAR
-        run: gradle --no-daemon :xs-runtime:assembleDebug :dev-harness:assembleDebug
+        run: gradle --no-daemon :xs-runtime:assembleDebug :dev-harness:assembleDebug :app-android:assembleDebug :app-android:lintDebug
       - name: Upload Android library (not an APK)
         uses: actions/upload-artifact@v4
         with:
@@ -50,6 +50,13 @@ jobs:
         with:
           name: xs-dev-harness-only
           path: dev-harness/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+
+      - name: Upload non-instrumented browser feasibility APK (NOT Alpha)
+        uses: actions/upload-artifact@v4
+        with:
+          name: xs-w0-browser-poc
+          path: app-android/build/outputs/apk/debug/*.apk
           if-no-files-found: error
 
   android-instrumentation:
@@ -79,4 +86,13 @@ jobs:
           target: google_apis
           arch: x86_64
           disable-animations: true
-          script: gradle --no-daemon :dev-harness:connectedDebugAndroidTest
+          script: gradle --no-daemon :dev-harness:connectedDebugAndroidTest :app-android:connectedDebugAndroidTest
+      - name: Upload synthetic Android test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xs-android-test-reports
+          path: |
+            app-android/build/reports/androidTests/
+            app-android/build/outputs/androidTest-results/
+            dev-harness/build/reports/androidTests/
