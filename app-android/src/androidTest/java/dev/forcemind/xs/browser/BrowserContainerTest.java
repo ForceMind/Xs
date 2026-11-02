@@ -134,6 +134,78 @@ public class BrowserContainerTest {
             });
         }
     }
+    @Test public void realWebViewBackAndReloadUseSyntheticHttpsResponses() throws Exception {
+        try (ActivityScenario<BrowserActivity> scenario = ActivityScenario.launch(BrowserActivity.class)) {
+            AtomicReference<CountDownLatch> pending = new AtomicReference<>(new CountDownLatch(1));
+            scenario.onActivity(activity -> {
+                WebView web = activity.findViewById(R.id.browser_view);
+                web.setWebViewClient(activity.new Client() {
+                    @Override public android.webkit.WebResourceResponse shouldInterceptRequest(
+                            WebView view, WebResourceRequest request) {
+                        return response(200); // Every request is local; never contacts X/CDNs.
+                    }
+                    @Override public void onPageFinished(WebView view, String url) {
+                        super.onPageFinished(view, url);
+                        pending.get().countDown();
+                    }
+                });
+                web.loadUrl("https://x.com/fixture/one");
+            });
+            assertTrue(pending.get().await(20, TimeUnit.SECONDS));
+            pending.set(new CountDownLatch(1));
+            scenario.onActivity(activity -> ((WebView) activity.findViewById(R.id.browser_view))
+                .loadUrl("https://x.com/fixture/two"));
+            assertTrue(pending.get().await(20, TimeUnit.SECONDS));
+            pending.set(new CountDownLatch(1));
+            scenario.onActivity(activity -> {
+                WebView web = activity.findViewById(R.id.browser_view);
+                assertTrue(web.canGoBack());
+                activity.onBackPressed();
+            });
+            assertTrue(pending.get().await(20, TimeUnit.SECONDS));
+            pending.set(new CountDownLatch(1));
+            scenario.onActivity(activity -> {
+                WebView web = activity.findViewById(R.id.browser_view);
+                assertEquals("https://x.com/fixture/one", web.getUrl());
+                assertTrue(web.canGoForward());
+                web.reload();
+            });
+            assertTrue(pending.get().await(20, TimeUnit.SECONDS));
+            scenario.onActivity(activity -> {
+                assertEquals("https://x.com/fixture/one",
+                    ((WebView) activity.findViewById(R.id.browser_view)).getUrl());
+            });
+        }
+    }
+    @Test public void actualSyntheticHttpFailureDisplaysNativeRetry() throws Exception {
+        try (ActivityScenario<BrowserActivity> scenario = ActivityScenario.launch(BrowserActivity.class)) {
+            CountDownLatch loaded = new CountDownLatch(1);
+            scenario.onActivity(activity -> {
+                WebView web = activity.findViewById(R.id.browser_view);
+                web.setWebViewClient(activity.new Client() {
+                    @Override public android.webkit.WebResourceResponse shouldInterceptRequest(
+                            WebView view, WebResourceRequest request) { return response(503); }
+                    @Override public void onPageFinished(WebView view, String url) {
+                        super.onPageFinished(view, url);
+                        loaded.countDown();
+                    }
+                });
+                web.loadUrl("https://x.com/fixture/unavailable");
+            });
+            assertTrue(loaded.await(20, TimeUnit.SECONDS));
+            scenario.onActivity(activity -> {
+                assertEquals(View.VISIBLE, activity.findViewById(R.id.browser_retry).getVisibility());
+                assertEquals(activity.getString(R.string.failed),
+                    ((TextView) activity.findViewById(R.id.browser_status)).getText().toString());
+            });
+        }
+    }
+    private static android.webkit.WebResourceResponse response(int code) {
+        return new android.webkit.WebResourceResponse("text/html", "UTF-8", code,
+            code == 200 ? "OK" : "Unavailable", Collections.emptyMap(),
+            new java.io.ByteArrayInputStream("<html><body>Synthetic offline fixture</body></html>"
+                .getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+    }
     private static WebResourceRequest request(boolean main) {
         return request("https://x.com/fixture", main, false);
     }
