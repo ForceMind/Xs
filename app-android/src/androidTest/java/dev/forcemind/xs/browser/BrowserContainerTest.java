@@ -63,11 +63,14 @@ public class BrowserContainerTest {
             scenario.onActivity(activity -> {
                 WebView web = activity.findViewById(R.id.browser_view);
                 // Retain the production client/security configuration. HTML contains no subresources.
+                web.setWebViewClient(activity.new Client() {
+                    @Override public void onPageFinished(WebView view, String url) {
+                        super.onPageFinished(view, url);
+                        loaded.countDown();
+                    }
+                });
                 web.loadDataWithBaseURL("https://x.com/", "<html><body><article id='fixture'>" +
                     "Synthetic Xs test · 离线夹具</article></body></html>", "text/html", "UTF-8", null);
-                web.postVisualStateCallback(1, new WebView.VisualStateCallback() {
-                    @Override public void onComplete(long id) { loaded.countDown(); }
-                });
             });
             assertTrue("WebView paint timed out", loaded.await(20, TimeUnit.SECONDS));
             CountDownLatch evaluated = new CountDownLatch(1);

@@ -4,7 +4,7 @@
 
 **Xs 是独立研发、本地优先的 X 使用增强工程。** 2026-10-29 起采用 **Web-first** 路线：以官方 X 网页为浏览主体，以原生本地资料库提供历史、搜索、分类和本人内容管理。不再将修改官方 X Android APK 作为主路线，也不建设新的社交网络、账号服务或 API 代理。
 
-> **当前是路线调整，不是已完成的网页客户端。** 仓库已有 Java/SQLite 本地核心、Android 归档界面、离线导入器与测试。WebView 宿主、网页观察器、真实登录和网页端到端验证尚未实现/验收；没有可直接交付的完整 Xs 客户端。
+> **当前为 W0 浏览容器验证版，尚未通过真实登录验收。** 已新增可构建的 `app-android` 系统 WebView 宿主与合成测试；未启用网页观察、原生桥接、历史采集或过滤，不是完整 Xs 客户端。[执行记录](docs/W0-EXECUTION.md) · [兼容性矩阵](compat/web/W0-MATRIX.md)
 
 ## 正式计划
 
@@ -23,8 +23,8 @@
 | 我的内容导入 | 已有官方 `tweets.js` / `tweet.js` 单文件/分段导入；归属由用户确认 |
 | 多账号/资料隔离 | 既有核心按账号分隔；网页身份绑定和浏览会话隔离待设计与验收 |
 | 界面精简 | 网页过滤待实现；不得伪造付费权益或隐藏安全提示 |
-| Web-first 宿主与登录 | 待 W0 实测，不以浏览器支持说明代替登录证据 |
-| 可用客户端 APK | 尚无；现有 dev-harness 是模拟数据开发宿主 |
+| Web-first 宿主与登录 | W0 无采集宿主已编写；真实登录和媒体仍待设备验证 |
+| APK | CI 提供内部 W0 PoC；未验收 Alpha；dev-harness 仍仅用于模拟数据 |
 
 ## 原则
 
@@ -35,6 +35,7 @@
 ## 现有工程
 
 ```text
+app-android/          W0 系统 WebView 验证宿主（无增强）
 xs-runtime/           Android Library，本地资料库与存储
 dev-harness/          离线模拟数据测试宿主（并非 X）
 src/main/java/        Android 无关的 URL、查询、Schema 与策略
@@ -45,7 +46,7 @@ docs/                 产品、架构、计划与决策
 compat/               旧 APK 元数据校验资产；不是已实现的 Web 安全闸门
 ```
 
-计划中的 `app-android/` 与 `web-enhancer/` 尚待研发创建。
+`app-android/` 已创建；`web-enhancer/` 和安全网页桥接仍待 W0 真实登录关卡通过后实施。
 
 ## 验证已有核心
 
@@ -55,13 +56,13 @@ compat/               旧 APK 元数据校验资产；不是已实现的 Web 安
 bash scripts/check-project.sh
 bash scripts/test-core.sh
 # Android SDK / JDK 17 / Gradle 8.9 环境：
-gradle --no-daemon :xs-runtime:assembleDebug :dev-harness:assembleDebug
-gradle --no-daemon :dev-harness:connectedDebugAndroidTest
+gradle --no-daemon :xs-runtime:assembleDebug :dev-harness:assembleDebug :app-android:assembleDebug :app-android:lintDebug
+gradle --no-daemon :dev-harness:connectedDebugAndroidTest :app-android:connectedDebugAndroidTest
 ```
 
 现有导入器仅支持用户选择的单个 posts-JS 文件/分段，不超过 16 MiB；不执行 JS、不读取 ZIP 内其他内容。重复导入不伪造阅读历史。未来多分段/ZIP 能力以实现与测试为准。
 
-旧 APK 集成文档和空 allowlist 保留作历史，不继续作为 Web-first 的开发前置。此次文档迁移没有新增运行时代码，也不代表重新通过构建或真机测试。
+旧 APK 集成文档和空 allowlist 保留作历史，不继续作为 Web-first 的开发前置。本次 W0 新增运行时代码与 CI 测试；实际结果见执行记录，不能用合成页面通过代替真实 X 登录。
 
 ## 许可与声明
 

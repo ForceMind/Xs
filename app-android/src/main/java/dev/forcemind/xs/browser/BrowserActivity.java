@@ -163,7 +163,7 @@ public final class BrowserActivity extends Activity {
         web.loadUrl(url);
     }
 
-    private final class Client extends WebViewClient {
+    class Client extends WebViewClient {
         @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
             BrowserNavigation.Target target = BrowserNavigation.classify(request.getUrl().toString());
             if (target == BrowserNavigation.Target.INTERNAL) return false;

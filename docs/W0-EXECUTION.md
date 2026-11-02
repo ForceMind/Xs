@@ -1,0 +1,65 @@
+# W0 execution record
+
+Date: 2026-11-02 (Asia/Shanghai). Baseline: `3bf78cbe4c780307a36a178ba8737f39011e9a68`.
+
+## Repository and retained assets
+
+Main was rechecked through GitHub. No open PRs existed; Issue #1 still described the historical
+APK route. The five latest CI runs were successful, including baseline run `40837698156`.
+Read AGENTS, both READMEs, the complete Web-first plan, ADR, product, architecture and roadmap.
+Reviewed the core schema/search/policy, Android storage/capture/import/UI and existing tests.
+The local SQLite v2, migration, FTS4/CJK fallback, category UI and importer are retained.
+The unbounded legacy capture executor is **not reused** by the W0 host; W1 must replace its
+session/queue boundary before connecting website observations. Shorter-text metadata replacement
+also needs a quality policy before W2 snapshots are connected.
+
+## Implemented
+
+`app-android` is an independent Java Android app sharing the existing Gradle/toolchain and
+`xs-runtime` dependency. It has a system WebView, first-use notice, small native toolbar,
+loading/failure/retry, home/reload, system back, navigation-state restore, lifecycle callbacks,
+renderer-loss recovery, user-confirmed media upload, fullscreen custom view and bilingual strings.
+No webpage is loaded before the first-use button. All capture remains absent, rather than merely
+hidden behind a setting. The app does not call the legacy authenticated account binding API.
+
+The browser uses an exact parsed HTTPS policy, no credential-bearing authority or custom ports,
+no file/content navigation, no permissive TLS handler, no arbitrary Intent forwarding, no native
+JavascriptInterface, no automatic web permission grants, no remote scripts and no User-Agent changes.
+Debugging is off even for this PoC. Screenshot/task-preview protection and backup exclusion rules
+are included; physical backup/transfer behavior is not yet verified.
+
+## Build and tests
+
+Local `bash scripts/check-project.sh`: PASS (6 Python allowlist tests).
+Local `bash scripts/test-core.sh`: BLOCKED, `javac` missing. The cloud has a Java 17 runtime,
+but no full JDK, Gradle, SDK or emulator. The package manager could not locate the JDK package.
+Android builds and device tests therefore run in the existing GitHub Actions workflow.
+
+CI commands added/retained:
+
+```bash
+bash scripts/check-project.sh
+bash scripts/test-core.sh
+gradle --no-daemon :xs-runtime:assembleDebug :dev-harness:assembleDebug :app-android:assembleDebug :app-android:lintDebug
+gradle --no-daemon :dev-harness:connectedDebugAndroidTest :app-android:connectedDebugAndroidTest
+```
+
+CI results will be recorded here after execution. JVM tests include adversarial navigation cases.
+New instrumented tests cover secure defaults, Activity recreation, actual synthetic HTML/JS execution,
+absence of archive creation, non-top-level navigation, automatic redirect refusal, permission denial,
+main-frame-only error UI and a simulated renderer-loss callback. Simulating a callback is not an actual
+OS renderer kill. Existing archive instrumentation remains unchanged.
+
+## Internal installation and validation
+
+1. Open [PR #2](https://github.com/ForceMind/Xs/pull/2) → checks → successful `xs-ci` run.
+2. Download `xs-w0-browser-poc`, unzip and install `app-android-debug.apk` on a test Android device.
+   With Android platform tools: `adb install -r app-android-debug.apk`.
+3. Verify source SHA from the run and compute `sha256sum app-android-debug.apk`. Debug signing is
+   ephemeral CI signing, not a production signing identity or reproducible-build proof.
+4. Open Xs, read the notice, tap Open X. Menu → Build and compatibility shows Android and WebView.
+5. Run [the matrix](../compat/web/W0-MATRIX.md) locally. Do not upload passwords, tokens or private data.
+
+This PoC has application ID `dev.forcemind.xs`, separate from the synthetic harness and official X.
+W0 records no history; signing keys are not added to the repository. No GitHub release or store
+publication is made. W1/W2 remain blocked on real login feasibility and explicit archive scopes.
