@@ -35,7 +35,9 @@ are included; physical backup/transfer behavior is not yet verified.
 Local `bash scripts/check-project.sh`: PASS (6 Python allowlist tests).
 Local `bash scripts/test-core.sh`: BLOCKED, `javac` missing. The cloud has a Java 17 runtime,
 but no full JDK, Gradle, SDK or emulator. The package manager could not locate the JDK package.
-Android builds and device tests therefore run in the existing GitHub Actions workflow.
+Android builds and emulator tests therefore run in the existing GitHub Actions workflow,
+now covering API 30 and API 36 (Android 16) independently. These are synthetic emulators,
+not physical-device or live-login evidence.
 
 CI commands added/retained:
 
@@ -53,6 +55,7 @@ this is a callback simulation, not a network failure test. Instrumentation compi
 into the build job so failures surface before emulator boot. Final rerun evidence follows. JVM tests include adversarial navigation cases.
 New instrumented tests cover secure defaults, Activity recreation, actual synthetic HTML/JS execution,
 absence of archive creation, non-top-level navigation, automatic redirect refusal, permission denial,
+actual back/reload with intercepted synthetic HTTPS responses, a synthetic HTTP 503,
 main-frame-only error UI and a simulated renderer-loss callback. Simulating a callback is not an actual
 OS renderer kill. Existing archive instrumentation remains unchanged.
 

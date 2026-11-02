@@ -7,7 +7,7 @@ Do not label this build Alpha or a complete X client.
 ## Automated evidence
 
 The GitHub Actions run linked from PR #2 builds the AAR, harness and PoC APK, runs lint,
-JVM/SQLite regression tests and Android emulator tests. Record final results in
+JVM/SQLite regression tests and Android API 30 and 36 emulator tests. Record final results in
 [the W0 execution record](../../docs/W0-EXECUTION.md). Synthetic WebView HTML is not X.
 
 ## Manual matrix (all NOT RUN)
@@ -15,7 +15,7 @@ JVM/SQLite regression tests and Android emulator tests. Record final results in
 For **each** row record source SHA, APK SHA-256, device, Android/API, WebView package/version,
 language, theme, date, steps and a sanitized pass/fail/unsupported result. Never include
 credentials, cookies, raw login URLs, verification codes, DMs or private screenshots.
-Target Android 16 on a physical device; API 30 emulator regression does not establish support.
+Target Android 16 on a physical device; API 30/36 synthetic emulator regression does not establish physical-device or live-login support.
 
 | Area | Required separate checks | Current evidence |
 | --- | --- | --- |

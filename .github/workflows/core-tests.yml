@@ -70,6 +70,10 @@ jobs:
 
   android-instrumentation:
     needs: android-library
+    strategy:
+      fail-fast: false
+      matrix:
+        api-level: [30, 36]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -91,7 +95,7 @@ jobs:
           sudo udevadm trigger --name-match=kvm
       - uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 30
+          api-level: ${{ matrix.api-level }}
           target: google_apis
           arch: x86_64
           disable-animations: true
@@ -100,7 +104,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: xs-android-test-reports
+          name: xs-android-test-reports-api-${{ matrix.api-level }}
           path: |
             app-android/build/reports/androidTests/
             app-android/build/outputs/androidTest-results/
