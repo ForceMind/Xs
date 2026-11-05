@@ -11,6 +11,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import dev.forcemind.xs.android.XsArchiveDatabase;
 import dev.forcemind.xs.android.XsCaptureBridge;
+import dev.forcemind.xs.android.XsLocalSpaces;
 import dev.forcemind.xs.android.XsHistoryActivity;
 import dev.forcemind.xs.core.ArchiveSchema;
 import dev.forcemind.xs.core.ArchiveSearch;
@@ -214,6 +215,40 @@ public class ArchiveIntegrationTest {
         q.keyword = "expansion";
         try (Cursor c = store.search("A", q)) { assertEquals(1, c.getCount()); }
         try (Cursor c = store.timeline("A", null, 20)) { assertEquals(2, c.getCount()); }
+    }
+
+    @Test public void manualLocalSpaceSavesLinkWithoutFakeReadingHistory() {
+        String scope = XsLocalSpaces.createOnExplicitUserAction(app);
+        assertTrue(scope.startsWith("local:"));
+        assertEquals(scope, XsLocalSpaces.current(app));
+        assertEquals(scope, XsLocalSpaces.createOnExplicitUserAction(app));
+        String link = "https://x.com/alice/status/99123";
+        assertTrue(store.saveManualLink(scope, link, 5000L));
+        assertFalse(store.saveManualLink(scope, link, 7000L));
+        assertFalse(store.saveManualLink(scope, "https://evil.test/user/status/99123", 8000L));
+        try (Cursor visits = store.timeline(scope, null, 20, "OPEN_POST")) {
+            assertEquals(0, visits.getCount());
+        }
+        ArchiveSearch.Filter filter = new ArchiveSearch.Filter();
+        filter.actionType = "LOCAL_SAVE";
+        filter.dateField = ArchiveSearch.DateField.ACTION;
+        try (Cursor records = store.search(scope, filter)) {
+            assertEquals(1, records.getCount());
+            assertTrue(records.moveToFirst());
+            assertEquals("99123", records.getString(1));
+            assertEquals(0, records.getInt(7));
+            assertEquals(5000L, records.getLong(8));
+        }
+        try (Cursor other = store.search("different-scope", filter)) {
+            assertEquals(0, other.getCount());
+        }
+        Intent nativeArchive = new Intent(app, XsHistoryActivity.class)
+            .putExtra(XsHistoryActivity.EXTRA_LOCAL_SPACE, true)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        Activity screen = InstrumentationRegistry.getInstrumentation().startActivitySync(nativeArchive);
+        assertNotNull(screen);
+        InstrumentationRegistry.getInstrumentation().runOnMainSync(screen::finish);
+        InstrumentationRegistry.getInstrumentation().waitForIdleSync();
     }
 
     @Test public void nativeArchiveActivityLoads() {
