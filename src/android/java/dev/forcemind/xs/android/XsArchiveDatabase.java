@@ -193,6 +193,39 @@ public final class XsArchiveDatabase extends SQLiteOpenHelper {
         return inserted;
     }
 
+    /**
+     * Explicit local bookmark: not a post open, feed impression or X-server
+     * bookmark. Repeating the same save retains the first save time.
+     */
+    public boolean saveManualLink(String localScope, String postUrl, long savedAtMs) {
+        if (localScope == null || !localScope.startsWith("local:") ||
+            savedAtMs <= 0) return false;
+        String id = PostUrls.extractPostId(postUrl);
+        if (id == null) return false;
+        SQLiteDatabase db = getWritableDatabase();
+        db.beginTransaction();
+        try {
+            insertPostIfMissing(db, localScope, id, null, null, null, savedAtMs);
+            try (Cursor found = db.rawQuery(
+                    "SELECT 1 FROM user_actions WHERE account_id=? AND post_id=? " +
+                    "AND action_type='LOCAL_SAVE' LIMIT 1", new String[]{localScope,id})) {
+                if (found.moveToFirst()) {
+                    db.setTransactionSuccessful();
+                    return false;
+                }
+            }
+            ContentValues action = new ContentValues();
+            action.put("account_id", localScope);
+            action.put("post_id", id);
+            action.put("action_type", "LOCAL_SAVE");
+            action.put("action_at_ms", savedAtMs);
+            action.put("source", "native_user_save");
+            db.insertOrThrow("user_actions", null, action);
+            db.setTransactionSuccessful();
+            return true;
+        } finally { db.endTransaction(); }
+    }
+
     private static boolean validAction(String type) {
         return "ORIGINAL".equals(type) || "REPLY".equals(type) ||
                "QUOTE".equals(type) || "REPOST".equals(type) ||

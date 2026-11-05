@@ -40,7 +40,7 @@ public final class ArchiveSearch {
     private static boolean validActionType(String type) {
         return "ORIGINAL".equals(type) || "REPLY".equals(type) ||
                "QUOTE".equals(type) || "REPOST".equals(type) ||
-               "BOOKMARK".equals(type);
+               "BOOKMARK".equals(type) || "LOCAL_SAVE".equals(type);
     }
 
     public static Query build(String accountId, Filter filter) {

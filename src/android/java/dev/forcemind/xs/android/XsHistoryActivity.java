@@ -46,6 +46,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public final class XsHistoryActivity extends Activity {
     private enum Mode { HISTORY, FEED, SEARCH, FOLDERS }
     private static final int PAGE_SIZE = 80;
+    public static final String EXTRA_LOCAL_SPACE = "dev.forcemind.xs.LOCAL_SPACE";
     private static final int REQUEST_POSTS_JS = 7167;
 
     private static final class Row {
@@ -81,6 +82,7 @@ public final class XsHistoryActivity extends Activity {
     private int dateChoice;
     private ArchiveSearch.DateField dateBasis = ArchiveSearch.DateField.LAST_SEEN;
     private boolean zh;
+    private boolean localSpaceMode;
 
     private TextView status;
     private EditText query;
@@ -96,6 +98,7 @@ public final class XsHistoryActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         zh = Locale.getDefault().getLanguage().equalsIgnoreCase("zh");
+        localSpaceMode = getIntent().getBooleanExtra(EXTRA_LOCAL_SPACE, false);
         archive = new XsArchiveDatabase(this);
         buildScreen();
     }
@@ -103,7 +106,8 @@ public final class XsHistoryActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        String active = XsCaptureBridge.getActiveAccountId();
+        String active = localSpaceMode ? XsLocalSpaces.current(this) :
+            XsCaptureBridge.getActiveAccountId();
         if (account == null ? active != null : !account.equals(active)) {
             account = active;
             selectedFolder = null;
@@ -259,11 +263,11 @@ public final class XsHistoryActivity extends Activity {
     private void refreshRecordingState() {
         boolean hasAccount = account != null;
         recorder.setOnCheckedChangeListener(null);
-        recorder.setEnabled(hasAccount);
-        recorder.setChecked(hasAccount && XsCaptureBridge.isRecordingEnabled());
+        recorder.setEnabled(hasAccount && !localSpaceMode);
+        recorder.setChecked(hasAccount && !localSpaceMode && XsCaptureBridge.isRecordingEnabled());
         feedRecorder.setOnCheckedChangeListener(null);
-        feedRecorder.setEnabled(hasAccount);
-        feedRecorder.setChecked(hasAccount && XsCaptureBridge.isFeedRecordingEnabled());
+        feedRecorder.setEnabled(hasAccount && !localSpaceMode);
+        feedRecorder.setChecked(hasAccount && !localSpaceMode && XsCaptureBridge.isFeedRecordingEnabled());
         feedRecorder.setOnCheckedChangeListener((view, enabled) -> {
             if (!XsCaptureBridge.setFeedRecordingEnabled(this, enabled)) {
                 refreshRecordingState();
@@ -278,11 +282,16 @@ public final class XsHistoryActivity extends Activity {
                 tr("已为当前账号开启本地记录", "Local recording enabled") :
                 tr("已关闭记录；原有历史仍保留", "Recording off; existing history kept"));
         });
-        status.setText(hasAccount ?
-            tr("当前账号已连接 · 数据仅在本机",
-               "Active account linked · on-device only") :
-            tr("尚未连接 X 账号（等待客户端适配器）",
-               "X account not linked (client adapter pending)"));
+        status.setText(localSpaceMode ?
+            (hasAccount ?
+                tr("手动保存资料空间 · 仅本机，非 X 登录身份",
+                   "Manual local space · not an X login identity") :
+                tr("尚未创建手动资料空间", "Create a local space first")) :
+            (hasAccount ?
+                tr("当前账号已连接 · 数据仅在本机",
+                   "Active account linked · on-device only") :
+                tr("尚未连接 X 账号（等待客户端适配器）",
+                   "X account not linked (client adapter pending)")));
     }
 
     private void setMode(Mode next) {
@@ -513,10 +522,10 @@ public final class XsHistoryActivity extends Activity {
     }
 
     private void chooseActionType() {
-        String[] types = {null, "ORIGINAL", "REPLY", "QUOTE", "REPOST", "BOOKMARK"};
+        String[] types = {null, "ORIGINAL", "REPLY", "QUOTE", "REPOST", "BOOKMARK", "LOCAL_SAVE"};
         String[] labels = zh ?
-            new String[]{"全部类型", "原创", "回复", "引用", "转帖", "收藏"} :
-            new String[]{"All types", "Original", "Reply", "Quote", "Repost", "Bookmark"};
+            new String[]{"全部类型", "原创", "回复", "引用", "转帖", "收藏", "本地保存"} :
+            new String[]{"All types", "Original", "Reply", "Quote", "Repost", "Bookmark", "Local save"};
         new AlertDialog.Builder(this)
             .setTitle(tr("内容类型", "Content type"))
             .setItems(labels, (dialog, selected) -> {
@@ -658,6 +667,10 @@ public final class XsHistoryActivity extends Activity {
 
     private void confirmErase() {
         if (account == null || clearing) return;
+        if (localSpaceMode) {
+            confirmLocalSpaceErase();
+            return;
+        }
         String owner = account;
         new AlertDialog.Builder(this)
             .setTitle(tr("清空本地归档？", "Erase local archive?"))
@@ -693,6 +706,34 @@ public final class XsHistoryActivity extends Activity {
                                 Toast.LENGTH_SHORT).show();
                         });
                     }
+                });
+            }).show();
+    }
+
+    private void confirmLocalSpaceErase() {
+        final String scope = account;
+        new AlertDialog.Builder(this)
+            .setTitle(tr("清空本机手动资料空间？", "Clear manual local space?"))
+            .setMessage(tr("仅删除此本机空间内的帖子、分类和历史，网页会话不受影响。",
+                "Deletes the local space only; the X web session is unaffected."))
+            .setNegativeButton(tr("取消", "Cancel"), null)
+            .setPositiveButton(tr("清空", "Clear"), (d, n) -> {
+                clearing = true;
+                worker.execute(() -> {
+                    boolean ok = false;
+                    try { archive.clearAccount(scope); ok = true; }
+                    catch (RuntimeException ignored) { }
+                    final boolean result = ok;
+                    runOnUiThread(() -> {
+                        clearing = false;
+                        if (!isFinishing() && scope.equals(account)) {
+                            selectedFolder = null;
+                            refresh();
+                        }
+                        Toast.makeText(this, result ?
+                            tr("本机资料已清空", "Local archive cleared") :
+                            tr("清理失败", "Clear failed"), Toast.LENGTH_SHORT).show();
+                    });
                 });
             }).show();
     }
