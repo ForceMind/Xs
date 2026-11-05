@@ -28,7 +28,7 @@ The existing `bindAuthenticatedAccount` contract cannot be satisfied merely by a
 
 ## Planned modules
 
-`app-android/`: implemented W0 independent browser host, navigation and explicit manual post-link bookmarking to a native-created `local:` space. No automatic capture or WebView bridge.
+`app-android/`: implemented W0 independent browser host, navigation, a native share-sheet target, and explicit manual post-link bookmarking to a native-created `local:` space. The share handler accepts bounded user-provided HTTPS public post links only; no page inspection. No automatic capture or WebView bridge.
 `web-enhancer/`: TypeScript observation and reversible style capabilities, packaged locally.
 `contracts/`: message and portable-export schemas.
 `tests/web-fixtures/`: synthetic or authorized redacted fixtures.

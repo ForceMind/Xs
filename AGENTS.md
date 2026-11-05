@@ -13,7 +13,7 @@ Do not build a replacement social network, account service, website deployment o
 - `xs-runtime`: Android AAR, not a complete installed client.
 - `dev-harness`: synthetic offline development host, not X.
 - Existing JVM/SQLite and Android instrumentation checks remain useful.
-- `app-android`: W0 WebView host plus explicitly user-created local bookmark space; automatic capture/bridge remain inactive. See `docs/W0-EXECUTION.md` and `compat/web/W0-MATRIX.md`.
+- `app-android`: W0 WebView host, native Android share target, and explicitly user-created local bookmark space; automatic capture/bridge remain inactive. See `docs/W0-EXECUTION.md` and `compat/web/W0-MATRIX.md`.
 - `ObservationRoutes`/`ObservationGate`: inactive, fail-closed policy foundation; it does not itself provide a WebView observer.
 - `web-enhancer`, web bridge, real login acceptance and web filters remain pending. Do not activate capture before the real W0 gate.
 - APK allowlist/validator and old integration contracts are historical. The metadata validator is not an implemented runtime security mechanism.

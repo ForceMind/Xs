@@ -1,6 +1,8 @@
 package dev.forcemind.xs.browser;
 
 import android.content.Context;
+import android.content.Intent;
+import dev.forcemind.xs.android.XsLocalSpaces;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
@@ -207,6 +209,24 @@ public class BrowserContainerTest {
             });
         }
     }
+    @Test public void sharedPostLinkRequiresExplicitSaveBeforeAnyLocalWrite() {
+        Context app = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        app.getSharedPreferences("xs_manual_archive", Context.MODE_PRIVATE)
+            .edit().clear().commit();
+        app.deleteDatabase("xs-local-history.db");
+        Intent incoming = new Intent(app, ShareToXsActivity.class)
+            .setAction(Intent.ACTION_SEND)
+            .setType("text/plain")
+            .putExtra(Intent.EXTRA_TEXT, "https://x.com/demo/status/998877");
+        try (ActivityScenario<ShareToXsActivity> scenario = ActivityScenario.launch(incoming)) {
+            scenario.onActivity(activity -> {
+                assertNull(XsLocalSpaces.current(app)); // no scope without confirmation
+                assertFalse(java.util.Arrays.asList(app.databaseList())
+                    .contains("xs-local-history.db")); // no silent history capture
+            });
+        }
+    }
+
     private static android.webkit.WebResourceResponse response(int code) {
         return new android.webkit.WebResourceResponse("text/html", "UTF-8", code,
             code == 200 ? "OK" : "Unavailable", Collections.emptyMap(),

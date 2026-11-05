@@ -67,3 +67,7 @@ do not weaken security or keep substituting embedded browser engines.
 ## 2026-11-05 manual-only native bookmark regression (not W0 login evidence)
 
 The browser now has a user-confirmed local archive-space creation step and manually saves a currently opened post URL to a distinct `LOCAL_SAVE` action. This does **not** imply a verified X account or automatic capture. Confirm on a test device: creating a space, saving a public post link twice (one row), opening the native archive, searching/filtering, assigning a folder, returning to the post, and safely clearing the local space. Verify that no `OPEN_POST` or `FEED_VISIBLE` event is created by manual saving. All real-login and provider compatibility rows above remain **NOT RUN** unless separately demonstrated.
+
+### Share-sheet entry
+
+When testing the manual Xs save flow, also use a system `text/plain` share intent from an existing app (including X) to choose `Save to Xs`. Verify untrusted URLs are rejected, no database/scope is created before explicit confirmation, repeated saves do not create fake open events, and the resulting post appears in the native manual archive. This does not validate login or automatic capture.

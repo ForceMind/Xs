@@ -28,7 +28,7 @@ Prove real login and essential browsing before implementing capture. Test each l
 
 ## Manual local bookmarking — available for testing
 
-W0 now exposes **Save this post locally** and **My local archive** in the browser menu. First use explicitly creates an on-device archive space; this is **not** a verified X account identity. Native search, folders, and post-return navigation work with manually saved links.
+W0 now exposes **Save this post locally** and **My local archive** in the browser menu. You can also use Android's system share sheet from the existing X app to choose **Save to Xs**, then explicitly confirm local saving of the public post link. First use explicitly creates an on-device archive space; this is **not** a verified X account identity. Native search, folders, and post-return navigation work with manually saved links.
 
 Only the public post URL/ID and local save time are stored; **no DOM, cookies, DMs, automatic reading history, or feed tracking**. Automatic observation remains gated on successful real-device W0 login/browser checks. The APK is still an internal PoC, not an accepted production client.
 
