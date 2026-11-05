@@ -1,0 +1,6 @@
+<resources>
+    <item name="browser_view" type="id" />
+    <item name="open_x" type="id" />
+    <item name="browser_status" type="id" />
+    <item name="browser_retry" type="id" />
+</resources>

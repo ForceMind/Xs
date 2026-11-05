@@ -20,3 +20,9 @@ Preserve `xs-runtime`, `dev-harness`, core and data migration history. Keep old 
 The detailed WF-01..WF-12 work packages, dependency graph, limits and acceptance matrix are in the full plan. W0 is an internal PoC; W2 may qualify as Alpha, W3 as Beta and W4 as a release candidate only after their gates pass.
 
 No milestone is complete because a document, AAR, mock fixture or synthetic APK exists. Do not claim new CI, emulator or live-login success without actually obtaining the matching result. No time commitment substitutes for a real exit criterion.
+
+## 2026-11-02 implementation update
+
+W0 host implementation is in [PR #2](https://github.com/ForceMind/Xs/pull/2).
+See [execution record](W0-EXECUTION.md) and [live matrix](../compat/web/W0-MATRIX.md).
+The live W0 gate remains unchecked. No W1 bridge or W2 capture is activated.

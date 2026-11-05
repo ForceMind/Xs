@@ -38,7 +38,7 @@ jobs:
         with:
           gradle-version: '8.9'
       - name: Compile independent Android archive AAR
-        run: gradle --no-daemon :xs-runtime:assembleDebug :dev-harness:assembleDebug
+        run: gradle --no-daemon :xs-runtime:assembleDebug :dev-harness:assembleDebug :app-android:assembleDebug :app-android:assembleDebugAndroidTest :dev-harness:assembleDebugAndroidTest :app-android:lintDebug
       - name: Upload Android library (not an APK)
         uses: actions/upload-artifact@v4
         with:
@@ -52,8 +52,28 @@ jobs:
           path: dev-harness/build/outputs/apk/debug/*.apk
           if-no-files-found: error
 
+      - name: Record PoC build provenance
+        run: |
+          mkdir -p app-android/build/provenance
+          git rev-parse HEAD > app-android/build/provenance/source-commit.txt
+          sha256sum app-android/build/outputs/apk/debug/*.apk > app-android/build/provenance/SHA256SUMS
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --print-certs app-android/build/outputs/apk/debug/app-android-debug.apk > app-android/build/provenance/signing-certificate.txt
+          gradle --no-daemon :app-android:dependencies --configuration debugRuntimeClasspath > app-android/build/provenance/dependencies.txt
+      - name: Upload non-instrumented browser feasibility APK (NOT Alpha)
+        uses: actions/upload-artifact@v4
+        with:
+          name: xs-w0-browser-poc
+          path: |
+            app-android/build/outputs/apk/debug/*.apk
+            app-android/build/provenance/
+          if-no-files-found: error
+
   android-instrumentation:
     needs: android-library
+    strategy:
+      fail-fast: false
+      matrix:
+        api-level: [30, 36]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -75,8 +95,26 @@ jobs:
           sudo udevadm trigger --name-match=kvm
       - uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 30
+          api-level: ${{ matrix.api-level }}
           target: google_apis
           arch: x86_64
           disable-animations: true
-          script: gradle --no-daemon :dev-harness:connectedDebugAndroidTest
+          script: |
+            mkdir -p app-android/build/compatibility
+            git rev-parse HEAD > app-android/build/compatibility/source-commit.txt
+            adb shell getprop ro.build.version.release > app-android/build/compatibility/android-release.txt
+            adb shell getprop ro.build.version.sdk > app-android/build/compatibility/android-api.txt
+            adb shell getprop persist.sys.locale > app-android/build/compatibility/locale.txt
+            adb shell dumpsys webviewupdate > app-android/build/compatibility/webview-provider.txt
+            adb shell cmd uimode night > app-android/build/compatibility/night-mode.txt
+            gradle --no-daemon :dev-harness:connectedDebugAndroidTest :app-android:connectedDebugAndroidTest
+      - name: Upload synthetic Android test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xs-android-test-reports-api-${{ matrix.api-level }}
+          path: |
+            app-android/build/compatibility/
+            app-android/build/reports/androidTests/
+            app-android/build/outputs/androidTest-results/
+            dev-harness/build/reports/androidTests/

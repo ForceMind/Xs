@@ -217,11 +217,18 @@ public final class XsArchiveDatabase extends SQLiteOpenHelper {
                                             String author, String text, Long publishedAtMs) {
         ContentValues values = new ContentValues();
         if (author != null && !author.isEmpty()) values.put("author_handle", author);
-        if (text != null && !text.isEmpty()) values.put("body", text);
         if (publishedAtMs != null) values.put("published_at_ms", publishedAtMs);
         if (values.size() != 0) {
             db.update("posts", values, "account_id=? AND post_id=?",
                       new String[]{accountId, id});
+        }
+        // A later card/partial render must not truncate a longer stored snapshot.
+        // Both lengths are measured by SQLite (Unicode code points, not UTF-16 units).
+        // This is a conservative retention rule, not proof of snapshot completeness.
+        if (text != null && !text.isEmpty()) {
+            db.execSQL("UPDATE posts SET body=? WHERE account_id=? AND post_id=? " +
+                       "AND (body IS NULL OR length(?) >= length(body))",
+                       new Object[]{text, accountId, id, text});
         }
     }
 

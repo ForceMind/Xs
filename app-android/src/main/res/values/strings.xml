@@ -1,0 +1,28 @@
+<resources>
+    <string name="app_name">Xs · W0 PoC</string>
+    <string name="open_x">Open X</string>
+    <string name="intro">Xs is an independent, unofficial browser feasibility build. X pages connect normally to X and WebView stores the web session. No Xs history capture, web bridge or filters are active. Login and media compatibility still need real-device testing. Local data is not a backup and may be lost on uninstall.</string>
+    <string name="poc">W0 · Capture off</string>
+    <string name="menu">Menu</string>
+    <string name="home">X home</string>
+    <string name="reload">Reload</string>
+    <string name="retry">Retry</string>
+    <string name="loading">Loading X…</string>
+    <string name="ready">x.com · Capture off</string>
+    <string name="failed">Page unavailable. Check your connection and retry.</string>
+    <string name="blocked">This navigation is blocked.</string>
+    <string name="external">Open in browser?</string>
+    <string name="external_body">Destination: %1$s\nThe browser uses its own session. Logging in there will not sign in to this WebView.</string>
+    <string name="open">Open</string>
+    <string name="cancel">Cancel</string>
+    <string name="no_browser">No browser is available.</string>
+    <string name="popup">New windows are disabled in this PoC. Use a same-window link where available.</string>
+    <string name="upload">Choose media to upload?</string>
+    <string name="upload_body">You will choose images or videos using the system picker. Selected media will be sent to the current X page. Camera, microphone and arbitrary file access are not enabled.</string>
+    <string name="upload_failed">No supported media selected, or the page changed.</string>
+    <string name="renderer_gone">The web renderer stopped. Retry to create a new browsing view.</string>
+    <string name="webview_missing">System WebView is unavailable. Install or enable a supported system WebView, then restart Xs.</string>
+    <string name="about">Build and compatibility</string>
+    <string name="about_body">Xs %1$s\nAndroid %2$s (API %3$d)\nWebView %4$s\n\nInternal W0 PoC. No capture or archive binding. Direct login, 2FA, Google, Apple and Passkey are separate pending checks. Downloads open externally; popups, camera and microphone are unsupported.</string>
+    <string name="tls_failed">Certificate verification failed. The page was blocked.</string>
+</resources>

@@ -5,7 +5,7 @@ Decision date: 2026-10-29. See [ADR-0001](adr/0001-web-first.md) and the [comple
 ## Target boundary
 
 ```text
-Official X web in Android WebView [W0 feasibility pending]
+Official X web in Android WebView [W0 host exists; live feasibility pending]
   -> packaged web observer / reversible UI rules [planned]
   -> origin + main-frame + route + schema + session gate [planned]
   -> native capture controller and bounded queue [refactor planned]
@@ -26,13 +26,13 @@ The existing `bindAuthenticatedAccount` contract cannot be satisfied merely by a
 
 ## Planned modules
 
-`app-android/`: independent browser host and native navigation.
+`app-android/`: implemented W0 independent browser host and native navigation; no capture or bridge.
 `web-enhancer/`: TypeScript observation and reversible style capabilities, packaged locally.
 `contracts/`: message and portable-export schemas.
 `tests/web-fixtures/`: synthetic or authorized redacted fixtures.
 `compat/web/`: tested capabilities, provider versions, language/theme and release evidence.
 
-These paths are planned. Keep current Java/storage/UI modules rather than performing a gratuitous rewrite.
+Except for `app-android/`, these paths remain planned. Keep current Java/storage/UI modules rather than performing a gratuitous rewrite.
 
 ## Login and platform gates
 
