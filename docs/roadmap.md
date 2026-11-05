@@ -21,6 +21,10 @@ The detailed WF-01..WF-12 work packages, dependency graph, limits and acceptance
 
 No milestone is complete because a document, AAR, mock fixture or synthetic APK exists. Do not claim new CI, emulator or live-login success without actually obtaining the matching result. No time commitment substitutes for a real exit criterion.
 
+## 2026-11-05 implementation update
+
+W0 browser work was merged to `main` (PR #2). A user-created native local archive space and explicit **manual post-link saving** now form an offline-search/category/return loop with no webpage observer or trusted X identity binding. Pure-Java observation admission policy has defensive tests but is **not activated**. Real X login and full browsing still require physical device acceptance before W1/W2 auto-capture.
+
 ## 2026-11-02 implementation update
 
 W0 host implementation is in [PR #2](https://github.com/ForceMind/Xs/pull/2).

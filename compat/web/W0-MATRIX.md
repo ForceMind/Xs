@@ -63,3 +63,7 @@ required real account flows locally. A direct-login success does not establish G
 support. Advance to W1 only after an evidence-backed pass or an explicitly bounded conditional pass.
 If required login is blocked by the provider, record it and evaluate a real-browser extension;
 do not weaken security or keep substituting embedded browser engines.
+
+## 2026-11-05 manual-only native bookmark regression (not W0 login evidence)
+
+The browser now has a user-confirmed local archive-space creation step and manually saves a currently opened post URL to a distinct `LOCAL_SAVE` action. This does **not** imply a verified X account or automatic capture. Confirm on a test device: creating a space, saving a public post link twice (one row), opening the native archive, searching/filtering, assigning a folder, returning to the post, and safely clearing the local space. Verify that no `OPEN_POST` or `FEED_VISIBLE` event is created by manual saving. All real-login and provider compatibility rows above remain **NOT RUN** unless separately demonstrated.

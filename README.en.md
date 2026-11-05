@@ -23,8 +23,14 @@ Prove real login and essential browsing before implementing capture. Test each l
 | My-content import | Official `tweets.js` / `tweet.js` single-file/part importer exists; user confirms ownership |
 | Account/archive isolation | Existing core scopes data by account; web binding and browser-session isolation still require design and verification |
 | Cleaner interface | Web filters pending; no paid-feature unlocking or hiding security prompts |
-| Web-first host and login | W0 non-capturing host implemented; real login and media require device validation |
+| Web-first host and login | W0 merged; explicit native save-post-link flow is implemented, while live login/media require device validation |
 | APK | CI supplies an internal W0 PoC, not an accepted Alpha; dev-harness remains synthetic |
+
+## Manual local bookmarking — available for testing
+
+W0 now exposes **Save this post locally** and **My local archive** in the browser menu. First use explicitly creates an on-device archive space; this is **not** a verified X account identity. Native search, folders, and post-return navigation work with manually saved links.
+
+Only the public post URL/ID and local save time are stored; **no DOM, cookies, DMs, automatic reading history, or feed tracking**. Automatic observation remains gated on successful real-device W0 login/browser checks. The APK is still an internal PoC, not an accepted production client.
 
 ## Principles
 
@@ -46,7 +52,7 @@ docs/                 Product, architecture, plans and decisions
 compat/               Legacy APK metadata checks; not a working web security gate
 ```
 
-`app-android/` is implemented. `web-enhancer/` and secure web bridging remain gated on real W0 login evidence.
+`app-android/` has native manual-save/local-space entry points. `ObservationGate` is an inactive guard foundation, not a WebView bridge. Web observation remains gated on real W0 login evidence.
 
 ## Test the existing core
 

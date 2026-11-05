@@ -83,3 +83,7 @@ OS renderer kill. Existing archive instrumentation remains unchanged.
 This PoC has application ID `dev.forcemind.xs`, separate from the synthetic harness and official X.
 W0 records no history; signing keys are not added to the repository. No GitHub release or store
 publication is made. W1/W2 remain blocked on real login feasibility and explicit archive scopes.
+
+## 2026-11-05: merged host and manual archive integration
+
+PR #2 was merged to `main` as `7b06e5c81da5a34b06266554d61bf1b65896b845`. A dormant core observation-permission gate now has adversarial tests; it is not a WebView bridge and cannot capture real X pages. The browser menu gained explicit manual post-link save and native archive access using a native-generated `local:` space. It stores a `LOCAL_SAVE` action, not a fabricated read event, and does not bind to an authenticated X identity. The new integration has a synthetic Android test; check Actions for exact build and instrumentation results. The W0 live-login test matrix is still pending.

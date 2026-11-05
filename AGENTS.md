@@ -13,7 +13,8 @@ Do not build a replacement social network, account service, website deployment o
 - `xs-runtime`: Android AAR, not a complete installed client.
 - `dev-harness`: synthetic offline development host, not X.
 - Existing JVM/SQLite and Android instrumentation checks remain useful.
-- `app-android`: W0 system-WebView feasibility host with no capture/bridge; see `docs/W0-EXECUTION.md` and `compat/web/W0-MATRIX.md`.
+- `app-android`: W0 WebView host plus explicitly user-created local bookmark space; automatic capture/bridge remain inactive. See `docs/W0-EXECUTION.md` and `compat/web/W0-MATRIX.md`.
+- `ObservationRoutes`/`ObservationGate`: inactive, fail-closed policy foundation; it does not itself provide a WebView observer.
 - `web-enhancer`, web bridge, real login acceptance and web filters remain pending. Do not activate capture before the real W0 gate.
 - APK allowlist/validator and old integration contracts are historical. The metadata validator is not an implemented runtime security mechanism.
 
@@ -29,6 +30,7 @@ Build a minimal non-instrumented browser first. Do not claim a usable integratio
 - OPEN_POST requires deliberate, actually presented detail navigation. FEED_VISIBLE requires confirmed foreground visibility >=60% continuously for >=1200ms and separate opt-in.
 - Prefetch, import, DOM rebinding and observing a repost are not user actions.
 - Preserve separate publication/action/open/feed timestamps; unknown values stay NULL.
+- Manual link saves use a native-generated `local:` archive scope and a distinct `LOCAL_SAVE` action. They never create `OPEN_POST` events or claim an authenticated X account.
 - The legacy `bindAuthenticatedAccount` requires a verified stable host identity. Never pass a scraped handle or local UUID while pretending it is verified. Add explicit native archive scopes and binding confidence.
 - Scope/session/permissions are native-controlled. Reject stale epochs and stop on switching, logout or uncertain context.
 - Treat all web messages as untrusted, including allowed-origin messages. Validate origin, main frame, route, schema, size/rate and session. No generic SQL/file/Intent/read-all/export/delete/enable-capture bridge.
