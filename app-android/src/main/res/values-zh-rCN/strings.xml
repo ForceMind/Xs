@@ -23,6 +23,16 @@
     <string name="renderer_gone">网页渲染进程已停止，重试可新建浏览视图。</string>
     <string name="webview_missing">系统 WebView 不可用，请安装或启用受支持的系统 WebView 后重启 Xs。</string>
     <string name="about">构建与兼容性</string>
-    <string name="about_body">Xs %1$s\nAndroid %2$s（API %3$d）\nWebView %4$s\n\n内部 W0 验证版，未绑定资料空间、未采集。直接登录、两步验证、Google、Apple、Passkey 均需分别验证。下载交外部浏览器；弹窗、相机、麦克风暂不支持。</string>
+    <string name="about_body">Xs %1$s\nAndroid %2$s（API %3$d）\nWebView %4$s\n\n内部 W0 验证版，自动采集关闭，支持手动保存帖子链接。直接登录、两步验证、Google、Apple、Passkey 均需分别验证。下载交外部浏览器；弹窗、相机、麦克风暂不支持。</string>
+    <string name="local_archive">我的本机资料库</string>
+    <string name="local_save">保存当前帖子链接</string>
+    <string name="local_scope_title">创建本机资料空间？</string>
+    <string name="local_scope_notice">Xs 将在本设备创建私有资料空间，用于手动保存帖子链接。这不是 X 登录身份，不会自动采集浏览记录。卸载应用可能丢失本地资料。</string>
+    <string name="create_local_scope">创建本机资料空间</string>
+    <string name="local_scope_error">无法创建本机资料空间。</string>
+    <string name="not_post_detail">请先打开一个帖子详情页。</string>
+    <string name="local_save_failed">保存失败。</string>
+    <string name="local_save_done">帖子链接已保存到本机。</string>
+    <string name="local_save_exists">该帖子已在本机保存。</string>
     <string name="tls_failed">证书验证失败，已阻止加载。</string>
 </resources>

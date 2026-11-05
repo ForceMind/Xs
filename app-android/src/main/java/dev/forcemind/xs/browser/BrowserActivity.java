@@ -34,12 +34,20 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import dev.forcemind.xs.core.BrowserNavigation;
+import dev.forcemind.xs.core.PostUrls;
+import dev.forcemind.xs.android.XsArchiveDatabase;
+import dev.forcemind.xs.android.XsLocalSpaces;
+import dev.forcemind.xs.android.XsHistoryActivity;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /** W0 only: no observer, JavascriptInterface, native capture or account binding. */
 public final class BrowserActivity extends Activity {
     private static final String HOME = "https://x.com/home";
+    private final ExecutorService localIo = Executors.newSingleThreadExecutor();
+    private String initialPost;
     private static final int PICK_MEDIA = 4101;
     private FrameLayout root;
     private LinearLayout shell;
@@ -61,6 +69,11 @@ public final class BrowserActivity extends Activity {
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
+        String requested = getIntent() == null ? null : getIntent().getDataString();
+        // Only explicit public post routes may be opened from Android intents.
+        initialPost = requested != null &&
+            BrowserNavigation.classify(requested) == BrowserNavigation.Target.INTERNAL &&
+            PostUrls.extractPostId(requested) != null ? requested : null;
         // Avoid exposing login/DM contents in screenshots or recent-task snapshots.
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
         root = new FrameLayout(this);
@@ -117,11 +130,12 @@ public final class BrowserActivity extends Activity {
                 started = true;
                 shell.removeView(notice);
                 shell.removeView(open);
-                navigate(HOME);
+                navigate(initialPost == null ? HOME : initialPost);
             });
         } else {
             Bundle browsing = state == null ? null : state.getBundle("web_navigation");
-            if (browsing == null || web.restoreState(browsing) == null) navigate(HOME);
+            if (browsing == null || web.restoreState(browsing) == null)
+                navigate(initialPost == null ? HOME : initialPost);
             else if (BrowserNavigation.classify(web.getUrl()) != BrowserNavigation.Target.INTERNAL) {
                 web.clearHistory();
                 navigate(HOME);
@@ -336,6 +350,63 @@ public final class BrowserActivity extends Activity {
                 } catch (ActivityNotFoundException missing) { toast(R.string.no_browser); }
             }).show();
     }
+    private void withLocalSpace(Runnable action) {
+        String existing = XsLocalSpaces.current(this);
+        if (existing != null) {
+            action.run();
+            return;
+        }
+        new AlertDialog.Builder(this)
+            .setTitle(R.string.local_scope_title)
+            .setMessage(R.string.local_scope_notice)
+            .setNegativeButton(R.string.cancel, null)
+            .setPositiveButton(R.string.create_local_scope, (d, n) -> {
+                try {
+                    XsLocalSpaces.createOnExplicitUserAction(this);
+                    action.run();
+                } catch (RuntimeException error) {
+                    toast(R.string.local_scope_error);
+                }
+            }).show();
+    }
+
+    private void showManualArchive() {
+        withLocalSpace(() -> {
+            Intent intent = new Intent(this, XsHistoryActivity.class);
+            intent.putExtra(XsHistoryActivity.EXTRA_LOCAL_SPACE, true);
+            startActivity(intent);
+        });
+    }
+
+    private void saveCurrentPostManually() {
+        String current = web == null ? null : web.getUrl();
+        if (current == null || !started ||
+            BrowserNavigation.classify(current) != BrowserNavigation.Target.INTERNAL ||
+            PostUrls.extractPostId(current) == null) {
+            toast(R.string.not_post_detail);
+            return;
+        }
+        // Only the public post URL/ID is saved: never read the page DOM or cookies.
+        final String url = current;
+        withLocalSpace(() -> {
+            final String scope = XsLocalSpaces.current(this);
+            if (scope == null) { toast(R.string.local_scope_error); return; }
+            localIo.execute(() -> {
+                boolean fresh=false;
+                boolean valid=false;
+                try (XsArchiveDatabase db = new XsArchiveDatabase(getApplicationContext())) {
+                    fresh=db.saveManualLink(scope,url,System.currentTimeMillis());
+                    valid=true;
+                } catch (RuntimeException ignored) { }
+                final boolean success=valid, newEntry=fresh;
+                runOnUiThread(() -> {
+                    if (!isFinishing()) toast(!success ? R.string.local_save_failed :
+                        newEntry ? R.string.local_save_done : R.string.local_save_exists);
+                });
+            });
+        });
+    }
+
     private void showMenu(View anchor) {
         PopupMenu menu = new PopupMenu(this, anchor);
         if (started) {
@@ -344,6 +415,12 @@ public final class BrowserActivity extends Activity {
                 if (web != null) web.reload(); return true;
             });
         }
+        menu.getMenu().add(R.string.local_archive).setOnMenuItemClickListener(item -> {
+            showManualArchive(); return true;
+        });
+        if (started) menu.getMenu().add(R.string.local_save).setOnMenuItemClickListener(item -> {
+            saveCurrentPostManually(); return true;
+        });
         menu.getMenu().add(R.string.about).setOnMenuItemClickListener(item -> {
             PackageInfo provider = WebView.getCurrentWebViewPackage();
             String version = provider == null ? "unavailable" : provider.packageName + " " + provider.versionName;
@@ -380,6 +457,7 @@ public final class BrowserActivity extends Activity {
         super.onSaveInstanceState(state);
     }
     @Override protected void onDestroy() {
+        localIo.shutdown();
         cancelUpload(); hideFullScreen();
         if (web != null) {
             shell.removeView(web);

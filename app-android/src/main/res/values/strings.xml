@@ -23,6 +23,16 @@
     <string name="renderer_gone">The web renderer stopped. Retry to create a new browsing view.</string>
     <string name="webview_missing">System WebView is unavailable. Install or enable a supported system WebView, then restart Xs.</string>
     <string name="about">Build and compatibility</string>
-    <string name="about_body">Xs %1$s\nAndroid %2$s (API %3$d)\nWebView %4$s\n\nInternal W0 PoC. No capture or archive binding. Direct login, 2FA, Google, Apple and Passkey are separate pending checks. Downloads open externally; popups, camera and microphone are unsupported.</string>
+    <string name="about_body">Xs %1$s\nAndroid %2$s (API %3$d)\nWebView %4$s\n\nInternal W0 PoC. Automatic capture off; manual local post-link saving is available. Direct login, 2FA, Google, Apple and Passkey are separate pending checks. Downloads open externally; popups, camera and microphone are unsupported.</string>
+    <string name="local_archive">My local archive</string>
+    <string name="local_save">Save this post locally</string>
+    <string name="local_scope_title">Create an on-device archive?</string>
+    <string name="local_scope_notice">Xs will create a private local folder for saved post links. This is not an X login or verified account, and it does not capture browsing automatically. Content may be lost if the app is removed.</string>
+    <string name="create_local_scope">Create local archive</string>
+    <string name="local_scope_error">Could not create the local archive.</string>
+    <string name="not_post_detail">Open a post detail page before saving.</string>
+    <string name="local_save_failed">Could not save this post.</string>
+    <string name="local_save_done">Post link saved on this device.</string>
+    <string name="local_save_exists">Post link already saved locally.</string>
     <string name="tls_failed">Certificate verification failed. The page was blocked.</string>
 </resources>
