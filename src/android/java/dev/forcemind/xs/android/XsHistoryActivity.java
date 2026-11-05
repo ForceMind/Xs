@@ -257,7 +257,13 @@ public final class XsHistoryActivity extends Activity {
         root.addView(controls);
         addFolder.setOnClickListener(v -> showFolderEditor(null, null));
         erase.setOnClickListener(v -> confirmErase());
-        setMode(Mode.HISTORY);
+        if (localSpaceMode) {
+            actionType = "LOCAL_SAVE";
+            typeFilter.setText(tr("本地保存", "Local save"));
+            setMode(Mode.SEARCH);
+        } else {
+            setMode(Mode.HISTORY);
+        }
     }
 
     private void refreshRecordingState() {
