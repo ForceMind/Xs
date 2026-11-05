@@ -23,5 +23,16 @@
                 <data android:scheme="https" android:host="www.twitter.com" />
             </intent-filter>
         </activity>
+        <!-- Receives an explicitly shared *text link*, never a file/credential. -->
+        <activity android:name=".ShareToXsActivity"
+            android:label="@string/share_to_xs"
+            android:exported="true"
+            android:excludeFromRecents="true">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity>
     </application>
 </manifest>

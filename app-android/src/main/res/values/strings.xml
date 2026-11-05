@@ -34,5 +34,10 @@
     <string name="local_save_failed">Could not save this post.</string>
     <string name="local_save_done">Post link saved on this device.</string>
     <string name="local_save_exists">Post link already saved locally.</string>
+    <string name="share_to_xs">Save to Xs</string>
+    <string name="share_confirm_title">Save post link locally?</string>
+    <string name="share_confirm_body">Xs will only save this public post link: %1$s\nNo web page or login information is inspected.</string>
+    <string name="share_save">Save locally</string>
+    <string name="share_invalid">Only HTTPS links to individual X posts are supported.</string>
     <string name="tls_failed">Certificate verification failed. The page was blocked.</string>
 </resources>

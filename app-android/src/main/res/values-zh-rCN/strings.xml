@@ -34,5 +34,10 @@
     <string name="local_save_failed">保存失败。</string>
     <string name="local_save_done">帖子链接已保存到本机。</string>
     <string name="local_save_exists">该帖子已在本机保存。</string>
+    <string name="share_to_xs">保存到 Xs</string>
+    <string name="share_confirm_title">保存帖子链接到本机？</string>
+    <string name="share_confirm_body">Xs 仅保存这条公开帖子链接：%1$s\n不会读取网页或登录数据。</string>
+    <string name="share_save">保存到本机</string>
+    <string name="share_invalid">目前仅支持分享单条 X 帖子的 HTTPS 链接。</string>
     <string name="tls_failed">证书验证失败，已阻止加载。</string>
 </resources>
