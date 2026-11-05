@@ -16,6 +16,12 @@ public final class SharedPostParser {
         if (text == null || text.length() > MAX_TEXT) return null;
         Matcher match = URL.matcher(text);
         while (match.find()) {
+            // Reject nested URLs embedded in another site's query or authority.
+            if (match.start() > 0) {
+                char before = text.charAt(match.start() - 1);
+                if (before == '=' || before == '/' || before == ':' ||
+                    before == '@' || before == '%') continue;
+            }
             String candidate = match.group();
             // Common punctuation introduced by messaging/share applications.
             while (!candidate.isEmpty() && endsInPunctuation(candidate)) {
