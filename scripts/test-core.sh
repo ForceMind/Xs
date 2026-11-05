@@ -7,4 +7,5 @@ mapfile -t SOURCES < <(find "$ROOT/src/main/java" "$ROOT/tests/java" -name "*.ja
 javac --release 8 -encoding UTF-8 -d "$OUT" "${SOURCES[@]}"
 java -ea -cp "$OUT" dev.forcemind.xs.tests.CoreSmokeTest
 java -ea -cp "$OUT" dev.forcemind.xs.tests.ObservationGateTest
+java -ea -cp "$OUT" dev.forcemind.xs.tests.SharedPostParserTest
 java -cp "$OUT" dev.forcemind.xs.tests.SchemaDump | python3 "$ROOT/tests/sqlite_schema_test.py"
