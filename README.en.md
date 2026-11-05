@@ -10,6 +10,7 @@
 
 - [Complete Web-first product and engineering plan (Chinese)](docs/WEB_FIRST_PLAN.zh-CN.md)
 - [ADR-0001 (English)](docs/adr/0001-web-first.md)
+- [Inactive observation contract](docs/contracts/observation-v1.md)
 - [Product](docs/product.md) · [Architecture](docs/architecture.md) · [Roadmap](docs/roadmap.md)
 
 Prove real login and essential browsing before implementing capture. Test each login method separately. External browser sessions do not automatically transfer to WebView; never copy cookies or bypass provider restrictions. If the embedded route fails, evaluate an extension in a real browser rather than assuming another embedded engine fixes authentication.

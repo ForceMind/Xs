@@ -14,6 +14,8 @@ Official X web in Android WebView [W0 host exists; live feasibility pending]
 
 `ObservationRoutes` and `ObservationGate` now define a dormant, bounded, fail-closed native observation admission contract, tested without wiring a message listener into WebView. The live-login gate is still open.
 
+The [inactive observation protocol](contracts/observation-v1.md) now has a strict Android JSON parser and a native-owned admission gate, with JVM/emulator tests. **There is still no attached web message listener or active capture.**
+
 The remote website is untrusted. Even an allowed-origin message may originate from a same-origin script other than ours. Website-to-native communication accepts bounded observations only and exposes no archive reads, arbitrary SQL, filesystem, export, erasure or consent changes.
 
 Native code owns archive scopes, epochs, receipt times and user controls. Login/DM/security/unknown routes do not receive capture privileges. WebView feature detection must fail closed for enhancement, not fall back to a generic unrestricted bridge. Ordinary browsing remains available where the provider supports it.

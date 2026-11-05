@@ -57,6 +57,34 @@ public class ObservationParserTest {
         expectInvalid("{broken");
     }
 
+    @Test public void typedEnvelopeNeedsNativeMainFrameGestureAndScope() {
+        ObservationGate.Message event = WebObservationParser.parse(OPEN);
+        ObservationGate gate = new ObservationGate();
+        ObservationGate.NativeState nativeOkay = new ObservationGate.NativeState(
+            "local:native-selected", true, true, true, true, "https://x.com",
+            "https://x.com/alice/status/12345", 2, 3000);
+        assertEquals(ObservationGate.Verdict.DISARMED, gate.admit(nativeOkay, event));
+        gate.changeDocument(2);
+        assertEquals(ObservationGate.Verdict.ACCEPT, gate.admit(nativeOkay, event));
+        assertEquals(ObservationGate.Verdict.REPLAY, gate.admit(nativeOkay, event));
+
+        ObservationGate.NativeState noGesture = new ObservationGate.NativeState(
+            "local:native-selected", true, true, true, false, "https://x.com",
+            "https://x.com/alice/status/12345", 2, 3001);
+        String next = OPEN.replace("\"seq\":1", "\"seq\":2");
+        assertEquals(ObservationGate.Verdict.NOT_DELIBERATE,
+            gate.admit(noGesture, WebObservationParser.parse(next)));
+
+        ObservationGate.NativeState iframe = new ObservationGate.NativeState(
+            "local:native-selected", true, true, false, true, "https://x.com",
+            "https://x.com/alice/status/12345", 2, 3001);
+        assertEquals(ObservationGate.Verdict.BAD_ORIGIN,
+            gate.admit(iframe, WebObservationParser.parse(next)));
+        gate.suspend();
+        assertEquals(ObservationGate.Verdict.DISARMED,
+            gate.admit(nativeOkay, WebObservationParser.parse(next)));
+    }
+
     private static void expectInvalid(String s) {
         try {
             WebObservationParser.parse(s);

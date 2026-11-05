@@ -10,6 +10,7 @@
 
 - [Web-first 完整产品与研发计划](docs/WEB_FIRST_PLAN.zh-CN.md)
 - [路线决策 ADR-0001](docs/adr/0001-web-first.md)
+- [尚未启用的安全观察协议](docs/contracts/observation-v1.md)
 - [产品边界](docs/product.md) · [技术架构](docs/architecture.md) · [研发路线](docs/roadmap.md)
 
 先验证真实登录和核心浏览，再实现安全桥接与本地记录。Google 等登录方式单独验证；外部浏览器会话不会自动转移至 WebView，不复制 Cookie 或规避登录限制。验证失败时评估真正浏览器中的扩展，而不是无限更换嵌入内核。
