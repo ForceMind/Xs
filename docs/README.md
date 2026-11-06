@@ -12,6 +12,7 @@
 | --- | --- |
 | [产品要求](product.md) | 用户确认的范围、点开/停留/转帖/收藏语义与资料所有权 |
 | [本机资料库、下载与分享规范](LOCAL_LIBRARY_MEDIA_PLAN.zh-CN.md) | 详细交互、下载和分享约束 |
+| [时间线停留记录专项方案](FEED_DWELL_PLAN.zh-CN.md) | 不打开帖子也能记录，1.2/3/5秒档、时长、去重、未打开检索和 XS-14 验收 |
 | [完整实施计划](IMPLEMENTATION_PLAN.zh-CN.md) | XS-01～XS-15 工作包、依赖、阶段交付和下一步 |
 | [架构](architecture.md) | 浏览底座、原生主动获取、统一写入、媒体与分享边界 |
 | [ChatGPT Studio 借鉴与迁移清单](CHATGPT_STUDIO_REUSE.zh-CN.md) | 已审阅源码基线、可复用部分、不应照搬部分和许可检查 |
@@ -24,9 +25,10 @@
 
 1. 用户新确认的要求及 [ADR-0002](adr/0002-local-library-media.md)：应用拥有资料，点开无停留门槛，独立收藏、下载和对外分享。
 2. [ADR-0003](adr/0003-native-pull-delivery.md)：借鉴已有浏览底座，优先原生主动取回受限观察结果；离线实现与真机验证并行。
-3. 本目录的产品要求、实施计划、架构与验收矩阵，按各自职责执行。
-4. [原 Web-first 计划](WEB_FIRST_PLAN.zh-CN.md) 和 [ADR-0001](adr/0001-web-first.md)：保留原始决策与未被覆盖的安全要求，不再把旧账号归属、严格串行开发顺序或消息桥选型当作新要求的前置。
-5. `integration.md`、`integration-contract.md`、旧 APK allowlist 为历史资产，不恢复官方 APK 修改路线。
+3. [ADR-0004](adr/0004-feed-dwell.md)：可选时间线停留（未点开也能记录）、默认 3 秒和基础阶段提前到 B，优先于旧“全部留到 D”的顺序。
+4. 本目录的产品要求、实施计划、架构与验收矩阵，按各自职责执行。
+5. [原 Web-first 计划](WEB_FIRST_PLAN.zh-CN.md) 和 [ADR-0001](adr/0001-web-first.md)：保留原始决策与未被覆盖的安全要求，不再把旧账号归属、严格串行开发顺序或消息桥选型当作新要求的前置。
+6. `integration.md`、`integration-contract.md`、旧 APK allowlist 为历史资产，不恢复官方 APK 修改路线。
 
 文档有冲突时先按以上优先级解释并修正文档，不擅自改变产品目标。源码实现现状不因文档优先级变化自动改变。
 

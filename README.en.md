@@ -9,7 +9,7 @@
 ## Continue development here
 
 - **[Documentation index](docs/README.md)**: authority, current state and tracking.
-- **[Implementation plan v2](docs/IMPLEMENTATION_PLAN.zh-CN.md)**: XS-01–XS-15 work packages, dependencies, A–D delivery batches and next steps (Chinese).
+- **[Implementation plan v2.1](docs/IMPLEMENTATION_PLAN.zh-CN.md)**: XS-01–XS-15 work packages, dependencies, A–D delivery batches and next steps (Chinese).
 - **[Product requirements](docs/product.md)** · [Local library/media specification](docs/LOCAL_LIBRARY_MEDIA_PLAN.zh-CN.md).
 - **[ChatGPT Studio reuse review](docs/CHATGPT_STUDIO_REUSE.zh-CN.md)**: pinned sources, browser lifecycle, native snapshots and exclusions.
 - **[Architecture](docs/architecture.md)** · [Roadmap](docs/roadmap.md) · [Acceptance matrix](docs/ACCEPTANCE_MATRIX.zh-CN.md) · [Change record](docs/CHANGELOG.md).
@@ -17,9 +17,11 @@
 
 [Issue #4](https://github.com/ForceMind/Xs/issues/4) tracks this scope; [Issue #3](https://github.com/ForceMind/Xs/issues/3) retains live browser evidence. The older [Web-first plan](docs/WEB_FIRST_PLAN.zh-CN.md) and [ADR-0001](docs/adr/0001-web-first.md) remain history and non-conflicting safeguards; use the documentation index to resolve conflicts.
 
+**[Timeline dwell specification (Chinese)](docs/FEED_DWELL_PLAN.zh-CN.md)** · [ADR-0004](docs/adr/0004-feed-dwell.md) · [D01–D09 acceptance](docs/ACCEPTANCE_MATRIX.zh-CN.md): stop on a post in the timeline without opening it, and optionally remember that visible exposure locally. Baseline dwell moves into early batch B; large-scale optimization stays in D.
+
 ## Confirmed experience
 
-**Record deliberate opens immediately.** After opt-in, entering a valid post detail creates history without a dwell threshold or another save tap. Store a link/time first if the body is pending, then enrich without creating more visits. Reload, rotation and restoration are not new opens. Feed dwell is separate and optional; own repost actions require confirmed success or an ownership-confirmed import.
+**Record deliberate opens immediately—and remember qualifying feed dwell without opening.** After opt-in, entering valid post detail creates history without a delay or extra save tap. Independently opt in to feed exposure with **1.2s / 3s (recommended default) / 5s** continuous-visible thresholds, allowing local search for posts seen for ≥5 seconds but **never opened**. This measures visibility, not proven reading. Reload, rotation and content enrichment do not create fake opens; own repost activity requires confirmed success.
 
 **Favorites belong to Xs.** A distinct “Favorite in Xs” button, categories, tags and notes do not invoke X bookmarks, likes or reposts. Logging out or switching X accounts must not delete or implicitly switch local history/favorites/assets. Browser Profile, library ownership and social actor attribution are different concepts.
 
@@ -36,7 +38,7 @@
 | Manual post-link saving and incoming share-to-Xs | Implemented; link-only is not a body snapshot or automatic history |
 | tweets.js/tweet.js import | One selected file/part up to 16 MiB; ownership confirmation required |
 | Observation gate and Android JSON parser | Inactive foundations, not a working webpage observer |
-| Automatic opens, dwell and own-activity observation | Local event foundations exist; web integration and real loop pending |
+| Automatic opens, dwell and own-activity observation | Event foundations exist; **dwell selector, measured duration and never-opened search are unimplemented**, along with live site integration |
 | App-native favorite button, snapshots and richer organization | Accepted scope, not equivalent to legacy LOCAL_SAVE |
 | Image/video download, asset management, outbound file sharing | Accepted scope; implementation and receiver-app testing pending |
 | Ad/subscription/recommendation cleanup | Reversible rules pending; no entitlement bypass or hiding security prompts |
@@ -47,7 +49,7 @@ Review ChatGPT Studio's Android lifecycle, Profile, controlled windows and nativ
 
 Offline observation, migration, favorite and media implementation can proceed alongside device verification. Do not default-enable unvalidated live capture. The old interpretation that all work must wait for W0 is not the current execution order.
 
-Delivery: **A browsing/automatic history → B favorites/images/assets/sharing → C own reposts/videos/cleanup → D optional dwell/release hardening.**
+Delivery: **A browsing/immediate open history → early B optional no-click feed dwell plus favorites/images/assets/sharing → C own reposts/videos/cleanup → D dwell performance/retention and release hardening.**
 
 ## Available manual flow
 

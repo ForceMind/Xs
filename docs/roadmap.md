@@ -13,9 +13,9 @@ Do not replace this status with a percentage. Use the [XS-01–XS-15 work packag
 | Batch | Delivery | Work packages | Exit evidence |
 | --- | --- | --- | --- |
 | A | Browser foundation + app-owned library + immediate open history + searchable snapshots | XS-01–06 | No dwell gate, no duplicate reload/rotation events, preserving migration, offline/restart retrieval and real-site browser acceptance |
-| B | Native favorite/category workflow + images + asset page + outbound file sharing | XS-07–10 | No X server bookmark mutation; real downloaded files; narrow read grants; recipient compatibility and independent deletion |
+| B | **Baseline optional feed dwell without opening**, native favorites/categories + images + assets + outbound sharing | XS-14 (baseline), XS-07–10 | Opt-in 1.2/3(default)/5s dwell, long card, duration/non-opened offline search, no fake opens; real files/sharing and independent deletion |
 | C | Confirmed own reposts + standard video + reversible promotional cleanup | XS-11–13 | Successful actions not menu clicks; complete playable files; restore-original toggle; sensitive UI unaffected |
-| D | Optional feed dwell + necessary advanced media + privacy/storage/release hardening | XS-14–15 and tested extensions | Long-card/overlay/background boundaries, migration/restore/performance, stable signing and exact supported scope |
+| D | Dwell performance/retention/analytics hardening + necessary advanced media + privacy/storage/release | XS-14 (hardening)/15 and tested extensions | Long-scroll/overlay/low-memory and storage/quota performance, migration/restore, stable signing and real compatibility scope |
 
 A and B do not wait for a general bridge platform or full multi-account service. XS-02 browser work and XS-03/04 storage/write work can proceed in parallel; observer and share/download fixtures can be developed before live deployment. Small reversible filter fixtures can also be built early; C is their acceptance batch, not a prohibition on earlier work.
 
@@ -38,7 +38,8 @@ The primary client remains Android. Standard desktop browser extensions are a po
 1. XS-01: verify the current source/toolchain, pinned reuse inventory and licenses without moving private user data or keys.
 2. XS-02 and XS-03/04 in parallel: browser lifecycle/window support plus library migration/write invalidation fixtures.
 3. XS-05/06: prove a synthetic click → valid detail → one immediate event → late text enrichment → native offline search/category → return loop.
-4. Bring that loop into an explicitly validated live X context, then complete B/C; do not substitute more manual link-save entry points for the core history goal.
+4. XS-14 baseline in parallel with early B: synthetic timeline visible ≥ selected 3s default → FEED_VISIBLE measured duration → offline search including never-opened filter, with background/long-card tests.
+5. Bring both loops into an explicitly validated live X context, then complete B/C; do not substitute more manual link-save entry points for the core history goal.
 
 ## Historical milestones retained
 

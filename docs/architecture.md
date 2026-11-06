@@ -57,12 +57,19 @@ The v2 schema and its v1 migration exist. Proposed new models include library/le
 | Record | Meaning |
 | --- | --- |
 | OPEN_POST | Opted-in deliberate entry into a valid detail context; no dwell delay. LINK_ONLY may be stored immediately, then enriched. |
-| FEED_VISIBLE | Independent, optional foreground exposure meeting continuous dwell and readable-area rules. Not proof of reading. |
+| FEED_VISIBLE | Independent, opt-in **timeline exposure without opening the post**, 1.2s/3s (default)/5s continuous visible dwell, normalized readable area and measured duration. Not proof of reading and does not increase opened_count. |
 | Own action | Confirmed own post/reply/quote/repost or provenance-checked import; cancellation/failure/seeing a repost is not success. |
 | FAVORITE | Xs-native relationship and local time, independent of X server bookmarks/likes. |
 | LOCAL_SAVE | Existing manual link import/save; retained as distinct legacy semantics, not silently inflated into reading. |
 
 One navigation ID admits at most one open per library/context; increasing message sequences are not sufficient. Original publication time, action time, open time and feed time remain separate, with unknown values preserved. Snapshots use LINK_ONLY/PARTIAL/DETAIL_VISIBLE and explicit source/version; length-only retention is a legacy safeguard, not a final correctness rule for edited posts.
+
+### Feed dwell design target (XS-14 baseline moves into B)
+
+See [feed dwell specification](FEED_DWELL_PLAN.zh-CN.md) / [ADR-0004](adr/0004-feed-dwell.md). A locally packaged X-specific observer will verify actual timeline cards, foreground visibility and readable-area ratio using bounded page observation; native code owns selected library, feature consent, current route, generation and monotonic timing. Thresholds are **1.2, 3 (recommended default), 5 seconds**; no threshold applies to deliberate OPEN_POST.
+
+Each continuous qualified exposure uses a stable `exposure_id`, persists FEED_VISIBLE separately from opening/favoriting and updates the same event duration as it continues. A real subsequent exposure may form a new event. Suggested new fields and a v2-preserving schema migration are **design targets**, not current runtime tables. Offline filters must support duration range and “never opened” in the local library without inferring server read status. Long cards normalize against actually readable viewport content; background, overlay, sensitive route and idle constraints require test fixtures and real-device evidence. The 1.2-second minimum currently enforced by FeedCapturePolicy is not by itself a shipped 3-second selector or measured duration index.
+
 
 ## 6. Writes, deletion and invalidation
 
