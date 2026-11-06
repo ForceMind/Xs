@@ -10,6 +10,7 @@
 
 - **[文档总入口](docs/README.md)**：当前方案、文档优先级、实际状态和跟踪入口。
 - **[完整实施计划 v2.1](docs/IMPLEMENTATION_PLAN.zh-CN.md)**：XS-01～XS-15 工作包、依赖、A～D 交付批次与下一步。
+- **[Work 持续研发交接指令](docs/WORK_HANDOFF_PROMPT.zh-CN.md)**：在新工作会话中接管实际代码、测试、GitHub 提交与验收。
 - **[产品要求](docs/product.md)** · [本机资料库、下载与分享规范](docs/LOCAL_LIBRARY_MEDIA_PLAN.zh-CN.md)。
 - **[ChatGPT Studio 借鉴清单](docs/CHATGPT_STUDIO_REUSE.zh-CN.md)**：浏览底座、页面保留、原生快照获取、源码来源与不应照搬的部分。
 - **[架构](docs/architecture.md)** · [路线图](docs/roadmap.md) · [验收矩阵](docs/ACCEPTANCE_MATRIX.zh-CN.md) · [变更记录](docs/CHANGELOG.md)。

@@ -10,6 +10,7 @@
 
 - **[Documentation index](docs/README.md)**: authority, current state and tracking.
 - **[Implementation plan v2.1](docs/IMPLEMENTATION_PLAN.zh-CN.md)**: XS-01–XS-15 work packages, dependencies, A–D delivery batches and next steps (Chinese).
+- **[Work development handoff prompt](docs/WORK_HANDOFF_PROMPT.zh-CN.md)**: instructions for implementing, testing, committing, and validating the existing project in a new Work session (Chinese).
 - **[Product requirements](docs/product.md)** · [Local library/media specification](docs/LOCAL_LIBRARY_MEDIA_PLAN.zh-CN.md).
 - **[ChatGPT Studio reuse review](docs/CHATGPT_STUDIO_REUSE.zh-CN.md)**: pinned sources, browser lifecycle, native snapshots and exclusions.
 - **[Architecture](docs/architecture.md)** · [Roadmap](docs/roadmap.md) · [Acceptance matrix](docs/ACCEPTANCE_MATRIX.zh-CN.md) · [Change record](docs/CHANGELOG.md).

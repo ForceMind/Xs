@@ -14,6 +14,7 @@
 | [本机资料库、下载与分享规范](LOCAL_LIBRARY_MEDIA_PLAN.zh-CN.md) | 详细交互、下载和分享约束 |
 | [时间线停留记录专项方案](FEED_DWELL_PLAN.zh-CN.md) | 不打开帖子也能记录，1.2/3/5秒档、时长、去重、未打开检索和 XS-14 验收 |
 | [完整实施计划](IMPLEMENTATION_PLAN.zh-CN.md) | XS-01～XS-15 工作包、依赖、阶段交付和下一步 |
+| [Work 持续研发交接指令](WORK_HANDOFF_PROMPT.zh-CN.md) | 新 Work 会话直接复制；要求实际代码、测试、提交和证据 |
 | [架构](architecture.md) | 浏览底座、原生主动获取、统一写入、媒体与分享边界 |
 | [ChatGPT Studio 借鉴与迁移清单](CHATGPT_STUDIO_REUSE.zh-CN.md) | 已审阅源码基线、可复用部分、不应照搬部分和许可检查 |
 | [验收矩阵](ACCEPTANCE_MATRIX.zh-CN.md) | 功能、并发、真机、接收应用与发布门槛 |
