@@ -1,51 +1,97 @@
-# Xs architecture — accepted Web-first target
+# Xs architecture — app-owned library and native-pull plan
 
-Decision date: 2026-10-29. See [ADR-0001](adr/0001-web-first.md) and the [complete implementation plan](WEB_FIRST_PLAN.zh-CN.md). This document distinguishes the existing archive from an unimplemented target; it does not claim a working web client.
+Updated 2026-11-06. Read [product](product.md), [ADR-0002](adr/0002-local-library-media.md), [ADR-0003](adr/0003-native-pull-delivery.md), [implementation](IMPLEMENTATION_PLAN.zh-CN.md) and [acceptance](ACCEPTANCE_MATRIX.zh-CN.md). This describes the target and names existing foundations separately; it does not claim live integration.
 
-## Target boundary
+## 1. Runtime and target boundaries
 
 ```text
-Official X web in Android WebView [W0 host exists; live feasibility pending]
-  -> packaged web observer / reversible UI rules [planned]
-  -> origin + main-frame + route + schema + session gate [planned]
-  -> native capture controller and bounded queue [refactor planned]
-  -> existing native SQLite / FTS / categories / archive UI [exists]
+Official X web in the Xs Android browser
+  ├─ BrowserHost / controlled navigation / browser Profile [host exists; refactor planned]
+  └─ packaged X-specific observer and reversible styles [planned]
+       ↑ native-initiated evaluateJavascript; finite batch/snapshot result
+       ↓ untrusted observations, no archive-query/command interface
+NativePageController + consent/context/schema/budget checks [planned]
+       ↓ library generation + document ID + navigation ID + receipt clock
+Unified bounded CaptureCoordinator [planned]
+  ├─ SQLite / FTS / snapshots / events / favorites / categories [foundation exists]
+  ├─ explicit MediaResolver → DownloadCoordinator → AssetRepository [planned]
+  └─ native ShareCoordinator → selected completed files → Android Sharesheet [planned]
 ```
 
-`ObservationRoutes` and `ObservationGate` now define a dormant, bounded, fail-closed native observation admission contract, tested without wiring a message listener into WebView. The live-login gate is still open.
+`app-android` currently hosts a system WebView with manual link save and incoming text sharing. `xs-runtime` contains archive UI/storage/import. `dev-harness` is a synthetic offline host, not a working X client. ObservationGate/Routes/WebObservationParser are inactive foundations. Automatic webpage history, native FAVORITE workflow, media downloader and outbound file provider are not made real by this diagram.
 
-The [inactive observation protocol](contracts/observation-v1.md) now has a strict Android JSON parser and a native-owned admission gate, with JVM/emulator tests. **There is still no attached web message listener or active capture.**
+## 2. Browser engineering and reuse
 
-The remote website is untrusted. Even an allowed-origin message may originate from a same-origin script other than ours. Website-to-native communication accepts bounded observations only and exposes no archive reads, arbitrary SQL, filesystem, export, erasure or consent changes.
+Use reviewed ChatGPT Studio patterns for page ownership independent of Activity, Profile binding before web use, controlled child windows, navigation categories, context reattachment and invalidated callbacks. See the [pinned reuse manifest](CHATGPT_STUDIO_REUSE.zh-CN.md). Do not import all chat workflow features, authentication domains, payloads or signing identity.
 
-Native code owns archive scopes, epochs, receipt times and user controls. Login/DM/security/unknown routes do not receive capture privileges. WebView feature detection must fail closed for enhancement, not fall back to a generic unrestricted bridge. Ordinary browsing remains available where the provider supports it.
+Start with one active web session. Runtime capability checks, not OS version assumptions, determine optional profile support. A local library is not a verified X account or a proxy. Controlled authentication navigation must not gain observation privileges. Keep normal browsing available when enhancement is disabled.
 
-## Existing assets retained
+Page retention is not capture permission: background/hidden/covered views stop observation timing. Do not rely on foreground-service hacks, fake audio or unbounded retained tabs. Process death means reloading the website; local history is what remains available offline.
 
-`posts`, `history_events`, `user_actions`, `categories`, `post_categories` and the trigger-maintained FTS4 index already form the local archive. `LOCAL_SAVE` is a separate, native-user-initiated action with its own known timestamp and no invented reading events. The v2 model distinguishes open/feed timestamps and supports a non-destructive v1 migration. CJK/punctuation queries use the existing substring fallback; no new tokenizer is implied.
+## 3. Native-pull observation contract
 
-`xs-runtime` builds an AAR. `dev-harness` is an offline synthetic APK, not X. `XsHistoryActivity` provides native archive management. The posts-JS importer currently handles one user-selected file/part of up to 16 MiB.
+Prefer local scripts packaged with the signed app and native-controlled calls that retrieve finite event batches/snapshots. Native code controls the target WebView, allowed current route/origin, foreground/overlay state, consent, library generation and navigation reason. Do not expose a general Java object or any SQL/path/Intent/export/delete operation to pages.
 
-The existing `bindAuthenticatedAccount` contract cannot be satisfied merely by a webpage handle. Add explicit archive scopes and binding confidence; preserve old records with tested migrations. Do not silently reinterpret unverified local identifiers as authenticated identities.
+Returned JSON remains untrusted: same-origin scripts/DOM can affect content, and a random window key/token is not identity authentication. Validate both before queuing and immediately before persistence. Reject stale document/navigation/space callbacks, oversized payloads, unknown fields/commands and sensitive contexts. Review strict parser behavior, duplicate keys, trailing content, nesting, byte limits and unsupported numeric forms before activation; a JSONObject constructor alone is not a security proof.
 
-## Planned modules
+Current limits in the older policy are starting budgets, not performance results: <=64 KiB envelope, <=16,000 body characters, <=100 author characters, 20 accepted observations/second with a burst budget of 40. Define a bounded pending queue (initial target <=128 events) and overload pause/recovery behavior during implementation. Invalid-message floods must also be bounded before expensive parsing. No unbounded executor is accepted as the final write controller.
 
-`app-android/`: implemented W0 independent browser host, navigation, a native share-sheet target, and explicit manual post-link bookmarking to a native-created `local:` space. The share handler accepts bounded user-provided HTTPS public post links only; no page inspection. No automatic capture or WebView bridge.
-`web-enhancer/`: TypeScript observation and reversible style capabilities, packaged locally.
-`contracts/`: message and portable-export schemas.
-`tests/web-fixtures/`: synthetic or authorized redacted fixtures.
-`compat/web/`: tested capabilities, provider versions, language/theme and release evidence.
+Rapid open-and-return must not be missed by polling the current URL every few seconds. Maintain bounded page observations and native navigation identity with tested flush/transition behavior. Refresh, back/forward, reload, restored state and actual deliberate new entry have distinct reasons. Content updates enrich a post; they are not new reading events.
 
-Except for `app-android/`, these paths remain planned. Keep current Java/storage/UI modules rather than performing a gratuitous rewrite.
+The [existing inactive observation envelope](contracts/observation-v1.md) is a starting point. A future origin-scoped listener is optional, not required to ship the first native-pull loop; it must preserve all current permissions and non-sensitive-route checks.
 
-## Login and platform gates
+## 4. Library ownership and preserving migration
 
-Real X login is a prerequisite, with each login method tested independently. Google OAuth embedded-user-agent restrictions are not solved by an embedded Chromium swap. A Custom Tab/browser login does not automatically move the session into WebView. No credential or cookie transfer workaround.
+Default library belongs to the application, not to the active X login. Distinguish:
 
-If the required Android path fails, evaluate a real-browser extension. Share observation logic, contracts and fixtures; do not assume Android native UI/SQLite is directly portable. Desktop and iOS are separate delivery gates.
+- `library_id`: native local data ownership; optional private libraries may be user-created later.
+- `browser_profile_id` / session context: browser cookies and website storage; never exported with the library.
+- `actor_hint` / provenance: optional metadata for confirmed own social actions, not library ownership.
 
-## Privacy and release
+A website account switch invalidates observation context and unconfirmed social attribution; it does not delete or implicitly switch local favorites/assets. Do not pass a local UUID or scraped handle to the legacy `bindAuthenticatedAccount` as if authenticated.
 
-Capture defaults off; open and feed semantics stay separate. No credential/DM/arbitrary traffic capture, backend or telemetry. X web itself still performs normal network requests. SQLite is not inherently encrypted. Verify cloud/D2D backup exclusions, scope isolation, migration, deletion, queue invalidation, restore and dependency/signing provenance before release.
+The v2 schema and its v1 migration exist. Proposed new models include library/legacy mapping, versioned snapshots, independent favorites, download tasks/assets and share leases; they are not existing tables. Final DDL/version must be fixed by migration tests before implementation. Preserve each legacy account_id namespace, counts, times, category links and FTS. Offer explicit consolidation, never a silent global constant or destructive recreation. Failed migration keeps the original data and an actionable error.
 
-Legacy `integration.md`, `integration-contract.md` and APK host allowlist remain historical references, superseded for the active route. Metadata validation alone is not a working runtime gate. The first implementation work is a minimal, non-instrumented login/browser proof, not additional APK patch scaffolding.
+## 5. Event and snapshot semantics
+
+| Record | Meaning |
+| --- | --- |
+| OPEN_POST | Opted-in deliberate entry into a valid detail context; no dwell delay. LINK_ONLY may be stored immediately, then enriched. |
+| FEED_VISIBLE | Independent, optional foreground exposure meeting continuous dwell and readable-area rules. Not proof of reading. |
+| Own action | Confirmed own post/reply/quote/repost or provenance-checked import; cancellation/failure/seeing a repost is not success. |
+| FAVORITE | Xs-native relationship and local time, independent of X server bookmarks/likes. |
+| LOCAL_SAVE | Existing manual link import/save; retained as distinct legacy semantics, not silently inflated into reading. |
+
+One navigation ID admits at most one open per library/context; increasing message sequences are not sufficient. Original publication time, action time, open time and feed time remain separate, with unknown values preserved. Snapshots use LINK_ONLY/PARTIAL/DETAIL_VISIBLE and explicit source/version; length-only retention is a legacy safeguard, not a final correctness rule for edited posts.
+
+## 6. Writes, deletion and invalidation
+
+All local writes, import batches, favorite changes, asset completion and destructive operations go through a unified native controller with bounded work. Queued units carry native library/document/generation identity; a clear or cancellation advances invalidation before a storage transaction. Recheck at commit time so a late callback cannot restore deleted records.
+
+Separate unfavorite, history clear, asset deletion, cache clear, browser logout/session clear and complete library deletion. Favoriting must not request an X server mutation. Importing never invents opens. Library clearing must handle downloads and share leases deliberately rather than racing independent Activity executors.
+
+## 7. Media and asset pipeline
+
+Resolve only explicitly selected media from permitted post contexts. Resolver output is an untrusted candidate, not an arbitrary network proxy request. Validate HTTPS destinations/redirects, resource type, bounds, generated filenames, disk quota and retry budget; reject local/private-network probing and unsafe paths. No DRM, paywall or authorization bypass. Avoid generic network-response interception and credential logs.
+
+Download images and available complete videos first. `blob:` identifiers, manifests and fragments are not completed MP4s. If permitted HLS/DASH is actually needed, test resolution, assembly, audio/video synchronization and shareable output separately. Lack of an allowed media source is an explicit unsupported/failure result, not permission to broaden extraction.
+
+Write temporary data, verify actual type/completeness/playback, then atomically register the asset. Resume only with verified range/object consistency; otherwise retry from the start explicitly. Keep user downloads separate from cache. Use an appropriate Android task/notification mechanism after target-version verification; a documentation name does not imply background reliability.
+
+Assets are separate from posts with stable local IDs, content hashes, MIME, size/duration/dimensions, source-post links, local timestamps, state and categories. Source-page disappearance does not delete completed local files. User export to Photos/Files is separate from private app storage and never implicit.
+
+## 8. Outbound sharing
+
+Native ShareCoordinator handles canonical links, explicit text with source, and selected actual completed media. Use ACTION_SEND/ACTION_SEND_MULTIPLE, accurate MIME, content URI/ClipData and temporary read grants. Provider exposure is restricted to chosen shareable assets/copies, never root/library databases, credentials, keys or unfinished files. No write grants.
+
+User selects installed app, conversation and sending. WeChat/QQ/Feishu/Telegram are compatibility targets, not token/SDK/contact integrations. Direct conversation shortcuts depend on the recipient. A chooser completion cannot prove sending/delivery and must not trigger automatic retry.
+
+Protect asynchronous receiver reads with a bounded share copy/lease and documented cleanup; deleting the source or clearing cache must not immediately break an active share. Sharing intentionally passes selected content to another app; no Xs upload service is used, but the receiver may upload it. Preserve originals on target/format/size failure; offer explicit alternatives, not silent quality loss.
+
+## 9. UI and release boundaries
+
+Preserve X web navigation. Add minimal native favorite/download/share/library actions. Native library provides history, favorites, own content and assets with shared search/category/time filters. Optional page-card actions and reversible styles must not block the native path or alter login/security/composers.
+
+Capture and filtering start off and have separate consent; cache is not durable saved media, and SQLite is not currently claimed encrypted. Reuse of device-key patterns does not encrypt existing FTS/WAL/backups automatically. Live login, target-device media, receiver apps, migrations, backups, signing and licensing need their own evidence.
+
+[Roadmap](roadmap.md) and [acceptance matrix](ACCEPTANCE_MATRIX.zh-CN.md) define stage completion. W0 gates enabling unvalidated real-site automation and release, not parallel offline development. Legacy APK integration contracts are retained history. No production release, website deployment or modification of the user's machines is authorized by this plan.

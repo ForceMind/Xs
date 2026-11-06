@@ -1,32 +1,50 @@
-# Xs development roadmap — Web-first
+# Xs delivery roadmap — current A–D plan
 
-Accepted 2026-10-29. [Full plan](WEB_FIRST_PLAN.zh-CN.md) and [ADR-0001](adr/0001-web-first.md) supersede the old APK-patching route.
+Updated 2026-11-06. Start at [documentation index](README.md). Product authority: [ADR-0002](adr/0002-local-library-media.md); implementation: [ADR-0003](adr/0003-native-pull-delivery.md). The older Web-first plan remains historical/non-conflicting guidance, not a reason to revert app-owned libraries or block offline work.
 
-## Existing foundation
+## Present baseline
 
-The repository contains an independent Java/SQLite archive, URL/search/schema policies, native Android archive UI, categories, open/feed events, posts-JS import, bilingual README and synthetic/instrumentation tests. Existing code and historical test evidence are not proof of a new live web integration.
+At `eb5aa4dbbb0499fb632202a27aaf24e898718818`, the repository contains a W0 browser host, local SQLite/FTS archive and UI, manual link save, incoming share, posts-JS import, and inactive observation policy/parser tests. New native favorites, automatic X history, media downloads and outbound file sharing are requirements, not delivered features.
 
-Preserve `xs-runtime`, `dev-harness`, core and data migration history. Keep old APK contracts and empty allowlist as legacy assets, not current prerequisites.
+Do not replace this status with a percentage. Use the [XS-01–XS-15 work packages](IMPLEMENTATION_PLAN.zh-CN.md) and [acceptance IDs](ACCEPTANCE_MATRIX.zh-CN.md), with evidence for each completed scope. Docs-only updates do not rerun or pass runtime tests.
 
-## Active phases — all pending at plan adoption
+## Execution order
 
-- [ ] W0: build a minimal non-instrumented browser host; validate actual X login methods, session restoration, navigation, media, upload and logout/switching. Record exact device/WebView/build evidence. Stop or narrow the route if this fails.
-- [ ] W1: implement secure navigation, runtime feature checks, native archive scopes, bounded origin/main-frame/route/schema/epoch-validated observations and a native-only settings boundary.
-- [ ] W2: deliver deliberate-open recording, native offline search/categories, duplicate prevention, persistence and return-to-original-post as one verified loop.
-- [ ] W3: separately verify feed visibility, reversible UI filtering and official-archive import integration; never invent repost or reading times.
-- [ ] W4: complete privacy review, backup/restore, non-destructive migrations, erasure/queue behavior, performance, real-device compatibility, signing/dependency provenance and distribution review.
-- [ ] W5: evaluate standard desktop-browser extension delivery; independently assess other desktop shells and iOS. Do not promise automatic code or login portability.
+| Batch | Delivery | Work packages | Exit evidence |
+| --- | --- | --- | --- |
+| A | Browser foundation + app-owned library + immediate open history + searchable snapshots | XS-01–06 | No dwell gate, no duplicate reload/rotation events, preserving migration, offline/restart retrieval and real-site browser acceptance |
+| B | Native favorite/category workflow + images + asset page + outbound file sharing | XS-07–10 | No X server bookmark mutation; real downloaded files; narrow read grants; recipient compatibility and independent deletion |
+| C | Confirmed own reposts + standard video + reversible promotional cleanup | XS-11–13 | Successful actions not menu clicks; complete playable files; restore-original toggle; sensitive UI unaffected |
+| D | Optional feed dwell + necessary advanced media + privacy/storage/release hardening | XS-14–15 and tested extensions | Long-card/overlay/background boundaries, migration/restore/performance, stable signing and exact supported scope |
 
-The detailed WF-01..WF-12 work packages, dependency graph, limits and acceptance matrix are in the full plan. W0 is an internal PoC; W2 may qualify as Alpha, W3 as Beta and W4 as a release candidate only after their gates pass.
+A and B do not wait for a general bridge platform or full multi-account service. XS-02 browser work and XS-03/04 storage/write work can proceed in parallel; observer and share/download fixtures can be developed before live deployment. Small reversible filter fixtures can also be built early; C is their acceptance batch, not a prohibition on earlier work.
 
-No milestone is complete because a document, AAR, mock fixture or synthetic APK exists. Do not claim new CI, emulator or live-login success without actually obtaining the matching result. No time commitment substitutes for a real exit criterion.
+## Live gates versus development gates
 
-## 2026-11-05 implementation update
+- W0 / [Issue #3](https://github.com/ForceMind/Xs/issues/3): actual required X login and core browsing; methods/results are independent. A working ChatGPT shell is a reusable engineering reference, not automatic proof for every X flow.
+- New [Issue #4](https://github.com/ForceMind/Xs/issues/4): app-owned history/favorites/media/sharing, tracked by XS task and acceptance ID.
+- Automatic X observation stays disabled in unvalidated real-site builds. Offline implementation is allowed and expected; no login bypass or copied session state.
+- A direct-login conditional pass may define a limited test-build scope, not a claim that Google/Apple/Passkey all work. Real failures must distinguish provider refusal from incomplete window/navigation handling.
+- Release requires real-device and exact recipient-app evidence, not just a generated APK, CI green check or synthetic webpage.
 
-W0 browser work was merged to `main` (PR #2). Native manual bookmarking now supports the Android system share sheet (including sharing from the existing X app) without intercepting webpages or identity. A user-created native local archive space and explicit **manual post-link saving** now form an offline-search/category/return loop with no webpage observer or trusted X identity binding. Pure-Java observation admission policy has defensive tests but is **not activated**. Real X login and full browsing still require physical device acceptance before W1/W2 auto-capture.
+## Mapping the previous W0–W5 labels
 
-## 2026-11-02 implementation update
+W0 remains browser feasibility; W1 security/library ownership is implemented within A; W2 usable history expands across A/B; W3 social/feed/filters/media maps to B/C/D; W4 privacy/upgrade/release maps to D. W5 remains a later independent platform decision. Do not restart the project or run the obsolete APK-patching track in parallel.
 
-W0 host implementation is in [PR #2](https://github.com/ForceMind/Xs/pull/2).
-See [execution record](W0-EXECUTION.md) and [live matrix](../compat/web/W0-MATRIX.md).
-The live W0 gate remains unchecked. No W1 bridge or W2 capture is activated.
+The primary client remains Android. Standard desktop browser extensions are a potential alternative/next platform if evidence calls for it; do not simultaneously adopt multiple browser engines and four desktop/mobile stacks.
+
+## Next executable slice
+
+1. XS-01: verify the current source/toolchain, pinned reuse inventory and licenses without moving private user data or keys.
+2. XS-02 and XS-03/04 in parallel: browser lifecycle/window support plus library migration/write invalidation fixtures.
+3. XS-05/06: prove a synthetic click → valid detail → one immediate event → late text enrichment → native offline search/category → return loop.
+4. Bring that loop into an explicitly validated live X context, then complete B/C; do not substitute more manual link-save entry points for the core history goal.
+
+## Historical milestones retained
+
+- 2026-10-29: [ADR-0001](adr/0001-web-first.md) adopted Web-first over official APK modification.
+- 2026-11-02: W0 PoC authored; see [execution record](W0-EXECUTION.md) and [device matrix](../compat/web/W0-MATRIX.md).
+- 2026-11-05: PR #2 merged as `7b06e5c81da5a34b06266554d61bf1b65896b845`; later baseline `67d2a48d01dbd08e866d0c991ef08bbaa4f09531` added manual links/share and inactive observation checks. Live W0 was not marked passed.
+- 2026-11-06: requirements commit `eb5aa4dbbb0499fb632202a27aaf24e898718818` established app-owned favorites/downloads/sharing. This roadmap consolidation records the implementation work still needed.
+
+See [change record](CHANGELOG.md). No calendar promise replaces an actual acceptance result.

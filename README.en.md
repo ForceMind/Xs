@@ -2,65 +2,75 @@
 
 [简体中文](README.md) | [English](README.en.md)
 
-**Xs is an independent, local-first enhancement for using X.** Official X web supplies browsing and social functions; an app-owned on-device library provides history, local favorites, categories and personal-content indexing, with image/video downloads, asset management and outbound system sharing now in the accepted scope. No official X APK patching, new social backend or account proxy.
+**Xs is an independent, local-first enhancement for using X.** Official X web supplies browsing and social features; an app-owned on-device library provides open history, local favorites, organization, own-activity indexing, image/video downloads and sharing selected resources to other apps. No official APK patching, new social backend or account proxy.
 
-> **Still a W0 feasibility build, not a complete client.** Browser hosting, native archive, manual link saving and incoming “Save to Xs” sharing have code. Automatic web capture, full favorite snapshots, media downloading and outbound file sharing are not delivered. Real X login/media and physical-device compatibility remain acceptance gates.
+> **Still a W0 feasibility build, not a complete client.** The browser host, native archive, manual link saves and incoming “Save to Xs” have code. Automatic web history, complete favorite snapshots, media downloads and outbound file sharing remain implementation/acceptance work. Plans are not delivered features; live login/media and physical-device validation remain required.
 
-## Authoritative scope
+## Continue development here
 
-- [Product requirements](docs/product.md) · [Local library/media implementation specification (Chinese)](docs/LOCAL_LIBRARY_MEDIA_PLAN.zh-CN.md)
-- [ADR-0002: app-owned library and media](docs/adr/0002-local-library-media.md) — overrides conflicting ownership, trigger and media assumptions in earlier plans.
-- [Web-first baseline plan](docs/WEB_FIRST_PLAN.zh-CN.md) · [ADR-0001](docs/adr/0001-web-first.md)
-- [Existing architecture](docs/architecture.md) · [Historical roadmap](docs/roadmap.md) · [Inactive observation contract](docs/contracts/observation-v1.md)
-- [Custom-license direction](docs/LICENSING.md)
+- **[Documentation index](docs/README.md)**: authority, current state and tracking.
+- **[Implementation plan v2](docs/IMPLEMENTATION_PLAN.zh-CN.md)**: XS-01–XS-15 work packages, dependencies, A–D delivery batches and next steps (Chinese).
+- **[Product requirements](docs/product.md)** · [Local library/media specification](docs/LOCAL_LIBRARY_MEDIA_PLAN.zh-CN.md).
+- **[ChatGPT Studio reuse review](docs/CHATGPT_STUDIO_REUSE.zh-CN.md)**: pinned sources, browser lifecycle, native snapshots and exclusions.
+- **[Architecture](docs/architecture.md)** · [Roadmap](docs/roadmap.md) · [Acceptance matrix](docs/ACCEPTANCE_MATRIX.zh-CN.md) · [Change record](docs/CHANGELOG.md).
+- [ADR-0002: app-owned library/media](docs/adr/0002-local-library-media.md) · [ADR-0003: native-pull and parallel delivery](docs/adr/0003-native-pull-delivery.md) · [Licensing decision](docs/LICENSING.md).
 
-## Confirmed product goals
+[Issue #4](https://github.com/ForceMind/Xs/issues/4) tracks this scope; [Issue #3](https://github.com/ForceMind/Xs/issues/3) retains live browser evidence. The older [Web-first plan](docs/WEB_FIRST_PLAN.zh-CN.md) and [ADR-0001](docs/adr/0001-web-first.md) remain history and non-conflicting safeguards; use the documentation index to resolve conflicts.
 
-**Record deliberate opens immediately:** after opt-in, entering a post detail inside Xs records history without another save tap or a dwell threshold. Feed exposure/dwell has its own optional event. Refresh, rotation and content enrichment must not inflate counts. Own repost actions require confirmed success or an ownership-confirmed import.
+## Confirmed experience
 
-**Favorites belong to Xs:** a distinct “Favorite in Xs” control saves visible content, link and provenance with local organization. It does not create an X server bookmark, like or repost. The library belongs to the application, not the currently authenticated X account; X logout/switching must not delete or switch local favorites, history and assets.
+**Record deliberate opens immediately.** After opt-in, entering a valid post detail creates history without a dwell threshold or another save tap. Store a link/time first if the body is pending, then enrich without creating more visits. Reload, rotation and restoration are not new opens. Feed dwell is separate and optional; own repost actions require confirmed success or an ownership-confirmed import.
 
-**Downloads and assets:** explicit image, image-set and video downloads, local preview, source links, organization, task management and deletion. Streaming formats, resumability and quality support require implementation and actual testing. Caches, manifests or partial files are not complete downloads.
+**Favorites belong to Xs.** A distinct “Favorite in Xs” button, categories, tags and notes do not invoke X bookmarks, likes or reposts. Logging out or switching X accounts must not delete or implicitly switch local history/favorites/assets. Browser Profile, library ownership and social actor attribution are different concepts.
 
-**Share actual files:** send selected links, text, images or videos through the Android Sharesheet to WeChat, QQ, Feishu, Telegram or other installed apps that support the MIME/size. The user chooses a conversation and confirms sending. Direct Share targets depend on the receiving app. Xs neither reads messaging credentials nor automates sending, and cannot infer delivery from opening a chooser.
+**Downloads belong in an asset library.** Explicit image, image-set and video download supports offline preview, source links, time/category organization, retry, cancel, export and deletion. Favoriting does not silently download every attachment. Browser cache is not a saved download, and clearing cache must not delete saved assets.
+
+**Share actual files.** Select a link, text, one/multiple images or video through the Android Sharesheet to WeChat, QQ, Feishu, Telegram or another installed compatible app; the user chooses a conversation and sends. Direct conversation targets depend on the receiver. No messaging tokens, automated sending or delivery claim from opening a chooser.
 
 ## Capabilities versus implementation
 
-| Capability | Current status |
+| Capability | Current state |
 | --- | --- |
-| Android WebView host | Implemented; live X login and sustained physical-device usage pending |
-| SQLite/FTS, date search, categories, native archive | Foundation exists; preserving account-scope to app-library migration pending |
-| Manual post-link saving and incoming share to Xs | Implemented; a saved link is not a body snapshot or automatic history |
-| Official tweets.js/tweet.js import | One user-selected part up to 16 MiB; ownership confirmation required |
-| Automatic opens, optional feed dwell, own repost observation | Local event foundations exist; live web observation and end-to-end acceptance pending |
-| App-native favorite button and complete local snapshot workflow | Confirmed requirement; not equivalent to existing link-only saving |
-| Image/video downloader, asset manager, outbound file sharing | Accepted scope; implementation and recipient-app validation pending |
-| Ad/subscription promotion cleanup | Reversible rules pending; no paid-entitlement bypass or hiding security prompts |
+| Android System WebView host | Implemented; live login, media and sustained physical-device acceptance pending |
+| SQLite/FTS, pagination, categories and archive UI | Foundation exists; preserving migration from legacy account scopes to app library pending |
+| Manual post-link saving and incoming share-to-Xs | Implemented; link-only is not a body snapshot or automatic history |
+| tweets.js/tweet.js import | One selected file/part up to 16 MiB; ownership confirmation required |
+| Observation gate and Android JSON parser | Inactive foundations, not a working webpage observer |
+| Automatic opens, dwell and own-activity observation | Local event foundations exist; web integration and real loop pending |
+| App-native favorite button, snapshots and richer organization | Accepted scope, not equivalent to legacy LOCAL_SAVE |
+| Image/video download, asset management, outbound file sharing | Accepted scope; implementation and receiver-app testing pending |
+| Ad/subscription/recommendation cleanup | Reversible rules pending; no entitlement bypass or hiding security prompts |
 
-## Available manual testing flow
+## Implementation direction
 
-Use the browser menu's “Save this post locally” / “My local archive”, or Android's incoming “Save to Xs” share target. First use explicitly creates a local space, not a verified X account. Repeated saves do not fabricate read events.
+Review ChatGPT Studio's Android lifecycle, Profile, controlled windows and native-initiated observation patterns. Preserve Xs SQLite/FTS/UI and write an X-specific packaged observer. Prefer bounded native-pull results for the first history loop; a generic bidirectional bridge is not a prerequisite. Returned data stays untrusted and must pass context, consent, generation and navigation checks again at write time.
 
-This mode does not inspect page DOM, cookies or DMs and does not automatically track the feed. It complements the core product; it is not a permanent substitute for automatic history inside Xs.
+Offline observation, migration, favorite and media implementation can proceed alongside device verification. Do not default-enable unvalidated live capture. The old interpretation that all work must wait for W0 is not the current execution order.
 
-## Privacy and data behavior
+Delivery: **A browsing/automatic history → B favorites/images/assets/sharing → C own reposts/videos/cleanup → D optional dwell/release hardening.**
 
-Capture defaults off with separate consent. Only allowed post contexts are observed, never login, verification, DMs or composers. No Xs cloud upload/sync; normal X pages still use the network. Explicitly sharing to another app transfers selected content to that app, which may upload it according to its own behavior.
+## Available manual flow
 
-Unfavorite, clear history, delete saved media, clear cache and X logout are separate actions. Preserve legacy scopes and content during migration rather than silently merging or recreating storage. Maintain truthful timestamps/provenance/snapshot quality. Existing SQLite is not claimed to be encrypted. Webpages cannot query the whole archive, execute SQL, export, erase or enable capture.
+Use “Save this post locally” / “My local archive” in the browser menu, or the incoming Android “Save to Xs” action. Native confirmation creates a local space and saves the link without fake reading events. This is a companion entry, not a permanent substitute for automatic history.
 
-## Existing layout and checks
+## Privacy, migration and deletion
+
+Separate consent for open history, dwell and filtering. No passwords, verification codes, cookies/tokens, DMs, drafts or hidden-state collection. X pages still use their normal network; Xs adds no archive-upload service. Explicitly shared files are then handled by the receiving app, so they are not guaranteed to remain on-device afterward.
+
+Unfavorite, clear history, delete asset, clear cache, X logout and delete library are distinct. Preserve legacy account_id mappings instead of silent merging or destructive recreation. Queued imports/downloads/shares must not revive cleared data. Existing SQLite is not claimed encrypted; webpages get no whole-archive reads, arbitrary SQL, export or erasure capability.
+
+## Layout and checks
 
 ```text
-app-android/          W0 host, native manual link saving and incoming share
-xs-runtime/           Android local-archive library
-dev-harness/          Offline synthetic test host (NOT X)
-src/main/java/        Java URL/query/schema and inactive observation policy
+app-android/          W0 host, native manual link saves and incoming share
+xs-runtime/           Android on-device archive library
+dev-harness/          Offline synthetic host, NOT X
+src/main/java/        URL/query/schema/policies and inactive observation gate
 src/android/java/     SQLite/import/archive UI and observation-parser foundations
-tests/                JVM / SQLite / other regressions
+tests/                JVM/SQLite/regression tests
 scripts/              Engineering checks
-docs/                 Plans, decisions and execution evidence
-compat/               Browser acceptance matrix and legacy APK metadata
+docs/                 Current plans, decisions and acceptance
+compat/               Device matrix and legacy APK metadata
 ```
 
 ```bash
@@ -71,10 +81,10 @@ gradle --no-daemon :xs-runtime:assembleDebug :dev-harness:assembleDebug :app-and
 gradle --no-daemon :dev-harness:connectedDebugAndroidTest :app-android:connectedDebugAndroidTest
 ```
 
-[W0 execution evidence](docs/W0-EXECUTION.md) · [Live-device matrix](compat/web/W0-MATRIX.md). A requirements update is not a new compile/test run. Synthetic tests do not establish real X login or actual file delivery to messaging apps. Offline development may run alongside device checks; production automation remains acceptance-gated.
+[W0 execution evidence](docs/W0-EXECUTION.md) · [Device matrix](compat/web/W0-MATRIX.md). A documentation commit is not a new build/test result. Synthetic/emulator passes do not replace actual login, recipient-file compatibility or personal-data upgrade testing.
 
 ## License and disclaimer
 
-The current operative text is [GNU GPL v3.0](LICENSE). The owner allows considering a custom source license; see [the licensing decision](docs/LICENSING.md). This requirements update does not replace LICENSE, revoke historical/third-party grants, or invent new commercial restrictions.
+The operative root text remains [GNU GPL v3.0](LICENSE). The owner permits a custom-license direction; see [LICENSING](docs/LICENSING.md). This plan update does not replace the license, invent commercial restrictions, remove third-party notices or rewrite earlier grants.
 
-Xs is unaffiliated with X Corp. and includes no official X package or credentials. Download only authorized, permitted resources; do not bypass DRM, login challenges or paid entitlements. Source licensing does not grant third-party content/service rights. Local storage does not imply provider permission, zero account risk or store approval.
+Xs is unaffiliated with X Corp. and includes no official package, credentials or subscription entitlements. Process/download only authorized, permitted resources without DRM, payment or access-control bypass. Source licensing does not grant third-party content/service rights; no zero-risk or store-approval promise.
