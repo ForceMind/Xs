@@ -37,3 +37,11 @@
 6. 完成W0与真实站点观察安全审查后，才在另行待验收构建接入采集/动作/过滤适配。再实际完成快速打开返回与3.5秒/1秒停留、离线“>3秒且从未打开”、本人成功/失败/撤销、精简恢复及付费权益保护。当前PoC不满足这些真实站点验收，不能用合成报告替代。
 
 仍需设备/站点适配、可靠系统后台任务、广格式视频、长期滚动/电量/容量、完整资源备份/加密恢复、稳定签名与发布门禁。上述基础闭环不代表整个C/D阶段完成。
+
+## 首轮双版本执行通过与后续兼容修正
+
+[CI 42356157321](https://github.com/ForceMind/Xs/actions/runs/42356157321) 的 core、Android构建、API30、API36四任务均成功。源码head `70fa6cea1a3d93ee86596362623109eab260f523`，实际PR测试merge `a30a047c25eaedb61d4d5abb7aeb8feff3fe4bff`、tree `584635bf7a2538bf2282f6c17dcc61d95169951d`。两套模拟器各36项资料库与37项客户端用例，合计146次，0失败/错误/跳过；933项JVM及SQLite/DOM也通过。完整case、OS/WebView、artifact ZIP校验与job-local四APK摘要/公开证书见 [首轮实际执行摘要](evidence/round-c-ci63.json)。
+
+后续SDK审查发现 `MediaExtractor.getSampleSize` 仅API28起可用，而工程minSdk26。本轮追加兼容读取修正，并将 `:xs-runtime:lintDebug` 纳入CI；先前仅app Lint未覆盖运行库NewApi检查。该追加源码需要新的CI，不将首轮通过冒充追加修正已验证。API26/27真设备与模拟器仍NOT RUN，不宣称全版本兼容。
+
+兼容修正本地全量5项assemble及双模块Lint通过（165 tasks，两个模块各0 Error/0 NewApi/11 Warning），见 [兼容修正构建记录](evidence/round-c-compat-local.json)。新CI尚待执行；原有933 JVM及146次设备回归不会被扩展为API26实测。

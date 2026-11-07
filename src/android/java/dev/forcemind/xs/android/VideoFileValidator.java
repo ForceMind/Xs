@@ -55,12 +55,10 @@ final class VideoFileValidator {
                 int samples=0;long maxTime=-1;
                 while(true) {
                     if(android.os.SystemClock.elapsedRealtime()>deadline)throw invalid();
-                    long size=extractor.getSampleSize();
-                    if(size<0)break;
-                    if(size==0||size>MAX_SAMPLE_BYTES||--sampleBudget<0||
-                        (extractor.getSampleFlags()&MediaExtractor.SAMPLE_FLAG_ENCRYPTED)!=0)throw invalid();
-                    buffer.clear();int read=extractor.readSampleData(buffer,0);
-                    if(read!=size)throw invalid();
+                    int sampleTrack=extractor.getSampleTrackIndex();
+                    if(sampleTrack<0)break;
+                    if(sampleTrack!=i||--sampleBudget<0)throw invalid();
+                    readBoundedSample(extractor,buffer);
                     long time=extractor.getSampleTime();if(time<0||time>trackDuration+250_000)throw invalid();
                     maxTime=Math.max(maxTime,time);samples++;
                     if(!extractor.advance())break;
@@ -102,11 +100,11 @@ final class VideoFileValidator {
                     int slot=codec.dequeueInputBuffer(10000);
                     if(slot>=0) {
                         ByteBuffer buffer=codec.getInputBuffer(slot);if(buffer==null)throw invalid();buffer.clear();
-                        long size=input.getSampleSize();
-                        if(size<0){codec.queueInputBuffer(slot,0,0,0,MediaCodec.BUFFER_FLAG_END_OF_STREAM);ended=true;}
+                        if(input.getSampleTrackIndex()<0){codec.queueInputBuffer(slot,0,0,0,MediaCodec.BUFFER_FLAG_END_OF_STREAM);ended=true;}
                         else {
-                            if(size>buffer.capacity())throw invalid();int count=input.readSampleData(buffer,0);if(count!=size)throw invalid();
-                            codec.queueInputBuffer(slot,0,count,input.getSampleTime(),0);input.advance();
+                            long time=input.getSampleTime();if(time<0)throw invalid();
+                            int count=readBoundedSample(input,buffer);
+                            codec.queueInputBuffer(slot,0,count,time,0);input.advance();
                         }
                     }
                 }
@@ -118,6 +116,16 @@ final class VideoFileValidator {
             }
             throw invalid();
         } finally {input.release();if(codec!=null){try{codec.stop();}catch(RuntimeException ignored){}codec.release();}}
+    }
+    /** A present sample must fit the bounded buffer; uses the same API-16 read path on every OS. */
+    private static int readBoundedSample(MediaExtractor input,ByteBuffer buffer)throws IOException {
+        int maximum=Math.min(MAX_SAMPLE_BYTES,buffer.capacity());
+        if(maximum<=0||(input.getSampleFlags()&MediaExtractor.SAMPLE_FLAG_ENCRYPTED)!=0)throw invalid();
+        buffer.clear();buffer.limit(maximum);
+        int bytes=input.readSampleData(buffer,0);
+        // The caller already checked track presence: a failed/oversized read is never a valid EOS.
+        if(bytes<=0||bytes>maximum)throw invalid();
+        return bytes;
     }
     private static void decodeFrame(MediaMetadataRetriever retriever,long us)throws IOException {
         Bitmap frame=retriever.getFrameAtTime(us,MediaMetadataRetriever.OPTION_CLOSEST);

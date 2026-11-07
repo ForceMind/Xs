@@ -42,7 +42,7 @@ jobs:
         with:
           gradle-version: '8.9'
       - name: Compile independent Android archive AAR
-        run: gradle --no-daemon :xs-runtime:assembleDebug :dev-harness:assembleDebug :app-android:assembleDebug :app-android:assembleDebugAndroidTest :dev-harness:assembleDebugAndroidTest :app-android:lintDebug
+        run: gradle --no-daemon :xs-runtime:assembleDebug :dev-harness:assembleDebug :app-android:assembleDebug :app-android:assembleDebugAndroidTest :dev-harness:assembleDebugAndroidTest :app-android:lintDebug :xs-runtime:lintDebug
       - name: Upload Android library (not an APK)
         uses: actions/upload-artifact@v4
         with:
