@@ -15,7 +15,6 @@ import dev.forcemind.xs.android.XsMediaRepository;
 import dev.forcemind.xs.android.XsLibraryWrites;
 import dev.forcemind.xs.android.XsShareCoordinator;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.util.Arrays;
 import java.util.UUID;
@@ -39,10 +38,21 @@ public final class MediaSharingTest {
     }
     @Test public void singleImageSharesActualReadOnlyBytesAfterSourceDeletion()throws Exception {
         String id=fixture(0xffff0000);File original=repo.completedFile(library,id);long size=original.length();
+        byte[] expectedBytes=java.nio.file.Files.readAllBytes(original.toPath());
         Intent share=XsShareCoordinator.assetIntent(context,library,Arrays.asList(id));assertEquals(Intent.ACTION_SEND,share.getAction());assertEquals("image/png",share.getType());assertTrue((share.getFlags()&Intent.FLAG_GRANT_READ_URI_PERMISSION)!=0);assertEquals(0,share.getFlags()&Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
         Uri uri=share.getParcelableExtra(Intent.EXTRA_STREAM);assertNotNull(uri);assertEquals(uri,share.getClipData().getItemAt(0).getUri());assertEquals("content",uri.getScheme());
-        repo.delete(library,id);drain();assertFalse(original.exists());
-        try(ParcelFileDescriptor pfd=context.getContentResolver().openFileDescriptor(uri,"r");FileInputStream input=new FileInputStream(pfd.getFileDescriptor())){byte[] prefix=new byte[8];assertEquals(8,input.read(prefix));assertArrayEquals(new byte[]{(byte)137,80,78,71,13,10,26,10},prefix);}
+        repo.delete(library,id);
+        drain(); // FIFO barrier: deletion must finish before testing the receiver's delayed read.
+        assertFalse("Source file must really be deleted",original.exists());
+        assertNull("Source metadata must really be deleted",repo.find(library,id));
+        ParcelFileDescriptor descriptor=context.getContentResolver().openFileDescriptor(uri,"r");
+        assertNotNull(descriptor);
+        try(ParcelFileDescriptor.AutoCloseInputStream input=new ParcelFileDescriptor.AutoCloseInputStream(descriptor);
+            java.io.ByteArrayOutputStream received=new java.io.ByteArrayOutputStream()) {
+            byte[] buffer=new byte[1024];int count;
+            while((count=input.read(buffer))!=-1)received.write(buffer,0,count);
+            assertArrayEquals("Receiver must get every original byte after source deletion",expectedBytes,received.toByteArray());
+        }
         try(Cursor c=context.getContentResolver().query(uri,null,null,null,null)){assertNotNull(c);assertTrue(c.moveToFirst());assertEquals(size,c.getLong(c.getColumnIndexOrThrow(OpenableColumns.SIZE)));assertTrue(c.getString(c.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME)).endsWith(".png"));}
         try{context.getContentResolver().openFileDescriptor(uri,"w");fail("Writable share accepted");}catch(java.io.FileNotFoundException expected){}
     }

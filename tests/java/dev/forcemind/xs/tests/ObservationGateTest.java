@@ -82,6 +82,11 @@ public final class ObservationGateTest {
         gate.suspend();
         eq(ObservationGate.Verdict.DISARMED,gate.admit(
             state(2,1200,detail,"https://x.com",true,true,true,true),post(2,2,"123")));
+        boolean reused=false;try{gate.changeDocument(2);}catch(IllegalArgumentException expected){reused=true;}
+        eq(true,reused);
+        gate.changeDocument(3);
+        eq(ObservationGate.Verdict.STALE,gate.admit(
+            state(2,1200,detail,"https://x.com",true,true,true,true),post(2,3,"123")));
         System.out.println("PASS "+n+" observation admission assertions (no WebView hook)");
     }
 }

@@ -209,6 +209,16 @@ public final class BrowserActivity extends Activity {
         web.loadUrl(url);
     }
 
+    @Override protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        // Reuse the one browser page when returning from the local library.
+        String requested=intent==null?null:intent.getDataString();
+        if (BrowserNavigation.classify(requested)!=BrowserNavigation.Target.INTERNAL ||
+                PostUrls.extractPostId(requested)==null) return;
+        initialPost=requested;
+        if (started) navigate(requested);
+    }
+
     class Client extends WebViewClient {
         @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
             BrowserNavigation.Target target = BrowserNavigation.classify(request.getUrl().toString());
@@ -495,7 +505,7 @@ public final class BrowserActivity extends Activity {
                 PostUrls.extractPostId(current)==null) { toast(R.string.not_post_detail); return; }
         withLocalSpace(()-> {
             final String library=XsLocalSpaces.current(this);
-            XsLibraryWrites.submit(library,()-> {
+            boolean queued=XsLibraryWrites.submit(library,()-> {
                 try (XsArchiveDatabase db=new XsArchiveDatabase(getApplicationContext())) {
                     db.favorite(library,current,null,null,null,System.currentTimeMillis());
                     runOnUiThread(()-> { if (!isFinishing()) toast(R.string.favorite_saved); });
@@ -503,6 +513,7 @@ public final class BrowserActivity extends Activity {
                     runOnUiThread(()-> { if (!isFinishing()) toast(R.string.local_save_failed); });
                 }
             });
+            if (!queued) toast(R.string.local_save_failed);
         });
     }
 

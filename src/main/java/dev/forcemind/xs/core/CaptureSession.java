@@ -151,7 +151,8 @@ public final class CaptureSession {
     public synchronized void destroy() { invalidate(); foreground=false; openConsent=feedConsent=false; }
     private static boolean safeUrl(String s) { return ObservationRoutes.classify(s)!=ObservationRoutes.Kind.DENIED; }
     private static boolean valid(Card c) {
-        return c!=null && PostUrls.extractPostId(c.url)!=null && c.url.length()<=8192 &&
+        return c!=null && ObservationRoutes.classify(c.url)==ObservationRoutes.Kind.POST_DETAIL &&
+            PostUrls.extractPostId(c.url)!=null && c.url.length()<=8192 &&
             (c.body==null || c.body.length()<=16000) && (c.author==null || c.author.length()<=100) &&
             (c.publishedAtMs==null || c.publishedAtMs>0);
     }

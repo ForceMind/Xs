@@ -55,6 +55,8 @@ public class ObservationParserTest {
         expectInvalid("");
         expectInvalid(OPEN + new String(new char[65536]).replace('\0', 'x'));
         expectInvalid("{broken");
+        expectInvalid(OPEN + "{}");
+        expectInvalid(OPEN.replace("\"v\":1", "\"v\":1,\"v\":1"));
     }
 
     @Test public void typedEnvelopeNeedsNativeMainFrameGestureAndScope() {

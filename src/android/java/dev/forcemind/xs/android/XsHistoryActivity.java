@@ -168,16 +168,14 @@ public final class XsHistoryActivity extends Activity {
         folderFilter = button(tr("全部分类", "All folders"));
         typeFilter = button(tr("全部类型", "All types"));
         filters.addView(dateFilter, weighted());
-        filters.addView(folderFilter, weighted());
-        filters.addView(typeFilter, weighted());
-        root.addView(filters);
         dateFilter.setOnClickListener(v -> chooseDate());
         folderFilter.setOnClickListener(v -> chooseFolder());
         typeFilter.setOnClickListener(v -> chooseActionType());
-        extraFilter = button(tr("时长、从未打开、来源与排序", "Dwell, never opened, source & sort"));
+        extraFilter = button(tr("筛选与排序", "Filter & sort"));
         extraFilter.setId(ID_FILTERS);
         extraFilter.setOnClickListener(v -> showSearchFilters());
-        root.addView(extraFilter);
+        filters.addView(extraFilter, weighted());
+        root.addView(filters);
 
         ListView results = new ListView(this);
         results.setId(ID_RESULTS);
@@ -343,6 +341,20 @@ public final class XsHistoryActivity extends Activity {
 
     private void showSearchFilters() {
         LinearLayout fields = paddedColumn();
+        LinearLayout folderAndType = horizontal();
+        final String[] categoryChoice = {selectedFolder};
+        final String[] activityChoice = {actionType};
+        Button chooseCategory = button(folderFilter.getText().toString());
+        chooseCategory.setOnClickListener(v -> chooseFolder((id, label) -> {
+            categoryChoice[0] = id; chooseCategory.setText(label);
+        }));
+        Button chooseType = button(typeFilter.getText().toString());
+        chooseType.setOnClickListener(v -> chooseActionType((id, label) -> {
+            activityChoice[0] = id; chooseType.setText(label);
+        }));
+        folderAndType.addView(chooseCategory, weighted());
+        folderAndType.addView(chooseType, weighted());
+        fields.addView(folderAndType);
         fields.addView(text(tr("单次连续停留达到指定秒数；不会累加不同曝光。",
             "Minimum duration of one continuous exposure; separate visits are not added together.")));
         EditText dwell = entry(tr("最低停留秒数（空白为不限）", "Minimum dwell seconds (blank: any)"),
@@ -378,7 +390,10 @@ public final class XsHistoryActivity extends Activity {
                 minDwellMs = null; neverOpened = false; favoriteOnly = false; sortByDwell = false;
                 authorFilter = null; sourceFilter = null; tagFilter = null;
                 dateBasis = ArchiveSearch.DateField.LAST_SEEN;
-                extraFilter.setText(tr("时长、从未打开、来源与排序", "Dwell, never opened, source & sort"));
+                selectedFolder = null; actionType = null;
+                folderFilter.setText(tr("全部分类", "All folders"));
+                typeFilter.setText(tr("全部类型", "All types"));
+                extraFilter.setText(tr("筛选与排序", "Filter & sort"));
                 if (mode == Mode.FEED) setMode(Mode.SEARCH); else refresh();
             })
             .setPositiveButton(tr("应用", "Apply"), null).create();
@@ -402,6 +417,8 @@ public final class XsHistoryActivity extends Activity {
             sourceFilter = emptyToNull(source.getText().toString().trim());
             tagFilter = emptyToNull(tag.getText().toString().trim());
             dateBasis = selectedBasis[0];
+            selectedFolder = categoryChoice[0]; actionType = activityChoice[0];
+            folderFilter.setText(chooseCategory.getText()); typeFilter.setText(chooseType.getText());
             extraFilter.setText(tr("已应用筛选 · 修改", "Filters applied · Edit"));
             dialog.dismiss();
             if (mode == Mode.FEED) setMode(Mode.SEARCH); else refresh();
@@ -585,15 +602,22 @@ public final class XsHistoryActivity extends Activity {
     }
     private String basisName(ArchiveSearch.DateField field) { return basisNames()[field.ordinal()]; }
 
+    private interface Choice { void selected(String id, String label); }
     private void chooseActionType() {
+        chooseActionType((id, label) -> { actionType = id; typeFilter.setText(label); refresh(); });
+    }
+    private void chooseActionType(Choice choice) {
         String[] types = {null,"ORIGINAL","REPLY","QUOTE","REPOST","BOOKMARK","LOCAL_SAVE"};
         String[] names = zh ? new String[]{"全部类型","原创","回复","引用","转帖","X 书签记录","手动链接"} :
             new String[]{"All types","Original","Reply","Quote","Repost","X bookmark record","Manual link"};
         new AlertDialog.Builder(this).setTitle(tr("已确认的本人行为", "Confirmed own activity"))
-            .setItems(names, (d, n) -> { actionType = types[n]; typeFilter.setText(names[n]); refresh(); }).show();
+            .setItems(names, (d, n) -> choice.selected(types[n], names[n])).show();
     }
 
     private void chooseFolder() {
+        chooseFolder((id, label) -> { selectedFolder = id; folderFilter.setText(label); refresh(); });
+    }
+    private void chooseFolder(Choice choice) {
         final String owner = library;
         read(() -> {
             List<String> ids = new ArrayList<>(), labels = new ArrayList<>();
@@ -604,9 +628,7 @@ public final class XsHistoryActivity extends Activity {
             main.post(() -> {
                 if (destroyed || !owner.equals(library)) return;
                 new AlertDialog.Builder(this).setTitle(tr("筛选分类", "Filter folder"))
-                    .setItems(labels.toArray(new String[0]), (d, n) -> {
-                        selectedFolder = ids.get(n); folderFilter.setText(labels.get(n)); refresh();
-                    }).show();
+                    .setItems(labels.toArray(new String[0]), (d, n) -> choice.selected(ids.get(n), labels.get(n))).show();
             });
         });
     }
@@ -620,7 +642,7 @@ public final class XsHistoryActivity extends Activity {
             }
             main.post(() -> {
                 if (destroyed || !owner.equals(library)) return;
-                if (ids.isEmpty()) { toast(tr("已保存；可从“新建分类”整理", "Saved; create a folder to organize")); return; }
+                if (ids.isEmpty()) { toast(tr("请先新建分类，再整理此帖", "Create a folder to organize this post")); return; }
                 new AlertDialog.Builder(this).setTitle(tr("加入本地分类", "Add to local folder"))
                     .setItems(labels.toArray(new String[0]), (d, n) ->
                         write(owner, () -> archive.assignCategory(owner, postId, ids.get(n)),
