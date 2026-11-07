@@ -2,22 +2,22 @@
 
 更新：2026-11-07。对应 [实施计划](IMPLEMENTATION_PLAN.zh-CN.md)。**下表为新增产品范围的待执行验收，不代表重新运行了测试。所有未附当前构建证据的项均为 NOT RUN。** 既有基础测试记录继续保留，但不能自动覆盖新语义。
 
-## 本轮离线实现与待执行仪器验收
+## 本轮离线实现与仪器证据
 
-当前代码范围、命令和待补报告见 [阶段 C 与资料治理证据](ROUND_C_EVIDENCE.zh-CN.md)。本地全套 **933 条 JVM 断言**、SQLite v4 迁移/查询、观察器与精简 DOM 回归、Android AAR/客户端/宿主及测试 APK 构建、Lint 均通过；**API 30/36 实际仪器测试 PENDING**。测试代码编译不代表已在设备执行。
+当前代码范围、命令和实际报告见 [阶段 C 与资料治理证据](ROUND_C_EVIDENCE.zh-CN.md)。本地全套 **933 条 JVM 断言**、SQLite v4 迁移/查询、观察器与精简 DOM 回归、Android AAR/客户端/宿主及测试 APK 构建、Lint 均通过；当前源码 `4ee242e` 的 [CI 42357220689](https://github.com/ForceMind/Xs/actions/runs/42357220689) 四任务通过，API30/36 各36项宿主＋37项客户端，合计 **146项、0失败/错误/跳过**；详见 [CI摘要](evidence/round-c-ci64.json)。双模块Lint各0 Error/0 NewApi/11 Warning；API26/27实际运行仍 NOT RUN。
 
 此前 [实施记录](IMPLEMENTATION_EVIDENCE.zh-CN.md) 保留旧构建的 443 条 JVM 断言、API 30/36 各 41 项仪器测试结果。旧报告不覆盖本轮新增语义。下面核心用例含真实设备/站点条件，因此整体仍为 NOT RUN；新增离线子场景按下表和当前 source SHA 单独记录。
 
 | 对应验收 | 本轮可验证子场景与限制 | 当前执行状态 |
 | --- | --- | --- |
-| L01、L03、A01～A03 | v4保留迁移；native fixture操作身份与结果匹配、类型/关联新帖、幂等、撤销不删收藏；导入/旧记录归属和未知时间保留；纯RT文本不冒充转帖 | JVM/SQLite PASS；Android DB/UI PENDING；真实X NOT RUN |
-| M01～M05、X01～X05、V01～V03 | 显式选择支持的直链H.264/可选AAC MP4，≤100 MiB/10分钟；容器/样本范围/下载长度/轨道和有限首尾解码；完成文件预览/分享 | 本地策略/结构回归及构建 PASS；Android实际媒体/Provider测试 PENDING；真实X/目标App NOT RUN |
-| C01～C03、D02、Q01～Q03 | 三默认off偏好、原样恢复、导航/遮挡/后台边界、未知结构保守失效与有界DOM；仅合成页面挂载 | DOM PASS；实际WebView仪器 PENDING；真实浏览器未启用 |
-| G03、Q03、Q04 | 明文元数据备份≤16 MiB/20,000条；严格校验后schema3→4恢复到新库，不含媒体/任务/会话；校验和不证明身份 | JVM PASS；Android DB/恢复/文件选择流程 PENDING |
-| L04、G03、Q03 | 2～4库、≤8 MiB/20,000条元数据预览快照→新库；源保留/新库删除回退；legacy来源冲突拒绝；源清理/代次失效拒绝提交 | JVM合并计划 PASS；Android事务/原生UI PENDING |
-| Q03、Q04 | 32个库写入器上限、空闲回收、票据绑定实例/epoch，旧任务不借回收后的写入器复活 | JVM PASS；Android整合回归 PENDING |
+| L01、L03、A01～A03 | v4保留迁移；native fixture操作身份与结果匹配、类型/关联新帖、幂等、撤销不删收藏；导入/旧记录归属和未知时间保留；纯RT文本不冒充转帖 | JVM/SQLite PASS；Android DB/History索引UI PASS；真实X NOT RUN |
+| M01～M05、X01～X05、V01～V03 | 显式选择支持的直链H.264/可选AAC MP4，≤100 MiB/10分钟；容器/样本范围/下载长度/轨道和有限首尾解码；完成文件预览/分享 | 本地策略/结构回归及构建 PASS；Android合成媒体/Provider回归 PASS；API26/27/真实X/目标App NOT RUN |
+| C01～C03、D02、Q01～Q03 | 三默认off偏好、原样恢复、导航/遮挡/后台边界、未知结构保守失效与有界DOM；仅合成页面挂载 | DOM PASS；合成WebView仪器 PASS；真实浏览器未启用 |
+| G03、Q03、Q04 | 明文元数据备份≤16 MiB/20,000条；严格校验后schema3→4恢复到新库，不含媒体/任务/会话；校验和不证明身份 | JVM、Android DB/恢复事务 PASS；SAF选择器/新增备份UI未专项自动化、真机 NOT RUN |
+| L04、G03、Q03 | 2～4库、≤8 MiB/20,000条元数据预览快照→新库；源保留/仅刚建且未改无媒体结果可即时撤销；已改/有媒体拒绝且不失效既有任务；legacy来源冲突拒绝；源清理/代次失效拒绝提交 | JVM合并计划、Android DB/事务/受限撤销 PASS；新增合并UI未专项自动化、真机 NOT RUN |
+| Q03、Q04 | 32个库写入器上限、空闲回收、票据绑定实例/epoch，旧任务不借回收后的写入器复活 | JVM PASS；Android整合回归 PASS |
 
-首尾有限解码不等于逐帧播放或每个接收应用支持；普通编辑不会自动加入已预览的合并快照，需重新预览。以上局部结果均不构成阶段C/D整体或正式发布通过。
+SAF文件选择器及新增备份/合并UI没有专门自动化，不能用DB/helper通过替代整个UI或文件选择流程通过。首尾有限解码不等于逐帧播放或每个接收应用支持；普通编辑不会自动加入已预览的合并快照，需重新预览。以上局部结果均不构成阶段C/D整体或正式发布通过。
 
 ## 记录规则
 

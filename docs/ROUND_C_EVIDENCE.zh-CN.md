@@ -17,19 +17,19 @@
 
 ## 验证
 
-本轮最终源提交、CI merge提交、job-local APK SHA/公开签名证书与设备/WebView版本在CI完成后追加于此，不借用上一轮82例的结果。合成素材来自色块与440Hz人工音调，见 [素材生成/散列](../app-android/src/androidTest/assets/VIDEO_FIXTURES.md)。没有采集用户账号或真实媒体。
+本轮功能提交、兼容修正提交、实际CI merge/tree、job-local APK SHA/公开签名证书与设备/WebView均已分别记录于下方两轮摘要，不借用上一轮82例的结果。合成素材来自色块与440Hz人工音调，见 [素材生成/散列](../app-android/src/androidTest/assets/VIDEO_FIXTURES.md)。没有采集用户账号或真实媒体。
 
 | 检查 | 当前结果 |
 | --- | --- |
 | 独立工程/双语文档检查 | PASS |
 | JVM、真实SQLite v4迁移/查询、observer/cleanup DOM | PASS；933项JVM断言，并有SQLite/DOM回归 |
 | AAR、harness/client APK、两套AndroidTest APK、Lint | PASS，162 tasks；Lint 0错误/11既有警告，见[本地构建记录](evidence/round-c-local.json) |
-| API30 / API36 仪器测试 | PENDING，新提交后运行GitHub KVM模拟器；本地主机无KVM，本轮不重复软件模拟器尝试 |
+| API30 / API36 仪器测试 | PASS，[CI 42357220689](https://github.com/ForceMind/Xs/actions/runs/42357220689) 两API各73项、合计146，0失败/错误/跳过；本地无KVM仍NOT RUN |
 | 真机、真实X登录/DOM/CDN/目标聊天App | NOT RUN；未启用真实自动采集、本人动作适配或过滤，无正式发布 |
 
 ## 真机操作清单
 
-1. 从指定CI下载内部PoC并核对APK SHA，记录机型/Android/System WebView版本；按Issue #3直接正常登录X，验证2FA、跳转、发帖/回复/转帖、媒体、旋转与会话恢复，不导入Cookie/Token。
+1. 在空白或隔离测试环境使用指定CI内部PoC并核对APK SHA，记录机型/Android/System WebView版本。调试证书可能每job不同，不能保证覆盖旧PoC；不要为安装新包直接卸载已有资料的实例，当前元数据备份不含媒体，稳定签名升级链仍待完成。按Issue #3直接正常登录X，验证2FA、跳转、发帖/回复/转帖、媒体、旋转与会话恢复，不导入Cookie/Token。
 2. 对有权保存的公开图片/direct MP4明确选择下载，核对实际音画、时长、大小、来源、本地离线预览/导出、失败重试/取消/删除、清缓存仍保留。没有合规direct资源时应明确失败，不将blob/列表改名。
 3. 微信/QQ/飞书/Telegram分别验证单图、多图、单视频、取消、延迟读取和源删除后读取；记录应用版本/MIME/大小，用户自己选择会话并发送，核对接收文件。混合图/视频组当前不支持。
 4. 离线导出含Unicode备注/分类/历史/本人行为的明文元数据，经系统文件选择器预览再恢复；新空间能全文查找且默认/源库不变。损坏文件、取消、并发清除均不得半恢复。
@@ -42,6 +42,14 @@
 
 [CI 42356157321](https://github.com/ForceMind/Xs/actions/runs/42356157321) 的 core、Android构建、API30、API36四任务均成功。源码head `70fa6cea1a3d93ee86596362623109eab260f523`，实际PR测试merge `a30a047c25eaedb61d4d5abb7aeb8feff3fe4bff`、tree `584635bf7a2538bf2282f6c17dcc61d95169951d`。两套模拟器各36项资料库与37项客户端用例，合计146次，0失败/错误/跳过；933项JVM及SQLite/DOM也通过。完整case、OS/WebView、artifact ZIP校验与job-local四APK摘要/公开证书见 [首轮实际执行摘要](evidence/round-c-ci63.json)。
 
-后续SDK审查发现 `MediaExtractor.getSampleSize` 仅API28起可用，而工程minSdk26。本轮追加兼容读取修正，并将 `:xs-runtime:lintDebug` 纳入CI；先前仅app Lint未覆盖运行库NewApi检查。该追加源码需要新的CI，不将首轮通过冒充追加修正已验证。API26/27真设备与模拟器仍NOT RUN，不宣称全版本兼容。
+后续SDK审查发现 `MediaExtractor.getSampleSize` 仅API28起可用，而工程minSdk26。本轮追加兼容读取修正，并将 `:xs-runtime:lintDebug` 纳入CI；先前仅app Lint未覆盖运行库NewApi检查。当时追加源码仍需新CI；现已在下方完成源码专属验证，不将首轮通过冒充追加修正已验证。API26/27真设备与模拟器仍NOT RUN，不宣称全版本兼容。
 
-兼容修正本地全量5项assemble及双模块Lint通过（165 tasks，两个模块各0 Error/0 NewApi/11 Warning），见 [兼容修正构建记录](evidence/round-c-compat-local.json)。新CI尚待执行；原有933 JVM及146次设备回归不会被扩展为API26实测。
+兼容修正本地全量5项assemble及双模块Lint通过（165 tasks，两个模块各0 Error/0 NewApi/11 Warning），见 [兼容修正构建记录](evidence/round-c-compat-local.json)。在提交兼容修正时新CI尚待执行；最终结果见下方。933 JVM及146次设备回归不会被扩展为API26实测。
+
+## 兼容修正后的最终源码回归
+
+[CI 42357220689](https://github.com/ForceMind/Xs/actions/runs/42357220689) 已全部成功：core、Android打包/双模块Lint、API30与API36。功能代码head `4ee242ef1ca542e6bb997acdb3d5629761cbe8dd`，实际测试merge `d5e6bb937dc508786d854dcfb64757a334beea7c`，tree `5b26ecca9529948e22637b4eb66fd6b33217fe61`；两套测试job工作树clean。源码统一使用较早API的getSampleTrackIndex与有界readSampleData，不包含getSampleSize或测试专用SDK分支。
+
+933条JVM断言、真实SQLite保留迁移/查询、observer与cleanup DOM回归通过；API30/36各36项harness和37项app，合计146项，全部PASS且0失败/错误/跳过，新生产读取路径的5个视频用例两套均执行。Android11/WebView83.0.4103.106与Android16/WebView133.0.6943.137；完整146条case、artifact ZIP校验、每job实际4个APK摘要与公开签名证书见 [修正后实际执行摘要](evidence/round-c-ci64.json)。客户端与运行库Lint均0 Error/0 NewApi/各11 Warning。
+
+这些结果包含真实SQLite/WebView/MediaPlayer/Provider上的合成子场景；SAF系统文件选择器、新合并Activity完整交互、实际X/CDN、聊天App及API26/27仍未实测。备份7个与合并8个用例证明数据/事务闭环，不将其改称SAF或新UI全部验收。最终文档提交只归档这些已测试源码的证据；main未合并、未发布正式版本。

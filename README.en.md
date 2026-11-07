@@ -4,7 +4,11 @@
 
 **Xs is an independent, local-first enhancement for using X.** Official X web supplies browsing and social features; an app-owned on-device library provides open history, local favorites, organization, own-activity indexing, image/video downloads and sharing selected resources to other apps. No official APK patching, new social backend or account proxy.
 
-> **Internal development PoC, not a production client.** The existing history/dwell, favorites and image-sharing slice now has schema v4 own-action/reversal indexing, narrow standard-MP4 downloads/sharing, reversible cleanup fixtures, metadata backup/restore and explicit library consolidation. Live X automatic capture, own-action confirmation and cleanup remain disabled. Local Android builds/lint passed; API 30/36 instrumentation for this increment is **PENDING**; actual login, X media sources and recipient apps need separate acceptance. See [this increment's evidence and limits](docs/ROUND_C_EVIDENCE.zh-CN.md). Prior offline results remain in the [existing implementation evidence](docs/IMPLEMENTATION_EVIDENCE.zh-CN.md).
+> **Internal development PoC, not a production client.** The existing history/dwell, favorites and image-sharing slice now has schema v4 own-action/reversal indexing, narrow standard-MP4 downloads/sharing, reversible cleanup fixtures, metadata backup/restore and explicit library consolidation. Live X automatic capture, own-action confirmation and cleanup remain disabled. [CI 42357220689](https://github.com/ForceMind/Xs/actions/runs/42357220689) passed core/build and API 30/36, with **146 synthetic instrumentation cases** (36 harness + 37 client per API, zero failures/errors/skips); actual login, X media sources and recipient apps need separate acceptance. See [this increment's evidence and limits](docs/ROUND_C_EVIDENCE.zh-CN.md). Prior offline results remain in the [existing implementation evidence](docs/IMPLEMENTATION_EVIDENCE.zh-CN.md).
+
+Validated source: `4ee242e`; 933 JVM assertions and SQLite/observer/cleanup-DOM regressions passed. Client/runtime lint each report 0 errors, 0 NewApi and 11 warnings. API 26/27 execution remains NOT RUN. Backup/consolidation database and transaction tests passed; the SAF picker and new backup/consolidation UI have no dedicated automation and remain NOT RUN on physical devices. See the [CI summary](docs/evidence/round-c-ci64.json).
+
+CI debug certificates may differ by job, so upgrading an existing PoC installation is not guaranteed. Do not uninstall an old Xs containing data just to install a new debug APK: current backups exclude media. Prefer a blank or isolated test environment; stable signing remains pending.
 
 ## Current implementation boundary
 
@@ -12,7 +16,7 @@
 - Local data: v1/v2/v3→v4 preserving migrations, separate libraries, independent favorites/categories/notes/tags and history erasure. Own-action records keep actor provenance, unknown times/current state and reversal history. Native fixture operations require a matching successful result; page claims and restored provenance strings cannot issue confirmation proofs.
 - Media: explicit current-post image/standard-MP4 selection, bounded downloads, validation, offline preview/category/export and read-only actual-file sharing with 24-hour copies. Interrupted downloads require reselecting the source; resumable transfers and reliable background scheduling remain pending.
 - Portability: plaintext metadata backups up to 16 MiB/20,000 records, schema-3→4 restore into a separate library, and explicit consolidation of 2–4 libraries into a new library within 8 MiB/20,000 records. Media files, download tasks and web sessions are excluded.
-- Pending: this increment's Android instrumentation, live X enablement and selectors, real own-action adapters, X video downloads, recipient apps, long-running reliability, full media recovery and release signing. These additions do not complete batches C/D or their live gates.
+- Pending: API 26/27 execution, SAF/new backup/consolidation UI acceptance, live X enablement and selectors, real own-action adapters, X video downloads, recipient apps, long-running reliability, full media recovery and release signing. These additions do not complete batches C/D or their live gates.
 
 ## Continue development here
 
@@ -51,13 +55,13 @@
 | Own activity | Native fixture operation/result confirmation, four types, reversal trail and archive provenance implemented; live adapter disabled; unknown actor/time/current state preserved |
 | App-native favorites, notes/tags and categories | Implemented; native browser favorites are link-only until live snapshots are validated |
 | Images, assets, outbound file sharing | Implemented narrow image pipeline and actual-file grants; actual X downloads and receiver apps unverified |
-| Video downloads/sharing | Explicit direct standard-MP4 selection, validation, assets/preview/sharing implemented in source; H.264 with optional AAC, ≤100 MiB/10 minutes; local build/lint passed; Android instrumentation PENDING, actual X/receivers unverified |
+| Video downloads/sharing | Explicit direct standard-MP4 selection, validation, assets/preview/sharing implemented in source; H.264 with optional AAC, ≤100 MiB/10 minutes; synthetic download/decode/Provider regression passed; actual X/receivers unverified |
 | Ad/subscription/recommendation cleanup | Three independent default-off switches, reversible rules and lifecycle control in synthetic fixtures; not attached to the live browser |
 | Metadata backup/restore and consolidation | Plaintext backup ≤16 MiB/20,000 records, schema-3→4 new-library restore; combine 2–4 libraries into another library, ≤8 MiB/20,000 records; sources/default preserved; no media files/tasks/web sessions |
 
 Video validation checks MP4 structure/sample ranges, transferred length, tracks and duration, plus limited decoding of first/tail video frames and optional AAC audio. It does not prove every frame plays or validate recipient apps. Blob URLs, HLS/DASH, fragments, encrypted and unknown formats are rejected; browser session material is not exported to obtain downloads.
 
-Backup files are plaintext and go to the document app the user selects. Checksums detect damage, not authorship or account identity; restoring provenance does not establish native action authority. Consolidation uses the metadata snapshot shown in the preview: later ordinary edits require a new preview, while source erasure or epoch invalidation rejects commit. Conflicting sources for the same legacy action identity reject consolidation. Removing the new combined library rolls back the result while source libraries and the default stay intact. Neither operation moves media files.
+Backup files are plaintext and go to the document app the user selects. Checksums detect damage, not authorship or account identity; restoring provenance does not establish native action authority. Consolidation uses the metadata snapshot shown in the preview: later ordinary edits require a new preview, while source erasure or epoch invalidation rejects commit. Conflicting sources for the same legacy action identity reject consolidation. The result dialog can undo only the just-created result whose metadata is unchanged and which has no media/download tasks. Changed results or results with media are rejected without invalidating existing tasks; sources and the default stay intact. Neither operation moves media files.
 
 ## Implementation direction
 
@@ -95,7 +99,7 @@ compat/               Device matrix and legacy APK metadata
 bash scripts/check-project.sh
 bash scripts/test-core.sh
 # Android SDK, JDK 17, Gradle 8.9:
-gradle --no-daemon :xs-runtime:assembleDebug :dev-harness:assembleDebug :app-android:assembleDebug :app-android:lintDebug
+gradle --no-daemon :xs-runtime:assembleDebug :dev-harness:assembleDebug :app-android:assembleDebug :app-android:lintDebug :xs-runtime:lintDebug
 gradle --no-daemon --no-parallel :dev-harness:connectedDebugAndroidTest :app-android:connectedDebugAndroidTest
 ```
 
