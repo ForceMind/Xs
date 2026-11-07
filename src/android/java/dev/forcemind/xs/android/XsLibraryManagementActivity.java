@@ -30,7 +30,7 @@ public final class XsLibraryManagementActivity extends Activity {
     private static final long[] QUOTAS={0,100*MIB,500*MIB,1024*MIB};
     private final ThreadPoolExecutor io=new ThreadPoolExecutor(1,1,0,TimeUnit.MILLISECONDS,new ArrayBlockingQueue<>(4),r->new Thread(r,"xs-storage-ui"));
     private String library,label,lastMessage;private Panel panel;private boolean busy,destroyed,loading;
-    private int retentionDays;private long quotaBytes;
+    private int retentionDays;private long quotaBytes;private AlertDialog activeDialog;
     public static Intent intent(Context context,String library){return new Intent(context,XsLibraryManagementActivity.class).putExtra(LIBRARY,library);}
     @Override protected void onCreate(Bundle saved){
         super.onCreate(saved);getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
@@ -71,7 +71,7 @@ public final class XsLibraryManagementActivity extends Activity {
         private static Button button(Context c,LinearLayout parent,int id,String label,Runnable action){Button button=new Button(c);if(id!=0)button.setId(id);button.setAllCaps(false);button.setSingleLine(false);button.setText(label);button.setOnClickListener(v->action.run());parent.addView(button,new LinearLayout.LayoutParams(-1,-2));return button;}
     }
     private void load(){
-        if(destroyed||loading||busy)return;loading=true;panel.refresh.setEnabled(false);
+        if(destroyed||loading||busy)return;loading=true;panel.enabled(false,false);panel.refresh.setEnabled(false);
         try{io.execute(()->{
             String found=null;XsArchiveDatabase.HistoryStats stats=null;XsMediaRepository.StorageUsage usage=null;int days=0;
             try{
@@ -97,13 +97,13 @@ public final class XsLibraryManagementActivity extends Activity {
         });}catch(RuntimeException full){loading=false;panel.refresh.setEnabled(true);panel.status.setText(tr("读取任务繁忙，请重试","Reader is busy; retry"));}
     }
     private String statsLabel(XsArchiveDatabase.HistoryStats s){return tr("帖子 ","Posts ")+s.postCount+tr(" · 正文版本 "," · Snapshots ")+s.snapshotCount+tr(" · 收藏 "," · Favorites ")+s.favoriteCount+
-        tr("\n累计打开次数 ","\nLifetime opens ")+s.lifetimeOpenedCount+tr("（曾打开帖子 "," (ever-opened posts ")+s.everOpenedPostCount+")"+tr("\n保留打开事件 ","\nRetained open events ")+s.openEventCount+tr("（帖子 "," (posts ")+s.distinctOpenPosts+")"+tr(" · 保留停留事件 "," · Retained dwell events ")+s.feedEventCount+tr("（帖子 "," (posts ")+s.distinctFeedPosts+")"+
+        tr("\n已知累计打开次数 ≥","\nKnown lifetime opens ≥")+s.lifetimeOpenedCount+tr("（曾打开帖子 "," (ever-opened posts ")+s.everOpenedPostCount+")"+tr("\n保留打开事件 ","\nRetained open events ")+s.openEventCount+tr("（帖子 "," (posts ")+s.distinctOpenPosts+")"+tr(" · 保留停留事件 "," · Retained dwell events ")+s.feedEventCount+tr("（帖子 "," (posts ")+s.distinctFeedPosts+")"+
         tr("\n从未主动打开的帖子 ","\nNever deliberately opened posts ")+s.neverOpenedPostCount+
         tr("\n保留事件的曝光时长下界总和 ≥","\nRetained exposure lower-bound sum ≥")+seconds(s.totalDwellLowerBoundMs)+tr("秒；单次最大 ≥"," s; maximum event ≥")+seconds(s.maxDwellLowerBoundMs)+tr("秒"," s")+
         tr("\n未知时长事件 ","\nUnknown-duration events ")+s.unknownDwellCount+tr(" · 达测量上限事件 "," · Capped events ")+s.cappedDwellCount+
         tr("\n曝光可能重叠；不是阅读时长或完成率。","\nExposures can overlap; this is not reading time or completion.");}
     private void chooseRetention(){if(busy||loading||XsLibraryWrites.isDeleted(library))return;String[] labels=new String[DAYS.length];int selected=0;for(int i=0;i<DAYS.length;i++){labels[i]=daysLabel(DAYS[i]);if(DAYS[i]==retentionDays)selected=i;}
-        new AlertDialog.Builder(this).setTitle(tr("历史事件保留期限","History event retention")).setSingleChoiceItems(labels,selected,(dialog,which)->{dialog.dismiss();previewRetention(DAYS[which],false);}).setNegativeButton(tr("取消","Cancel"),null).show();}
+        show(new AlertDialog.Builder(this).setTitle(tr("历史事件保留期限","History event retention")).setSingleChoiceItems(labels,selected,(dialog,which)->{dialog.dismiss();previewRetention(DAYS[which],false);}).setNegativeButton(tr("取消","Cancel"),null).create());}
     private void previewRetention(int days,boolean cleanOnly){
         if(busy||loading||XsLibraryWrites.isDeleted(library))return;busy=true;panel.enabled(false,false);
         try{io.execute(()->{try(XsArchiveDatabase archive=new XsArchiveDatabase(getApplicationContext())){
@@ -114,7 +114,7 @@ public final class XsLibraryManagementActivity extends Activity {
                     .setNegativeButton(tr("取消","Cancel"),(d,n)->complete(true,-1)).setPositiveButton(tr("确认并清理","Confirm and clean"),(d,n)->{
                         panel.status.setText(tr("正在应用保留设置…","Applying retention…"));
                         if(cleanOnly)XsRetentionController.cleanNow(this,library,this::complete);else XsRetentionController.apply(this,library,days,this::complete);
-                    }).create();dialog.setOnCancelListener(d->complete(true,-1));dialog.show();
+                    }).create();dialog.setOnCancelListener(d->complete(true,-1));show(dialog);
             });
         }catch(RuntimeException failure){runOnUiThread(()->complete(false,0));}});}catch(RuntimeException full){complete(false,0);}
     }
@@ -123,10 +123,10 @@ public final class XsLibraryManagementActivity extends Activity {
         if(busy||loading||XsLibraryWrites.isDeleted(library))return;long[] choices=QUOTAS;boolean custom=true;for(long q:QUOTAS)if(q==quotaBytes)custom=false;
         if(custom){choices=java.util.Arrays.copyOf(QUOTAS,QUOTAS.length+1);choices[QUOTAS.length]=quotaBytes;}
         final long[] limits=choices;String[] labels=new String[limits.length];int selected=0;for(int i=0;i<limits.length;i++){labels[i]=quotaLabel(limits[i]);if(limits[i]==quotaBytes)selected=i;}
-        new AlertDialog.Builder(this).setTitle(tr("此空间媒体配额","Media limit for this library")).setSingleChoiceItems(labels,selected,(dialog,which)->{
-            dialog.dismiss();long limit=limits[which];new AlertDialog.Builder(this).setTitle(tr("确认媒体配额","Confirm media limit")).setMessage(quotaLabel(limit)+tr("\n已完成文件保留。若完成文件与预留总量超过新配额，所有未完成下载将停止并标记失败，可在配额允许后显式重试；后续超限下载会被拒绝。","\nCompleted files remain. If completed plus reserved bytes exceed the new limit, every unfinished download stops and becomes failed; explicitly retry when the limit allows. Later downloads exceeding it are rejected."))
-                .setNegativeButton(tr("取消","Cancel"),null).setPositiveButton(tr("保存配额","Save limit"),(d,n)->setQuota(limit)).show();
-        }).setNegativeButton(tr("取消","Cancel"),null).show();
+        show(new AlertDialog.Builder(this).setTitle(tr("此空间媒体配额","Media limit for this library")).setSingleChoiceItems(labels,selected,(dialog,which)->{
+            dialog.dismiss();long limit=limits[which];show(new AlertDialog.Builder(this).setTitle(tr("确认媒体配额","Confirm media limit")).setMessage(quotaLabel(limit)+tr("\n已完成文件保留。若完成文件与预留总量超过新配额，所有未完成下载将停止并标记失败，可在配额允许后显式重试；后续超限下载会被拒绝。","\nCompleted files remain. If completed plus reserved bytes exceed the new limit, every unfinished download stops and becomes failed; explicitly retry when the limit allows. Later downloads exceeding it are rejected."))
+                .setNegativeButton(tr("取消","Cancel"),null).setPositiveButton(tr("保存配额","Save limit"),(d,n)->setQuota(limit)).create());
+        }).setNegativeButton(tr("取消","Cancel"),null).create());
     }
     private void setQuota(long limit){if(busy||XsLibraryWrites.isDeleted(library))return;busy=true;panel.enabled(false,false);panel.status.setText(tr("正在保存配额…","Saving media limit…"));
         try{if(!XsLibraryWrites.submit(library,()->{boolean ok=false;try{XsMediaRepository.get(getApplicationContext()).setQuotaBytes(library,limit);ok=true;}catch(RuntimeException failure){}final boolean saved=ok;runOnUiThread(()->complete(saved,-1));}))complete(false,0);}catch(RuntimeException invalid){complete(false,0);}
@@ -145,7 +145,11 @@ public final class XsLibraryManagementActivity extends Activity {
                         (XsDeletedLibraries.isDeleted(this,library)?tr("删除未完成。此空间已停用，可重试清理。","Deletion incomplete. This scope is disabled; retry cleanup."):tr("未能持久保存删除请求，资料空间尚未删除，请重试。","Could not persist the deletion request. Library deletion has not started; retry.")));
                     panel.enabled(false,!ok);panel.erase.setText(tr("重试删除清理","Retry deletion cleanup"));
                     if(XsLibraryWrites.isDeleted(library)){panel.stats.setText(tr("此空间已不可读取。","This library is unavailable."));panel.usage.setText("");}
-                });});});dialog.show();
+                });});});show(dialog);
+    }
+    private void show(AlertDialog dialog){
+        if(destroyed||isFinishing())return;
+        activeDialog=dialog;dialog.setOnDismissListener(d->{if(activeDialog==dialog)activeDialog=null;});dialog.show();
     }
     private String daysLabel(int days){return days==0?tr("永久保留","Keep forever"):days+tr("天"," days");}
     private String quotaLabel(long value){return value==0?tr("不限","Unlimited"):bytes(value);}
@@ -154,5 +158,5 @@ public final class XsLibraryManagementActivity extends Activity {
     private static int dp(Context c,int value){return Math.round(c.getResources().getDisplayMetrics().density*value);}
     private String tr(String zh,String en){return tr(this,zh,en);}
     private static String tr(Context c,String zh,String en){return c.getResources().getConfiguration().getLocales().get(0).getLanguage().equals("zh")?zh:en;}
-    @Override protected void onDestroy(){destroyed=true;io.shutdown();super.onDestroy();}
+    @Override protected void onDestroy(){destroyed=true;if(activeDialog!=null){activeDialog.dismiss();activeDialog=null;}io.shutdown();super.onDestroy();}
 }

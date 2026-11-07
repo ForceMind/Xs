@@ -72,11 +72,36 @@ public final class RetentionIntegrationTest {
         write(library,()->{
             assertTrue(db.recordObservedOpen(library,url("7301"),null,null,null,now-9*DAY,"legacy:open"));
             db.getWritableDatabase().execSQL("UPDATE posts SET opened_count=0,last_opened_at_ms=NULL WHERE account_id=?",new Object[]{library});
+            XsArchiveDatabase.HistoryStats before=db.historyStats(library);
+            assertEquals(1,before.lifetimeOpenedCount);assertEquals(1,before.everOpenedPostCount);assertEquals(1,before.openEventCount);
             assertEquals(1,db.pruneHistory(library,7,now));
         });
         XsArchiveDatabase.HistoryStats stats=db.historyStats(library);assertEquals(0,stats.openEventCount);assertEquals(1,stats.lifetimeOpenedCount);assertEquals(1,stats.everOpenedPostCount);assertEquals(0,stats.neverOpenedPostCount);
         ArchiveSearch.Filter f=new ArchiveSearch.Filter();f.neverOpened=true;try(Cursor c=db.search(library,f)){assertEquals(0,c.getCount());}
         write(library,()->db.clearHistory(library));assertEquals(1,db.historyStats(library).neverOpenedPostCount);
+    }
+    @Test public void knownLifetimeOpensUsePerPostEvidenceMaximumWithoutDoubleCounting()throws Exception {
+        write(library,()->{
+            for(int i=0;i<2;i++)assertTrue(db.recordOpened(library,url("7901"),null,null,null,now-9*DAY));
+            assertTrue(db.recordOpened(library,url("7902"),null,null,null,now-9*DAY));
+            for(int i=0;i<4;i++)assertTrue(db.recordOpened(library,url("7903"),null,null,null,now-9*DAY));
+            db.getWritableDatabase().execSQL("UPDATE posts SET opened_count=CASE post_id WHEN '7901' THEN 0 WHEN '7902' THEN 5 ELSE 2 END WHERE account_id=?",new Object[]{library});
+        });
+        write(other,()->{
+            assertTrue(db.recordOpened(other,url("7901"),null,null,null,now-9*DAY));
+            db.getWritableDatabase().execSQL("UPDATE posts SET opened_count=100 WHERE account_id=?",new Object[]{other});
+        });
+        XsArchiveDatabase.HistoryStats before=db.historyStats(library);
+        assertEquals("Known opens are max(0,2)+max(5,1)+max(2,4)",11,before.lifetimeOpenedCount);
+        assertEquals(7,before.openEventCount);assertEquals(3,before.everOpenedPostCount);assertEquals(3,before.distinctOpenPosts);
+        assertEquals(100,db.historyStats(other).lifetimeOpenedCount);
+        write(library,()->assertEquals(7,db.pruneHistory(library,7,now)));
+        XsArchiveDatabase.HistoryStats after=db.historyStats(library);
+        assertEquals("Pruning details cannot change the known lifetime lower bound",11,after.lifetimeOpenedCount);
+        assertEquals(0,after.openEventCount);assertEquals(3,after.everOpenedPostCount);assertEquals(100,db.historyStats(other).lifetimeOpenedCount);assertEquals(1,db.historyStats(other).openEventCount);
+        write(library,()->db.clearHistory(library));
+        XsArchiveDatabase.HistoryStats forgotten=db.historyStats(library);
+        assertEquals(0,forgotten.lifetimeOpenedCount);assertEquals(0,forgotten.everOpenedPostCount);assertEquals(3,forgotten.neverOpenedPostCount);assertEquals(3,forgotten.postCount);
     }
     @Test public void metadataVersionsFavoritesOwnActionsAndActualSavedFileSurvive()throws Exception {
         write(library,()->{

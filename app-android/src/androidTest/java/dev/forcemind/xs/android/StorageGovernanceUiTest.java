@@ -11,6 +11,8 @@ import android.graphics.Rect;
 import android.os.LocaleList;
 import android.os.SystemClock;
 import android.view.ContextThemeWrapper;
+import android.view.InputDevice;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.accessibility.AccessibilityNodeInfo;
@@ -54,7 +56,7 @@ public final class StorageGovernanceUiTest {
         await("retention policy and scoped pruning committed",()->XsRetentionSettings.getDays(db,library)==7&&db.historyStats(library).openEventCount==1&&db.historyStats(library).feedEventCount==0);awaitReady();
         XsArchiveDatabase.HistoryStats stats=db.historyStats(library);assertEquals(2,stats.postCount);assertEquals(2,stats.lifetimeOpenedCount);assertEquals(2,stats.everOpenedPostCount);assertEquals(1,stats.favoriteCount);assertTrue(stats.snapshotCount>=2);assertEquals(1,db.historyStats(other).openEventCount);assertEquals(0,XsRetentionSettings.getDays(db,other));
         ArchiveSearch.Filter never=new ArchiveSearch.Filter();never.neverOpened=true;try(Cursor rows=db.search(library,never)){assertEquals("Expired open details must not fabricate never-opened posts",0,rows.getCount());}
-        final String[] displayed={""};instrumentation.runOnMainSync(()->displayed[0]=((TextView)screen.findViewById(XsLibraryManagementActivity.ID_STATS)).getText().toString());assertTrue(displayed[0].contains(label("累计打开次数 2","Lifetime opens 2")));assertTrue(displayed[0].contains(label("保留打开事件 1","Retained open events 1")));
+        final String[] displayed={""};instrumentation.runOnMainSync(()->displayed[0]=((TextView)screen.findViewById(XsLibraryManagementActivity.ID_STATS)).getText().toString());assertTrue(displayed[0].contains(label("已知累计打开次数 ≥2","Known lifetime opens ≥2")));assertTrue(displayed[0].contains(label("保留打开事件 1","Retained open events 1")));
     }
     @Test public void mediaLimitRequiresConfirmationAndAppliesOnlyToChosenLibrary()throws Exception {
         open();XsMediaRepository media=XsMediaRepository.get(app);assertEquals(0,media.usage(library).quotaBytes);
@@ -84,12 +86,19 @@ public final class StorageGovernanceUiTest {
     }
     private void open(){screen=instrumentation.startActivitySync(XsLibraryManagementActivity.intent(app,library).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));instrumentation.waitForIdleSync();awaitReady();}
     private void awaitReady(){await("storage controls ready",()->{final boolean[] ready={false};instrumentation.runOnMainSync(()->ready[0]=screen.findViewById(XsLibraryManagementActivity.ID_RETENTION).isEnabled()&&screen.findViewById(XsLibraryManagementActivity.ID_QUOTA).isEnabled());return ready[0];});}
-    private void click(int id){instrumentation.runOnMainSync(()->{View view=screen.findViewById(id);view.requestRectangleOnScreen(new Rect(0,0,view.getWidth(),view.getHeight()),true);assertTrue(view.performClick());});instrumentation.waitForIdleSync();}
+    private void click(int id){
+        instrumentation.runOnMainSync(()->{View view=screen.findViewById(id);view.requestRectangleOnScreen(new Rect(0,0,view.getWidth(),view.getHeight()),true);});instrumentation.waitForIdleSync();
+        final Rect visible=new Rect();await("foreground visible control "+id,()->{final boolean[] ready={false};instrumentation.runOnMainSync(()->{View view=screen.findViewById(id);ready[0]=screen.hasWindowFocus()&&view.isEnabled()&&view.getGlobalVisibleRect(visible)&&visible.height()>0&&visible.width()>0;if(ready[0]){int[] window=new int[2],display=new int[2];view.getLocationInWindow(window);view.getLocationOnScreen(display);visible.offset(display[0]-window[0],display[1]-window[1]);}});return ready[0];});
+        long time=SystemClock.uptimeMillis();MotionEvent down=MotionEvent.obtain(time,time,MotionEvent.ACTION_DOWN,visible.centerX(),visible.centerY(),0),up=MotionEvent.obtain(time,time+50,MotionEvent.ACTION_UP,visible.centerX(),visible.centerY(),0);down.setSource(InputDevice.SOURCE_TOUCHSCREEN);up.setSource(InputDevice.SOURCE_TOUCHSCREEN);
+        try{assertTrue("Native control receives touch down",instrumentation.getUiAutomation().injectInputEvent(down,true));assertTrue("Native control receives touch up",instrumentation.getUiAutomation().injectInputEvent(up,true));}finally{down.recycle();up.recycle();}instrumentation.waitForIdleSync();
+    }
     private void clickText(String label){AccessibilityNodeInfo node=textNode(label);assertTrue(node.performAction(AccessibilityNodeInfo.ACTION_CLICK));instrumentation.waitForIdleSync();}
     private void awaitText(String label){textNode(label);}
     private AccessibilityNodeInfo textNode(String text){final AccessibilityNodeInfo[] result={null};await("visible text "+text,()->{AccessibilityNodeInfo root=instrumentation.getUiAutomation().getRootInActiveWindow();if(root==null)return false;for(AccessibilityNodeInfo node:root.findAccessibilityNodeInfosByText(text))if(text.contentEquals(node.getText()==null?"":node.getText())&&node.isVisibleToUser()){result[0]=node;return true;}return false;});return result[0];}
     private void clickDialog(int id){final AccessibilityNodeInfo[] found={null};String resource=app.getResources().getResourceName(id);await("dialog button "+resource,()->{AccessibilityNodeInfo root=instrumentation.getUiAutomation().getRootInActiveWindow();if(root==null)return false;for(AccessibilityNodeInfo node:root.findAccessibilityNodeInfosByViewId(resource))if(node.isVisibleToUser()&&node.isEnabled()){found[0]=node;return true;}return false;});assertTrue(found[0].performAction(AccessibilityNodeInfo.ACTION_CLICK));instrumentation.waitForIdleSync();}
     private interface Check{boolean passed();}
-    private void await(String expected,Check check){long end=SystemClock.uptimeMillis()+8000;do{if(check.passed())return;SystemClock.sleep(30);}while(SystemClock.uptimeMillis()<end);fail("Timed out waiting for "+expected);}
+    private void await(String expected,Check check){long end=SystemClock.uptimeMillis()+8000;do{if(check.passed())return;SystemClock.sleep(30);}while(SystemClock.uptimeMillis()<end);fail("Timed out waiting for "+expected+"; active UI: "+activeUi());}
+    private String activeUi(){StringBuilder text=new StringBuilder();AccessibilityNodeInfo root=instrumentation.getUiAutomation().getRootInActiveWindow();appendUi(root,text,new int[]{0});return text.toString();}
+    private void appendUi(AccessibilityNodeInfo node,StringBuilder text,int[] visited){if(node==null||++visited[0]>100||text.length()>5000)return;if(node.isVisibleToUser())text.append('[').append(node.getPackageName()).append(':').append(node.getText()).append('/').append(node.getContentDescription()).append(']');for(int i=0;i<node.getChildCount();i++)appendUi(node.getChild(i),text,visited);}
     private String label(String zh,String en){return app.getResources().getConfiguration().getLocales().get(0).getLanguage().equals("zh")?zh:en;}
 }

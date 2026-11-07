@@ -28,6 +28,7 @@ import dev.forcemind.xs.android.XsLocalSpaces;
 import dev.forcemind.xs.android.XsMediaRepository;
 import dev.forcemind.xs.android.XsShareCoordinator;
 import dev.forcemind.xs.core.ArchiveSearch;
+import dev.forcemind.xs.core.PostUrls;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -210,7 +211,7 @@ public final class BrowserPrivacyIntegrationTest {
         if(supported[0]) {
             assertTrue("Only the just-confirmed public link loads the local fixture",selected.await(20,TimeUnit.SECONDS));
             assertFalse(BrowserPrivacy.needsExplicitNavigation(app));
-            scenario.onActivity(a->assertEquals(fresh,((WebView)a.findViewById(R.id.browser_view)).getUrl()));
+            scenario.onActivity(a->assertEquals(PostUrls.canonicalLink(fresh),((WebView)a.findViewById(R.id.browser_view)).getUrl()));
             assertEquals("true",evaluate("typeof window.fixtureOldDom==='undefined'&&localStorage.getItem('xs_privacy_fixture')===null&&sessionStorage.getItem('xs_privacy_fixture')===null&&document.cookie.indexOf('xs_privacy_fixture=')<0"));
         } else {
             assertTrue("A failed safety gate cannot consume explicit-navigation consent",BrowserPrivacy.needsExplicitNavigation(app));

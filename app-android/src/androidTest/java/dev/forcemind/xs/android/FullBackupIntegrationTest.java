@@ -13,6 +13,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import dev.forcemind.xs.core.ArchiveSearch;
 import dev.forcemind.xs.core.EncryptedLibraryBackup;
 import dev.forcemind.xs.core.LibraryBackupCodec;
+import dev.forcemind.xs.core.MediaDownloadPolicy;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -46,6 +47,7 @@ public final class FullBackupIntegrationTest {
     private Context app;private XsArchiveDatabase archive;private XsMediaRepository media;
     private String source,defaultLibrary;private File png,movie;private final List<String> owned=new ArrayList<>();
     private Set<String> initialMarkers;
+    private long writerTimeoutSeconds=20;
     private static final char[] PASSWORD="Xs本地恢复-test-2026".toCharArray();
     private static final String POST="https://x.com/i/web/status/912345";
     @Before public void setUp()throws Exception {
@@ -60,7 +62,7 @@ public final class FullBackupIntegrationTest {
         write(source,()->{archive.ensureLibrary(source,"加密资料 📚");assertTrue(archive.favorite(source,POST,"作者","加密中文正文 🚀",1000L,2000L));archive.putFavoriteDetails(source,"912345","需要保留的备注 🧪","离线,研发");archive.putCategory(source,"folder","研究");assertTrue(archive.assignCategory(source,"912345","folder"));});
     }
     @After public void tearDown()throws Exception {
-        for(String scope:owned){CountDownLatch done=new CountDownLatch(1);AtomicReference<Throwable> failure=new AtomicReference<>();assertTrue(XsLibraryWrites.invalidateAndSubmit(scope,()->{try{media.eraseLibrary(scope);archive.clearAccount(scope);archive.getWritableDatabase().delete("libraries","storage_scope=?",new String[]{scope});File marker=markerFile(scope);if(marker.exists()&&!marker.delete())throw new IOException("Fixture marker cleanup failed");}catch(Throwable problem){failure.set(problem);}finally{done.countDown();}}));assertTrue(done.await(20,TimeUnit.SECONDS));assertNull("Owned fixture cleanup",failure.get());}
+        for(String scope:owned){CountDownLatch done=new CountDownLatch(1);AtomicReference<Throwable> failure=new AtomicReference<>();assertTrue(XsLibraryWrites.invalidateAndSubmit(scope,()->{try{media.eraseLibrary(scope);archive.clearAccount(scope);archive.getWritableDatabase().delete("libraries","storage_scope=?",new String[]{scope});File marker=markerFile(scope);if(marker.exists()&&!marker.delete())throw new IOException("Fixture marker cleanup failed");}catch(Throwable problem){failure.set(problem);}finally{done.countDown();}}));assertTrue(done.await(writerTimeoutSeconds,TimeUnit.SECONDS));assertNull("Owned fixture cleanup",failure.get());}
         archive.close();if(png!=null)png.delete();if(movie!=null)movie.delete();
     }
     @Test public void encryptedRoundTripRestoresActualImageVideoMetadataAndShareableBytes()throws Exception {
@@ -200,6 +202,56 @@ public final class FullBackupIntegrationTest {
             assertEquals(defaultLibrary,XsLocalSpaces.defaultLibrary(app));assertFalse(markerFile(target).exists());assertNoNewMarkers();
         }finally{encrypted.delete();}
     }
+    @Test public void nearMaximumPayloadRestoresThirtyActualLargePngFilesThroughEncryptedStreams()throws Exception {
+        writerTimeoutSeconds=120;final int count=30;long free=app.getCacheDir().getUsableSpace();
+        // Peak private disk use is about 1.9 GiB: source + ciphertext + verified payload
+        // + parsed resource staging (or restored files). Leave room for the running AVD.
+        assertTrue("Native near-limit fixture requires 2.5 GiB available /data; actual bytes="+free,free>=2560L*1024*1024);
+        File large=null,encrypted=null;
+        try {
+            large=File.createTempFile("full-backup-large-",".png",app.getCacheDir());
+            Bitmap bitmap=Bitmap.createBitmap(1024,4096,Bitmap.Config.ARGB_8888);
+            try {
+                bitmap.setPremultiplied(false);
+                int[] row=new int[1024];int random=0x4e3ab19d;
+                for(int y=0;y<4096;y++) {
+                    for(int x=0;x<row.length;x++){random^=random<<13;random^=random>>>17;random^=random<<5;row[x]=random;}
+                    bitmap.setPixels(row,0,row.length,0,y,row.length,1);
+                }
+                try(FileOutputStream out=new FileOutputStream(large)){assertTrue(bitmap.compress(Bitmap.CompressFormat.PNG,100,out));out.getFD().sync();}
+            }finally{bitmap.recycle();}
+            long total=count*large.length();
+            assertTrue("Actual PNG must stay within the image limit",large.length()<=MediaDownloadPolicy.MAX_BYTES);
+            assertTrue("Actual native resource bytes must reach 480 MiB; actual="+total,total>=480L*1024*1024);
+            assertTrue("Leave room below 512 MiB for metadata/framing",total<EncryptedLibraryBackup.MAX_PLAINTEXT_BYTES-1024*1024);
+            String expected=hash(large);XsMediaRepository.RestoredAsset original=new XsMediaRepository.RestoredAsset(POST,"IMAGE","image/png",large.length(),expected,"近容量边界",2600L,0,0,0,0,0,0,large);
+            write(source,()->media.restoreCompleted(source,Collections.nCopies(count,original)));
+            List<XsMediaRepository.CompletedAsset> originals=media.snapshotCompleted(source);assertEquals(count,originals.size());Set<String> sourceIds=new HashSet<>();for(XsMediaRepository.CompletedAsset item:originals)assertTrue(sourceIds.add(item.asset.id));
+            encrypted=File.createTempFile("full-backup-near-limit-",".xsbackup",app.getCacheDir());
+            try(FileOutputStream out=new FileOutputStream(encrypted)){XsFullBackup.exportEncrypted(app,source,out,PASSWORD);}
+            assertTrue(encrypted.length()>total);assertTrue("Payload plus encryption overhead is below 512 MiB",encrypted.length()<EncryptedLibraryBackup.MAX_PLAINTEXT_BYTES);
+            android.util.Log.i("XsFullBackupFixture","native near-limit assets="+count+" source_bytes="+total+" encrypted_bytes="+encrypted.length());
+            String target;
+            try(FileInputStream in=new FileInputStream(encrypted);XsFullBackup.Prepared prepared=XsFullBackup.inspectEncrypted(app,source,in,PASSWORD)) {
+                assertEquals(count,prepared.assetCount());assertEquals(total,prepared.assetBytes());
+                target=XsFullBackup.restoreNewLibrary(app,prepared,"near-limit native fixture");owned.add(target);
+            }
+            assertNotEquals(source,target);try(Cursor rows=media.getReadableDatabase().rawQuery("SELECT COUNT(*) FROM assets WHERE library_id=? AND state='COMPLETED'",new String[]{target})){assertTrue(rows.moveToFirst());assertEquals(count,rows.getInt(0));}
+            List<XsMediaRepository.CompletedAsset> restored=media.snapshotCompleted(target);assertEquals(count,restored.size());Set<String> targetIds=new HashSet<>();long restoredBytes=0;
+            for(XsMediaRepository.CompletedAsset item:restored) {
+                assertTrue(targetIds.add(item.asset.id));assertFalse(sourceIds.contains(item.asset.id));assertEquals("IMAGE",item.asset.mediaKind);assertEquals("image/png",item.asset.mime);assertEquals(POST,item.asset.postUrl);
+                assertEquals(original.category,item.asset.category);assertEquals(original.createdMs,item.asset.createdMs);assertEquals(original.bytes,item.file.length());assertEquals(expected,item.sha256);assertEquals(expected,hash(item.file));restoredBytes+=item.file.length();
+            }
+            assertEquals(total,restoredBytes);assertEquals(count,media.snapshotCompleted(source).size());for(XsMediaRepository.CompletedAsset item:originals){assertTrue(item.file.isFile());assertEquals(original.bytes,item.file.length());assertEquals(expected,hash(item.file));}
+            ArchiveSearch.Filter query=new ArchiveSearch.Filter();query.keyword="加密中文";query.tag="研发";query.categoryId="folder";query.favoriteOnly=true;
+            try(Cursor rows=archive.search(source,query)){assertEquals(1,rows.getCount());}try(Cursor rows=archive.search(target,query)){assertEquals(1,rows.getCount());assertTrue(rows.moveToFirst());assertEquals("需要保留的备注 🧪",rows.getString(11));}
+            assertEquals(defaultLibrary,XsLocalSpaces.defaultLibrary(app));assertFalse(markerFile(target).exists());assertNoNewMarkers();
+        }finally {
+            boolean ciphertextCleared=encrypted==null||!encrypted.exists()||encrypted.delete();
+            boolean sourceStageCleared=large==null||!large.exists()||large.delete();
+            assertTrue("Near-limit ciphertext fixture cleanup",ciphertextCleared);assertTrue("Large source staging fixture cleanup",sourceStageCleared);
+        }
+    }
     private static long pragma(SQLiteDatabase db,String sql){try(Cursor c=db.rawQuery(sql,null)){assertTrue(c.moveToFirst());return c.getLong(0);}}
     private void addResources()throws Exception {
         VideoFileValidator.Info video=VideoFileValidator.validate(movie);
@@ -226,7 +278,7 @@ public final class FullBackupIntegrationTest {
     private int libraries(){try(Cursor c=archive.libraries()){return c.getCount();}}
     private int allAssets(){try(Cursor c=media.getReadableDatabase().rawQuery("SELECT COUNT(*) FROM assets",null)){assertTrue(c.moveToFirst());return c.getInt(0);}}
     private interface Mutation{void run()throws Exception;}
-    private void write(String scope,Mutation mutation)throws Exception{CountDownLatch done=new CountDownLatch(1);AtomicReference<Throwable> failure=new AtomicReference<>();assertTrue(XsLibraryWrites.submit(scope,()->{try{mutation.run();}catch(Throwable problem){failure.set(problem);}finally{done.countDown();}}));assertTrue(done.await(20,TimeUnit.SECONDS));if(failure.get()!=null)throw new AssertionError(failure.get());}
+    private void write(String scope,Mutation mutation)throws Exception{CountDownLatch done=new CountDownLatch(1);AtomicReference<Throwable> failure=new AtomicReference<>();assertTrue(XsLibraryWrites.submit(scope,()->{try{mutation.run();}catch(Throwable problem){failure.set(problem);}finally{done.countDown();}}));assertTrue(done.await(writerTimeoutSeconds,TimeUnit.SECONDS));if(failure.get()!=null)throw new AssertionError(failure.get());}
     private static String hash(File file)throws Exception{try(InputStream in=new FileInputStream(file)){return hash(in);}}
     private static String hash(InputStream in)throws Exception{MessageDigest digest=MessageDigest.getInstance("SHA-256");byte[] bytes=new byte[8192];int count;while((count=in.read(bytes))!=-1)digest.update(bytes,0,count);StringBuilder hex=new StringBuilder();for(byte b:digest.digest())hex.append(String.format(java.util.Locale.ROOT,"%02x",b&255));return hex.toString();}
 }

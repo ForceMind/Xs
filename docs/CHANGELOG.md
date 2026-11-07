@@ -2,6 +2,21 @@
 
 本文件记录决策变化，不把文档提交计作功能完成。代码执行与测试结果保留在各执行记录和 CI 中。
 
+## 2026-11-07 — 补齐保留/配额/统计与云端端到端验证（CI68失败，后续修复CI待生成）
+
+上一轮源码 `58585977c90307cbf97d0aadafd818bcbdf88793` / tree `595dcb18016bf4bdf2f0e520dce1236ac5fc35a5` 的 [CI68](https://github.com/ForceMind/Xs/actions/runs/42374634739) 已失败：API26/30/36共450项实际执行，415通过/35失败/0错误/0跳过；API27官方镜像架构配置导致启动失败、0 case，另计。本次PR #5修复提交与新CI待生成，不提前记PASS。
+
+下一轮矩阵为API26/27/30/36（27用x86，其余x86_64）；每API声明52宿主+100客户端仅为待跑数量。新增客体系统reboot/boot-ID与serial核对、仅CI可丢弃8GB AVD上的真实/data低空间至28MiB与原文件保留/新任务拒绝（finally仅清自建压力文件），以及原生≥480MiB/30实际资源流式备份用例，实际均NOT RUN。它们不代表物理断电、真实X/聊天App或生产key验收。
+
+本地已通过1155项JVM、SQLite/DOM/20k压力、SDK SQLite标准FTS语法复现（旧多词查询0条、修正后1条），以及完整Android构建/双Lint（196 tasks、17秒；运行库0错误/20警告，客户端0错误/12警告）。最大512MiB加密容器已在32MiB JVM流式往返并逐字节核对；这不等于Android近上限实际资源恢复。
+
+- 默认永久/7/30/90/365天事件明细保留、累计与最近打开/停留事实保留；普通writer与实际SQLite锁后policy复验，不撤销媒体票据。默认不限媒体quota计完成文件和活动预留，超限下调停止未完成任务、完成文件不删；双语管理预览/确认与统计明确曝光下界不是阅读时长。累计打开按每帖MAX(已有累计,保留OPEN明细数)求和，是已知下界，不双计数。
+- 独立UID实际Intent/ClipData文件授权、未授权/未选/写/数据库拒绝及删库后接收Activity存活时首次延迟hash读取；Browser实际SAF image/video与触摸子窗口；新增API27，当前矩阵26/27/30/36。
+- 外部ADB OS force-stop消失PID/新PID恢复、同job调试证书版本3→4安装升级已有独立驱动，执行仍PENDING；不是in-process恢复、生产key或跨schema升级，不证明物理断电/厂商后台。
+- SDK标准FTS4多词旧显式AND查询为0条、修正隐式交集为1条，保留词项白名单；双Java builder与原生current/history/Tab/字面OR回归已源码。
+
+[CI67 42372593770](https://github.com/ForceMind/Xs/actions/runs/42372593770) 实际360项、336通过/24失败/0错误或跳过；与下节CI66失败完整保留在本轮证据，不写为PASS。下一轮每API52宿主+100客户端只是声明数量，最终按实际XML及独立驱动报告结算。CI68已实际结束失败（450项中415通过/35失败，0错误/跳过；API27启动0 case另计），下一提交修复，不把失败算作通过。真实X自动采集/动作/精简仍关闭，物理设备/聊天App/真实电量多日/正式key与许可最终文本仍待验收，无正式发布。
+
 ## 2026-11-07 — v5快照、系统下载、加密资源备份与资料管理增量（首轮CI失败，修正后回归待执行）
 
 接续既有仓库实际修改SQLite/Java/Android/JS和CI，不重建项目。当前源码和精确执行状态统一记录在 [本轮可靠性与资料管理证据](ROUND_D_EVIDENCE.zh-CN.md)。源码50c91ec的 [首轮CI66](https://github.com/ForceMind/Xs/actions/runs/42369802915) core/构建通过，API26/30/36共342项仪器实际执行304通过/38失败/0跳过；问题包含备份sha256字段名校验、fixture provider初始化及观察/最低版本兼容，正在修复。LibraryUiTest和AssetLibraryUiTest三个API共39项全部通过（含206版本分页、批量和整库删除），只作为该源码的局部证据。修正后完整回归仍**PENDING**，不将66整体改写为PASS；旧933条JVM/146项API30/36结果仅属下节历史提交。

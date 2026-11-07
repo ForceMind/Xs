@@ -223,20 +223,59 @@ public final class GovernanceUiTest {
     }
 
     private void fixtureRoot() {
-        await(()->find(n->n.getPackageName()!=null&&n.getPackageName().toString().contains("documentsui"))!=null,"System DocumentsUI is active");
-        AccessibilityNodeInfo drawer=find(n->n.getClassName()!=null&&n.getClassName().toString().contains("ImageButton")&&n.getContentDescription()!=null&&
-            (n.getContentDescription().toString().toLowerCase(java.util.Locale.ROOT).contains("roots")||n.getContentDescription().toString().toLowerCase(java.util.Locale.ROOT).contains("navigation")||n.getContentDescription().toString().toLowerCase(java.util.Locale.ROOT).contains("drawer")));
-        if(drawer!=null){assertTrue("Open SAF locations",drawer.performAction(AccessibilityNodeInfo.ACTION_CLICK));SystemClock.sleep(100);}
-        AccessibilityNodeInfo root=find(n->text(n).equals(GovernanceDocumentsProvider.TITLE)&&n.isVisibleToUser());
-        if(root==null) {
-            AccessibilityNodeInfo navigation=find(n->n.getClassName()!=null&&n.getClassName().toString().contains("ImageButton")&&n.isVisibleToUser());
-            if(navigation!=null)navigation.performAction(AccessibilityNodeInfo.ACTION_CLICK);
+        await(this::documentsUiActive,"System DocumentsUI is active");
+        // SAF often restores the exact provider directory itself. Do not toggle its drawer
+        // and accidentally hit a different row while the sidebar animates into position.
+        if(fixtureToolbarVisible()&&find(this::fixtureSidebarRoot)==null)return;
+        if(find(this::fixtureSidebarRoot)==null) {
+            AccessibilityNodeInfo navigation=awaitNode(n->systemDocumentNode(n)&&n.getClassName()!=null&&
+                n.getClassName().toString().contains("ImageButton")&&n.getContentDescription()!=null&&
+                (n.getContentDescription().toString().toLowerCase(java.util.Locale.ROOT).contains("roots")||
+                 n.getContentDescription().toString().toLowerCase(java.util.Locale.ROOT).contains("navigation")||
+                 n.getContentDescription().toString().toLowerCase(java.util.Locale.ROOT).contains("drawer")));
+            touchSystemDocument(navigation);
         }
-        clickText(GovernanceDocumentsProvider.TITLE);
+        // Select only the sidebar ListView item. The same provider title also appears on
+        // the Recent screen under "Browse files in other apps" and in the toolbar.
+        touchSystemDocument(awaitNode(this::fixtureSidebarRoot));
+        await(()->fixtureToolbarVisible()&&find(this::fixtureSidebarRoot)==null,
+            "SAF shows the synthetic provider directory with its navigation drawer closed");
+    }
+    private boolean fixtureSidebarRoot(AccessibilityNodeInfo node){
+        if(!systemDocumentNode(node)||!GovernanceDocumentsProvider.TITLE.equals(text(node)))return false;
+        for(int depth=0;node!=null&&depth<12;depth++,node=node.getParent()) {
+            String id=node.getViewIdResourceName();CharSequence type=node.getClassName();
+            if((id!=null&&(id.equals("android:id/list")||id.endsWith(":id/roots_list")))||
+                    (type!=null&&type.toString().equals("android.widget.ListView")))return true;
+        }return false;
+    }
+    private boolean fixtureToolbarVisible(){return find(n->{
+        if(!systemDocumentNode(n)||!GovernanceDocumentsProvider.TITLE.equals(text(n)))return false;
+        for(int depth=0;n!=null&&depth<10;depth++,n=n.getParent()) {
+            String id=n.getViewIdResourceName();CharSequence type=n.getClassName();
+            if((id!=null&&id.endsWith(":id/toolbar"))||(type!=null&&type.toString().endsWith(".Toolbar")))return true;
+        }return false;
+    })!=null;}
+    private static boolean systemDocumentNode(AccessibilityNodeInfo node){return node.isVisibleToUser()&&node.isEnabled()&&node.getPackageName()!=null&&node.getPackageName().toString().contains("documentsui");}
+    private void touchSystemDocument(AccessibilityNodeInfo node) {
+        assertTrue("Only a visible system document control is touched",systemDocumentNode(node));
+        Rect bounds=new Rect();node.getBoundsInScreen(bounds);assertFalse("Visible document has screen bounds",bounds.isEmpty());
+        long now=SystemClock.uptimeMillis();MotionEvent down=MotionEvent.obtain(now,now,MotionEvent.ACTION_DOWN,bounds.exactCenterX(),bounds.exactCenterY(),0);
+        down.setSource(InputDevice.SOURCE_TOUCHSCREEN);
+        try{assertTrue("Touch system document control",instrumentation.getUiAutomation().injectInputEvent(down,true));}finally{down.recycle();}
+        SystemClock.sleep(20);
+        MotionEvent up=MotionEvent.obtain(now,SystemClock.uptimeMillis(),MotionEvent.ACTION_UP,bounds.exactCenterX(),bounds.exactCenterY(),0);up.setSource(InputDevice.SOURCE_TOUCHSCREEN);
+        try{assertTrue("Release system document control",instrumentation.getUiAutomation().injectInputEvent(up,true));}finally{up.recycle();}
     }
     private boolean documentsUiActive(){return find(n->n.getPackageName()!=null&&n.getPackageName().toString().contains("documentsui"))!=null;}
     private void saveInFixtureRoot(){fixtureRoot();clickText("Save","保存");await(()->!documentsUiActive(),"SAF returned the saved document");}
-    private void openFixtureFile(String name){fixtureRoot();clickText(name);await(()->!documentsUiActive(),"SAF returned the selected document");}
+    private void openFixtureFile(String name){
+        fixtureRoot();
+        // A RecyclerView ancestor may report ACTION_CLICK success without activating its
+        // child document. The user's file-title tap goes through SAF's gesture handler.
+        touchSystemDocument(awaitNode(n->systemDocumentNode(n)&&!isEditor(n)&&name.equals(text(n))));
+        await(()->!documentsUiActive(),"SAF returned the selected document");
+    }
     private void setEditor(int index,String value) {
         List<AccessibilityNodeInfo> fields=new ArrayList<>();AccessibilityNodeInfo root=instrumentation.getUiAutomation().getRootInActiveWindow();collect(root,n->{if(isEditor(n)&&n.isVisibleToUser())fields.add(n);return false;},new int[]{0});
         assertTrue("Native editor "+index+" is visible",fields.size()>index);Bundle args=new Bundle();args.putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE,value);
@@ -251,11 +290,7 @@ public final class GovernanceUiTest {
         // DocumentsUI's RecyclerView can expose non-clickable title/row nodes while its
         // touch listener owns selection. Tap only its freshly observed visible node bounds.
         if(original.getPackageName()!=null&&original.getPackageName().toString().contains("documentsui")) {
-            Rect bounds=new Rect();original.getBoundsInScreen(bounds);assertFalse("Visible document has screen bounds",bounds.isEmpty());
-            long now=SystemClock.uptimeMillis();MotionEvent down=MotionEvent.obtain(now,now,MotionEvent.ACTION_DOWN,bounds.exactCenterX(),bounds.exactCenterY(),0);
-            MotionEvent up=MotionEvent.obtain(now,now+16,MotionEvent.ACTION_UP,bounds.exactCenterX(),bounds.exactCenterY(),0);
-            down.setSource(InputDevice.SOURCE_TOUCHSCREEN);up.setSource(InputDevice.SOURCE_TOUCHSCREEN);
-            try{assertTrue("Touch system document row",instrumentation.getUiAutomation().injectInputEvent(down,true));assertTrue("Release system document row",instrumentation.getUiAutomation().injectInputEvent(up,true));}finally{down.recycle();up.recycle();}return;
+            touchSystemDocument(original);return;
         }
         throw new AssertionError("Native UI is not clickable: "+Arrays.toString(alternatives)+"\n"+activeText());
     }

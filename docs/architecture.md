@@ -1,8 +1,14 @@
 # Xs architecture — app-owned library and native-pull plan
 
-当前v5与可靠性源码见 [本轮证据](ROUND_D_EVIDENCE.zh-CN.md)，API26/30/36 CI当前PENDING。历史 [阶段C](ROUND_C_EVIDENCE.zh-CN.md) 与 [A/early-B](IMPLEMENTATION_EVIDENCE.zh-CN.md) 报告不覆盖新代码；下文区分实现和未启用的现场目标。
+当前v5与可靠性源码见 [本轮证据](ROUND_D_EVIDENCE.zh-CN.md)，CI68实际失败，修复后新CI待生成。历史 [阶段C](ROUND_C_EVIDENCE.zh-CN.md) 与 [A/early-B](IMPLEMENTATION_EVIDENCE.zh-CN.md) 报告不覆盖新代码；下文区分实现和未启用的现场目标。
 
 Updated 2026-11-07. Read [product](product.md), [ADR-0002](adr/0002-local-library-media.md), [ADR-0003](adr/0003-native-pull-delivery.md), [implementation](IMPLEMENTATION_PLAN.zh-CN.md) and [acceptance](ACCEPTANCE_MATRIX.zh-CN.md). This describes the target and names existing foundations separately; it does not claim live integration.
+
+Previous source `58585977c90307cbf97d0aadafd818bcbdf88793` / tree `595dcb18016bf4bdf2f0e520dce1236ac5fc35a5` failed [CI68](https://github.com/ForceMind/Xs/actions/runs/42374634739): API26/30/36 executed 450 cases, with 415 passed/35 failed/0 errors/0 skipped. API27 failed to start any case because of the official image architecture and is counted separately. The next PR #5 fix commit and CI are pending generation; no PASS is claimed.
+
+The next matrix is API26/27/30/36 (x86 for 27, x86_64 otherwise); 52 harness + 100 client cases/API are declarations, not passes. New guest-reboot/boot-ID/serial checks, real /data pressure down to 28MiB on disposable CI-only 8GB AVDs (preserve originals/reject new tasks; finally remove only the created pressure file), and native streaming backup of ≥480MiB/30 actual assets remain NOT RUN. They do not establish physical-power-loss, live X/chat-app or production-key acceptance.
+
+Local checks passed 1,155 JVM assertions, SQLite/DOM/20k stress, and an SDK SQLite standard-FTS reproduction (old multiword query: 0 rows; corrected: 1), plus full Android builds and both lint checks (196 tasks, 17 seconds; runtime: 0 errors/20 warnings, client: 0 errors/12 warnings). The maximum 512MiB encrypted container was streamed and checked byte-for-byte in a 32MiB JVM; this does not validate near-limit Android asset restoration.
 
 ## 1. Runtime and target boundaries
 
@@ -23,6 +29,8 @@ Use reviewed ChatGPT Studio patterns for page ownership independent of Activity,
 Start with one active web session. Runtime capability checks, not OS version assumptions, determine optional profile support. A local library is not a verified X account or a proxy. Controlled authentication navigation must not gain observation privileges. Keep normal browsing available when enhancement is disabled.
 
 Page retention is not capture permission: background/hidden/covered views stop observation timing. Do not rely on foreground-service hacks, fake audio or unbounded retained tabs. Process death means reloading the website; local history is what remains available offline.
+
+Cache clearing and web-session clearing are separate confirmed native operations. Session clear destroys the old DOM and clears Cookie/WebStorage/HTTP-auth/form state while preserving native libraries/assets/leases. Persistent session epochs/pending state and upload identities reject stale callbacks and old saved navigation. Real SAF image/video upload and touch-generated window.open fixtures are implemented; execution results belong to their exact source-specific CI. CI68 ended in failure, including the separate zero-case API27 startup failure; a new fix run is pending. Actual X authentication/upload remains unverified.
 
 ## 3. Native-pull observation contract
 
@@ -61,6 +69,12 @@ SQLite v5 preserves v1–v4 namespaces, library mappings, counts, times, categor
 
 One navigation ID admits at most one open per library/context; increasing message sequences are not sufficient. Original publication time, action time, open time and feed time remain separate, with unknown values preserved. Snapshot quality is LINK_ONLY/PARTIAL/COMPLETE/LEGACY_UNKNOWN with explicit source/capture time. COMPLETE establishes only accepted visible DOM text, never hidden/server-full content. Native detail evidence controls that quality; a newer shorter COMPLETE snapshot can become current, while PARTIAL cannot overwrite COMPLETE. Preserve all prior versions and use SnapshotPolicy for consolidation; version browsing never switches the current pointer.
 
+### Retention and statistics
+
+Per-library history retention defaults to forever, optionally 7/30/90/365 days. Only expired event details (event time, not publication time) are pruned; posts, versions, favorites, own actions, media and cumulative/latest open/dwell facts remain. Never-opened queries therefore retain the deliberate-open fact. Explicit Clear history separately resets those facts. Retention is lazy on library/management entry or manual cleanup, not a timed background promise. Changes have a count preview/confirmation. Ordinary shared-queue execution rechecks policy/cutoff inside the SQLite write lock without invalidating media tickets.
+
+HistoryStats reads one scoped SQLite snapshot and separates known lifetime open lower bounds/ever-opened posts from retained open/feed counts. Known lifetime opens sum MAX(stored cumulative count, retained OPEN detail count) per post, so legacy counter-zero/detail-present records are visible without adding both counts. Duration sums/maxima represent retained exposure lower bounds; exposures can overlap and do not establish reading time/completion. Management controls use a bounded worker; 320dp/1.8-font Chinese/English/light/dark layout cases use isolated Configuration contexts and await CI, not physical-device acceptance.
+
 ### Feed dwell design target (XS-14 baseline moves into B)
 
 See [feed dwell specification](FEED_DWELL_PLAN.zh-CN.md) / [ADR-0004](adr/0004-feed-dwell.md). A locally packaged X-specific observer will verify actual timeline cards, foreground visibility and readable-area ratio using bounded page observation; native code owns selected library, feature consent, current route, generation and monotonic timing. Thresholds are **1.2, 3 (recommended default), 5 seconds**; no threshold applies to deliberate OPEN_POST.
@@ -84,6 +98,8 @@ Write temporary data, verify actual type/completeness/playback, then atomically 
 
 Assets are separate from posts with stable local IDs, content hashes, MIME, size/duration/dimensions, source-post links, local timestamps, state and categories. Source-page disappearance does not delete completed local files. User export to Photos/Files is separate from private app storage and never implicit.
 
+Per-library media quotas default to unlimited and account for completed bytes plus active reservations. Unknown lengths conservatively reserve 20MiB/image or 100MiB/video; validated lengths can reduce that reservation. Native controls offer unlimited/100MiB/500MiB/1GiB and preserve a current custom value. Lowering below completed+reserved stops/fails all unfinished tasks, clears parts/jobs and preserves sealed candidates for later explicit retry; it never deletes completed files. Quota changes use the same shared writer/SQLite lock and roll back failed durable preference commits.
+
 ## 8. Outbound sharing
 
 Native ShareCoordinator handles canonical links, explicit text with source, and selected actual completed media. Use ACTION_SEND/ACTION_SEND_MULTIPLE, accurate MIME, content URI/ClipData and temporary read grants. Provider exposure is restricted to chosen shareable assets/copies, never root/library databases, credentials, keys or unfinished files. No write grants.
@@ -91,6 +107,8 @@ Native ShareCoordinator handles canonical links, explicit text with source, and 
 User selects installed app, conversation and sending. WeChat/QQ/Feishu/Telegram are compatibility targets, not token/SDK/contact integrations. Direct conversation shortcuts depend on the recipient. A chooser completion cannot prove sending/delivery and must not trigger automatic retry.
 
 Protect asynchronous receiver reads with a bounded share copy/lease and documented cleanup; deleting the source or clearing cache must not immediately break an active share. Sharing intentionally passes selected content to another app; no Xs upload service is used, but the receiver may upload it. Preserve originals on target/format/size failure; offer explicit alternatives, not silent quality loss.
+
+An independent-UID fixture receiver now exercises actual Intent/ClipData read grants, rejection of ungranted/unselected/write/database access, and first delayed hash-verified reads after deletion while its Activity remains alive. This tests Android grant boundaries, not WeChat/QQ/Feishu/Telegram. Its fixes await a new source-specific CI run.
 
 ## 9. UI and release boundaries
 
@@ -113,8 +131,8 @@ This is a separate format from plaintext metadata JSONL. `EncryptedLibraryBackup
 
 The plaintext payload is at most 512MiB / 500 completed assets, including metadata ≤16MiB / 20,000 records; images remain ≤20MiB and videos ≤100MiB. Overflow rejects the operation rather than truncating content. Tasks, pending URL ciphertext/candidates, browser Profiles/sessions, keys and share leases are excluded. All authentication completes into private staging before payload parsing and preview; strict schema/FK/source checks plus per-resource hash and native image/MP4 checks precede commit.
 
-Restore allocates a new UUID and never overwrites a source/default. Media files and directory state commit first; archive registration commits last. Private durable pending markers allow startup to discard an unregistered target after interruption while preserving a registered result. This does not encrypt the working SQLite/FTS/WAL or establish whole-device recovery. Dedicated core/Android/SAF UI evidence belongs to the current source, not the earlier metadata-only CI.
+Restore allocates a new UUID and never overwrites a source/default. Media files and directory state commit first; archive registration commits last. Private durable pending markers allow startup to discard an unregistered target after interruption while preserving a registered result. This does not encrypt the working SQLite/FTS/WAL or establish whole-device recovery. Dedicated core/Android/SAF UI evidence belongs to the current source, not the earlier metadata-only CI. The maximum 536,870,912-byte container has passed streaming encryption/decryption and byte-for-byte checking under a 32MiB JVM; near-limit Android resource restore and physical power-loss recovery remain separate gaps. Marker retirement requires a complete real WAL checkpoint, or the supported rollback-journal durability level; busy/incomplete checkpoints retain the marker for retry.
 
 ### Candidate signing boundary
 
-The manual `xs-signed-candidate` workflow takes an exact reviewed commit on main ancestry, configured environment secrets and a pinned certificate SHA-256. It builds/verifies an internal candidate and provenance artifact without publishing a GitHub Release/store build. Production key/certificate configuration is absent; physical upgrade/rollback and release acceptance remain open. The root GPL-3.0 license remains effective pending separate rights/notice review.
+The manual `xs-signed-candidate` workflow takes an exact reviewed commit on main ancestry, configured environment secrets and a pinned certificate SHA-256. It builds/verifies an internal candidate and provenance artifact without publishing a GitHub Release/store build. External ADB drivers now prove a live target PID, force-stop, process absence and a different recovery PID; a separate same-job debug-certificate version3→4 install driver is implemented. Both require the next source-specific CI result. Emulator process/upgrade tests are cloud-executable but do not establish reboot, physical power loss, production-key or cross-schema migration. Production key/certificate configuration is absent; physical upgrade/rollback and release acceptance remain open. The root GPL-3.0 license remains effective pending separate rights/notice review.

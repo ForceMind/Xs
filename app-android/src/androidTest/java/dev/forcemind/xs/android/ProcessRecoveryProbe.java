@@ -34,6 +34,7 @@ public final class ProcessRecoveryProbe {
         String phase=InstrumentationRegistry.getArguments().getString("xs_phase","");
         if("seed".equals(phase)){seed();return;}
         if("verify".equals(phase)){try{verify(true);}finally{cleanup();}return;}
+        if("low-space".equals(phase)){try{lowSpace();}finally{cleanup();}return;}
         assertEquals("Unexpected fixture phase","",phase);
         seed();
         try {
@@ -61,6 +62,7 @@ public final class ProcessRecoveryProbe {
             });
             write(deleted,()->{archive.ensureLibrary(deleted,"Process fixture pending deletion");assertTrue(archive.favorite(deleted,POST,"fixture","Delete only this scope",null,System.currentTimeMillis()));});
         } finally {assertTrue(image.delete());}
+        XsMediaRepository.Lease lease=media.lease(survivor,media.list(survivor).get(0).id);
         // These rows model the exact durable state of an interrupted transfer. No real
         // network request is scheduled; recovery must not silently initiate a new one.
         write(survivor,()->{
@@ -73,16 +75,19 @@ public final class ProcessRecoveryProbe {
         try(FileOutputStream out=new FileOutputStream(part)){out.write(new byte[]{1,2,3,4,5,6,7,8});out.getFD().sync();}
         XsDeletedLibraries.markDeleted(context,deleted);
         assertTrue(context.getSharedPreferences("browser.BrowserActivity",Context.MODE_PRIVATE).edit().putBoolean("browser_notice_accepted",false).commit());
-        assertTrue(prefs.edit().putString("survivor",survivor).putString("deleted",deleted).putString("task",id).putString("part",part.getName()).putString("sha256",checksum).putString("default",XsLocalSpaces.defaultLibrary(context)).putInt("seed_pid",Process.myPid()).commit());
+        assertTrue(prefs.edit().putString("survivor",survivor).putString("deleted",deleted).putString("task",id).putString("part",part.getName()).putString("sha256",checksum).putString("lease_token",lease.token).putString("lease_filename",lease.filename).putString("default",XsLocalSpaces.defaultLibrary(context)).putInt("seed_pid",Process.myPid()).commit());
     }
     private void verify(boolean separateProcess)throws Exception {
         Context context=app();SharedPreferences prefs=context.getSharedPreferences(PREFS,Context.MODE_PRIVATE);
         String survivor=prefs.getString("survivor",null),deleted=prefs.getString("deleted",null),id=prefs.getString("task",null);assertNotNull(survivor);assertNotNull(deleted);assertNotNull(id);
         if(separateProcess){
-            assertNotEquals("Verification must execute in a different native process",prefs.getInt("seed_pid",-1),Process.myPid());
-            int stopped=Integer.parseInt(InstrumentationRegistry.getArguments().getString("xs_stopped_pid","-1"));
-            assertTrue("Host driver must identify the process actually stopped",stopped>0);
-            assertNotEquals("Verification cannot reuse the stopped foreground process",stopped,Process.myPid());
+            boolean rebooted="true".equals(InstrumentationRegistry.getArguments().getString("xs_rebooted","false"));
+            if(!rebooted){
+                assertNotEquals("Verification must execute in a different native process",prefs.getInt("seed_pid",-1),Process.myPid());
+                int stopped=Integer.parseInt(InstrumentationRegistry.getArguments().getString("xs_stopped_pid","-1"));
+                assertTrue("Host driver must identify the process actually stopped",stopped>0);
+                assertNotEquals("Verification cannot reuse the stopped foreground process",stopped,Process.myPid());
+            } // Across a reboot, PIDs may legitimately repeat. The host proves different kernel boot IDs.
             android.os.Bundle status=new android.os.Bundle();status.putString("xs_verify_pid",Integer.toString(Process.myPid()));
             InstrumentationRegistry.getInstrumentation().sendStatus(0,status);
         }
@@ -101,13 +106,28 @@ public final class ProcessRecoveryProbe {
         XsMediaRepository.Asset task=media.find(survivor,id);assertNotNull(task);assertEquals("PAUSED",task.state);
         if(separateProcess){assertEquals(0,task.bytes);assertFalse(new File(new File(context.getFilesDir(),"xs-saved-media"),prefs.getString("part","")).exists());}
         int completed=0;for(XsMediaRepository.Asset asset:media.list(survivor))if("COMPLETED".equals(asset.state)){completed++;assertEquals(prefs.getString("sha256",null),hash(media.completedFile(survivor,asset.id)));}assertEquals(1,completed);
-        try(Cursor c=media.getReadableDatabase().rawQuery("SELECT url_cipher,run_token FROM assets WHERE id=?",new String[]{id})){assertTrue(c.moveToFirst());assertNotNull(c.getString(0));if(separateProcess)assertTrue(c.isNull(1));}
+        try(Cursor c=media.getReadableDatabase().rawQuery("SELECT url_cipher,run_token FROM assets WHERE id=?",new String[]{id})){assertTrue(c.moveToFirst());assertNotNull(c.getString(0));assertEquals("https://pbs.twimg.com/media/ProcessFixture?format=png&name=orig",XsDownloadSecrets.open(c.getString(0),id+"|"+survivor+"|"+POST+"|IMAGE"));if(separateProcess)assertTrue(c.isNull(1));}
+        assertEquals(prefs.getString("sha256",null),hash(media.leaseFile(media.resolveLease(prefs.getString("lease_token",null),prefs.getString("lease_filename",null)))));
+    }
+    private void lowSpace()throws Exception {
+        Context context=app();SharedPreferences prefs=context.getSharedPreferences(PREFS,Context.MODE_PRIVATE);
+        String survivor=prefs.getString("survivor",null);assertNotNull(survivor);
+        long available=context.getFilesDir().getUsableSpace();
+        assertTrue("Driver must create real low-space conditions",available>0&&available<2*dev.forcemind.xs.core.MediaDownloadPolicy.MAX_BYTES);
+        XsMediaRepository media=XsMediaRepository.get(context);int before=media.list(survivor).size();
+        try{media.enqueueImage(survivor,POST,"https://pbs.twimg.com/media/LowSpaceFixture?format=png&name=orig");fail("Low-space request should be rejected before a task or network is created");}
+        catch(IllegalStateException expected){assertEquals("Insufficient free space",expected.getMessage());}
+        assertEquals(before,media.list(survivor).size());int completed=0;
+        for(XsMediaRepository.Asset asset:media.list(survivor))if("COMPLETED".equals(asset.state)){completed++;assertEquals(prefs.getString("sha256",null),hash(media.completedFile(survivor,asset.id)));}assertEquals(1,completed);
+        try(XsArchiveDatabase archive=new XsArchiveDatabase(context)){ArchiveSearch.Filter filter=new ArchiveSearch.Filter();filter.keyword="Process boundary";filter.favoriteOnly=true;try(Cursor c=archive.search(survivor,filter)){assertEquals(1,c.getCount());}}
+        android.os.Bundle status=new android.os.Bundle();status.putString("xs_available_bytes",Long.toString(available));InstrumentationRegistry.getInstrumentation().sendStatus(0,status);
     }
     private void cleanup()throws Exception {
         Context context=app();SharedPreferences prefs=context.getSharedPreferences(PREFS,Context.MODE_PRIVATE);XsMediaRepository media=XsMediaRepository.get(context);
         for(String key:new String[]{"survivor","deleted"}){String scope=prefs.getString(key,null);if(scope==null)continue;CountDownLatch done=new CountDownLatch(1);AtomicReference<Throwable> failure=new AtomicReference<>();
             Runnable erase=()->{try(XsArchiveDatabase archive=new XsArchiveDatabase(context)){media.eraseLibrary(scope);archive.deleteLibraryScope(scope);}catch(Throwable problem){failure.set(problem);}finally{done.countDown();}};
             assertTrue(XsLibraryWrites.isDeleted(scope)?XsLibraryWrites.submitDeletion(scope,erase):XsLibraryWrites.invalidateAndSubmit(scope,erase));assertTrue(done.await(15,TimeUnit.SECONDS));if(failure.get()!=null)throw new AssertionError(failure.get());}
+        if(prefs.contains("lease_token"))media.discardLease(media.resolveLease(prefs.getString("lease_token",null),prefs.getString("lease_filename",null)));
         assertTrue(prefs.edit().clear().commit());
     }
     private interface Operation{void run()throws Exception;}

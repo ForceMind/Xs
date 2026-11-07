@@ -4,7 +4,11 @@
 
 ## 本轮离线实现与仪器证据
 
-本轮源码与精确报告统一见 [可靠性与资料管理证据](ROUND_D_EVIDENCE.zh-CN.md)。**API26/30/36及新增SAF/批量/备份/合并/删除UI当前为PENDING；测试代码存在或javac编译通过不记为UI PASS。** 当前提交的完整core/Lint/构建与仪器数字以证据页最终摘要为准。
+本轮源码与精确报告统一见 [可靠性与资料管理证据](ROUND_D_EVIDENCE.zh-CN.md)。**CI68已失败；本次修复/新增用例的新CI待生成。测试代码或编译不记为仪器PASS。** 上一轮源码 `58585977c90307cbf97d0aadafd818bcbdf88793` / tree `595dcb18016bf4bdf2f0e520dce1236ac5fc35a5` 的 [CI68](https://github.com/ForceMind/Xs/actions/runs/42374634739) 已失败：API26/30/36共450项实际执行，415通过/35失败/0错误/0跳过；API27官方镜像架构配置导致启动失败、0 case，另计。本次PR #5修复提交与新CI待生成，不提前记PASS。
+
+下一轮矩阵为API26/27/30/36（27用x86，其余x86_64）；每API声明52宿主+100客户端仅为待跑数量。新增客体系统reboot/boot-ID与serial核对、仅CI可丢弃8GB AVD上的真实/data低空间至28MiB与原文件保留/新任务拒绝（finally仅清自建压力文件），以及原生≥480MiB/30实际资源流式备份用例，实际均NOT RUN。它们不代表物理断电、真实X/聊天App或生产key验收。
+
+本地已通过1155项JVM、SQLite/DOM/20k压力、SDK SQLite标准FTS语法复现（旧多词查询0条、修正后1条），以及完整Android构建/双Lint（196 tasks、17秒；运行库0错误/20警告，客户端0错误/12警告）。最大512MiB加密容器已在32MiB JVM流式往返并逐字节核对；这不等于Android近上限实际资源恢复。 声明每API52宿主+100客户端只是待跑数量，最终按XML实际case/失败/跳过和独立驱动报告记账。
 
 历史源码4ee242e的 [CI42357220689](https://github.com/ForceMind/Xs/actions/runs/42357220689) 已通过933条JVM、SQLite/DOM、构建/Lint及146项API30/36仪器（每API36宿主+37客户端），仅覆盖旧v4提交；历史 [阶段C摘要](evidence/round-c-ci64.json) 和 [更早记录](IMPLEMENTATION_EVIDENCE.zh-CN.md) 保留，不能覆盖下面新增语义。
 
@@ -16,7 +20,12 @@
 | G03、Q03/Q04、X04 | 完整资源备份口令/64KiB分块认证，≤512MiB/500完成资源、内层16MiB/20k元数据；错误口令/损坏/超限/媒体哈希与类型；media-first/archive-last、失败清理和崩溃恢复；SAF导出/导入预览 | core/Android恢复与SAF/口令UI已编码；本轮CI PENDING；物理设备/丢失口令恢复 NOT RUN/不可恢复 |
 | Q03/Q04、F03、X04 | 持久删库tombstone、默认UUID轮换、事务内guard拒旧回调、清媒体/快照/事件/FTS、他库/网页/24h receiver lease保留、失败pending启动重试 | controller/typed确认UI/延迟receiver测试已编码且编译；仪器 PENDING |
 | D03/D05、Q02 | 时长写入1秒合并、10分钟cap后停止重复、暂停停止JS轮询、bounded长滚动/heap压力 | 新回归 PENDING；多日真实设备/耗电 NOT RUN |
+| Q03/Q04、D07/D08、U01/U02 | 默认永久/7/30/90/365天仅清事件明细，保留累计事实和从未打开判定；默认无限媒体配额，完成+预留预算，降低超限停止未完成、不删完成文件；已知累计打开下界（逐帖MAX计数与OPEN明细，不双计）/保留事件/曝光下界统计；320dp/1.8字号/双语深浅配置 | 源码/原生回归与UI已编码，本轮CI PENDING；配置测量不代表真机，统计不等于阅读时长 |
+| X01/X02/X04、B03/B04 | 独立UID实际grant/未授权与写入拒绝/删库后Activity存活期间首次延迟hash读取；Browser实际SAF image/video上传和触摸window.open | 本轮CI PENDING；不是聊天App送达或真实X授权验收 |
+| Q04/G02/G03 | 外部ADB存活PID→force-stop→进程消失→不同PID恢复；同job调试证书版本3→4真实覆盖安装 | 本轮独立驱动PENDING；不是in-process重启，也不是设备reboot/物理断电/生产key或跨schema升级 |
 | G02/G04 | 手动内部签名候选、main祖先/secret/证书SHA256 pin与APK摘要，不发布 | workflow/scripts已有；正式密钥未配置，生产候选/升级/分发 NOT RUN |
+
+最大512MiB加密容器在32MiB JVM流式逐字节验证已通过，但近上限Android文件恢复仍未执行。模拟器OS强停、重启和磁盘压力可云端扩展，不归为只能真机；物理断电、厂商后台、真实电量/多日与现场服务需对应设备证据。
 
 完整加密备份不等于工作SQLite/FTS/WAL加密，不备份网页会话、密钥、任务/候选URL或lease；明文元数据选项仍需明确提示。系统任务可被Android延迟/停止。标准MP4首尾有限解码不等于全程播放或每个接收应用支持。下面核心用例包含现场条件，整体保持NOT RUN，直到各自证据满足；本轮离线子集不能直接给整个C/D或发布盖章。
 

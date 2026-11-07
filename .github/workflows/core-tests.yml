@@ -90,7 +90,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        api-level: [26, 27, 30, 36]
+        include:
+          - api-level: 26
+            arch: x86_64
+          - api-level: 27
+            arch: x86
+          - api-level: 30
+            arch: x86_64
+          - api-level: 36
+            arch: x86_64
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -114,13 +122,17 @@ jobs:
         with:
           api-level: ${{ matrix.api-level }}
           target: google_apis
-          arch: x86_64
+          arch: ${{ matrix.arch }}
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none -partition-size 8192
           disable-animations: true
           script: |
             mkdir -p app-android/build/compatibility
             git rev-parse HEAD > app-android/build/compatibility/source-commit.txt
             adb shell getprop ro.build.version.release > app-android/build/compatibility/android-release.txt
             adb shell getprop ro.build.version.sdk > app-android/build/compatibility/android-api.txt
+            adb shell getprop ro.product.cpu.abi > app-android/build/compatibility/primary-abi.txt
+            adb shell getprop ro.product.cpu.abilist > app-android/build/compatibility/supported-abis.txt
+            adb shell df -k /data > app-android/build/compatibility/data-space-before-tests.txt
             adb shell getprop persist.sys.locale > app-android/build/compatibility/locale.txt
             adb shell am get-config > app-android/build/compatibility/device-configuration.txt
             adb shell dumpsys webviewupdate > app-android/build/compatibility/webview-provider.txt
@@ -128,6 +140,8 @@ jobs:
             gradle --no-daemon --no-parallel --continue :dev-harness:connectedDebugAndroidTest :app-android:connectedDebugAndroidTest
             python3 scripts/test-process-recovery.py
             python3 scripts/test-debug-upgrade.py
+            python3 scripts/test-process-recovery.py --reboot
+            python3 scripts/test-emulator-low-space.py
       - name: Record job-local fixture APK hashes and public signing certificates
         if: always()
         run: python3 scripts/record-fixture-provenance.py

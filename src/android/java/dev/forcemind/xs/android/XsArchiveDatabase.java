@@ -482,7 +482,10 @@ public final class XsArchiveDatabase extends SQLiteOpenHelper {
         requireAccount(libraryId);SQLiteDatabase db=getReadableDatabase();db.beginTransactionNonExclusive();
         try {
             String opened="(p.opened_count>0 OR EXISTS (SELECT 1 FROM history_events e WHERE e.account_id=p.account_id AND e.post_id=p.post_id AND e.event_type='OPEN_POST'))";
-            long[] posts=statsRow(db,"SELECT COUNT(*),COALESCE(SUM(p.opened_count),0),COALESCE(SUM(CASE WHEN "+opened+" THEN 1 ELSE 0 END),0),COALESCE(SUM(CASE WHEN NOT "+opened+" THEN 1 ELSE 0 END),0) FROM posts p WHERE p.account_id=?",libraryId,4);
+            // Legacy imports can have real OPEN evidence without a populated counter.
+            // Both are lower bounds on the same opens: use the larger per post, never add them.
+            String knownOpens="MAX(p.opened_count,(SELECT COUNT(*) FROM history_events e WHERE e.account_id=p.account_id AND e.post_id=p.post_id AND e.event_type='OPEN_POST'))";
+            long[] posts=statsRow(db,"SELECT COUNT(*),COALESCE(SUM("+knownOpens+"),0),COALESCE(SUM(CASE WHEN "+opened+" THEN 1 ELSE 0 END),0),COALESCE(SUM(CASE WHEN NOT "+opened+" THEN 1 ELSE 0 END),0) FROM posts p WHERE p.account_id=?",libraryId,4);
             long[] events=statsRow(db,"SELECT COALESCE(SUM(CASE WHEN event_type='OPEN_POST' THEN 1 ELSE 0 END),0),"+
                 "COALESCE(SUM(CASE WHEN event_type='FEED_VISIBLE' THEN 1 ELSE 0 END),0),"+
                 "COUNT(DISTINCT CASE WHEN event_type='OPEN_POST' THEN post_id END),"+

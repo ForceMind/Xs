@@ -53,6 +53,7 @@ public final class BrowserInteractionIntegrationTest {
     private Context app;
     private ActivityScenario<BrowserActivity> scenario;
     private Map<String,?> previousBrowser,previousPrivacy;
+    private boolean bodyCompleted;
     private final AtomicReference<CountDownLatch> loaded=new AtomicReference<>();
     private static final String HTML="<!doctype html><meta name='viewport' content='width=device-width,initial-scale=1'>"+
         "<style>body{margin:8px}button,input{display:block;box-sizing:border-box;width:100%;height:44px;margin:8px 0;font-size:16px}</style>"+
@@ -62,7 +63,8 @@ public final class BrowserInteractionIntegrationTest {
         "<button id='internal' onclick=\"window.popupReturned=window.open('"+POPUP+"','_blank')!==null\">Open synthetic authentication window</button>"+
         "<button id='external' onclick=\"window.popupReturned=window.open('https://example.invalid/xs-fixture','_blank')!==null\">Open external fixture link</button>"+
         "<button id='blocked' onclick=\"window.popupReturned=window.open('intent://xs-fixture','_blank')!==null\">Open blocked scheme</button>"+
-        "<script>window.uploadResult=null;window.rejectOnHide=false;"+
+        "<script>window.uploadResult=null;window.rejectOnHide=false;window.lastFixturePointer=null;"+
+        "document.addEventListener('pointerdown',function(e){window.lastFixturePointer={id:e.target.id,trusted:e.isTrusted}},true);"+
         "document.getElementById('file').onchange=function(){var f=this.files[0];if(!f)return;var r=new FileReader();"+
         "r.onload=function(){window.uploadResult={name:f.name,type:f.type,size:f.size,data:r.result}};r.readAsDataURL(f)};"+
         "document.addEventListener('visibilitychange',function(){if(window.rejectOnHide&&document.visibilityState==='hidden'){window.rejectOnHide=false;location.href='"+SENSITIVE+"'}});</script>";
@@ -81,8 +83,15 @@ public final class BrowserInteractionIntegrationTest {
         });});load(HOME);
     }
     @After public void cleanup(){
-        if(isDocumentsUi())backFromPicker();
-        if(scenario!=null)scenario.close();restore("browser.BrowserActivity",previousBrowser);restore("xs_browser_privacy",previousPrivacy);
+        Throwable cleanupFailure=null;
+        try{if(isDocumentsUi())backFromPicker();}catch(Throwable failure){cleanupFailure=failure;}
+        try{if(scenario!=null)scenario.close();}catch(Throwable failure){if(cleanupFailure==null)cleanupFailure=failure;else cleanupFailure.addSuppressed(failure);}
+        try{if(previousBrowser!=null)restore("browser.BrowserActivity",previousBrowser);if(previousPrivacy!=null)restore("xs_browser_privacy",previousPrivacy);}
+        catch(Throwable failure){if(cleanupFailure==null)cleanupFailure=failure;else cleanupFailure.addSuppressed(failure);}
+        if(cleanupFailure!=null){
+            if(bodyCompleted)throw new AssertionError("Browser fixture cleanup failed",cleanupFailure);
+            android.util.Log.w("XsBrowserFixture","Cleanup failure follows the original test failure",cleanupFailure);
+        }
     }
     private void restore(String name,Map<String,?> values){android.content.SharedPreferences.Editor edit=app.getSharedPreferences(name,Context.MODE_PRIVATE).edit().clear();for(Map.Entry<String,?> item:values.entrySet()){
         Object value=item.getValue();if(value instanceof Boolean)edit.putBoolean(item.getKey(),(Boolean)value);else if(value instanceof Integer)edit.putInt(item.getKey(),(Integer)value);else if(value instanceof Long)edit.putLong(item.getKey(),(Long)value);else if(value instanceof String)edit.putString(item.getKey(),(String)value);
@@ -93,13 +102,35 @@ public final class BrowserInteractionIntegrationTest {
     private boolean dialog(String name){Object value=field(name);return value instanceof AlertDialog&&((AlertDialog)value).isShowing();}
     private String currentUrl(){AtomicReference<String> result=new AtomicReference<>();scenario.onActivity(a->result.set(((WebView)a.findViewById(R.id.browser_view)).getUrl()));return result.get();}
     @SuppressWarnings("unchecked") private void tapHtml(String id)throws Exception {
-        String script="(function(){var e=document.getElementById('"+id+"');e.scrollIntoView();var r=e.getBoundingClientRect();return JSON.stringify({x:r.left+r.width/2,y:r.top+r.height/2,width:innerWidth})})()";
+        await(()->{final boolean[] focused={false};scenario.onActivity(a->{WebView web=a.findViewById(R.id.browser_view);focused[0]=web.isShown()&&web.hasWindowFocus();});return focused[0];},"Fixture WebView has actual window focus before a trusted gesture");
+        evaluate("document.getElementById('"+id+"').scrollIntoView();window.lastFixturePointer=null");
+        CountDownLatch presented=new CountDownLatch(1);
+        scenario.onActivity(a->{WebView web=a.findViewById(R.id.browser_view);
+            web.postVisualStateCallback(1,new WebView.VisualStateCallback(){
+                @Override public void onComplete(long request){web.postOnAnimation(()->web.postOnAnimation(presented::countDown));}
+            });
+        });
+        assertTrue("The scrolled fixture DOM reaches the compositor before its coordinates are used",presented.await(10,TimeUnit.SECONDS));
+        String script="(function(){var r=document.getElementById('"+id+"').getBoundingClientRect();return JSON.stringify({x:r.left+r.width/2,y:r.top+r.height/2,width:innerWidth})})()";
         Object raw=StrictJson.parse(evaluate(script));Map<String,Object> point=(Map<String,Object>)StrictJson.parse((String)raw);
-        final float[] pixels=new float[2];scenario.onActivity(a->{WebView web=a.findViewById(R.id.browser_view);int[] location=new int[2];web.getLocationOnScreen(location);double ratio=web.getWidth()/((Number)point.get("width")).doubleValue();pixels[0]=(float)(location[0]+((Number)point.get("x")).doubleValue()*ratio);pixels[1]=(float)(location[1]+((Number)point.get("y")).doubleValue()*ratio);});
-        instrumentation.waitForIdleSync();SystemClock.sleep(50);tap(pixels[0],pixels[1]);
+        final float[] pixels=new float[2];scenario.onActivity(a->{WebView web=a.findViewById(R.id.browser_view);int[] location=new int[2];web.getLocationOnScreen(location);double ratio=web.getWidth()/((Number)point.get("width")).doubleValue();pixels[0]=(float)(location[0]+((Number)point.get("x")).doubleValue()*ratio);pixels[1]=(float)(location[1]+((Number)point.get("y")).doubleValue()*ratio);
+            Rect visible=new Rect();assertTrue(web.getGlobalVisibleRect(visible));assertTrue("The real touch stays inside the visible WebView",visible.contains((int)pixels[0],(int)pixels[1]));
+        });
+        tap(pixels[0],pixels[1]);
+        awaitJs("window.lastFixturePointer&&window.lastFixturePointer.id==='"+id+"'&&window.lastFixturePointer.trusted===true");
     }
-    private void tap(float x,float y){long time=SystemClock.uptimeMillis();MotionEvent down=MotionEvent.obtain(time,time,MotionEvent.ACTION_DOWN,x,y,0),up=MotionEvent.obtain(time,time+20,MotionEvent.ACTION_UP,x,y,0);down.setSource(android.view.InputDevice.SOURCE_TOUCHSCREEN);up.setSource(android.view.InputDevice.SOURCE_TOUCHSCREEN);try{assertTrue(instrumentation.getUiAutomation().injectInputEvent(down,true));assertTrue(instrumentation.getUiAutomation().injectInputEvent(up,true));}finally{down.recycle();up.recycle();}}
+    private void tap(float x,float y){
+        long time=SystemClock.uptimeMillis();MotionEvent down=MotionEvent.obtain(time,time,MotionEvent.ACTION_DOWN,x,y,0);down.setSource(android.view.InputDevice.SOURCE_TOUCHSCREEN);
+        try{assertTrue(instrumentation.getUiAutomation().injectInputEvent(down,true));}finally{down.recycle();}
+        MotionEvent up=MotionEvent.obtain(time,SystemClock.uptimeMillis(),MotionEvent.ACTION_UP,x,y,0);up.setSource(android.view.InputDevice.SOURCE_TOUCHSCREEN);
+        try{assertTrue(instrumentation.getUiAutomation().injectInputEvent(up,true));}finally{up.recycle();}
+    }
     private void clickText(String text){AccessibilityNodeInfo node=awaitNode(n->text.contentEquals(n.getText()==null?"":n.getText())&&n.isVisibleToUser());for(int i=0;i<6&&node!=null;i++,node=node.getParent())if(node.isClickable()){assertTrue(node.performAction(AccessibilityNodeInfo.ACTION_CLICK));return;}throw new AssertionError("Visible UI is not clickable: "+text);}
+    private void clickNativeId(int resource){
+        String id=app.getResources().getResourceName(resource);
+        AccessibilityNodeInfo node=awaitNode(n->id.equals(n.getViewIdResourceName())&&n.isVisibleToUser()&&n.isEnabled());
+        assertTrue("The identified native control is clicked through accessibility",node.performAction(AccessibilityNodeInfo.ACTION_CLICK));
+    }
     private void dialogButton(boolean positive){String id="android:id/button"+(positive?"1":"2");AccessibilityNodeInfo node=awaitNode(n->id.equals(n.getViewIdResourceName())&&n.isVisibleToUser()&&n.isEnabled());assertTrue(node.performAction(AccessibilityNodeInfo.ACTION_CLICK));}
     private void chooseFixture(String name){
         await(this::isDocumentsUi,"System DocumentsUI opens");
@@ -127,11 +158,22 @@ public final class BrowserInteractionIntegrationTest {
         tap(bounds.exactCenterX(),bounds.exactCenterY());
     }
     private boolean isDocumentsUi(){return find(n->n.getPackageName()!=null&&n.getPackageName().toString().contains("documentsui"))!=null;}
-    private void backFromPicker(){for(int i=0;i<4&&isDocumentsUi();i++){assertTrue(instrumentation.getUiAutomation().injectInputEvent(new KeyEvent(KeyEvent.ACTION_DOWN,KeyEvent.KEYCODE_BACK),true));assertTrue(instrumentation.getUiAutomation().injectInputEvent(new KeyEvent(KeyEvent.ACTION_UP,KeyEvent.KEYCODE_BACK),true));SystemClock.sleep(150);}await(()->!isDocumentsUi(),"System picker cancellation returns");}
+    private void backFromPicker(){
+        for(int i=0;i<4&&isDocumentsUi();i++){
+            // The short KeyEvent(action,code) constructor has eventTime=0; modern input
+            // dispatchers correctly drop it as stale instead of delivering system Back.
+            long now=SystemClock.uptimeMillis();
+            KeyEvent down=new KeyEvent(now,now,KeyEvent.ACTION_DOWN,KeyEvent.KEYCODE_BACK,0,0,android.view.KeyCharacterMap.VIRTUAL_KEYBOARD,0,0,android.view.InputDevice.SOURCE_KEYBOARD);
+            assertTrue("The actual current system Back press is injected",instrumentation.getUiAutomation().injectInputEvent(down,true));
+            KeyEvent up=new KeyEvent(now,SystemClock.uptimeMillis(),KeyEvent.ACTION_UP,KeyEvent.KEYCODE_BACK,0,0,android.view.KeyCharacterMap.VIRTUAL_KEYBOARD,0,0,android.view.InputDevice.SOURCE_KEYBOARD);
+            assertTrue("The matching system Back release is injected",instrumentation.getUiAutomation().injectInputEvent(up,true));SystemClock.sleep(150);
+        }
+        await(()->!isDocumentsUi(),"System picker cancellation returns");
+    }
     private AccessibilityNodeInfo awaitNode(Predicate<AccessibilityNodeInfo> predicate){AtomicReference<AccessibilityNodeInfo> found=new AtomicReference<>();await(()->{AccessibilityNodeInfo node=find(predicate);if(node==null)return false;found.set(node);return true;},"Required native/system UI appears");return found.get();}
     private AccessibilityNodeInfo find(Predicate<AccessibilityNodeInfo> predicate){return visit(instrumentation.getUiAutomation().getRootInActiveWindow(),predicate,new int[]{0});}
     private AccessibilityNodeInfo visit(AccessibilityNodeInfo node,Predicate<AccessibilityNodeInfo> predicate,int[] count){if(node==null||++count[0]>2000)return null;if(predicate.test(node))return node;for(int i=0;i<node.getChildCount();i++){AccessibilityNodeInfo found=visit(node.getChild(i),predicate,count);if(found!=null)return found;}return null;}
-    private void await(BooleanSupplier condition,String explanation){long end=SystemClock.elapsedRealtime()+20000;do{if(condition.getAsBoolean())return;SystemClock.sleep(40);}while(SystemClock.elapsedRealtime()<end);throw new AssertionError(explanation);}
+    private void await(BooleanSupplier condition,String explanation){long end=SystemClock.elapsedRealtime()+20000;do{if(condition.getAsBoolean())return;SystemClock.sleep(40);}while(SystemClock.elapsedRealtime()<end);AccessibilityNodeInfo active=instrumentation.getUiAutomation().getRootInActiveWindow();throw new AssertionError(explanation+"; active package="+(active==null?"none":active.getPackageName()));}
     private void awaitJs(String expression){await(()->{try{return "true".equals(evaluate(expression));}catch(Exception failure){throw new AssertionError(failure);}},expression);}
     private void openSystemPicker()throws Exception {tapHtml("file");await(()->dialog("uploadDialog"),"Trusted file-input gesture opens native consent");dialogButton(true);await(this::isDocumentsUi,"Actual ACTION_OPEN_DOCUMENT runs");}
 
@@ -147,26 +189,26 @@ public final class BrowserInteractionIntegrationTest {
         try(InputStream input=app.getContentResolver().openInputStream(selected);ByteArrayOutputStream bytes=new ByteArrayOutputStream()){assertNotNull(input);byte[] chunk=new byte[128];int n;while((n=input.read(chunk))!=-1)bytes.write(chunk,0,n);assertArrayEquals(Base64.decode(BrowserDocumentsProvider.PNG_BASE64,Base64.NO_WRAP),bytes.toByteArray());}
         try{android.os.ParcelFileDescriptor write=app.getContentResolver().openFileDescriptor(selected,"w");if(write!=null)write.close();fail("Read-only fixture cannot be modified");}catch(SecurityException|FileNotFoundException expected){}
         tapHtml("reset");tapHtml("file");await(()->dialog("uploadDialog"),"Native upload consent appears");dialogButton(false);awaitJs("document.getElementById('file').files.length===0&&window.uploadResult===null");assertNull(field("upload"));
-        openSystemPicker();backFromPicker();awaitJs("document.getElementById('file').files.length===0&&window.uploadResult===null");assertNull(field("upload"));
+        openSystemPicker();backFromPicker();awaitJs("document.getElementById('file').files.length===0&&window.uploadResult===null");assertNull(field("upload"));bodyCompleted=true;
     }
     @Test public void realPickerResultAfterPageNavigationIsRejectedAndSensitivePageCannotChoose()throws Exception {
         tapHtml("arm");openSystemPicker();
         await(()->SENSITIVE.equals(currentUrl()),"Visibility transition performs the fixture's real navigation while SAF is open");
         chooseFixture("xs-browser-boundary.png");
         awaitJs("location.href==='"+SENSITIVE+"'&&document.getElementById('file').files.length===0&&window.uploadResult===null");assertNull(field("upload"));
-        tapHtml("file");SystemClock.sleep(300);assertFalse("Security route never opens native file consent",dialog("uploadDialog"));assertFalse(isDocumentsUi());awaitJs("document.getElementById('file').files.length===0&&window.uploadResult===null");
+        tapHtml("file");SystemClock.sleep(300);assertFalse("Security route never opens native file consent",dialog("uploadDialog"));assertFalse(isDocumentsUi());awaitJs("document.getElementById('file').files.length===0&&window.uploadResult===null");bodyCompleted=true;
     }
     @Test public void trustedWindowOpenUsesNativeConfirmationAndNeverRunsChildContent()throws Exception {
-        CountDownLatch ready=new CountDownLatch(1);loaded.set(ready);clickText(app.getString(R.string.open_x));
+        CountDownLatch ready=new CountDownLatch(1);loaded.set(ready);clickNativeId(R.id.open_x);
         final boolean[] supported={false};scenario.onActivity(a->supported[0]=((WebView)a.findViewById(R.id.browser_view)).getSettings().getSafeBrowsingEnabled());
         if(!supported[0]) {
-            tapHtml("internal");SystemClock.sleep(300);assertNull(field("popupTransport"));assertFalse(dialog("popupDialog"));assertEquals(HOME,currentUrl());return;
+            tapHtml("internal");SystemClock.sleep(300);assertNull(field("popupTransport"));assertFalse(dialog("popupDialog"));assertEquals(HOME,currentUrl());bodyCompleted=true;return;
         }
         assertTrue(ready.await(20,TimeUnit.SECONDS));
         evaluate("window.noGesture=window.open('https://x.com/fixture/unsolicited','_blank')===null");SystemClock.sleep(250);assertNull(field("popupTransport"));assertFalse(dialog("popupDialog"));assertEquals(HOME,currentUrl());
         tapHtml("internal");await(()->dialog("popupDialog"),"Trusted window.open reaches controlled native confirmation");assertEquals(HOME,currentUrl());assertNull(field("popupTransport"));
         ready=new CountDownLatch(1);loaded.set(ready);dialogButton(true);assertTrue(ready.await(20,TimeUnit.SECONDS));assertEquals(POPUP,currentUrl());
         tapHtml("external");await(()->dialog("externalDialog"),"External HTTPS requires native confirmation");assertEquals(POPUP,currentUrl());assertNull(field("popupTransport"));dialogButton(false);assertEquals(POPUP,currentUrl());
-        tapHtml("blocked");await(()->field("popupTransport")==null,"Blocked scheme transport is destroyed");assertFalse(dialog("externalDialog"));assertFalse(dialog("popupDialog"));assertEquals(POPUP,currentUrl());
+        tapHtml("blocked");await(()->field("popupTransport")==null,"Blocked scheme transport is destroyed");assertFalse(dialog("externalDialog"));assertFalse(dialog("popupDialog"));assertEquals(POPUP,currentUrl());bodyCompleted=true;
     }
 }

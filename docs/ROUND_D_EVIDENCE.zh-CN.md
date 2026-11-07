@@ -69,3 +69,16 @@ API26/30/36的真实WebView、SQLite、Job/Keystore、完整资源、SAF和新�
 多词FTS的实际根因已在[SDK SQLite标准语法复现](evidence/round-d-fts-compatibility.json)：旧`native* AND resource*`为0，新隐式交集`native* resource*`为1；两个Java builder统一修复，保留token白名单。新增原生Android current/history/multiword/Tab/字面OR回归及浏览器动作前完整种子校验。桌面SQLite的增强语法通过不能代替Android原生测试。
 
 本轮追加源码的[本地统一检查](evidence/round-d-governance-local.json)实际通过1155项JVM、v5迁移/搜索、DOM/20k压力、SDK标准FTS复现、完整构建和双Lint；[五个实际debug夹具APK/public cert](evidence/round-d-governance-local-apks.json)单独留证。196 tasks最终17秒（修改触摸源前完整31秒）；源码base为aaf4f1b的未提交工作树，仪器声明52＋98仅是待跑数量，不提前记600项通过。生产key/许可/真实设备边界不变。
+
+
+## CI68真实结果与下一修复
+
+[CI68 42374634739](https://github.com/ForceMind/Xs/actions/runs/42374634739) core1155/构建通过；API26/30/36各150项共450执行，415通过/35失败/0错误/跳过。API27因官方无`google_apis;x86_64`镜像未启动，实际0项，不计为应用失败或PASS。[完整原始诊断](evidence/round-d-ci68-failures.json)含merge `27769f02f1f661454c4ea1559a4c1eb2b0a4a6c5`、tree `595dcb18016bf4bdf2f0e520dce1236ac5fc35a5`和各job五APK/环境/ZIP摘要。官方[sdkmanager目录证据](evidence/round-d-api27-catalog.json)/[7条包片段](evidence/round-d-api27-packages.txt)确认27有google_apis;x86 rev11，下一矩阵27改x86，另三版保留x86_64，并记录实际ABI和/data容量。
+
+三套FullBackup10项（含500真实tiny PNG）/MediaQuota7项/Retention9项/原生多词FTS均实际PASS；旧容器/视频/NativeText/精简回归也通过。失败集中于测试跨APK匿名ResultReceiver具体类不可解包、DocumentsUI返回true的祖先AX点击未激活文件、输入合成器呈现/过期BACK事件/原生文本匹配、API30管理窗口焦点/销毁泄漏，以及规范URL预期。修复使用framework ResultReceiver Binder、受限固定filename实际触摸、visual/frame同步与isTrusted命中、当前uptime键盘事件及弹窗销毁，不伪造文件选择结果/URI grant，也不延长业务时限。此前隐私两例已PASS，第三已抵达最后canonical断言，实际URI行为正确。
+
+继续修正legacy累计统计：每帖取MAX(原计数,当前OPEN证据数)再求和，标已知下界，避免清理前0/曾开1、清理后数值跳变；不相加双计。追加第10个保留回归。下次新增近上限Android真实30 PNG（≥480MiB）流式完整恢复，不能与已通过的JVM512MiB或Android500tiny相互冒充。
+
+外部OS强停/升级驱动在CI68因主仪器失败**NOT RUN**。下一轮另外实际执行同一guest serial的reboot前后kernel boot_id变化与native数据/Keystore/lease保留，及仅GITHUB_ACTIONS且证实emulator/qemu的真实/data低空间测试：唯一shell自建文件压至约28MiB可用，native实测低于40MiB并拒绝新图任务、保留既有PNG/hash/离线搜索，finally删除该唯一文件、核不存在并记录释放后容量，清理失败不能记PASS。8GiB AVD给大资源恢复余量；这些不是mid-stream ENOSPC/物理断电/厂商后台或用户手机证据。
+
+[下一轮提交前本地复测](evidence/round-d-pre-ci69-local.json)实际1155/SQLite/DOM/SDK FTS/完整Android与双Lint PASS（196 tasks28秒）；52＋100每API只为新源码声明，608项及外部drivers结果仍待下一CI，不提前记通过。

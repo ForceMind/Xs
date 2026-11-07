@@ -7,6 +7,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.Parcel;
 import android.os.ParcelFileDescriptor;
 import android.os.Process;
 import android.os.ResultReceiver;
@@ -46,7 +47,13 @@ public final class ReceiverActivity extends Activity {
             }
         };
         // The caller can finish deletion before allowing the very first openFile call.
-        Bundle control=new Bundle();control.putParcelable(CONTINUE,continuation);ready.send(1,control);
+        Bundle control=new Bundle();control.putParcelable(CONTINUE,frameworkReceiver(continuation));ready.send(1,control);
+    }
+    /** Marshal only the framework class; the sender APK cannot load this anonymous callback. */
+    private static ResultReceiver frameworkReceiver(ResultReceiver local) {
+        Parcel parcel=Parcel.obtain();
+        try{local.writeToParcel(parcel,0);parcel.setDataPosition(0);return ResultReceiver.CREATOR.createFromParcel(parcel);}
+        finally{parcel.recycle();}
     }
     private void readSelected() {
         String status="UNAVAILABLE",hash=null;long bytes=0;
