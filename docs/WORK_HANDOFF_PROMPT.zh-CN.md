@@ -7,7 +7,7 @@
 ## 仓库与约束
 
 - 仓库：https://github.com/ForceMind/Xs
-- 默认分支：`main`；GPL-3.0 目前仍为有效根目录许可，用户允许后续经权利/历史授权审查采用自定义许可，**不得擅自将已有代码换成未确认的限制性许可**。
+- 默认分支：`main`；GPL-3.0 目前仍为有效根目录许可，用户允许但不要求后续经权利/历史授权审查选择自定义许可；如切换才另定范围和条款，**不得擅自将已有代码换成未确认的限制性许可**。
 - 项目保持独立、公开，中英文 README 同步；保留现有代码和用户数据迁移路径。
 - 参考自有 ChatGPT Studio 的浏览容器、Profile、受控窗口、页面保留、原生主动获取与加密恢复经验，但不要盲目复制大 Activity、聊天草稿处理、签名或登录信息。
 - 不使用用户电脑或服务器，不在本机/远端擅自部署，不上传凭证/真实私人内容，不为了开发方便绕过登录、DRM、付费/安全控制。
@@ -24,15 +24,16 @@
 
 ## 接续代码基线（2026-11-07，仍需核对最新提交）
 
-上一轮源码 `58585977c90307cbf97d0aadafd818bcbdf88793` / tree `595dcb18016bf4bdf2f0e520dce1236ac5fc35a5` 的 [CI68](https://github.com/ForceMind/Xs/actions/runs/42374634739) 已失败：API26/30/36共450项实际执行，415通过/35失败/0错误/0跳过；API27官方镜像架构配置导致启动失败、0 case，另计。本次PR #5修复提交与新CI待生成，不提前记PASS。
+当前验证源码 `0d193e4689d649970d9705818d33e8706b470d8f` / tested tree `c8551cd4a09e4466cd84e7973039aba06a5f87b2`：[CI74](https://github.com/ForceMind/Xs/actions/runs/42386764024) 六项任务全部成功。1155项JVM、构建/双Lint及API26/27/30/36主仪器608/608通过，0失败/错误/跳过；独立force-stop、同job同源debug3→4升级、guest reboot与真实低空间各4/4，共16/16通过，不并入608主XML。
 
-下一轮矩阵为API26/27/30/36（27用x86，其余x86_64）；每API声明52宿主+100客户端仅为待跑数量。新增客体系统reboot/boot-ID与serial核对、仅CI可丢弃8GB AVD上的真实/data低空间至28MiB与原文件保留/新任务拒绝（finally仅清自建压力文件），以及原生≥480MiB/30实际资源流式备份用例，实际均NOT RUN。它们不代表物理断电、真实X/聊天App或生产key验收。
+低空间断言以普通应用原UID和实际可用空间为准，验证新任务拒绝、原文件/hash/离线搜索保留及压力文件清理；仅CI可丢弃旧userdebug模拟器的分配器在严格环境/当次quota/UID门后临时root，并已核实finally删除、unroot及shell UID恢复。10项host故障/安全门回归另行通过。完整case、身份/包摘要与CI66～73失败历史见本轮证据；这不是物理断电、用户手机提权或无限后台保证。
 
-保留A/早期B/C已有即时打开、无点击停留、独立收藏、图片与标准MP4分享、本人行为与可撤销精简夹具。当前XS-06/07/09/14/15等范围已有实际源码；本轮API26/27/30/36与新增治理/SAF/独立UID/Browser/OS强停/调试升级**PENDING**。先查看 [本轮证据](ROUND_D_EVIDENCE.zh-CN.md) 与最新CI，测试编码/编译不等于仪器执行。
 
-本地已通过1155项JVM、SQLite/DOM/20k压力、SDK SQLite标准FTS语法复现（旧多词查询0条、修正后1条），以及完整Android构建/双Lint（196 tasks、17秒；运行库0错误/20警告，客户端0错误/12警告）。最大512MiB加密容器已在32MiB JVM流式往返并逐字节核对；这不等于Android近上限实际资源恢复。
+保留A/早期B/C已有即时打开、无点击停留、独立收藏、图片与标准MP4分享、本人行为与可撤销精简夹具。当前XS-06/07/09/14/15等范围已有实际源码；CI74已通过API26/27/30/36的608主用例与force-stop/debug升级/reboot探针；四API低空间driver亦实际通过。先查看 [本轮证据](ROUND_D_EVIDENCE.zh-CN.md) 与最新CI，测试编码/编译不等于仪器执行。
 
-历史源码4ee242e的 [CI42357220689](https://github.com/ForceMind/Xs/actions/runs/42357220689) 已通过933条JVM、SQLite/DOM、构建/Lint及API30/36共146项；这些仅属历史v4提交，不覆盖当前修改。API27在CI68因架构配置启动0 case，修复后随新CI执行；真机、真实X与目标接收应用、真实耗电/多日soak仍缺证据。CI66与67真实失败保留，不能改写成环境阻断或PASS。
+CI74已实际通过核心/SQLite/DOM压力与Android构建检查；已验证的云端合成范围包括真实原生SAF导出/恢复、Browser真实SAF PNG文件选择、只读URI/68字节FileReader读取与手势子窗口、独立UID文件授权/拒绝越权/删源后延迟读取、320dp/1.8字号/中英深浅配置、500个小资源和约481MiB/30文件的实际原生备份恢复，以及512MiB容器在32MiB JVM逐字节往返。不同规模、平台与driver分别记账，不合并成真实X/手机或聊天App验收。
+
+历史源码4ee242e的 [CI42357220689](https://github.com/ForceMind/Xs/actions/runs/42357220689) 已通过933条JVM、SQLite/DOM、构建/Lint及API30/36共146项；这些仅属历史v4提交，不覆盖当前修改。API27在历史CI68架构配置启动0 case，后已用x86在CI74实际通过；真机、真实X与目标接收应用、真实耗电/多日soak仍缺证据。CI66与67真实失败保留，不能改写成环境阻断或PASS。
 
 - SQLite v5保留v1～v4数据/旧命名空间，新增snapshot_versions/current pointer、来源/收录时间/质量、历史正文全文搜索和只读版本浏览。COMPLETE仅表示原生证据支持的接受可见DOM正文，不保证服务器全文；更新但较短COMPLETE可成为current，PARTIAL不能覆盖COMPLETE，全部旧版本保留（版本面板每页50条、前后翻页及正文关键词查询，点选才读单版本正文，不无限累积UI行）。显式合并按SnapshotPolicy保留版本，源/default不覆盖，不能恢复成“最长文本永远正确”。
 - History批量收藏/分类/标签追加替换/取消与Assets分页搜索/类型状态/多选分类删除分享/导出已有实现。导出单项原文件、多项ZIP，每批≤200MiB；完成文件才能导出/分享。测试实际操作UI后检查SQLite/bytes，不能只跑helper或放宽assert。
@@ -43,11 +44,11 @@
 - 完整删库先持久tombstone再写入barrier；资料库Archive公开写入口在实际取得写事务后重查deleted，媒体批量helper只经同一shared writer调用；旧票据/未来普通提交不得复活。仅删default时轮换UUID；清所选scope的全部快照/事件/收藏/分类/本人记录与媒体，另库/网页会话/既有24h接收lease保留。失败保持pending，启动或用户重试只可继续purge，不重新开放空间。
 - 停留更新1秒合并、达到10分钟cap后停止反复写，暂停停止JS timer。合成stress不等于真实多日soak/耗电。即时打开、停留、本人行为和精简真实适配仍关闭；native fixture Admission不可由页面/导入provenance字符串伪造。
 - 事件明细默认永久，可选7/30/90/365天，只清理过期明细；累计打开次数/最近打开停留事实、帖子/快照/收藏/本人行为/文件保留，“从未打开”不因过期而变真。主动清历史才重置事实。普通shared writer内实际SQLite锁后复验policy，不失效媒体票据；管理页/资料库入口或手动惰性维护，无后台定时保证。
-- 每库媒体quota默认不限，完成文件+活动预留预算，未知图/视频预留20/100MiB。下调后总量超限停止并FAILED全部未完成任务，保留密封来源供显式retry，完成文件不删。双语管理页预览/确认和统计已源码；已知累计打开下界逐帖MAX(累计计数,保留OPEN明细数)再求和、不双计；与保留事件分开，曝光下界可重叠不是阅读时长。320dp/1.8字号/中英深浅配置UI回归待本轮CI，不称真机。
-- 独立UID receiver真实Intent/ClipData read grant、拒绝未授权/未选/写/DB及删库后Activity存活延迟hash读取，Browser真实SAF image/video上传/触摸window.open已编码；不等于聊天App送达/真实X。外部ADB force-stop消失PID/恢复不同PID与同jobdebug证书3→4覆盖升级先前CI68未完成这些独立驱动，本次修复待新CI；不能用in-process case冒充OS杀进程，也不代表reboot/物理断电/production key/跨schema。
+- 每库媒体quota默认不限，完成文件+活动预留预算，未知图/视频预留20/100MiB。下调后总量超限停止并FAILED全部未完成任务，保留密封来源供显式retry，完成文件不删。双语管理页预览/确认和统计已源码；已知累计打开下界逐帖MAX(累计计数,保留OPEN明细数)再求和、不双计；与保留事件分开，曝光下界可重叠不是阅读时长。320dp/1.8字号/中英深浅配置UI回归已在CI74通过，不称真机。
+- 独立UID receiver真实Intent/ClipData read grant、拒绝未授权/未选/写/DB及删库后Activity存活延迟hash读取，Browser真实SAF PNG文件选择、只读URI/68字节FileReader读取/触摸window.open已编码；不等于聊天App送达/真实X。外部ADB force-stop消失PID/不同PID恢复、同jobdebug3→4覆盖升级与guest reboot已在CI74各四API通过；不把in-process重启或app-owned lease恢复冒充接收grant跨reboot，也不代表物理断电/production key/跨schema。
 - 手动签名候选workflow只接受确切main祖先SHA、预配secret与证书pin，产内部候选与来源摘要，不发布GitHub Release或商店。生产key/cert未配置，稳定升级/回退与正式发布门槛未过；根GPL-3.0不变，不能抹历史授权或跳过rights/notice审查。
 
-继续已有PR而不覆盖未合并进展，先完成当前源码的core/SQLite/DOM/build/lint和API26/27/30/36/newUI及独立驱动执行与失败修复，API27已在本轮矩阵；再补云端重启/磁盘压力/近上限Android恢复，以及设备/现场适配。所有现场启用受独立证据门槛；不能将W0变成停止离线研发的理由。
+继续已有PR而不覆盖未合并进展，保留CI74低空间脚本/普通UID原生断言/清理恢复的实际证据；不要将CI74已通过的主用例、reboot/升级/大资源恢复重复列为未实现。再推进设备/现场适配。真实Browser尚未挂载自动打开/停留、本人动作和网页精简的live适配器；开关不能把fixture能力变为现场验收。真实X登录/DOM/媒体CDN、微信/QQ/飞书/Telegram接收、厂商后台与多日电量、物理断电、生产key/跨schema升级仍缺独立证据。如选择切换自定义许可，须另行确定权利范围与条款；当前GPL及历史授权/第三方义务继续有效。所有现场启用受独立证据门槛；不能将W0变成停止离线研发的理由。
 
 CI调试证书可能每个job不同，不能保证覆盖旧PoC升级。有资料的旧Xs不要为换装直接卸载；即使已有完整备份源码，也应先在隔离环境实际验证导出/恢复，再操作真实个人资料。
 

@@ -2,6 +2,24 @@
 
 从既有 `a323b7cca2c760defd4b9b58a58e8f76431cdb96` / PR #5 接续，没有重建项目。接手核验 main 为 `f88003c8ec1ee193b75de7267db6ae7654ee77c4`，PR #5 是唯一开放实现PR，Issue #3/#4仍开放；此前CI65成功。此前 [C轮源码和证据](ROUND_C_EVIDENCE.zh-CN.md) 保留。本页区分源码、模拟测试、桌面容量、签名夹具和真实设备，不能相互冒充。
 
+
+## 当前云端验收结论
+
+源码 **`0d193e4689d649970d9705818d33e8706b470d8f`** / tested tree **`c8551cd4a09e4466cd84e7973039aba06a5f87b2`** 的 [CI74 42386764024](https://github.com/ForceMind/Xs/actions/runs/42386764024) 六个job全部成功。四API的实际XML为**608/608通过，0失败、0错误、0跳过**；16项独立系统driver **16/16通过**，重复原生probe调用不加入608计数。[完整源码、环境、XML逐项、包与公开签名/digest证据](evidence/round-d-ci74-results.json)。后续仅文档/证据提交的最新SHA及CI结果在[PR #5](https://github.com/ForceMind/Xs/pull/5)和[Issue #4](https://github.com/ForceMind/Xs/issues/4)核对，不把旧源码结果自动套给任意新改动。
+
+| 实际环境 | 主XML | 外部系统验证 | 低空间普通应用实测 |
+| --- | --- | --- | --- |
+| API26 / x86_64 | 52 harness＋100 client PASS | force-stop / debug3→4 / guest reboot / low-space 全PASS | UID10082，28565504字节可用 |
+| API27 / x86 | 52 harness＋100 client PASS | 同上四项全PASS | UID10084，29069312字节可用 |
+| API30 / x86_64 | 52 harness＋100 client PASS | 同上四项全PASS | UID10172，29106176字节可用 |
+| API36 / x86_64 | 52 harness＋100 client PASS | 同上四项全PASS | UID10221，29224960字节可用 |
+
+同一次CI还通过1155项JVM断言、10项host安全/故障测试、SQLite/DOM/20k压力、10k/100k容量迁移、Android构建和双Lint。四版原生治理UI（包括系统SAF、320dp/1.8字号/中英深浅配置）、独立UID文件授权、500tiny和约481MiB/30实际资源的完整备份恢复均有实际测试；512MiB容器另由32MiB JVM逐字节验证，不混同规模/平台。Browser真实上传路径的证明仅为SAF PNG选择、只读URI和68字节FileReader；视频播放与跨UID分享属于单独的标准MP4夹具，不声称浏览器视频上传已验收。
+
+API26/27仅在本次shell分配真实quota、CI/emulator/userdebug/debuggable及UID检查全部满足后，临时root构造唯一压力文件；实际应用始终原普通UID，最终文件不存在且unroot回shell2000都有原文证据。30/36全程普通shell分配。该fixture不是对用户手机提权，也不证明物理flash故障或mid-write ENOSPC。
+
+**当前无需真机的本轮实现与云端可靠性闭环已完成；整体产品/正式发布仍未完成现场验收。** 真正的Browser尚未挂载自动打开/停留、本人动作或精简live适配，开关本身不能激活真实X能力；原生收藏当前保存链接并保留已有快照。后续先完成Issue #3真实登录/2FA/会话/核心浏览，再按真实站点证据接入和限定启用；实际CDN/聊天App接收、厂商后台/多日耗电/物理断电与生产签名升级独立验证。具体四场景手机步骤见下表。以下记录按发生顺序保留全部历史失败与NOT RUN，不覆盖本节当前结果。
+
 ## 实际新增源码
 
 | 工作包 | 本轮交付 | 明确边界 |
@@ -37,7 +55,7 @@
 
 API26/30/36的真实WebView、SQLite、Job/Keystore、完整资源、SAF和新资料治理UI夹具即将由本轮CI执行；预计每API52项harness+62项client，但最终仅按XML的实际case/失败/跳过数记账。各job保留自己的APK/public cert与source/tree，不借用另一构建job的包。
 
-真实X登录/2FA/会话、站点DOM/短编辑/停留/本人动作/精简、真实CDN、微信/QQ/飞书/Telegram会话接收、多日真机/存储满/强制停止/重启仍需物理设备。自动live capture/action/cleanup仍关闭。候选签名需要权利方配置固定私钥和环境保护；自定义许可还缺最终条款及权利范围确认，根GPL和历史授权不动。以上客观缺口不能以合成PASS替代，也不发布未经验收正式版本。
+真实X登录/2FA/会话、站点DOM/短编辑/停留/本人动作/精简、真实CDN、微信/QQ/飞书/Telegram会话接收、多日真机/存储满/强制停止/重启仍需物理设备。自动live capture/action/cleanup仍关闭。候选签名需要权利方配置固定私钥和环境保护；如选择切换自定义许可，须另行确定条款及权利范围；当前GPL、历史授权和第三方义务继续有效，保留GPL不以另拟自定义文本为前提。真实设备和正式签名的缺口不能以合成PASS替代，也不发布未经验收正式版本。
 
 手机步骤：使用空白/隔离测试实例，记录APK/public signer/系统/WebView；正常登录与切号；选择有权保存的图片/direct MP4并测试后台/切网/重启/取消；SAF导出加密完整备份再恢复到新库，核对正文版本与实际文件；分别手选聊天App会话确认接收；验证整库删不影响其他scope/活动分享租约。调试证书可能逐job变化，不为安装新包直接卸载已有资料的Xs；先完成迁出/固定签名流程。
 
@@ -157,3 +175,10 @@ API26/27严格先shell2000、当次dd quota、实际userdebug/debuggable1，才r
 下一修复仅精确激活该标题所属roots_list的**直接可点击item**，fresh后再次确认其子树仍含fixture标题、可见/启用/正确窗口与边界，单次真实ACTION_CLICK；随后仍要求正确toolbar和drawer关闭。文档文件Recycler继续FINGER触摸，原SAF返回/实际字节/ZIP逐文件hash断言均保留，没有延时增加/盲重试/手造URI结果。官方[AbsListView item delegate](https://android.googlesource.com/platform/frameworks/base/+/refs/heads/master/core/java/android/widget/AbsListView.java)将item ACTION_CLICK交给performItemClick，[DocumentsUI RootsFragment](https://android.googlesource.com/platform/packages/apps/DocumentsUI/+/07e538caffec348d204096b387562b99437ba780/src/com/android/documentsui/sidebar/RootsFragment.java)的真实item listener打开所选root并关闭drawer，与泛祖先/整个ListView点击不同。
 
 [本地harness测试APK编译](evidence/round-d-pre74-local.json)通过（58 tasks9秒），生产runtime未改，实际四API结果待CI74；不将编译记为系统UI通过。
+
+
+## CI74闭环与文档收尾
+
+[CI74](https://github.com/ForceMind/Xs/actions/runs/42386764024) 对`0d193e4689d649970d9705818d33e8706b470d8f`实际tested merge `f23a211e083fe922456f903f5357d160c87f1c29` / tree `c8551cd4a09e4466cd84e7973039aba06a5f87b2`的六job全PASS；608主用例与16独立driver的全部原始结果已在[完整JSON](evidence/round-d-ci74-results.json)留档。精确item操作后的Governance四场景在四API共16例均通过，原生100例每版全通过，不再有该UI失败。26/27实际root构造/普通app测压/清理降权，以及30/36普通shell分配，各自独立验证，不互相借用结果。
+
+本次统一更新中英文README、AGENTS、架构/计划/路线图/验收矩阵/CHANGELOG/交接文件，保留CI66～73失败史。当前已完成云端可执行子集，Issue #3现场总体验收和Issue #4完整产品跟踪保持开放。最终文档/证据提交的CI将单独在PR/Issue记录精确HEAD、tree、run与artifact，避免为了记录同一提交的测试结果而无限递归制造新提交；文档提交本身不等于重新运行测试。

@@ -2,24 +2,42 @@
 
 本文件记录决策变化，不把文档提交计作功能完成。代码执行与测试结果保留在各执行记录和 CI 中。
 
-## 2026-11-07 — 补齐保留/配额/统计与云端端到端验证（CI68失败，后续修复CI待生成）
+## 2026-11-07 — 四版本608项与16个独立系统探针全部通过
 
-上一轮源码 `58585977c90307cbf97d0aadafd818bcbdf88793` / tree `595dcb18016bf4bdf2f0e520dce1236ac5fc35a5` 的 [CI68](https://github.com/ForceMind/Xs/actions/runs/42374634739) 已失败：API26/30/36共450项实际执行，415通过/35失败/0错误/0跳过；API27官方镜像架构配置导致启动失败、0 case，另计。本次PR #5修复提交与新CI待生成，不提前记PASS。
+当前验证源码 `0d193e4689d649970d9705818d33e8706b470d8f` / tested tree `c8551cd4a09e4466cd84e7973039aba06a5f87b2`：[CI74](https://github.com/ForceMind/Xs/actions/runs/42386764024) 六项任务全部成功。1155项JVM、构建/双Lint及API26/27/30/36主仪器608/608通过，0失败/错误/跳过；独立force-stop、同job同源debug3→4升级、guest reboot与真实低空间各4/4，共16/16通过，不并入608主XML。
 
-下一轮矩阵为API26/27/30/36（27用x86，其余x86_64）；每API声明52宿主+100客户端仅为待跑数量。新增客体系统reboot/boot-ID与serial核对、仅CI可丢弃8GB AVD上的真实/data低空间至28MiB与原文件保留/新任务拒绝（finally仅清自建压力文件），以及原生≥480MiB/30实际资源流式备份用例，实际均NOT RUN。它们不代表物理断电、真实X/聊天App或生产key验收。
+低空间断言以普通应用原UID和实际可用空间为准，验证新任务拒绝、原文件/hash/离线搜索保留及压力文件清理；仅CI可丢弃旧userdebug模拟器的分配器在严格环境/当次quota/UID门后临时root，并已核实finally删除、unroot及shell UID恢复。10项host故障/安全门回归另行通过。完整case、身份/包摘要与CI66～73失败历史见本轮证据；这不是物理断电、用户手机提权或无限后台保证。
+
+真实X自动打开/停留、本人动作与精简live适配仍未挂载；PNG/68字节Browser读取不代表视频上传，MP4播放与跨UID分享另行计证。现场手机/聊天App/真实CDN/厂商后台多日电量/物理断电/生产key与跨schema升级仍NOT RUN。自定义许可切换可选，当前GPL及历史授权/第三方义务继续有效。
+
+## 2026-11-07 — 四版本主测试与跨进程验证（历史CI72/73）
+
+当时的验证基线为源码 `026245fa8cfa791f85d766d34a90b2822fe5f514` / tested tree `532e0f582df363c16dd8967f96929ad2a2fa80d7`：[CI72](https://github.com/ForceMind/Xs/actions/runs/42383813896) 的1155项JVM、构建/双Lint及API26/27/30/36主仪器608/608通过，0失败/错误/跳过。外部系统driver独立记14/16：force-stop、同job同源debug3→4升级、guest reboot各4/4；低空间30/36通过，26/27在压力构造阶段遇shell配额、尚未执行原生低空间断言，因此整体run仍失败。
+
+后续[CI73](https://github.com/ForceMind/Xs/actions/runs/42385436203)实际607/608通过、1失败、0错误/跳过；API26/27/30的12个外部driver全部通过（含26/27普通UID业务断言、root分配器清理与unroot），API36因Gov侧栏provider选择失败，其四driver未执行，不与前轮拼接16/16。失败发生在SAF目录选择，未抵达ZIP/hash断言；CI74只将该roots_list标题所属直接可点击item改为单次真实ACTION_CLICK，保留文件触摸、toolbar/drawer关闭和实际字节断言。
+
+已验证的云端合成范围包括真实原生SAF导出/恢复、Browser真实SAF PNG文件选择、只读URI/68字节FileReader读取与手势子窗口、独立UID文件授权/拒绝越权/删源后延迟读取、320dp/1.8字号/中英深浅配置、500个小资源和约481MiB/30文件的实际原生备份恢复，以及512MiB容器在32MiB JVM逐字节往返。不同规模、平台与driver分别记账，不合并成真实X/手机或聊天App验收。
+
+真实Browser尚未挂载自动打开/停留、本人动作和网页精简的live适配器；开关不能把fixture能力变为现场验收。真实X登录/DOM/媒体CDN、微信/QQ/飞书/Telegram接收、厂商后台与多日电量、物理断电、生产key/跨schema升级仍缺独立证据。如选择切换自定义许可，须另行确定权利范围与条款；当前GPL及历史授权/第三方义务继续有效。
+
+## 2026-11-07 — 补齐保留/配额/统计与云端端到端验证（历史CI68状态）
+
+上一轮源码 `58585977c90307cbf97d0aadafd818bcbdf88793` / tree `595dcb18016bf4bdf2f0e520dce1236ac5fc35a5` 的 [CI68](https://github.com/ForceMind/Xs/actions/runs/42374634739) 已失败：API26/30/36共450项实际执行，415通过/35失败/0错误/0跳过；API27官方镜像架构配置导致启动失败、0 case，另计。当时后续修复提交与CI尚待生成；后续执行见上节，原失败记录保留。
+
+当时计划的下一轮矩阵为API26/27/30/36（27用x86，其余x86_64）；每API声明52宿主+100客户端仅为待跑数量。新增客体系统reboot/boot-ID与serial核对、仅CI可丢弃8GB AVD上的真实/data低空间至28MiB与原文件保留/新任务拒绝（finally仅清自建压力文件），以及原生≥480MiB/30实际资源流式备份用例，当时实际均NOT RUN；后续执行见上节。它们不代表物理断电、真实X/聊天App或生产key验收。
 
 本地已通过1155项JVM、SQLite/DOM/20k压力、SDK SQLite标准FTS语法复现（旧多词查询0条、修正后1条），以及完整Android构建/双Lint（196 tasks、17秒；运行库0错误/20警告，客户端0错误/12警告）。最大512MiB加密容器已在32MiB JVM流式往返并逐字节核对；这不等于Android近上限实际资源恢复。
 
 - 默认永久/7/30/90/365天事件明细保留、累计与最近打开/停留事实保留；普通writer与实际SQLite锁后policy复验，不撤销媒体票据。默认不限媒体quota计完成文件和活动预留，超限下调停止未完成任务、完成文件不删；双语管理预览/确认与统计明确曝光下界不是阅读时长。累计打开按每帖MAX(已有累计,保留OPEN明细数)求和，是已知下界，不双计数。
-- 独立UID实际Intent/ClipData文件授权、未授权/未选/写/数据库拒绝及删库后接收Activity存活时首次延迟hash读取；Browser实际SAF image/video与触摸子窗口；新增API27，当前矩阵26/27/30/36。
-- 外部ADB OS force-stop消失PID/新PID恢复、同job调试证书版本3→4安装升级已有独立驱动，执行仍PENDING；不是in-process恢复、生产key或跨schema升级，不证明物理断电/厂商后台。
+- 独立UID实际Intent/ClipData文件授权、未授权/未选/写/数据库拒绝及删库后接收Activity存活时首次延迟hash读取；Browser真实SAF PNG文件选择、只读URI/68字节FileReader读取与触摸子窗口；新增API27，当前矩阵26/27/30/36。
+- 外部ADB OS force-stop消失PID/新PID恢复、同job调试证书版本3→4安装升级已有独立驱动，当时执行仍PENDING；不是in-process恢复、生产key或跨schema升级，不证明物理断电/厂商后台。
 - SDK标准FTS4多词旧显式AND查询为0条、修正隐式交集为1条，保留词项白名单；双Java builder与原生current/history/Tab/字面OR回归已源码。
 
-[CI67 42372593770](https://github.com/ForceMind/Xs/actions/runs/42372593770) 实际360项、336通过/24失败/0错误或跳过；与下节CI66失败完整保留在本轮证据，不写为PASS。下一轮每API52宿主+100客户端只是声明数量，最终按实际XML及独立驱动报告结算。CI68已实际结束失败（450项中415通过/35失败，0错误/跳过；API27启动0 case另计），下一提交修复，不把失败算作通过。真实X自动采集/动作/精简仍关闭，物理设备/聊天App/真实电量多日/正式key与许可最终文本仍待验收，无正式发布。
+[CI67 42372593770](https://github.com/ForceMind/Xs/actions/runs/42372593770) 实际360项、336通过/24失败/0错误或跳过；与下节CI66失败完整保留在本轮证据，不写为PASS。下一轮每API52宿主+100客户端只是声明数量，最终按实际XML及独立驱动报告结算。CI68已实际结束失败（450项中415通过/35失败，0错误/跳过；API27启动0 case另计），下一提交修复，不把失败算作通过。真实X自动采集/动作/精简仍关闭，物理设备/聊天App/真实电量多日/正式key仍待验收；自定义许可切换可选，如选择才另定权利范围与条款，无正式发布。
 
 ## 2026-11-07 — v5快照、系统下载、加密资源备份与资料管理增量（首轮CI失败，修正后回归待执行）
 
-接续既有仓库实际修改SQLite/Java/Android/JS和CI，不重建项目。当前源码和精确执行状态统一记录在 [本轮可靠性与资料管理证据](ROUND_D_EVIDENCE.zh-CN.md)。源码50c91ec的 [首轮CI66](https://github.com/ForceMind/Xs/actions/runs/42369802915) core/构建通过，API26/30/36共342项仪器实际执行304通过/38失败/0跳过；问题包含备份sha256字段名校验、fixture provider初始化及观察/最低版本兼容，正在修复。LibraryUiTest和AssetLibraryUiTest三个API共39项全部通过（含206版本分页、批量和整库删除），只作为该源码的局部证据。修正后完整回归仍**PENDING**，不将66整体改写为PASS；旧933条JVM/146项API30/36结果仅属下节历史提交。
+接续既有仓库实际修改SQLite/Java/Android/JS和CI，不重建项目。当前源码和精确执行状态统一记录在 [本轮可靠性与资料管理证据](ROUND_D_EVIDENCE.zh-CN.md)。源码50c91ec的 [首轮CI66](https://github.com/ForceMind/Xs/actions/runs/42369802915) core/构建通过，API26/30/36共342项仪器实际执行304通过/38失败/0跳过；问题包含备份sha256字段名校验、fixture provider初始化及观察/最低版本兼容，正在修复。LibraryUiTest和AssetLibraryUiTest三个API共39项全部通过（含206版本分页、批量和整库删除），只作为该源码的局部证据。当时修正后完整回归仍**PENDING**，不将66整体改写为PASS；旧933条JVM/146项API30/36结果仅属下节历史提交。
 
 - SQLite v5新增快照版本、current pointer、质量/来源/收录时间和历史正文全文搜索；原生detail证据支持COMPLETE仅表示接受的可见DOM正文完整，不保证服务器全文。更新但较短的COMPLETE可成为current，PARTIAL不降级；全部版本保留、版本面板每页50条/前后翻页/关键词查询且浏览只读、合并沿用SnapshotPolicy且源/default不覆盖。
 - 原生帖子批量收藏/分类/标签追加替换/取消，资源分页文字/类型/状态查询、多选分类/删除/实际文件分享与单项/多项ZIP导出（每批≤200MiB）；历史/收藏/资源与整库的删除范围分开。
@@ -29,7 +47,7 @@
 - 合格停留时长按1秒合并更新、10分钟测量cap后不再反复写，暂停观察器停止JS计时；新增压力与生命周期回归，尚不能据此宣称真实耗电/多日稳定性。
 - 增加手动内部签名候选workflow：确切main祖先SHA、环境secrets和证书pin、APK与来源摘要；无GitHub Release/商店发布。生产key/cert未配置，根GPL-3.0、历史授权和第三方声明均不变。
 
-真实X自动采集/现场本人动作/网页精简仍关闭；真机、API27、真实X视频与微信/QQ/飞书/Telegram、真实电量/多日soak、生产签名/正式许可文本均未验收，阶段C/D整体与正式发布保持开放。
+真实X自动采集/现场本人动作/网页精简仍关闭；真机、API27、真实X视频与微信/QQ/飞书/Telegram、真实电量/多日soak、生产签名未验收；GPL及历史/第三方义务有效，自定义许可仅在选择切换时另审，阶段C/D整体与正式发布保持开放。
 
 ## 2026-11-07 — 修正 minSdk 视频读取并完成新提交双版本回归
 

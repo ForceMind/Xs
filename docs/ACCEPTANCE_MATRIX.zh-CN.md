@@ -1,33 +1,33 @@
 # Xs 验收矩阵 v2.2
 
-更新：2026-11-07。对应 [实施计划](IMPLEMENTATION_PLAN.zh-CN.md)。**下表为新增产品范围的待执行验收，不代表重新运行了测试。所有未附当前构建证据的项均为 NOT RUN。** 既有基础测试记录继续保留，但不能自动覆盖新语义。
+更新：2026-11-07。对应 [实施计划](IMPLEMENTATION_PLAN.zh-CN.md)。**云端子项按下列实际报告记账；后面的核心现场用例与接收应用总表仍NOT RUN。没有当前构建证据的范围不记PASS。** 既有基础测试记录继续保留，但不能自动覆盖新语义。
 
 ## 本轮离线实现与仪器证据
 
-本轮源码与精确报告统一见 [可靠性与资料管理证据](ROUND_D_EVIDENCE.zh-CN.md)。**CI68已失败；本次修复/新增用例的新CI待生成。测试代码或编译不记为仪器PASS。** 上一轮源码 `58585977c90307cbf97d0aadafd818bcbdf88793` / tree `595dcb18016bf4bdf2f0e520dce1236ac5fc35a5` 的 [CI68](https://github.com/ForceMind/Xs/actions/runs/42374634739) 已失败：API26/30/36共450项实际执行，415通过/35失败/0错误/0跳过；API27官方镜像架构配置导致启动失败、0 case，另计。本次PR #5修复提交与新CI待生成，不提前记PASS。
+本轮源码与精确报告统一见 [可靠性与资料管理证据](ROUND_D_EVIDENCE.zh-CN.md)。**CI74主仪器608项与16个独立driver通过。现场总体验收仍NOT RUN。** 当前验证源码 `0d193e4689d649970d9705818d33e8706b470d8f` / tested tree `c8551cd4a09e4466cd84e7973039aba06a5f87b2`：[CI74](https://github.com/ForceMind/Xs/actions/runs/42386764024) 六项任务全部成功。1155项JVM、构建/双Lint及API26/27/30/36主仪器608/608通过，0失败/错误/跳过；独立force-stop、同job同源debug3→4升级、guest reboot与真实低空间各4/4，共16/16通过，不并入608主XML。
 
-下一轮矩阵为API26/27/30/36（27用x86，其余x86_64）；每API声明52宿主+100客户端仅为待跑数量。新增客体系统reboot/boot-ID与serial核对、仅CI可丢弃8GB AVD上的真实/data低空间至28MiB与原文件保留/新任务拒绝（finally仅清自建压力文件），以及原生≥480MiB/30实际资源流式备份用例，实际均NOT RUN。它们不代表物理断电、真实X/聊天App或生产key验收。
+低空间断言以普通应用原UID和实际可用空间为准，验证新任务拒绝、原文件/hash/离线搜索保留及压力文件清理；仅CI可丢弃旧userdebug模拟器的分配器在严格环境/当次quota/UID门后临时root，并已核实finally删除、unroot及shell UID恢复。10项host故障/安全门回归另行通过。完整case、身份/包摘要与CI66～73失败历史见本轮证据；这不是物理断电、用户手机提权或无限后台保证。
 
-本地已通过1155项JVM、SQLite/DOM/20k压力、SDK SQLite标准FTS语法复现（旧多词查询0条、修正后1条），以及完整Android构建/双Lint（196 tasks、17秒；运行库0错误/20警告，客户端0错误/12警告）。最大512MiB加密容器已在32MiB JVM流式往返并逐字节核对；这不等于Android近上限实际资源恢复。 声明每API52宿主+100客户端只是待跑数量，最终按XML实际case/失败/跳过和独立驱动报告记账。
+
+CI74已实际通过核心/SQLite/DOM压力与Android构建检查；已验证的云端合成范围包括真实原生SAF导出/恢复、Browser真实SAF PNG文件选择、只读URI/68字节FileReader读取与手势子窗口、独立UID文件授权/拒绝越权/删源后延迟读取、320dp/1.8字号/中英深浅配置、500个小资源和约481MiB/30文件的实际原生备份恢复，以及512MiB容器在32MiB JVM逐字节往返。不同规模、平台与driver分别记账，不合并成真实X/手机或聊天App验收。 主XML为每API52宿主+100客户端，608项与外部driver独立记账。
 
 历史源码4ee242e的 [CI42357220689](https://github.com/ForceMind/Xs/actions/runs/42357220689) 已通过933条JVM、SQLite/DOM、构建/Lint及146项API30/36仪器（每API36宿主+37客户端），仅覆盖旧v4提交；历史 [阶段C摘要](evidence/round-c-ci64.json) 和 [更早记录](IMPLEMENTATION_EVIDENCE.zh-CN.md) 保留，不能覆盖下面新增语义。
 
-| 对应验收 | 本轮新增可执行子场景 | 当前状态 |
+| 对应验收 | 已实际执行的云端子场景 | 结果与边界 |
 | --- | --- | --- |
-| L01/L03、H04 | v5保留迁移、快照质量/来源/收录时间、更新但较短COMPLETE、PARTIAL不降级、历史全文与每页50条只读版本UI，206版本翻至最旧/关键词且current不变；合并保留各版本/source/default | 已编码；当前core/SQLite/Android/UI CI PENDING；真实个人升级 NOT RUN |
-| F02/F03、M04、U01/U02 | 实际原生批量收藏/分类/追加替换标签/取消；资产分页文字/类型状态搜索、多选分类删除；只改所选scope、保留历史/另库 | UI测试已编码且编译；实际执行 PENDING；窄屏/大字号/真机 NOT RUN |
-| M03、Q03/Q04 | AES-GCM密封任务URL；JobScheduler/API34+UIDT fallback/API26～33regular；初次+2次网络重试、从头重下、取消清候选、进程恢复PAUSED和尊重系统stop | 当前持久/系统任务回归 PENDING；真实后台/网络/电量 NOT RUN，不宣称断点续传 |
-| G03、Q03/Q04、X04 | 完整资源备份口令/64KiB分块认证，≤512MiB/500完成资源、内层16MiB/20k元数据；错误口令/损坏/超限/媒体哈希与类型；media-first/archive-last、失败清理和崩溃恢复；SAF导出/导入预览 | core/Android恢复与SAF/口令UI已编码；本轮CI PENDING；物理设备/丢失口令恢复 NOT RUN/不可恢复 |
-| Q03/Q04、F03、X04 | 持久删库tombstone、默认UUID轮换、事务内guard拒旧回调、清媒体/快照/事件/FTS、他库/网页/24h receiver lease保留、失败pending启动重试 | controller/typed确认UI/延迟receiver测试已编码且编译；仪器 PENDING |
-| D03/D05、Q02 | 时长写入1秒合并、10分钟cap后停止重复、暂停停止JS轮询、bounded长滚动/heap压力 | 新回归 PENDING；多日真实设备/耗电 NOT RUN |
-| Q03/Q04、D07/D08、U01/U02 | 默认永久/7/30/90/365天仅清事件明细，保留累计事实和从未打开判定；默认无限媒体配额，完成+预留预算，降低超限停止未完成、不删完成文件；已知累计打开下界（逐帖MAX计数与OPEN明细，不双计）/保留事件/曝光下界统计；320dp/1.8字号/双语深浅配置 | 源码/原生回归与UI已编码，本轮CI PENDING；配置测量不代表真机，统计不等于阅读时长 |
-| X01/X02/X04、B03/B04 | 独立UID实际grant/未授权与写入拒绝/删库后Activity存活期间首次延迟hash读取；Browser实际SAF image/video上传和触摸window.open | 本轮CI PENDING；不是聊天App送达或真实X授权验收 |
-| Q04/G02/G03 | 外部ADB存活PID→force-stop→进程消失→不同PID恢复；同job调试证书版本3→4真实覆盖安装 | 本轮独立驱动PENDING；不是in-process重启，也不是设备reboot/物理断电/生产key或跨schema升级 |
-| G02/G04 | 手动内部签名候选、main祖先/secret/证书SHA256 pin与APK摘要，不发布 | workflow/scripts已有；正式密钥未配置，生产候选/升级/分发 NOT RUN |
+| L01/L03、H04 | ArchiveIntegrationTest、SnapshotVersionIntegrationTest及LibraryUiTest：v5迁移、current/质量/历史FTS、206版本分页至最旧/搜索且current不变；合并保留source/default | CI74四API PASS；真实个人资料升级/真实X正文现场仍NOT RUN |
+| F02/F03、M04、U01/U02 | LibraryUiTest、AssetLibraryUiTest、GovernanceUiTest：批量收藏/分类/标签/取消，分页资源/多选删除/SAF ZIP，scope隔离；StorageGovernanceUiTest的320dp/1.8字号/中英深浅配置 | CI74四API PASS；配置布局测量不等于真机 |
+| M03、Q03/Q04 | MediaDurabilityTest/MediaDownloadEngineTest：密封任务URL、JobScheduler、有限重试、取消/系统stop；外部force-stop探针验证PID消失/新进程恢复 | CI74四API PASS；厂商后台/真实网络电量另验，不宣称续传或准时后台 |
+| G03、Q03/Q04、X04 | FullBackupIntegrationTest11项/系统SAF口令UI：认证/坏文件拒绝、media-first/archive-last/崩溃marker；500真实tiny PNG与约481MiB/30实际文件分别恢复并逐项hash | CI74四API PASS；另有32MiB JVM下512MiB容器通过；物理断电/手机恢复仍NOT RUN，忘记口令不可恢复 |
+| Q03/Q04、F03、X04 | AssetLibraryUiTest与CrossUidSharingTest：typed删库、tombstone/default轮换、旧回调拒绝、失败pending重试、其他scope/已发share copy保留 | CI74四API PASS；受限接收Activity存活期间延迟读取，不承诺接收grant跨reboot |
+| D03/D05、Q02 | NativeCaptureIntegrationTest、DOM/CaptureSession压力：1秒合并/10分钟cap/暂停JS、有界候选与20k虚拟列表 | CI74 PASS；模拟时钟/桌面压力不是多日真实电量 |
+| Q03/Q04、D07/D08、U01/U02 | RetentionIntegrationTest10项、MediaQuotaIntegrationTest7项、StorageGovernanceUiTest3项：仅淘汰明细/累计事实与neverOpened、quota预留/完成文件保留、已知下界统计和实际确认UI | CI74四API PASS；lazy非后台定时保证，曝光下界可重叠、不是阅读时长 |
+| X01/X02/X04、B03/B04 | CrossUidSharingTest5项独立UID实际grant/拒未授权未选写入DB/删源后hash；BrowserInteractionIntegrationTest真实SAF PNG文件选择、只读URI/68字节FileReader读取与触摸window.open | CI74四API PASS；不含Browser视频上传；MP4播放/跨UID分享另验，不是聊天App送达/真实X认证上传 |
+| Q04/G02/G03 | 独立force-stop、同job同源debug3→4覆盖安装、guest reboot/boot-ID变更和元数据/文件/Keystore/app-owned lease恢复 | CI74各4/4 PASS；不并入608主XML，不代表production-key/跨schema升级或物理断电 |
+| M03/Q04/G04 | 独立真实/data低空间拒绝新图任务、原PNG/hash/FTS保留、压力文件清理 | CI74四API PASS；26/27严格CI-only分配器与普通UID原生断言、清理/unroot均已核实 |
+| G02/G04 | 手动内部签名候选main祖先/secret/证书pin与APK摘要；临时测试key构建/校验 | 工程夹具已有证据；正式key未配置，生产候选/升级/分发NOT RUN |
 
-最大512MiB加密容器在32MiB JVM流式逐字节验证已通过，但近上限Android文件恢复仍未执行。模拟器OS强停、重启和磁盘压力可云端扩展，不归为只能真机；物理断电、厂商后台、真实电量/多日与现场服务需对应设备证据。
-
-完整加密备份不等于工作SQLite/FTS/WAL加密，不备份网页会话、密钥、任务/候选URL或lease；明文元数据选项仍需明确提示。系统任务可被Android延迟/停止。标准MP4首尾有限解码不等于全程播放或每个接收应用支持。下面核心用例包含现场条件，整体保持NOT RUN，直到各自证据满足；本轮离线子集不能直接给整个C/D或发布盖章。
+完整加密备份不等于工作SQLite/FTS/WAL加密；不包含网页登录/密钥/任务候选URL/lease。标准MP4有限首尾解码和合成本地播放不证明真实X来源或每个聊天App全程播放。下面保留的是**现场总体验收**，未满足真实环境条件的整项仍NOT RUN；云端子项PASS不将整个阶段或发布标为完成。
 
 ## 记录规则
 
@@ -35,7 +35,7 @@
 
 不上传密码、验证码、Cookie/Token、私信、私人截图或可重用媒体凭证。只有明确授权、脱敏素材进入公共仓库。
 
-## 核心用例
+## 核心现场用例（整体NOT RUN）
 
 | ID | 场景与通过条件 | 当前状态 |
 | --- | --- | --- |
@@ -91,7 +91,7 @@
 | S01 | 原生主动取回或未来消息通道都不读取密码/验证码/私信/草稿/隐藏状态；不向页面回传私库 | NOT RUN |
 | U01 | 手机窄屏、中文/英文、深浅色、大字号下历史/收藏/搜索/分类操作可达 | NOT RUN |
 | U02 | 资源页文件大小/状态/失败原因与实际文件一致；保存和分享时来源明确 | NOT RUN |
-| G01 | 自有复用文件的来源/许可/第三方声明齐全，正式许可证与 README 不矛盾 | NOT RUN |
+| G01 | 自有复用文件的来源/有效GPL/第三方声明齐全，与README一致；仅如选择切换自定义许可才另定权利范围和条款 | NOT RUN |
 | G02 | 固定测试/发布签名、包名、来源 SHA、依赖与包摘要可追溯；debug 不冒充正式更新 | NOT RUN |
 | G03 | 备份恢复范围不含网页登录凭证；升级/恢复失败不覆盖原库；加密边界明确 | NOT RUN |
 | G04 | 真实设备性能/容量/后台边界有记录；无未关闭的串库、泄漏或数据丢失问题才发布 | NOT RUN |
