@@ -16,10 +16,17 @@ COMPONENT="dev.forcemind.xs.test/androidx.test.runner.AndroidJUnitRunner"
 TEST_CLASS="dev.forcemind.xs.android.ProcessRecoveryProbe"
 
 
+class CommandFailure(RuntimeError):
+    def __init__(self,name,output):
+        super().__init__("Low-space fixture command failed: "+name)
+        self.operation=name
+        self.output=output
+
+
 def run(args,name,timeout=120):
     result=subprocess.run(["adb",*args],capture_output=True,text=True,encoding="utf-8",errors="replace",timeout=timeout)
     (OUT/(name+".txt")).write_text(result.stdout+result.stderr,encoding="utf-8")
-    if result.returncode:raise RuntimeError("Low-space fixture command failed: "+name)
+    if result.returncode:raise CommandFailure(name,result.stdout+result.stderr)
     return result.stdout
 
 
@@ -34,8 +41,11 @@ def main():
     report={"status":"FAIL","scope":"Real emulator /data space below image-admission requirement; saved fixture bytes and local search preserved. Not mid-stream ENOSPC, physical flash, or user-device evidence."}
     allocation="/data/local/tmp/xs-disk-pressure-fixture-"+uuid.uuid4().hex
     allocation_attempted=False
+    root_attempted=False
     try:
         if os.environ.get("GITHUB_ACTIONS")!="true" or not run(["get-serialno"],"emulator-serial").strip().startswith("emulator-") or run(["shell","getprop","ro.kernel.qemu"],"emulator-qemu").strip()!="1":raise RuntimeError("Disk pressure is restricted to this disposable GitHub CI emulator")
+        if run(["shell","id","-u"],"allocator-initial-uid").strip()!="2000":raise RuntimeError("Pressure fixture must start with the ordinary shell UID")
+        report.update(allocator="ordinary-shell",allocator_uid_before=2000)
         seeded=instrument("seed")
         native_baseline=re.search(r"INSTRUMENTATION_STATUS: xs_seed_available_bytes=(\d+)",seeded)
         native_uid=re.search(r"INSTRUMENTATION_STATUS: xs_seed_app_uid=(\d+)",seeded)
@@ -48,13 +58,32 @@ def main():
         available=int(native_baseline[1]);target=28*1024*1024;allocate=available-target
         report.update(native_baseline_available_bytes=available,native_actor_uid=int(native_uid[1]),diagnostic_df_available_bytes=int(fields[3])*1024)
         if allocate<=0:raise RuntimeError("Disposable emulator already has insufficient free space")
+        def allocate_file(label):
+            try:run(["shell","fallocate","-l",str(allocate),allocation],label,180)
+            except RuntimeError:
+                # Old 32-bit toybox may reject a >2GiB fallocate length. This writes
+                # real bytes only to our generated file, with the same safety margin.
+                run(["shell","rm","-f",allocation],label+"-reset")
+                run(["shell","dd","if=/dev/zero","of="+allocation,"bs=1048576","count="+str(allocate//(1024*1024))],label+"-dd",240)
         allocation_attempted=True
-        try:run(["shell","fallocate","-l",str(allocate),allocation],"allocate-pressure",180)
-        except RuntimeError:
-            # Older toybox images may not provide fallocate. Write only our generated
-            # file instead, retaining at least the same measured safety margin.
-            run(["shell","rm","-f",allocation],"reset-generated-allocation")
-            run(["shell","dd","if=/dev/zero","of="+allocation,"bs=1048576","count="+str(allocate//(1024*1024))],"allocate-pressure-dd",240)
+        try:allocate_file("allocate-pressure")
+        except CommandFailure as failure:
+            # Android 8 emulator allocation quotas can stop the shell while the
+            # ordinary app still reports hundreds of MiB free. Only that proven
+            # fixture error permits privileged allocation, never a relaxed assertion.
+            if failure.operation!="allocate-pressure-dd" or "quota exceeded" not in failure.output.lower():raise
+            sdk=run(["shell","getprop","ro.build.version.sdk"],"allocator-api").strip()
+            build_type=run(["shell","getprop","ro.build.type"],"allocator-build-type").strip()
+            debuggable=run(["shell","getprop","ro.debuggable"],"allocator-debuggable").strip()
+            allocator_uid=run(["shell","id","-u"],"allocator-uid-before").strip()
+            if sdk not in ("26","27") or build_type!="userdebug" or debuggable!="1" or allocator_uid!="2000":raise RuntimeError("Privileged allocation is restricted to the old disposable userdebug CI emulator shell-quota fixture")
+            run(["shell","rm","-f",allocation],"remove-shell-quota-partial")
+            root_attempted=True
+            run(["root"],"allocator-root")
+            run(["wait-for-device"],"allocator-root-ready")
+            if run(["shell","id","-u"],"allocator-uid-root").strip()!="0":raise RuntimeError("Disposable pressure allocator did not gain root")
+            report.update(allocator="isolated-root-after-shell-quota",allocator_uid_before=2000,allocator_uid_during=0)
+            allocate_file("allocate-pressure-root")
         text=instrument("low-space")
         measured=re.search(r"INSTRUMENTATION_STATUS: xs_available_bytes=(\d+)",text)
         measured_uid=re.search(r"INSTRUMENTATION_STATUS: xs_low_space_app_uid=(\d+)",text)
@@ -69,7 +98,18 @@ def main():
         except Exception:
             report.update(status="FAIL",cleanup_failed=True)
             raise
-        finally:(OUT/"summary.json").write_text(json.dumps(report,indent=2)+"\n",encoding="utf-8")
+        finally:
+            try:
+                if root_attempted:
+                    run(["unroot"],"allocator-unroot")
+                    run(["wait-for-device"],"allocator-unroot-ready")
+                    restored_uid=run(["shell","id","-u"],"allocator-uid-restored").strip()
+                    if restored_uid!="2000":raise RuntimeError("Disposable allocator privileges were not restored to the shell UID")
+                    report["allocator_uid_restored"]=2000
+            except Exception:
+                report.update(status="FAIL",privilege_restore_failed=True)
+                raise
+            finally:(OUT/"summary.json").write_text(json.dumps(report,indent=2)+"\n",encoding="utf-8")
     print("PASS actual emulator low-space admission; original native files remain intact")
 
 

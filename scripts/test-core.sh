@@ -25,3 +25,6 @@ node "$ROOT/tests/observer_test.js"
 node "$ROOT/tests/cleanup_test.js"
 
 node "$ROOT/tests/observer_stress_test.js"
+
+# Safety/control-flow checks for the disposable-emulator pressure allocator.
+python3 "$ROOT/scripts/test-low-space-driver.py"

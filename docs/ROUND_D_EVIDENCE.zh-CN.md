@@ -16,7 +16,7 @@
 
 合并现在保留全部来源正文版本并重映射pointer，按相同SnapshotPolicy选择当前正文；来源与默认不覆盖。撤销在普通队列与实际SQLite写锁内完成全部拒绝检查后，才持久化删除承诺。被拒绝的修改/媒体结果不会进入pending误删；已接受的purge失败则保持停用并可重试，不能以拒绝名义在下次启动误删后续内容。
 
-## 本地验证与发现修正
+## 首次本地验证与发现修正（历史）
 
 - 核心：1141项JVM断言通过（包含204 capture、220 writer、31 snapshot、112加密与32合并检查），SQLite v5保留迁移/两类FTS与scope、DOM回归和20k observer压力通过。增加完整正文证据后压力预算从96 article styles细化为96 geometry + 4个viewport正文style；没有放开候选遍历上限。
 - 完整AAR、harness/client及两套AndroidTest APK、双模块Lint本地通过。见[本地完整检查/包摘要](evidence/round-d-local.json)，客户端Lint 0错误/11警告、运行库0错误/16警告（包含有意后台commit、已受版本控制的内联常量提示）；Android实际仪器测试仍 PENDING，不以编译通过代替执行。
@@ -33,7 +33,7 @@
 
 [合成签名实际证据](evidence/round-d-signing.json)：使用临时自生成测试key实际构建versionCode 3和4，两个APK均非debuggable且证书pin一致；真实apksigner/aapt校验通过，错误pin拒绝；缺输入的assembleRelease --dry-run明确失败。临时私钥已销毁且未上传。这证明签名工程路径，不证明在用户设备上覆盖旧PoC，也不代表正式签名已经配置。该证据记录的是提交前工作树，source clean=false；不能把其中旧HEAD冒充新源码CI身份。
 
-## 本轮执行与现场缺口
+## 首次本地实现后的待跑状态（历史）
 
 API26/30/36的真实WebView、SQLite、Job/Keystore、完整资源、SAF和新资料治理UI夹具即将由本轮CI执行；预计每API52项harness+62项client，但最终仅按XML的实际case/失败/跳过数记账。各job保留自己的APK/public cert与source/tree，不借用另一构建job的包。
 
@@ -120,3 +120,27 @@ API26/30/36的真实WebView、SQLite、Job/Keystore、完整资源、SAF和新�
 UTP同时删除target externalFilesDir，导致先前失败截图在Gradle返回时已丢失；下一Gov仅在证实qemu=1后，把白名单生成的PNG/脱敏AX经shell复制到chmod700的固定临时目录，wrapper在AVD alive时拉取。它只改诊断持久性，不掩盖原测试失败。源不包含真实用户手机/文件/网页数据。
 
 [本地新两测试APK和工程检查](evidence/round-d-pre71-local.json)PASS（132 tasks9秒），Python脚本语法通过。生产runtime源码未变化，core1155/双Lint沿用已核验源范围，下一CI仍完整执行608与四独立driver。
+
+
+## CI71：四版本主测试及跨进程验证全部通过，旧系统压力构造尚未通过
+
+[CI71 42381897122](https://github.com/ForceMind/Xs/actions/runs/42381897122) head `7511d5212f4caa20828526a901922bd2fe99b2ca`，tested merge `cebcf3267977be00f84ec2ccd0e5dc5136fcaef7`，tree `869385002569cd7163309326619be166ccda6313`。core 1155、构建和双Lint通过；四API各52项harness＋100项client，**608/608主测试通过，0失败/错误/跳过**。外部真实force-stop、同job同源调试签名3→4安装升级、guest reboot/boot-ID变化，各四系统全通过。主XML、20个主APK及8个升级APK的SHA256/公开证书、环境/ABI/driver原文与独立校验见[完整结果](evidence/round-d-ci71-results.json)。重复外部探针调用不并入608个主用例。
+
+低空间原生拒绝/既有文件hash/离线搜索在API30、36通过，普通app实测分别29204480、29102080字节可用。API26、27在构造压力文件时失败，未进入`low-space`原生业务断言，不记PASS或产品逻辑FAIL：shell `df`约7954148KiB可用，fallback `dd`写到7488761856字节遇到`Quota exceeded`，26的fallocate也quota、27的旧工具为Invalid argument。两套finally均已删除且证实唯一自建文件不存在，释放后容量有记录；不能为通过忽略EDQUOT或缩小压力要求。
+
+后续最小修复`026245fa8cfa791f85d766d34a90b2822fe5f514`只调整探针：seed直接由普通应用`File.getUsableSpace()`报告可用量与UID，host据同一真实API预算，低空间阶段再次要求普通UID相同与真实可用0～40MiB；shell df保留为诊断。没有修改生产下载门槛。[本地测试APK编译/脚本语法和工程检查](evidence/round-d-pre72-local.json)通过（91 tasks10秒），此处不提前记CI72为PASS。
+
+
+## CI72：普通应用可用量已核实，旧模拟器shell配额单独处理
+
+[CI72 42383813896](https://github.com/ForceMind/Xs/actions/runs/42383813896) head `026245fa8cfa791f85d766d34a90b2822fe5f514`，merge `9f3478cf23d15195afec13b95141ed69acbd956a`，tree `532e0f582df363c16dd8967f96929ad2a2fa80d7`。四API主测试仍**608/608通过、0失败/错误/跳过**，core1155与完整构建通过；force-stop、同源debug3→4、guest reboot各4/4，低空间30/36通过，26/27压力构造仍失败（14/16外部driver PASS，整个run不能记成功）。[完整原始结果/包证据](evidence/round-d-ci72-results.json)。
+
+API26普通app UID10082，native baseline8170389504字节；27 UID10084，baseline8147226624字节，均与对应shell df一致。两套dd又在7488761856字节准确触发quota，并已清理唯一生成文件；因此‘df与getUsableSpace口径不同’已排除为本次原因。30/36最终普通UID分别10172/10221，可用29118464/29261824字节，真实新任务拒绝与既有PNG/hash/FTS保持通过。
+
+下一修复仅针对已证实的旧模拟器shell quota：先通过GITHUB_ACTIONS、emulator serial、qemu门，在普通分配真实报Quota exceeded且API26/27、userdebug、ro.debuggable=1、shellUID2000时，才允许临时adb root重建同一个唯一压力文件；实际rootUID0必须确认，应用验证仍必须原普通UID且实际0～40MiB。finally无论成功失败都清该文件/核不存在/记录释放容量，再unroot并核shellUID2000；任何清理或权限恢复失败均不能PASS。不对用户手机执行，不降低应用空间门槛，不把脚本构造失败伪装成产品通过。最终结果仍须后续CI实际执行。
+
+
+实现依据仅限官方调试模拟器：[ADB root/unroot说明](https://android.googlesource.com/platform/packages/modules/adb/+/refs/heads/main/docs/dev/root.md)及[Chromium模拟器镜像属性表](https://chromium.googlesource.com/chromium/src/+/refs/heads/main/docs/android_emulator.md)说明userdebug与生产user镜像的权限差别；包名本身不作为执行证明，脚本仍强制读取实际属性/UID并验证恢复。没有remount、修改系统镜像或对真实设备提权。
+
+
+新增[10项host故障/安全门回归](evidence/round-d-pre73-host.json)全部通过，执行真实driver控制流而仅替换subprocess，不连接ADB：错误环境/初始root不得分配，当前quota才授权，旧日志+当前reset错误不得root，错误/缺失原生压力证据必须失败，root部分生效后报错仍恢复，删除/不存在检查/unroot失败永不PASS。命令异常绑定本次operation/output，避免旧日志误授权。Python语法、shell语法、工程检查通过；这些10项不并入608项Android主XML，真实26/27压力仍待下一CI。生产Java未改，没有重复冒称本次重新构建Android。
