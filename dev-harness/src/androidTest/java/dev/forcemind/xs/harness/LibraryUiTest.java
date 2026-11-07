@@ -104,7 +104,9 @@ public final class LibraryUiTest {
         awaitCount(2);
         assertTrue(rowsText().contains("3.5 s"));
         assertTrue(rowsText().contains("6.0 s"));
-        assertFalse(rowsText().contains("openedneedle"));
+        assertTrue(rowsText().contains("feedonlymarker"));
+        assertTrue(rowsText().contains("savedneedle"));
+        assertFalse(rowsText().contains("openedonlymarker"));
         // Native X login identity changes cannot switch the app-owned library.
         XsCaptureBridge.bindAuthenticatedAccount(app, "different-x-account");
         assertEquals(library, XsLocalSpaces.defaultLibrary(app));
@@ -154,10 +156,10 @@ public final class LibraryUiTest {
     private void seed() {
         long now = System.currentTimeMillis();
         assertTrue(db.recordMeasuredFeed(library, url("901"), "home_following", "alice",
-            "dwellneedle unopenedneedle", null, now, "exposure-901", 3500, 3000));
+            "dwellneedle feedonlymarker", null, now, "exposure-901", 3500, 3000));
         assertTrue(db.recordMeasuredFeed(library, url("902"), "home_following", "bob",
-            "dwellneedle openedneedle", null, now + 1, "exposure-902", 4000, 3000));
-        assertTrue(db.recordObservedOpen(library, url("902"), "bob", "dwellneedle openedneedle",
+            "dwellneedle openedonlymarker", null, now + 1, "exposure-902", 4000, 3000));
+        assertTrue(db.recordObservedOpen(library, url("902"), "bob", "dwellneedle openedonlymarker",
             null, now + 2, "nav-902"));
         assertTrue(db.recordMeasuredFeed(library, url("903"), "home_following", "carol",
             "dwellneedle savedneedle", null, now + 3, "exposure-903", 6000, 3000));
