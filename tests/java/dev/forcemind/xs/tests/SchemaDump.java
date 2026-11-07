@@ -38,5 +38,22 @@ public final class SchemaDump {
         q=ArchiveSearch.build("local:test",f);
         System.out.println("META_QUERY:" + Base64.getEncoder().encodeToString(q.sql.getBytes(StandardCharsets.UTF_8)));
         for (String arg:q.args) System.out.println("META_ARG:" + Base64.getEncoder().encodeToString(arg.getBytes(StandardCharsets.UTF_8)));
+        f = new ArchiveSearch.Filter();
+        f.dateField=ArchiveSearch.DateField.FEED_SEEN; f.fromMs=100L; f.toMs=200L;
+        f.minDwellMs=3000L; f.sortByDwell=true;
+        dumpQuery("DATE",ArchiveSearch.build("local:dates",f));
+        f = new ArchiveSearch.Filter();
+        f.source="home_following"; f.minDwellMs=3000L; f.sortByDwell=true;
+        dumpQuery("SOURCE",ArchiveSearch.build("local:sources",f));
+        f.dateField=ArchiveSearch.DateField.FEED_SEEN; f.fromMs=100L; f.toMs=200L;
+        dumpQuery("SOURCE_DATE",ArchiveSearch.build("local:sources",f));
+        f = new ArchiveSearch.Filter();
+        f.dateField=ArchiveSearch.DateField.PUBLISHED; f.fromMs=100L; f.toMs=200L;
+        f.minDwellMs=3000L; f.sortByDwell=true;
+        dumpQuery("PUBLISHED",ArchiveSearch.build("local:dates",f));
+    }    private static void dumpQuery(String name,ArchiveSearch.Query query) {
+        System.out.println(name+"_QUERY:"+Base64.getEncoder().encodeToString(query.sql.getBytes(StandardCharsets.UTF_8)));
+        for(String arg:query.args) System.out.println(name+"_ARG:"+Base64.getEncoder().encodeToString(arg.getBytes(StandardCharsets.UTF_8)));
     }
+
 }

@@ -81,14 +81,44 @@ public final class ArchiveSearch {
                 (filter.tag != null && filter.tag.length() > 64)) {
             throw new IllegalArgumentException("Filter too long");
         }
-        String dwellColumn = "(SELECT MAX(e.duration_ms) FROM history_events e WHERE " +
-            "e.account_id=p.account_id AND e.post_id=p.post_id AND e.event_type='FEED_VISIBLE')";
+        // Duration, source and exposure-date filters must be satisfied by one event.
+        // Aggregate only matching exposures, so sorting cannot borrow an older/other-feed duration.
+        boolean hasSource = filter.source != null && !filter.source.isEmpty();
+        boolean feedDate = filter.dateField == DateField.FEED_SEEN;
+        boolean feedSource = hasSource && (FeedCapturePolicy.supportedSource(filter.source) ||
+            filter.minDwellMs != null || feedDate);
+        List<String> args = new ArrayList<>();
+        StringBuilder matchedFeed = new StringBuilder(
+            "SELECT e.account_id,e.post_id,MAX(e.duration_ms) AS max_dwell_ms, " +
+            "MAX(e.event_at_ms) AS feed_time, CASE WHEN MAX(e.duration_ms)>=600000 " +
+            "THEN 'CAPPED_LOWER_BOUND' WHEN MAX(e.duration_ms) IS NOT NULL " +
+            "THEN 'SAMPLED_LOWER_BOUND' END AS dwell_quality FROM history_events e " +
+            "WHERE e.account_id=? AND e.event_type='FEED_VISIBLE'");
+        args.add(accountId);
+        if (filter.minDwellMs != null) {
+            matchedFeed.append(" AND e.duration_ms>=CAST(? AS INTEGER)");
+            args.add(Long.toString(filter.minDwellMs));
+        }
+        if (feedSource) {
+            matchedFeed.append(" AND e.source=?");
+            args.add(filter.source);
+        }
+        if (feedDate && filter.fromMs != null) {
+            matchedFeed.append(" AND e.event_at_ms>=CAST(? AS INTEGER)");
+            args.add(Long.toString(filter.fromMs));
+        }
+        if (feedDate && filter.toMs != null) {
+            matchedFeed.append(" AND e.event_at_ms<=CAST(? AS INTEGER)");
+            args.add(Long.toString(filter.toMs));
+        }
+        matchedFeed.append(" GROUP BY e.account_id,e.post_id");
+        String dwellColumn = "matched_feed.max_dwell_ms";
         String favoriteTime = "(SELECT f.favorited_at_ms FROM favorites f WHERE " +
             "f.account_id=p.account_id AND f.post_id=p.post_id)";
         String dateColumn;
         switch (filter.dateField) {
             case LAST_OPENED: dateColumn = "p.last_opened_at_ms"; break;
-            case FEED_SEEN: dateColumn = "p.last_feed_seen_at_ms"; break;
+            case FEED_SEEN: dateColumn = "matched_feed.feed_time"; break;
             case PUBLISHED: dateColumn = "p.published_at_ms"; break;
             case FAVORITED: dateColumn = favoriteTime; break;
             case ACTION:
@@ -111,11 +141,10 @@ public final class ArchiveSearch {
             "f.post_id=p.post_id) AS note, " +
             "(SELECT GROUP_CONCAT(t.tag, ', ') FROM post_tags t WHERE t.account_id=p.account_id " +
             "AND t.post_id=p.post_id) AS tags, " +
-            "(SELECT e.duration_quality FROM history_events e WHERE e.account_id=p.account_id " +
-            "AND e.post_id=p.post_id AND e.event_type='FEED_VISIBLE' AND e.duration_ms IS NOT NULL " +
-            "ORDER BY e.duration_ms DESC,e.id DESC LIMIT 1) AS dwell_quality " +
-            "FROM posts p WHERE p.account_id = ?");
-        List<String> args = new ArrayList<>();
+            "matched_feed.dwell_quality AS dwell_quality " +
+            "FROM posts p LEFT JOIN (" + matchedFeed + ") matched_feed ON " +
+            "matched_feed.account_id=p.account_id AND matched_feed.post_id=p.post_id " +
+            "WHERE p.account_id = ?");
         args.add(accountId);
 
         if (filter.openedOnly) sql.append(" AND p.opened_count > 0");
@@ -124,11 +153,10 @@ public final class ArchiveSearch {
             "AND o.post_id=p.post_id AND o.event_type='OPEN_POST')");
         if (filter.favoriteOnly) sql.append(" AND EXISTS (SELECT 1 FROM favorites f WHERE " +
             "f.account_id=p.account_id AND f.post_id=p.post_id)");
-        if (filter.minDwellMs != null) {
-            sql.append(" AND ").append(dwellColumn).append(" >= CAST(? AS INTEGER)");
-            args.add(Long.toString(filter.minDwellMs));
+        if (filter.minDwellMs != null || feedSource || feedDate) {
+            sql.append(" AND matched_feed.post_id IS NOT NULL");
         }
-        if (filter.source != null && !filter.source.isEmpty()) {
+        if (hasSource && !feedSource) {
             sql.append(" AND EXISTS (SELECT 1 FROM history_events e WHERE " +
                 "e.account_id=p.account_id AND e.post_id=p.post_id AND e.source=?)");
             args.add(filter.source);
@@ -142,11 +170,11 @@ public final class ArchiveSearch {
                 "t.account_id=p.account_id AND t.post_id=p.post_id AND t.tag=?)");
             args.add(filter.tag.trim());
         }
-        if (filter.fromMs != null) {
+        if (!feedDate && filter.fromMs != null) {
             sql.append(" AND ").append(dateColumn).append(" >= CAST(? AS INTEGER)");
             args.add(Long.toString(filter.fromMs));
         }
-        if (filter.toMs != null) {
+        if (!feedDate && filter.toMs != null) {
             sql.append(" AND ").append(dateColumn).append(" <= CAST(? AS INTEGER)");
             args.add(Long.toString(filter.toMs));
         }

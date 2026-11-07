@@ -107,7 +107,7 @@ jobs:
             adb shell getprop persist.sys.locale > app-android/build/compatibility/locale.txt
             adb shell dumpsys webviewupdate > app-android/build/compatibility/webview-provider.txt
             adb shell cmd uimode night > app-android/build/compatibility/night-mode.txt
-            gradle --no-daemon :dev-harness:connectedDebugAndroidTest :app-android:connectedDebugAndroidTest
+            gradle --no-daemon --no-parallel :dev-harness:connectedDebugAndroidTest :app-android:connectedDebugAndroidTest
       - name: Upload synthetic Android test reports
         if: always()
         uses: actions/upload-artifact@v4

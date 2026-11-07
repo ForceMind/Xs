@@ -192,7 +192,28 @@ def main() -> None:
     con.execute("DELETE FROM favorites WHERE account_id='local:test' AND post_id='101'")
     assert con.execute("SELECT count(*) FROM post_tags").fetchone()[0] == 0
     assert con.execute("SELECT count(*) FROM posts WHERE account_id='local:test'").fetchone()[0] == 3
-    print("PASS SQLite v3 DDL, v1/v2 preserving migrations, scope mappings, FTS, exposure dedup, dwell/never-opened query, independent favorites")
+    # An old long exposure must not qualify a short exposure on the requested day/source.
+    def feed_row(scope, ident, source, when, duration, key):
+        con.execute("INSERT OR IGNORE INTO posts(account_id,post_id,body,published_at_ms,first_seen_at_ms,last_seen_at_ms,last_feed_seen_at_ms) VALUES (?,?,'matching exposure',150,50,150,150)",(scope,ident))
+        con.execute("INSERT INTO history_events(account_id,post_id,event_type,event_at_ms,source,event_key,duration_ms,threshold_ms,duration_quality) VALUES (?,?,'FEED_VISIBLE',?,?,?,?,3000,'SAMPLED_LOWER_BOUND')",(scope,ident,when,source,key,duration))
+    for ident, old_duration, today_duration in [('201',5000,1000),('202',9000,4000),('203',10000,3500)]:
+        feed_row('local:dates',ident,'home_for_you',50,old_duration,'old:'+ident)
+        feed_row('local:dates',ident,'home_for_you',150,today_duration,'today:'+ident)
+    for ident, for_you, following in [('204',5000,1000),('205',9000,4000),('206',10000,3500)]:
+        feed_row('local:sources',ident,'home_for_you',150,for_you,'foryou:'+ident)
+        feed_row('local:sources',ident,'home_following',160,following,'following:'+ident)
+    def query_named(name):
+        query=next(base64.b64decode(line.partition(":")[2],validate=True).decode('utf-8')
+                   for line in lines if line.startswith(name+'_QUERY:'))
+        args=[base64.b64decode(line.partition(":")[2],validate=True).decode('utf-8')
+              for line in lines if line.startswith(name+'_ARG:')]
+        return con.execute(query,args).fetchall()
+    assert [(row[1],row[8],row[9]) for row in query_named('DATE')] == [('202',150,4000),('203',150,3500)]
+    assert [(row[1],row[9]) for row in query_named('SOURCE')] == [('205',4000),('206',3500)]
+    assert [(row[1],row[8],row[9]) for row in query_named('SOURCE_DATE')] == [('205',160,4000),('206',160,3500)]
+    # Choosing published date explicitly continues filtering publication, not exposure time.
+    assert [(row[1],row[9]) for row in query_named('PUBLISHED')] == [('203',10000),('202',9000),('201',5000)]
+    print("PASS SQLite v3 DDL, v1/v2 preserving migrations, scope mappings, FTS, exposure dedup, dwell/never-opened and same-exposure date/source queries, independent favorites")
 
 
 if __name__ == "__main__":

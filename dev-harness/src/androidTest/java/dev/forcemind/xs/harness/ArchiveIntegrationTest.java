@@ -357,6 +357,36 @@ public class ArchiveIntegrationTest {
         }
     }
 
+    @Test public void durationSourceAndFeedDateMustMatchTheSameExposure() {
+        String library="local:event-filter";
+        String first="https://x.com/alice/status/8801", second="https://x.com/alice/status/8802";
+        assertTrue(store.recordMeasuredFeed(library,first,"home_for_you","alice","Old long, recent short",150L,
+            50,"old-first",5000,3000));
+        assertTrue(store.recordMeasuredFeed(library,first,"home_following","alice",null,150L,
+            150,"recent-first",1500,1200));
+        assertTrue(store.recordMeasuredFeed(library,second,"home_for_you","alice","Sorted by matching duration",150L,
+            50,"old-second",9000,3000));
+        assertTrue(store.recordMeasuredFeed(library,second,"home_following","alice",null,150L,
+            150,"recent-second",3500,3000));
+        ArchiveSearch.Filter q=new ArchiveSearch.Filter(); q.minDwellMs=3000L; q.sortByDwell=true;
+        q.dateField=ArchiveSearch.DateField.FEED_SEEN; q.fromMs=100L; q.toMs=200L;
+        try (Cursor rows=store.search(library,q)) {
+            assertEquals(1,rows.getCount()); assertTrue(rows.moveToFirst());
+            assertEquals("8802",rows.getString(1)); assertEquals(3500L,rows.getLong(9));
+        }
+        q.dateField=ArchiveSearch.DateField.LAST_SEEN; q.fromMs=null; q.toMs=null;
+        q.source="home_following";
+        try (Cursor rows=store.search(library,q)) {
+            assertEquals(1,rows.getCount()); assertTrue(rows.moveToFirst());
+            assertEquals("8802",rows.getString(1)); assertEquals(3500L,rows.getLong(9));
+        }
+        q.source=null; q.dateField=ArchiveSearch.DateField.PUBLISHED; q.fromMs=100L; q.toMs=200L;
+        try (Cursor rows=store.search(library,q)) {
+            assertEquals(2,rows.getCount()); assertTrue(rows.moveToFirst());
+            assertEquals(9000L,rows.getLong(9));
+        }
+    }
+
     @Test public void nativeArchiveActivityLoads() {
         XsCaptureBridge.bindAuthenticatedAccount(app, "dev-only");
         Intent intent = new Intent(app, XsHistoryActivity.class)

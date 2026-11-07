@@ -71,7 +71,7 @@ After relevant runtime edits:
 bash scripts/check-project.sh
 bash scripts/test-core.sh
 gradle --no-daemon :xs-runtime:assembleDebug :dev-harness:assembleDebug :app-android:assembleDebug :app-android:lintDebug
-gradle --no-daemon :dev-harness:connectedDebugAndroidTest :app-android:connectedDebugAndroidTest
+gradle --no-daemon --no-parallel :dev-harness:connectedDebugAndroidTest :app-android:connectedDebugAndroidTest
 ```
 
 Record source/APK hash, exact device/OS/WebView/recipient-app versions, MIME/size, test scenario and outcome. Keep NOT RUN distinct from PASS. Docs-only commits do not claim compilation or device tests. Build artifacts, an AAR or a synthetic harness are not production releases; no unsupported universal login/sharing/background/store claims.

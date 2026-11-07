@@ -91,7 +91,7 @@ bash scripts/check-project.sh
 bash scripts/test-core.sh
 # Android SDK, JDK 17, Gradle 8.9:
 gradle --no-daemon :xs-runtime:assembleDebug :dev-harness:assembleDebug :app-android:assembleDebug :app-android:lintDebug
-gradle --no-daemon :dev-harness:connectedDebugAndroidTest :app-android:connectedDebugAndroidTest
+gradle --no-daemon --no-parallel :dev-harness:connectedDebugAndroidTest :app-android:connectedDebugAndroidTest
 ```
 
 [W0 execution evidence](docs/W0-EXECUTION.md) · [Device matrix](compat/web/W0-MATRIX.md). A documentation commit is not a new build/test result. Synthetic/emulator passes do not replace actual login, recipient-file compatibility or personal-data upgrade testing.

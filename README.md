@@ -85,7 +85,7 @@ bash scripts/check-project.sh
 bash scripts/test-core.sh
 # Android SDK、JDK 17、Gradle 8.9 环境：
 gradle --no-daemon :xs-runtime:assembleDebug :dev-harness:assembleDebug :app-android:assembleDebug :app-android:lintDebug
-gradle --no-daemon :dev-harness:connectedDebugAndroidTest :app-android:connectedDebugAndroidTest
+gradle --no-daemon --no-parallel :dev-harness:connectedDebugAndroidTest :app-android:connectedDebugAndroidTest
 ```
 
 [W0 执行记录](docs/W0-EXECUTION.md) · [设备矩阵](compat/web/W0-MATRIX.md)。文档提交不等于新编译/测试；合成或模拟器结果不替代真实账号、目标应用接收文件和个人数据升级验收。

@@ -77,7 +77,7 @@ public final class CoreSmokeTest {
         yes(q.sql.contains("p.last_opened_at_ms DESC"));
         f.dateField = ArchiveSearch.DateField.FEED_SEEN;
         q = ArchiveSearch.build("user-2", f);
-        yes(q.sql.contains("p.last_feed_seen_at_ms DESC"));
+        yes(q.sql.contains("matched_feed.feed_time DESC"));
         f.dateField = ArchiveSearch.DateField.ACTION;
         q = ArchiveSearch.build("user-2", f);
         yes(q.sql.contains("MAX(a.action_at_ms)"));

@@ -226,6 +226,9 @@ public final class XsHistoryActivity extends Activity {
     }
 
     private void setMode(Mode value) {
+        if (value==Mode.FEED && mode!=Mode.FEED) dateBasis=ArchiveSearch.DateField.FEED_SEEN;
+        else if (value==Mode.FAVORITES && mode!=Mode.FAVORITES) dateBasis=ArchiveSearch.DateField.FAVORITED;
+        else if (value==Mode.HISTORY) dateBasis=ArchiveSearch.DateField.LAST_OPENED;
         mode = value;
         boolean search = value == Mode.SEARCH || value == Mode.FAVORITES;
         query.setVisibility(search ? View.VISIBLE : View.GONE);
@@ -597,8 +600,8 @@ public final class XsHistoryActivity extends Activity {
     }
 
     private String[] basisNames() {
-        return zh ? new String[]{"最近收录时间","主动打开时间","停留时间","帖子发布时间","本人操作时间"} :
-            new String[]{"Last saved","Last opened","Dwell time","Published","Own action"};
+        return zh ? new String[]{"最近收录时间","主动打开时间","停留时间","帖子发布时间","本人操作时间","Xs 收藏时间"} :
+            new String[]{"Last saved","Last opened","Dwell time","Published","Own action","Xs favorite time"};
     }
     private String basisName(ArchiveSearch.DateField field) { return basisNames()[field.ordinal()]; }
 
