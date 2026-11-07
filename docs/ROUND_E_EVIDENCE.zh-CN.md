@@ -91,3 +91,16 @@ CI78前仅改浏览器测试helper；生产源码/Provider/legacy driver不变�
 下一最小修正仅在已确认fixture目录/关闭侧栏、固定三个导出文件名之一、exact container_save内android:id/button1 Save且实际IME窗口存在、Save不可见时，执行一次真实系统Back收键盘。随后必须确认IME消失、原目录/文件名保留、原Save可见，再走原系统ACTION_CLICK和SAF返回，全部ZIP原文件字节断言不变。未无条件Back、未点不可见节点、未加超时、未降低验收。
 
 该单文件helper通过测试APK和dev-harness Lint实际构建（88 tasks/30秒；0错误/16警告），无生产/Browser/Provider/legacy修改。下一CI79需重跑真实四API，不将本地编译当原生通过。
+
+
+## CI79：IME修复实际执行；API30 SPA合成触发条件失败
+
+[CI79 42413903426](https://github.com/ForceMind/Xs/actions/runs/42413903426) 的head `32b43387ef7e2d886ccfe73b43b58d1842e43882` / tree `9a235dce29f26cafe164f02465d371fb44ca71f5`。实际624主执行中623通过，唯API30 SPA用例在选择文件前等待页面路由复合条件失败；0错误/跳过。16次Gov执行全过，Browser23/24；API26/27/36各156主用例及全部5driver通过，API30跨源码legacy通过，其后4driver未运行。实际16/16 attempted driver、36个外部native phase通过；详见[CI79完整报告](evidence/round-e-ci79-results.json)。
+
+API26 Gov同一ZIP用例原始logcat明确出现`Dismiss actual IME over fixed SAF save form: Xs-selected-media.zip`，并实际PASS原ZIP每个选中文件的字节/hash断言。IME新增条件分支这次确实执行，不只是未触发时的用例通过。
+
+API30 Browser已实际PAUSED/STOPPED、真实DocsUI显示正确fixture目录，失败发生在等待`spaVisitLog`/sameDocument/最终URL的复合表达式，尚未点击返回文件。原日志未采集各JS字段和nativeHistoryCallbacks的实际值，故**不能断言其中哪个子条件或visibility行为是根因**。失败时生成33656字节AX与36920字节PNG，但shell副本preserved=false，未真正导出；只有受限AX logcat备用输出可读，不声称查看了PNG。
+
+下一修正限定合成触发契约：真实点击SPA arm并观察onclick/trusted生效，打开真实SAF并确认native上传仍pending后，由标准evaluateJavascript一次调用本地HTML定义的合成函数，执行真实history.pushState敏感路由→HOME。用例目标是实际pending选择器期间的瞬时SPA路由失效，不再依赖与该目标无关的visibilitychange必达时序。仍要求两个实际URL、原document marker、真实WebView native回调顺序、最终URL等于原URL、真实选择后的FileList为空和旧callback清空；不手调Client/Activity结果、伪造URI或写入通过标志。完整导航的visibility用例保留；未扩大超时/自动重跑/削弱业务断言。新增失败诊断仅含白名单合成方法的有限状态/路由类别，不采正文、私密输入或任意网页数据。
+
+CI80前实际编译app测试APK及appLint通过：121 tasks/16秒；[本地构建摘要](evidence/round-e-pre80-build.json)。Gov/生产/Provider/legacy未变，未以编译替代下一轮真实624/20验收。

@@ -76,7 +76,7 @@ public final class BrowserInteractionIntegrationTest {
         "<input id=\"multiFile\" type=\"file\" accept=\"image/png\" multiple aria-label=\"Select two synthetic PNGs\">\n" +
         "<button id=\"reset\" onclick=\"document.getElementById('file').value='';window.uploadResult=null\">Reset selection</button>\n" +
         "<button id=\"arm\" onclick=\"window.rejectOnHide=true\">Arm navigation boundary</button>\n" +
-        "<button id=\"armSpa\" onclick=\"window.spaOnHide=true\">Arm same-document navigation boundary</button>\n" +
+        "<button id=\"armSpa\" onclick=\"window.spaArmTrusted=event.isTrusted;window.spaRouteArmed=window.spaArmTrusted\">Arm same-document navigation boundary</button>\n" +
         "<button id=\"internal\" onclick=\"window.popupReturned=window.open('__POPUP__','_blank')!==null\">Open synthetic authentication window</button>\n" +
         "<button id=\"external\" onclick=\"window.popupReturned=window.open('https://example.invalid/xs-fixture','_blank')!==null\">Open external fixture link</button>\n" +
         "<button id=\"blocked\" onclick=\"window.popupReturned=window.open('intent://xs-fixture','_blank')!==null\">Open blocked scheme</button>\n" +
@@ -84,7 +84,7 @@ public final class BrowserInteractionIntegrationTest {
         "<button id=\"playVideo\" onclick=\"window.videoState.playGestureTrusted=event.isTrusted;var p=document.getElementById('videoPreview').play();if(p&amp;&amp;p.catch)p.catch(function(e){window.videoState.error=e.name})\">Play selected local MP4</button>\n" +
         "<script>\n" +
         "window.uploadResult=null;window.videoResult=null;window.multiResult=null;window.multiError=null;\n" +
-        "window.rejectOnHide=false;window.spaOnHide=false;window.spaVisitLog=[];window.fixtureDocumentMarker={};window.lastFixturePointer=null;\n" +
+        "window.rejectOnHide=false;window.spaRouteArmed=false;window.spaArmTrusted=false;window.spaRouteRuns=0;window.spaVisitLog=[];window.fixtureDocumentMarker={};window.lastFixturePointer=null;\n" +
         "window.videoState={metadata:false,playing:false,ended:false,timeUpdates:0,playGestureTrusted:false,error:null};\n" +
         "document.addEventListener('pointerdown',function(e){window.lastFixturePointer={id:e.target.id,trusted:e.isTrusted}},true);\n" +
         "document.getElementById('file').onchange=function(){var f=this.files[0];if(!f)return;var r=new FileReader();r.onload=function(){window.uploadResult={name:f.name,type:f.type,size:f.size,data:r.result}};r.readAsDataURL(f)};\n" +
@@ -94,7 +94,8 @@ public final class BrowserInteractionIntegrationTest {
         "video.onended=function(){window.videoState.ended=true;window.videoState.currentTime=video.currentTime};video.onerror=function(){window.videoState.error=video.error?video.error.code:'unknown'};\n" +
         "document.getElementById('videoFile').onchange=function(){var f=this.files[0];if(!f)return;var r=new FileReader();r.onload=function(){window.videoResult={name:f.name,type:f.type,size:f.size,data:r.result}};r.onerror=function(){window.videoState.error='file-read'};r.readAsDataURL(f);video.src=URL.createObjectURL(f);video.load()};\n" +
         "document.getElementById('multiFile').onchange=function(){var files=Array.prototype.slice.call(this.files);Promise.all(files.map(function(f){return new Promise(function(resolve,reject){var r=new FileReader();r.onload=function(){resolve({name:f.name,type:f.type,size:f.size,data:r.result})};r.onerror=reject;r.readAsDataURL(f)})})).then(function(results){window.multiResult=results},function(){window.multiError='file-read'})};\n" +
-        "document.addEventListener('visibilitychange',function(){if(document.visibilityState!=='hidden')return;if(window.rejectOnHide){window.rejectOnHide=false;location.href='__SENSITIVE__'}else if(window.spaOnHide){window.spaOnHide=false;var marker=window.fixtureDocumentMarker;history.pushState({fixture:'sensitive'},'','__SENSITIVE__');window.spaVisitLog.push(location.href);history.pushState({fixture:'home'},'','__HOME__');window.spaVisitLog.push(location.href);window.spaSameDocument=window.fixtureDocumentMarker===marker}});\n" +
+        "window.runArmedSpaRoute=function(){if(!window.spaRouteArmed||!window.spaArmTrusted||window.spaRouteRuns!==0||window.spaVisitLog.length!==0)return false;window.spaRouteArmed=false;window.spaRouteRuns++;var marker=window.fixtureDocumentMarker;history.pushState({fixture:'sensitive'},'','__SENSITIVE__');window.spaVisitLog.push(location.href);history.pushState({fixture:'home'},'','__HOME__');window.spaVisitLog.push(location.href);window.spaSameDocument=window.fixtureDocumentMarker===marker;return true};\n" +
+        "document.addEventListener('visibilitychange',function(){if(document.visibilityState==='hidden'&&window.rejectOnHide){window.rejectOnHide=false;location.href='__SENSITIVE__'}});\n" +
         "</script>"
         ).replace("__POPUP__",POPUP).replace("__SENSITIVE__",SENSITIVE).replace("__HOME__",HOME);
     @Before public void setup()throws Exception {
@@ -353,6 +354,7 @@ public final class BrowserInteractionIntegrationTest {
             if(active==null||active.getPackageName()==null)return;
             String owner=active.getPackageName().toString();
             if(!app.getPackageName().equals(owner)&&!(owner.contains("documentsui")&&(fixtureDirectoryConfirmed||fixtureToolbarVisible()||find(this::fixtureSidebarRoot)!=null)))return;
+            if("realSafResultAfterSameDocumentSensitiveRouteAndHomeRoundTripIsRejected".equals(method))recordSyntheticSpaState();
             String name="browser-"+method;File directory=app.getExternalFilesDir("xs-governance-ui");
             if(directory==null||(!directory.isDirectory()&&!directory.mkdirs()))return;
             StringBuilder ax=new StringBuilder();
@@ -388,6 +390,16 @@ public final class BrowserInteractionIntegrationTest {
             }catch(Throwable screenshotUnavailable){android.util.Log.i("XsBrowserFixture","Synthetic screenshot unavailable; AX already preserved");}
             preserveDiagnostic(pngFile,name+".png");
         }catch(Throwable unavailable){android.util.Log.i("XsBrowserFixture","Synthetic emulator failure capture unavailable");}
+    }
+    private void recordSyntheticSpaState(){
+        // Called only behind the emulator, fixed-method and synthetic-window gates.
+        // No body text, arbitrary URLs, selected bytes or browser storage is logged.
+        try {
+            Object state=jsonFromPage("(function(){function route(value){return value==='"+HOME+"'?'HOME':value==='"+SENSITIVE+"'?'SENSITIVE':'OTHER'}return {visibility:document.visibilityState,armed:window.spaRouteArmed===true,trusted:window.spaArmTrusted===true,runs:Number(window.spaRouteRuns)||0,visitCount:Array.isArray(window.spaVisitLog)?window.spaVisitLog.length:-1,visits:Array.isArray(window.spaVisitLog)?window.spaVisitLog.slice(0,8).map(route):[],sameDocument:window.spaSameDocument===true,location:route(location.href),fileCount:document.getElementById('file').files.length}})()");
+            String text=String.valueOf(state);if(text.length()>2048)text=text.substring(0,2048);
+            List<String> routes=new ArrayList<>();for(String value:nativeHistoryCallbacks){if(routes.size()>=16)break;routes.add(HOME.equals(value)?"HOME":SENSITIVE.equals(value)?"SENSITIVE":"OTHER");}
+            android.util.Log.i("XsBrowserFixture","SYNTHETIC_SPA_STATE "+text+" nativeRouteCount="+nativeHistoryCallbacks.size()+" nativeRoutes="+routes+" uploadPending="+(field("upload")!=null));
+        }catch(Throwable unavailable){android.util.Log.i("XsBrowserFixture","Synthetic SPA scalar diagnostic unavailable");}
     }
     private static String diagnosticText(CharSequence value){String text=String.valueOf(value).replace('\n',' ').replace('\t',' ');return text.length()>256?text.substring(0,256):text;}
     private void preserveDiagnostic(File file,String name){
@@ -450,7 +462,7 @@ public final class BrowserInteractionIntegrationTest {
         openSystemPicker();backFromPicker();awaitJs("document.getElementById('file').files.length===0&&window.uploadResult===null");assertNull(field("upload"));bodyCompleted=true;
     }
     @Test public void realPickerResultAfterPageNavigationIsRejectedAndSensitivePageCannotChoose()throws Exception {
-        tapHtml("arm");openSystemPicker();
+        tapHtml("arm");awaitJs("window.rejectOnHide===true");openSystemPicker();
         await(()->SENSITIVE.equals(currentUrl()),"Visibility transition performs the fixture's real navigation while SAF is open");
         chooseFixture("xs-browser-boundary.png");
         awaitJs("location.href==='"+SENSITIVE+"'&&document.getElementById('file').files.length===0&&window.uploadResult===null");assertNull(field("upload"));
@@ -521,8 +533,15 @@ public final class BrowserInteractionIntegrationTest {
         assertNeverSelectedDenied();assertNull(field("upload"));bodyCompleted=true;
     }
     @Test public void realSafResultAfterSameDocumentSensitiveRouteAndHomeRoundTripIsRejected()throws Exception {
-        nativeHistoryCallbacks.clear();tapHtml("armSpa");openSystemPicker();
-        awaitJs("window.spaVisitLog.length===2&&window.spaVisitLog[0]==='"+SENSITIVE+"'&&window.spaVisitLog[1]==='"+HOME+"'&&window.spaSameDocument===true&&location.href==='"+HOME+"'");
+        nativeHistoryCallbacks.clear();tapHtml("armSpa");
+        awaitJs("window.spaArmTrusted===true&&window.spaRouteArmed===true&&window.spaRouteRuns===0&&window.spaVisitLog.length===0");
+        openSystemPicker();assertTrue("The actual system picker is foreground before the route stimulus",isDocumentsUi());
+        assertNotNull("The real native upload callback is still pending before the route changes",field("upload"));
+        // The tested boundary is an actual same-DOM route change while SAF is pending.
+        // Invoke the synthetic page's once-armed closure through the standard WebView
+        // API, avoiding dependence on delivery timing of background visibility events.
+        assertEquals("The armed fixture executes its actual pushState pair once","true",evaluate("window.runArmedSpaRoute()"));
+        awaitJs("window.spaRouteRuns===1&&window.spaVisitLog.length===2&&window.spaVisitLog[0]==='"+SENSITIVE+"'&&window.spaVisitLog[1]==='"+HOME+"'&&window.spaSameDocument===true&&location.href==='"+HOME+"'");
         await(()->{
             int sensitive=nativeHistoryCallbacks.indexOf(SENSITIVE);if(sensitive<0)return false;
             for(int i=sensitive+1;i<nativeHistoryCallbacks.size();i++)if(HOME.equals(nativeHistoryCallbacks.get(i)))return true;
