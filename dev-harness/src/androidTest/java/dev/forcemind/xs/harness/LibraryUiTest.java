@@ -2,6 +2,7 @@ package dev.forcemind.xs.harness;
 
 import android.app.Activity;
 import android.app.Instrumentation;
+import android.accessibilityservice.AccessibilityServiceInfo;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
@@ -44,6 +45,9 @@ public final class LibraryUiTest {
     @Before public void setUp() throws Exception {
         instrumentation = InstrumentationRegistry.getInstrumentation();
         app = instrumentation.getTargetContext();
+        AccessibilityServiceInfo accessibility = instrumentation.getUiAutomation().getServiceInfo();
+        accessibility.flags |= AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS;
+        instrumentation.getUiAutomation().setServiceInfo(accessibility);
         library = XsLocalSpaces.defaultLibrary(app);
         CountDownLatch cleared = new CountDownLatch(1);
         assertTrue(XsLibraryWrites.invalidateAndSubmit(library, cleared::countDown));
@@ -96,7 +100,7 @@ public final class LibraryUiTest {
         click(XsHistoryActivity.ID_FILTERS);
         setAccessibleText(label("最低停留秒数", "Minimum dwell seconds"), "3");
         accessible(label("从未主动打开", "Never deliberately opened")).performAction(AccessibilityNodeInfo.ACTION_CLICK);
-        clickAccessible(label("应用", "Apply"));
+        clickDialogButton(android.R.id.button1, label("应用", "Apply"));
         awaitCount(2);
         assertTrue(rowsText().contains("3.5 s"));
         assertTrue(rowsText().contains("6.0 s"));
@@ -120,13 +124,13 @@ public final class LibraryUiTest {
             assertNotNull(row);
             list.performItemClick(row, 0, list.getAdapter().getItemId(0));
         });
-        clickAccessible(label("整理", "Organize"));
+        clickDialogButton(android.R.id.button3, label("整理", "Organize"));
         clickAccessible(label("编辑收藏备注与标签", "Edit favorite note & tags"));
         assertEquals("existing private note", accessible(label("收藏备注", "Favorite note")).getText().toString());
         assertTrue(accessible(label("收藏标签", "Favorite tags")).getText().toString().contains("work"));
         setAccessibleText(label("收藏备注", "Favorite note"), "edited private note");
         setAccessibleText(label("收藏标签", "Favorite tags"), "work, reviewed");
-        clickAccessible(label("保存", "Save"));
+        clickDialogButton(android.R.id.button1, label("保存", "Save"));
         awaitCondition(() -> {
             ArchiveSearch.Filter filter = new ArchiveSearch.Filter(); filter.tag = "reviewed";
             try (Cursor c = db.search(library, filter)) {
@@ -134,7 +138,7 @@ public final class LibraryUiTest {
             }
         });
         click(XsHistoryActivity.ID_CLEAR_HISTORY);
-        clickAccessible(label("清历史", "Clear history"));
+        clickDialogButton(android.R.id.button1, label("清历史", "Clear history"));
         awaitCondition(() -> {
             try (Cursor c = db.timeline(library, null, 20, "FEED_VISIBLE")) { return c.getCount() == 0; }
         });
@@ -172,7 +176,7 @@ public final class LibraryUiTest {
         instrumentation.waitForIdleSync();
     }
     private void awaitCount(int count) {
-        awaitCondition(() -> {
+        awaitCondition("native list count " + count, () -> {
             final int[] actual = {-1};
             instrumentation.runOnMainSync(() -> actual[0] = ((ListView) screen.findViewById(XsHistoryActivity.ID_RESULTS)).getAdapter().getCount());
             return actual[0] == count;
@@ -188,7 +192,7 @@ public final class LibraryUiTest {
     }
     private AccessibilityNodeInfo accessible(String text) {
         final AccessibilityNodeInfo[] found = {null};
-        awaitCondition(() -> {
+        awaitCondition("accessible label " + text, () -> {
             AccessibilityNodeInfo root = instrumentation.getUiAutomation().getRootInActiveWindow();
             if (root == null) return false;
             List<AccessibilityNodeInfo> matches = root.findAccessibilityNodeInfosByText(text);
@@ -206,19 +210,38 @@ public final class LibraryUiTest {
         assertTrue(accessible(text).performAction(AccessibilityNodeInfo.ACTION_CLICK));
         instrumentation.waitForIdleSync();
     }
+    /** Framework AlertDialog buttons apply theme-specific all-caps transformations. */
+    private void clickDialogButton(int viewId, String expectedLabel) {
+        String resourceName = app.getResources().getResourceName(viewId);
+        final AccessibilityNodeInfo[] found = {null};
+        awaitCondition("dialog button " + resourceName + " (" + expectedLabel + ")", () -> {
+            AccessibilityNodeInfo root = instrumentation.getUiAutomation().getRootInActiveWindow();
+            if (root == null) return false;
+            for (AccessibilityNodeInfo node : root.findAccessibilityNodeInfosByViewId(resourceName)) {
+                if (node.isVisibleToUser() && node.isEnabled()) { found[0] = node; return true; }
+            }
+            return false;
+        });
+        assertNotNull("Expected dialog button label", found[0].getText());
+        assertTrue("Expected " + expectedLabel + ", got " + found[0].getText(),
+            expectedLabel.equalsIgnoreCase(found[0].getText().toString()));
+        assertTrue(found[0].performAction(AccessibilityNodeInfo.ACTION_CLICK));
+        instrumentation.waitForIdleSync();
+    }
     private void setAccessibleText(String description, String value) {
         Bundle args = new Bundle(); args.putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, value);
         assertTrue(accessible(description).performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, args));
         instrumentation.waitForIdleSync();
     }
     private interface Check { boolean passed(); }
-    private void awaitCondition(Check check) {
+    private void awaitCondition(Check check) { awaitCondition("native library condition", check); }
+    private void awaitCondition(String expected, Check check) {
         long deadline = SystemClock.uptimeMillis() + 5000;
         do {
             if (check.passed()) return;
             SystemClock.sleep(30);
         } while (SystemClock.uptimeMillis() < deadline);
-        fail("Timed out waiting for native library UI");
+        fail("Timed out waiting for " + expected);
     }
     private String label(String chinese, String english) {
         return app.getResources().getConfiguration().getLocales().get(0).getLanguage().equals("zh") ? chinese : english;

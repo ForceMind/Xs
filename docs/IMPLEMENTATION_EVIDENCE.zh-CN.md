@@ -58,3 +58,9 @@
 ## 源码借鉴与许可
 
 重新读取 `ForceMind/ChatGPT@d0be3a853929eb8bc0595075767e8d14ace8c71f` 的 LICENSE、BrowserMemory、NavigationPolicy、PageRecoveryManager。采用页面所有权与窗口分离、MutableContextWrapper 重绑、原生取回及代次失效的思路；本轮没有复制这些自定义非商业许可文件的源码，也没有导入聊天草稿/自动发送/账号/密钥或依赖。新增 X-specific 实现保留 Xs 根 GPL-3.0；自定义许可最终决策仍未完成。来源清单见 [复用审阅记录](CHATGPT_STUDIO_REUSE.zh-CN.md)。
+
+## 首次 CI 实际用例与修正
+
+运行时代码 [CI 42347473651](https://github.com/ForceMind/Xs/actions/runs/42347473651) 的核心与 Android 构建通过；API30/36 各执行15项 harness 测试，13通过、2失败，app任务因前一task失败尚未执行。完整报告定位到原生UI测试第99行 Apply、第123行 Organize 标准按钮的文本定位，初始搜索/收藏列表断言已通过。
+
+测试改为标准 Android 按钮资源ID并校验原语义文案，兼容主题大写转换，不延长超时、不删除业务断言。CI增加顺序 --continue，让两个独立模块都运行并保留失败状态。修复后的仪器结果仍需新的CI报告，见 [首次执行明细](evidence/ci-first-fixture-run.json)。这次失败不是前述本地软件模拟器环境阻断。
