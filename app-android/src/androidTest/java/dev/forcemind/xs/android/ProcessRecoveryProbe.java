@@ -32,7 +32,11 @@ public final class ProcessRecoveryProbe {
     private Context app(){return InstrumentationRegistry.getInstrumentation().getTargetContext();}
     @Test public void nativeStateAndRecoveryAcrossProcessBoundary()throws Exception {
         String phase=InstrumentationRegistry.getArguments().getString("xs_phase","");
-        if("seed".equals(phase)){seed();return;}
+        if("seed".equals(phase)){
+            seed();assertTrue("Fixture measurement must use the ordinary application UID",Process.myUid()>=10000);
+            android.os.Bundle status=new android.os.Bundle();status.putString("xs_seed_available_bytes",Long.toString(app().getFilesDir().getUsableSpace()));status.putString("xs_seed_app_uid",Integer.toString(Process.myUid()));
+            InstrumentationRegistry.getInstrumentation().sendStatus(0,status);return;
+        }
         if("verify".equals(phase)){try{verify(true);}finally{cleanup();}return;}
         if("low-space".equals(phase)){try{lowSpace();}finally{cleanup();}return;}
         assertEquals("Unexpected fixture phase","",phase);
@@ -113,6 +117,7 @@ public final class ProcessRecoveryProbe {
         Context context=app();SharedPreferences prefs=context.getSharedPreferences(PREFS,Context.MODE_PRIVATE);
         String survivor=prefs.getString("survivor",null);assertNotNull(survivor);
         long available=context.getFilesDir().getUsableSpace();
+        assertTrue("Low-space admission must run with the ordinary application UID",Process.myUid()>=10000);
         assertTrue("Driver must create real low-space conditions",available>0&&available<2*dev.forcemind.xs.core.MediaDownloadPolicy.MAX_BYTES);
         XsMediaRepository media=XsMediaRepository.get(context);int before=media.list(survivor).size();
         try{media.enqueueImage(survivor,POST,"https://pbs.twimg.com/media/LowSpaceFixture?format=png&name=orig");fail("Low-space request should be rejected before a task or network is created");}
@@ -120,7 +125,7 @@ public final class ProcessRecoveryProbe {
         assertEquals(before,media.list(survivor).size());int completed=0;
         for(XsMediaRepository.Asset asset:media.list(survivor))if("COMPLETED".equals(asset.state)){completed++;assertEquals(prefs.getString("sha256",null),hash(media.completedFile(survivor,asset.id)));}assertEquals(1,completed);
         try(XsArchiveDatabase archive=new XsArchiveDatabase(context)){ArchiveSearch.Filter filter=new ArchiveSearch.Filter();filter.keyword="Process boundary";filter.favoriteOnly=true;try(Cursor c=archive.search(survivor,filter)){assertEquals(1,c.getCount());}}
-        android.os.Bundle status=new android.os.Bundle();status.putString("xs_available_bytes",Long.toString(available));InstrumentationRegistry.getInstrumentation().sendStatus(0,status);
+        android.os.Bundle status=new android.os.Bundle();status.putString("xs_available_bytes",Long.toString(available));status.putString("xs_low_space_app_uid",Integer.toString(Process.myUid()));InstrumentationRegistry.getInstrumentation().sendStatus(0,status);
     }
     private void cleanup()throws Exception {
         Context context=app();SharedPreferences prefs=context.getSharedPreferences(PREFS,Context.MODE_PRIVATE);XsMediaRepository media=XsMediaRepository.get(context);

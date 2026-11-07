@@ -1,0 +1,9 @@
+{
+  "baseline_commit": "7511d5212f4caa20828526a901922bd2fe99b2ca",
+  "dirty_changes": "ordinary app usable-space / UID probe only; runtime unchanged",
+  "app_test_apk_build": "PASS",
+  "build_log_sha256": "323854ca6d3f6217f5364a1defe11d6c5a67dbbe060122aeb341d653d291b7f0",
+  "python_compile": "PASS",
+  "diff_check": "PASS",
+  "native_results": "Pending next CI; no new local emulator claims"
+}

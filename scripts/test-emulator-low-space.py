@@ -36,11 +36,17 @@ def main():
     allocation_attempted=False
     try:
         if os.environ.get("GITHUB_ACTIONS")!="true" or not run(["get-serialno"],"emulator-serial").strip().startswith("emulator-") or run(["shell","getprop","ro.kernel.qemu"],"emulator-qemu").strip()!="1":raise RuntimeError("Disk pressure is restricted to this disposable GitHub CI emulator")
-        instrument("seed")
+        seeded=instrument("seed")
+        native_baseline=re.search(r"INSTRUMENTATION_STATUS: xs_seed_available_bytes=(\d+)",seeded)
+        native_uid=re.search(r"INSTRUMENTATION_STATUS: xs_seed_app_uid=(\d+)",seeded)
+        if not native_baseline or not native_uid or int(native_uid[1])<10000:raise RuntimeError("Ordinary application free-space measurement not proven")
         listing=run(["shell","df","-k","/data"],"space-before")
         fields=listing.strip().splitlines()[-1].split()
         if len(fields)<6 or not fields[3].isdigit():raise RuntimeError("Cannot measure emulator /data free space")
-        available=int(fields[3])*1024;target=28*1024*1024;allocate=available-target
+        # Legacy df and filesystem reservations can differ from the ordinary app's
+        # usable bytes. Budget with the same real syscall/API used by the download guard.
+        available=int(native_baseline[1]);target=28*1024*1024;allocate=available-target
+        report.update(native_baseline_available_bytes=available,native_actor_uid=int(native_uid[1]),diagnostic_df_available_bytes=int(fields[3])*1024)
         if allocate<=0:raise RuntimeError("Disposable emulator already has insufficient free space")
         allocation_attempted=True
         try:run(["shell","fallocate","-l",str(allocate),allocation],"allocate-pressure",180)
@@ -51,7 +57,8 @@ def main():
             run(["shell","dd","if=/dev/zero","of="+allocation,"bs=1048576","count="+str(allocate//(1024*1024))],"allocate-pressure-dd",240)
         text=instrument("low-space")
         measured=re.search(r"INSTRUMENTATION_STATUS: xs_available_bytes=(\d+)",text)
-        if not measured or not 0<int(measured[1])<40*1024*1024:raise RuntimeError("Native measured pressure not proven")
+        measured_uid=re.search(r"INSTRUMENTATION_STATUS: xs_low_space_app_uid=(\d+)",text)
+        if not measured or not 0<int(measured[1])<40*1024*1024 or not measured_uid or int(measured_uid[1])!=int(native_uid[1]):raise RuntimeError("Native measured pressure at the ordinary application UID not proven")
         report.update(status="PASS",native_available_bytes=int(measured[1]),requested_allocation_bytes=allocate)
     finally:
         try:
