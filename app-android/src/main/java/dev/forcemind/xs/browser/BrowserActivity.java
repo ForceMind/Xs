@@ -557,6 +557,31 @@ public final class BrowserActivity extends Activity {
         });
     }
 
+    private void selectCurrentVideo() {
+        final String current=web==null?null:web.getUrl();
+        if(!foreground||!started||BrowserNavigation.classify(current)!=BrowserNavigation.Target.INTERNAL||PostUrls.extractPostId(current)==null){toast(R.string.not_post_detail);return;}
+        final long epoch=pageEpoch;final WebView owner=web;
+        withLocalSpace(()->{
+            if(!foreground||web!=owner||epoch!=pageEpoch||!current.equals(web.getUrl()))return;
+            final String library=XsLocalSpaces.current(this);
+            owner.evaluateJavascript(PostVideoSelection.script(current),raw->{
+                if(!foreground||isFinishing()||web!=owner||epoch!=pageEpoch||!current.equals(web.getUrl()))return;
+                final List<String> candidates;
+                try{candidates=PostVideoSelection.parse(current,raw);}catch(IllegalArgumentException invalid){toast(R.string.video_unavailable);return;}
+                if(candidates.isEmpty()){toast(R.string.video_unavailable);return;}
+                String[] labels=new String[candidates.size()];for(int i=0;i<labels.length;i++)labels[i]=getString(R.string.video_item,i+1);
+                new AlertDialog.Builder(this).setTitle(R.string.download_video).setItems(labels,(list,index)->{
+                    new AlertDialog.Builder(this).setTitle(R.string.download_video).setMessage(R.string.video_permission_notice)
+                        .setNegativeButton(R.string.cancel,null).setPositiveButton(R.string.download,(dialog,which)->{
+                            if(!foreground||web!=owner||epoch!=pageEpoch||!current.equals(web.getUrl()))return;
+                            try{XsMediaRepository.get(this).enqueueVideo(library,current,candidates.get(index));startActivity(XsAssetsActivity.intent(this,library));}
+                            catch(RuntimeException unavailable){toast(R.string.local_save_failed);}
+                        }).show();
+                }).show();
+            });
+        });
+    }
+
     private void showMenu(View anchor) {
         PopupMenu menu = new PopupMenu(this, anchor);
         if (started) {
@@ -579,6 +604,7 @@ public final class BrowserActivity extends Activity {
             menu.getMenu().add(R.string.share_post).setOnMenuItemClickListener(item -> {
                 shareCurrentPost(); return true;
             });
+            menu.getMenu().add(R.string.download_video).setOnMenuItemClickListener(item -> {selectCurrentVideo();return true;});
             menu.getMenu().add(R.string.download_images).setOnMenuItemClickListener(item -> {
                 selectCurrentImages(); return true;
             });

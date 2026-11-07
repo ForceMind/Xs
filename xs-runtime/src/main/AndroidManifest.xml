@@ -6,6 +6,8 @@
             android:exported="false"
             android:label="Xs Local Archive" />
         <activity android:name="dev.forcemind.xs.android.XsAssetsActivity" android:exported="false" android:label="Xs Assets" />
+        <activity android:name="dev.forcemind.xs.android.XsBackupActivity" android:exported="false" android:label="Xs Metadata Backup" />
+        <activity android:name="dev.forcemind.xs.android.XsLibrariesActivity" android:exported="false" android:label="Xs Libraries" />
         <provider android:name="dev.forcemind.xs.android.XsAssetProvider"
             android:authorities="${applicationId}.xs.assets" android:exported="false"
             android:grantUriPermissions="true" />

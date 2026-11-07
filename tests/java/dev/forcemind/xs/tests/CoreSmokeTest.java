@@ -81,11 +81,11 @@ public final class CoreSmokeTest {
         f.dateField = ArchiveSearch.DateField.ACTION;
         q = ArchiveSearch.build("user-2", f);
         yes(q.sql.contains("MAX(a.action_at_ms)"));
-        yes(q.sql.contains("a.action_type='REPOST'"));
+        yes(q.sql.contains("a.action_type=?"));
         f.actionType = "REPOST' OR 1=1 --";
         expectInvalid(() -> ArchiveSearch.build("user-2", f));
         f.actionType = "REPOST";
-        yes(q.sql.contains("user_actions"));
+        yes(q.sql.contains("own_actions"));
         eq("user-2", q.args[0]);
 
         f.fromMs = 5L;
@@ -111,7 +111,7 @@ public final class CoreSmokeTest {
         gate.reset();
         yes(gate.shouldSave("a", "42", "home_for_you", true, 0.8, 1400, now + 500));
 
-        yes(ArchiveSchema.VERSION == 3);
+        yes(ArchiveSchema.VERSION == 4);
         yes(ArchiveSchema.CREATE.length >= 10);
         yes(ArchiveSchema.MIGRATE_1_TO_2.length > 1);
         boolean fts = false, cascade = false;

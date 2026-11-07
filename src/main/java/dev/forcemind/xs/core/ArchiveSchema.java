@@ -1,11 +1,11 @@
 package dev.forcemind.xs.core;
 
 /**
- * App-private SQLite database v3. Legacy namespace keys remain unchanged. FTS4 is supported by the Android SQLite stack.
+ * App-private SQLite database v4. Legacy namespace keys remain unchanged. FTS4 is supported by the Android SQLite stack.
  * China-language substring fallback is provided by ArchiveSearch.
  */
 public final class ArchiveSchema {
-    public static final int VERSION = 3;
+    public static final int VERSION = 4;
 
     public static final String[] CREATE_V2 = {
         "CREATE TABLE IF NOT EXISTS posts (" +
@@ -121,7 +121,35 @@ public final class ArchiveSchema {
         "CREATE INDEX IF NOT EXISTS idx_tags_filter ON post_tags(account_id,tag,post_id)"
     };
 
-    public static final String[] CREATE = concatenate(CREATE_V2, MIGRATE_2_TO_3);
+    /** Preserve pre-v4 data without asserting an unknown actor or current platform state. */
+    public static final String[] MIGRATE_3_TO_4 = {
+        "CREATE TABLE IF NOT EXISTS own_actions (account_id TEXT NOT NULL, action_key TEXT NOT NULL, " +
+            "post_id TEXT NOT NULL, related_post_id TEXT, action_type TEXT NOT NULL CHECK(action_type IN ('ORIGINAL','REPLY','QUOTE','REPOST')), " +
+            "actor_id TEXT, actor_provenance TEXT NOT NULL, source TEXT NOT NULL, action_at_ms INTEGER, " +
+            "observed_at_ms INTEGER, state TEXT NOT NULL CHECK(state IN ('ACTIVE','REVERSED','UNKNOWN')), " +
+            "state_at_ms INTEGER, PRIMARY KEY(account_id,action_key), FOREIGN KEY(account_id,post_id) " +
+            "REFERENCES posts(account_id,post_id) ON DELETE CASCADE)",
+        "CREATE INDEX IF NOT EXISTS idx_own_actions_post ON own_actions(account_id,post_id,action_type,action_at_ms)",
+        "CREATE INDEX IF NOT EXISTS idx_own_actions_actor ON own_actions(account_id,actor_id,state)",
+        "CREATE TABLE IF NOT EXISTS own_action_events (account_id TEXT NOT NULL, action_key TEXT NOT NULL, " +
+            "event_key TEXT NOT NULL, event_type TEXT NOT NULL CHECK(event_type IN " +
+            "('CONFIRMED','REVERSED','ARCHIVE_IMPORTED','LEGACY_RECORDED')), event_at_ms INTEGER, " +
+            "observed_at_ms INTEGER, source TEXT NOT NULL, PRIMARY KEY(account_id,event_key), " +
+            "FOREIGN KEY(account_id,action_key) REFERENCES own_actions(account_id,action_key) ON DELETE CASCADE)",
+        "CREATE INDEX IF NOT EXISTS idx_own_events_action ON own_action_events(account_id,action_key,observed_at_ms)",
+        "INSERT OR IGNORE INTO own_actions(account_id,action_key,post_id,action_type,actor_id,actor_provenance," +
+            "source,action_at_ms,observed_at_ms,state,state_at_ms) SELECT a.account_id,'legacy:'||a.id," +
+            "a.post_id,a.action_type,NULL,CASE WHEN a.source='local_x_archive' THEN 'USER_CONFIRMED_ARCHIVE' " +
+            "ELSE 'LEGACY_UNVERIFIED' END,a.source,a.action_at_ms,NULL,'UNKNOWN',NULL " +
+            "FROM user_actions a JOIN posts p ON p.account_id=a.account_id AND p.post_id=a.post_id " +
+            "WHERE a.action_type IN ('ORIGINAL','REPLY','QUOTE','REPOST')",
+        "INSERT OR IGNORE INTO own_action_events(account_id,action_key,event_key,event_type,event_at_ms," +
+            "observed_at_ms,source) SELECT account_id,action_key,action_key,CASE WHEN source='local_x_archive' " +
+            "THEN 'ARCHIVE_IMPORTED' ELSE 'LEGACY_RECORDED' END,action_at_ms,observed_at_ms,source FROM own_actions"
+    };
+
+    public static final String[] CREATE_V3 = concatenate(CREATE_V2, MIGRATE_2_TO_3);
+    public static final String[] CREATE = concatenate(CREATE_V3, MIGRATE_3_TO_4);
 
     private static String[] concatenate(String[] first, String[] second) {
         String[] joined = new String[first.length + second.length];

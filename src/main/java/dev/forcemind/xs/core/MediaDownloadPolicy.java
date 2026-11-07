@@ -10,17 +10,22 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
- * Narrow public-image download policy. This is not a generic URL downloader:
+ * Narrow public-media download policy. This is not a generic URL downloader:
  * callers must obtain the candidate from the explicitly selected public post.
  * Validation errors deliberately never include the supplied URL.
  */
 public final class MediaDownloadPolicy {
     public static final long MAX_BYTES = 20L * 1024 * 1024;
+    public static final long MAX_VIDEO_BYTES = 100L * 1024 * 1024;
     public static final int MAX_QUEUE = 16;
     public static final int MAX_REDIRECTS = 3;
     private static final Pattern IMAGE_PATH = Pattern.compile(
         "/media/[A-Za-z0-9_-]{1,180}(?:\\.(?:jpg|jpeg|png|webp|gif))?" +
         "(?::(?:orig|large|medium|small|thumb))?");
+    private static final Pattern VIDEO_PATH = Pattern.compile(
+        "(?:/ext_tw_video/[0-9]{1,20}/pu/vid/|/amplify_video/[0-9]{1,20}/vid/)" +
+        "(?:avc1/)?[1-9][0-9]{0,4}x[1-9][0-9]{0,4}/[A-Za-z0-9_-]{1,180}\\.mp4" +
+        "|/tweet_video/[A-Za-z0-9_-]{1,180}\\.mp4");
 
     private MediaDownloadPolicy() {}
 
@@ -60,6 +65,34 @@ public final class MediaDownloadPolicy {
         return uri.toASCIIString();
     }
 
+    /**
+     * Complete, clear MP4 resources only. This allowlist does not prove that a
+     * resource belongs to a post: the native explicit-selection layer does that.
+     * No arbitrary signed query or browser authentication material is accepted.
+     */
+    public static String validateVideo(String postUrl, String mediaUrl) {
+        if (postUrl == null || postUrl.length() > 4096 || PostUrls.extractPostId(postUrl) == null ||
+                mediaUrl == null || mediaUrl.length() > 2048) {
+            throw invalidVideo();
+        }
+        URI post;
+        URI video;
+        try { post = parse(postUrl); video = parse(mediaUrl); }
+        catch (IllegalArgumentException error) { throw invalidVideo(); }
+        if (!"https".equalsIgnoreCase(post.getScheme()) || post.getRawUserInfo() != null ||
+                post.getPort() != -1 || post.getRawFragment() != null ||
+                !"https".equalsIgnoreCase(video.getScheme()) ||
+                !"video.twimg.com".equalsIgnoreCase(video.getHost()) ||
+                video.getRawUserInfo() != null || video.getPort() != -1 ||
+                video.getRawFragment() != null || video.isOpaque() ||
+                video.getRawPath() == null || !VIDEO_PATH.matcher(video.getRawPath()).matches()) {
+            throw invalidVideo();
+        }
+        String query = video.getRawQuery();
+        if (query != null && !query.matches("tag=[0-9]{1,20}")) throw invalidVideo();
+        return video.toASCIIString();
+    }
+
     /** Detect actual image format and require an honest HTTP media type. */
     public static String imageExtension(byte[] prefix, String contentType) {
         String extension = sniff(prefix);
@@ -73,7 +106,12 @@ public final class MediaDownloadPolicy {
 
     /** Unknown length is allowed, but every streamed byte remains bounded. */
     public static boolean completeLength(long declared, long actual) {
-        return actual > 0 && actual <= MAX_BYTES && declared >= -1 &&
+        return completeLength(declared, actual, MAX_BYTES);
+    }
+
+    /** A caller selects the image/video ceiling; no supported ceiling exceeds 100 MiB. */
+    public static boolean completeLength(long declared, long actual, long maximum) {
+        return maximum > 0 && maximum <= MAX_VIDEO_BYTES && actual > 0 && actual <= maximum && declared >= -1 &&
             (declared == -1 || declared == actual);
     }
 
@@ -154,5 +192,9 @@ public final class MediaDownloadPolicy {
 
     private static IllegalArgumentException invalid() {
         return new IllegalArgumentException("Unsupported public image resource");
+    }
+
+    private static IllegalArgumentException invalidVideo() {
+        return new IllegalArgumentException("Unsupported public video resource");
     }
 }

@@ -15,6 +15,8 @@ import dev.forcemind.xs.android.XsLocalSpaces;
 import dev.forcemind.xs.android.XsHistoryActivity;
 import dev.forcemind.xs.core.ArchiveSchema;
 import dev.forcemind.xs.core.ArchiveSearch;
+import dev.forcemind.xs.core.OwnActionSession;
+import dev.forcemind.xs.core.OwnActionSession.Type;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
@@ -97,15 +99,15 @@ public class ArchiveIntegrationTest {
         try (Cursor c = store.search("A", q)) { assertEquals(1, c.getCount()); }
         try (Cursor c = store.search("B", q)) { assertEquals(0, c.getCount()); }
 
-        assertTrue(store.recordPersonalAction("A", url, "REPOST", "demo", "Agent notes",
-            null, null, 200L));
-        assertTrue(store.recordPersonalAction("A", url, "REPOST", "demo", "Agent notes",
-            null, null, 250L));
+        assertFalse(store.recordPersonalAction("A", url, "REPOST", "demo", "unverified",null,null,200L));
+        OwnActionSession nativeOwner=OwnActionSession.forOfflineFixture("A","folders-test");
+        OwnActionSession.Admission confirmed=nativeOwner.confirm(nativeOwner.begin(Type.REPOST,url,"fixture:me"),
+            "fixture:me",url,Type.REPOST,true,null,200L);
+        assertTrue(store.recordConfirmedOwnAction(confirmed,"demo","Agent notes",null));
+        assertFalse(store.recordConfirmedOwnAction(confirmed,"demo","Agent notes",null));
         try (Cursor c = store.getReadableDatabase().rawQuery(
-            "SELECT count(*), MAX(action_at_ms) FROM user_actions WHERE account_id='A'", null)) {
-            assertTrue(c.moveToFirst());
-            assertEquals(1, c.getInt(0));
-            assertTrue(c.isNull(1));
+            "SELECT count(*), MAX(action_at_ms) FROM own_actions WHERE account_id='A'", null)) {
+            assertTrue(c.moveToFirst()); assertEquals(1,c.getInt(0)); assertTrue(c.isNull(1));
         }
         store.clearAccount("A");
         try (Cursor c = store.timeline("A", null, 20)) { assertEquals(0, c.getCount()); }
@@ -169,7 +171,7 @@ public class ArchiveIntegrationTest {
             "{\"tweet\":{\"id_str\":\"402\",\"full_text\":\"reply body\"," +
             "\"in_reply_to_status_id_str\":\"100\"," +
             "\"created_at\":\"Sat Jan 02 03:04:06 +0000 2021\"}}," +
-            "{\"tweet\":{\"id_str\":\"403\",\"full_text\":\"RT @someone: repost\"," +
+            "{\"tweet\":{\"id_str\":\"403\",\"full_text\":\"RT @someone: repost\",\"retweeted_status\":{\"id_str\":\"100\"}," +
             "\"created_at\":\"Sat Jan 02 03:04:07 +0000 2021\"}}]";
         byte[] bytes = json.getBytes(StandardCharsets.UTF_8);
         XsArchiveImporter.Result first = XsArchiveImporter.importJs(
@@ -179,6 +181,15 @@ public class ArchiveIntegrationTest {
         XsArchiveImporter.Result again = XsArchiveImporter.importJs(
             new ByteArrayInputStream(bytes), "A", store, 2000000000001L);
         assertEquals(0, again.inserted);
+        try (Cursor owned=store.getReadableDatabase().rawQuery("SELECT actor_id,actor_provenance,state,action_at_ms,observed_at_ms " +
+                "FROM own_actions WHERE account_id='A' AND post_id='403'",null)) {
+            assertTrue(owned.moveToFirst()); assertTrue(owned.isNull(0));
+            assertEquals("USER_CONFIRMED_ARCHIVE",owned.getString(1)); assertEquals("UNKNOWN",owned.getString(2));
+            assertTrue(owned.isNull(3)); assertEquals(2000000000000L,owned.getLong(4));
+        }
+        try (Cursor events=store.getReadableDatabase().rawQuery("SELECT count(*) FROM own_action_events WHERE account_id='A'",null)) {
+            assertTrue(events.moveToFirst()); assertEquals(3,events.getInt(0));
+        }
 
         try (Cursor views = store.timeline("A", null, 50, "OPEN_POST")) {
             assertEquals(0, views.getCount());
@@ -192,6 +203,7 @@ public class ArchiveIntegrationTest {
             assertTrue(posts.isNull(8)); // unknown repost action time stays unknown
             assertEquals(0, posts.getInt(7));
         }
+        try(Cursor repost=store.ownActions("A","403")) { assertTrue(repost.moveToFirst()); assertEquals("100",repost.getString(14)); }
         q.actionType = "REPLY";
         try (Cursor posts = store.search("A", q)) {
             assertTrue(posts.moveToFirst());
@@ -396,4 +408,91 @@ public class ArchiveIntegrationTest {
         InstrumentationRegistry.getInstrumentation().runOnMainSync(opened::finish);
         InstrumentationRegistry.getInstrumentation().waitForIdleSync();
     }
+    @Test public void confirmedNativeFixtureRepostAndReversalKeepIndependentData() {
+        String url="https://x.com/other/status/900";
+        OwnActionSession live=OwnActionSession.liveDisabled("local:own","live");
+        assertNull(live.begin(Type.REPOST,url,"fixture:me"));
+        OwnActionSession owner=OwnActionSession.forOfflineFixture("local:own","native-fixture");
+        assertTrue(store.favorite("local:own",url,"other","retained favorite",null,100));
+        assertTrue(store.recordObservedOpen("local:own",url,"other","retained favorite",null,101,"nav:own"));
+        try(Cursor none=store.getReadableDatabase().rawQuery("SELECT count(*) FROM own_actions WHERE account_id='local:own'",null)) { assertTrue(none.moveToFirst()); assertEquals(0,none.getInt(0)); }
+        assertNull(owner.confirm(owner.begin(Type.REPOST,url,"fixture:me"),"fixture:other",url,Type.REPOST,true,null,200));
+        assertNull(owner.confirm(owner.begin(Type.REPOST,url,"fixture:me"),"fixture:me",url,Type.REPOST,false,null,200));
+        OwnActionSession.Admission confirmed=owner.confirm(owner.begin(Type.REPOST,url,"fixture:me"),"fixture:me",url,Type.REPOST,true,200L,201);
+        assertTrue(store.recordConfirmedOwnAction(confirmed,"other","retained favorite",null));
+        assertFalse(store.recordConfirmedOwnAction(confirmed,"other","retained favorite",null));
+        OwnActionSession.Admission repeated=owner.confirm(owner.begin(Type.REPOST,url,"fixture:me"),"fixture:me",url,Type.REPOST,true,200L,202);
+        assertFalse(store.recordConfirmedOwnAction(repeated,"other","retained favorite",null));
+        OwnActionSession.Admission stale=owner.confirm(owner.beginReversal(confirmed),"fixture:me",url,Type.REPOST,true,190L,210);
+        assertFalse(store.recordConfirmedOwnAction(stale,null,null,null));
+        OwnActionSession.Admission reversed=owner.confirm(owner.beginReversal(confirmed),"fixture:me",url,Type.REPOST,true,null,300);
+        assertTrue(store.recordConfirmedOwnAction(reversed,null,null,null));
+        assertFalse(store.recordConfirmedOwnAction(reversed,null,null,null));
+        ArchiveSearch.Filter query=new ArchiveSearch.Filter(); query.ownOnly=true; query.actionState="REVERSED"; query.actorId="fixture:me";
+        try (Cursor rows=store.search("local:own",query)) { assertTrue(rows.moveToFirst()); assertEquals("900",rows.getString(1)); assertEquals(1,rows.getInt(7)); assertFalse(rows.isNull(10)); }
+        try (Cursor events=store.ownActions("local:own","900")) {
+            assertEquals(2,events.getCount()); assertTrue(events.moveToFirst());
+            assertEquals("REVERSED",events.getString(8)); assertEquals("REVERSED",events.getString(10)); assertTrue(events.isNull(11));
+            assertEquals(200L,events.getLong(6)); assertTrue(events.isNull(9)); assertEquals("fixture:me",events.getString(3));
+        }
+        store.clearHistory("local:own");
+        try (Cursor rows=store.search("local:own",query)) { assertTrue(rows.moveToFirst()); assertEquals(0,rows.getInt(7)); assertFalse(rows.isNull(10)); }
+        try (Cursor other=store.search("local:other",query)) { assertEquals(0,other.getCount()); }
+        OwnActionSession.Admission queued=owner.confirm(owner.begin(Type.REPLY,url,"fixture:me"),"fixture:me","https://x.com/i/status/901",Type.REPLY,true,400L,400);
+        owner.invalidate(); assertFalse(store.recordConfirmedOwnAction(queued,"me","late",400L));
+    }
+
+    @Test public void nativeCreationStoresNewPostAndRelatedParentWithoutSyntheticOpens() {
+        OwnActionSession owner=OwnActionSession.forOfflineFixture("local:own","creation");
+        String parent="https://x.com/other/status/900";
+        for (Type type:new Type[]{Type.ORIGINAL,Type.REPLY,Type.QUOTE}) {
+            String result="https://x.com/me/status/"+(910+type.ordinal());
+            OwnActionSession.Admission confirmed=owner.confirm(owner.begin(type,type == Type.ORIGINAL ? null : parent,"fixture:me"),"fixture:me",result,type,true,null,500);
+            assertTrue(store.recordConfirmedOwnAction(confirmed,"me","created " + type,null));
+            try (Cursor c=store.ownActions("local:own",confirmed.postId)) {
+                assertTrue(c.moveToFirst()); assertEquals(type.name(),c.getString(2)); assertTrue(c.isNull(6));
+                if (type == Type.ORIGINAL) assertTrue(c.isNull(14)); else assertEquals("900",c.getString(14));
+            }
+        }
+        try (Cursor visits=store.timeline("local:own",null,20)) { assertEquals(0,visits.getCount()); }
+        ArchiveSearch.Filter query=new ArchiveSearch.Filter(); query.ownOnly=true;
+        try (Cursor rows=store.search("local:own",query)) { assertEquals(3,rows.getCount()); }
+        query.actionType="QUOTE";
+        try (Cursor rows=store.search("local:own",query)) { assertEquals(1,rows.getCount()); assertTrue(rows.moveToFirst()); assertEquals("912",rows.getString(1)); }
+    }
+
+    @Test public void databaseV3MigrationPreservesActionsWithoutInventingActorOrObservationTime() {
+        store.close(); store=null; app.deleteDatabase(NAME);
+        SQLiteDatabase old=app.openOrCreateDatabase(NAME,Context.MODE_PRIVATE,null);
+        for(String ddl:ArchiveSchema.CREATE_V3) old.execSQL(ddl);
+        old.execSQL("INSERT INTO posts(account_id,post_id,body,first_seen_at_ms,last_seen_at_ms) VALUES ('A','75','legacy searchable',1,999)");
+        old.execSQL("INSERT INTO user_actions(account_id,post_id,action_type,action_at_ms,source) VALUES ('A','75','REPOST',NULL,'verified_self_activity')");
+        old.execSQL("INSERT INTO user_actions(account_id,post_id,action_type,action_at_ms,source) VALUES ('A','75','QUOTE',500,'local_x_archive')");
+        old.execSQL("INSERT INTO favorites(account_id,post_id,favorited_at_ms,note) VALUES ('A','75',600,'retained note')");
+        old.setVersion(3); old.close(); store=new XsArchiveDatabase(app);
+        try (Cursor c=store.getReadableDatabase().rawQuery("SELECT actor_id,actor_provenance,state,action_at_ms,observed_at_ms FROM own_actions ORDER BY action_type",null)) {
+            assertTrue(c.moveToFirst()); assertTrue(c.isNull(0)); assertEquals("USER_CONFIRMED_ARCHIVE",c.getString(1));
+            assertEquals("UNKNOWN",c.getString(2)); assertEquals(500,c.getLong(3)); assertTrue(c.isNull(4));
+            assertTrue(c.moveToNext()); assertEquals("LEGACY_UNVERIFIED",c.getString(1)); assertTrue(c.isNull(3)); assertTrue(c.isNull(4));
+        }
+        ArchiveSearch.Filter query=new ArchiveSearch.Filter(); query.keyword="searchable"; query.ownOnly=true; query.favoriteOnly=true;
+        try(Cursor rows=store.search("A",query)) { assertTrue(rows.moveToFirst()); assertEquals("75",rows.getString(1)); assertEquals("retained note",rows.getString(11)); }
+        try(Cursor fk=store.getReadableDatabase().rawQuery("PRAGMA foreign_key_check",null)) { assertEquals(0,fk.getCount()); }
+    }
+
+    @Test public void ambiguousRetweetTextRetainsSnapshotWithoutInventingRepostAndImportsParents() throws Exception {
+        String json="[{\"tweet\":{\"id_str\":\"930\",\"full_text\":\"RT @author: manually quoted text\",\"created_at\":\"Sat Jan 02 03:04:05 +0000 2021\"}}," +
+            "{\"tweet\":{\"id_str\":\"931\",\"full_text\":\"real quote\",\"quoted_status_id_str\":\"100\",\"created_at\":\"Sat Jan 02 03:04:05 +0000 2021\"}}," +
+            "{\"tweet\":{\"id_str\":\"932\",\"full_text\":\"real reply\",\"in_reply_to_status_id_str\":\"101\",\"created_at\":\"Sat Jan 02 03:04:05 +0000 2021\"}}]";
+        XsArchiveImporter.Result result=XsArchiveImporter.importJs(new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)),"local:import",store,2000000000000L);
+        assertEquals(3,result.parsed); assertEquals(2,result.inserted);
+        ArchiveSearch.Filter query=new ArchiveSearch.Filter(); query.keyword="manually";
+        try(Cursor found=store.search("local:import",query)) { assertEquals(1,found.getCount()); assertTrue(found.moveToFirst()); assertTrue(found.isNull(4)); assertTrue(found.isNull(14)); }
+        query.keyword=null; query.ownOnly=true;
+        try(Cursor found=store.search("local:import",query)) { assertEquals(2,found.getCount()); }
+        try(Cursor quote=store.ownActions("local:import","931")) { assertTrue(quote.moveToFirst()); assertEquals("QUOTE",quote.getString(2)); assertEquals("100",quote.getString(14)); assertTrue(quote.isNull(3)); }
+        try(Cursor reply=store.ownActions("local:import","932")) { assertTrue(reply.moveToFirst()); assertEquals("REPLY",reply.getString(2)); assertEquals("101",reply.getString(14)); }
+        try(Cursor views=store.timeline("local:import",null,20)) { assertEquals(0,views.getCount()); }
+    }
+
 }

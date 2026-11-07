@@ -20,6 +20,9 @@ public final class SchemaDump {
             System.out.println("V3:" + Base64.getEncoder().encodeToString(
                 migration.getBytes(StandardCharsets.UTF_8)));
         }
+        for (String migration : ArchiveSchema.MIGRATE_3_TO_4) {
+            System.out.println("V4:" + Base64.getEncoder().encodeToString(migration.getBytes(StandardCharsets.UTF_8)));
+        }
         for (String migration : ArchiveSchema.MIGRATE_1_TO_2) {
             System.out.println("MIGRATE:" + Base64.getEncoder().encodeToString(
                 migration.getBytes(StandardCharsets.UTF_8)));
@@ -51,6 +54,10 @@ public final class SchemaDump {
         f.dateField=ArchiveSearch.DateField.PUBLISHED; f.fromMs=100L; f.toMs=200L;
         f.minDwellMs=3000L; f.sortByDwell=true;
         dumpQuery("PUBLISHED",ArchiveSearch.build("local:dates",f));
+        f=new ArchiveSearch.Filter(); f.ownOnly=true; f.actionType="REPOST";
+        f.actorId="fixture:me"; f.actionState="REVERSED"; f.actionSource="native_fixture";
+        f.dateField=ArchiveSearch.DateField.ACTION; f.fromMs=100L; f.toMs=200L;
+        dumpQuery("OWN",ArchiveSearch.build("local:own",f));
     }    private static void dumpQuery(String name,ArchiveSearch.Query query) {
         System.out.println(name+"_QUERY:"+Base64.getEncoder().encodeToString(query.sql.getBytes(StandardCharsets.UTF_8)));
         for(String arg:query.args) System.out.println(name+"_ARG:"+Base64.getEncoder().encodeToString(arg.getBytes(StandardCharsets.UTF_8)));

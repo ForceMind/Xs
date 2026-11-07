@@ -26,9 +26,9 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-/** User-requested image downloads. Files live in files/, never WebView cache.
+/** User-requested image and standard MP4 downloads. Files live in files/, never WebView cache.
  * Work is foreground/process scoped; interrupted tasks require explicit restart.
- * No cookies, authorization headers, arbitrary URL fetching or video claims.
+ * No cookies, authorization headers, arbitrary URL fetching, manifests or DRM access.
  */
 public final class XsMediaRepository extends SQLiteOpenHelper {
     private static XsMediaRepository instance;
@@ -50,7 +50,7 @@ public final class XsMediaRepository extends SQLiteOpenHelper {
 
     /** Instance-only transport seam for same-package synthetic tests; URL policy is unchanged. */
     XsMediaRepository(Context context, ConnectionFactory connections) {
-        super(context, "xs-media.db", null, 1);
+        super(context, "xs-media.db", null, 2);
         if(connections==null)throw new IllegalArgumentException("Connection factory required");
         this.connections=connections;
         savedDir = new File(context.getFilesDir(), "xs-saved-media");
@@ -78,22 +78,37 @@ public final class XsMediaRepository extends SQLiteOpenHelper {
         db.execSQL("CREATE TABLE assets (id TEXT PRIMARY KEY, library_id TEXT NOT NULL, post_url TEXT NOT NULL, media_url TEXT, state TEXT NOT NULL, bytes INTEGER NOT NULL DEFAULT 0, total INTEGER NOT NULL DEFAULT -1, mime TEXT, filename TEXT, sha256 TEXT, created_ms INTEGER NOT NULL, error TEXT, category TEXT NOT NULL DEFAULT '')");
         db.execSQL("CREATE INDEX asset_library_time ON assets(library_id,created_ms DESC)");
         db.execSQL("CREATE TABLE leases (token TEXT PRIMARY KEY, filename TEXT NOT NULL, mime TEXT NOT NULL, bytes INTEGER NOT NULL, expires_ms INTEGER NOT NULL)");
+        migrateVideo(db);
     }
     @Override public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        if(oldVersion==1&&newVersion==2){migrateVideo(db);return;}
         throw new IllegalStateException("Media migration required");
     }
 
+    private static void migrateVideo(SQLiteDatabase db) {
+        db.execSQL("ALTER TABLE assets ADD COLUMN media_kind TEXT NOT NULL DEFAULT 'IMAGE'");
+        db.execSQL("ALTER TABLE assets ADD COLUMN duration_ms INTEGER");
+        db.execSQL("ALTER TABLE assets ADD COLUMN width INTEGER");
+        db.execSQL("ALTER TABLE assets ADD COLUMN height INTEGER");
+        db.execSQL("ALTER TABLE assets ADD COLUMN video_tracks INTEGER");
+        db.execSQL("ALTER TABLE assets ADD COLUMN audio_tracks INTEGER");
+        db.execSQL("ALTER TABLE assets ADD COLUMN rotation_degrees INTEGER");
+    }
+
     public static final class Asset {
-        public final String id, libraryId, postUrl, state, mime, filename, error, category;
-        public final long bytes, total, createdMs;
+        public final String id, libraryId, postUrl, state, mime, filename, error, category,mediaKind;
+        public final long bytes, total, createdMs,durationMs;
+        public final int width,height,videoTracks,audioTracks,rotationDegrees;
         Asset(Cursor c) {
             id=c.getString(0); libraryId=c.getString(1); postUrl=c.getString(2); state=c.getString(3);
             mime=c.getString(4); filename=c.getString(5); bytes=c.getLong(6); total=c.getLong(7);
-            createdMs=c.getLong(8); error=c.getString(9); category=c.getString(10);
+            createdMs=c.getLong(8); error=c.getString(9); category=c.getString(10);mediaKind=c.getString(11);
+            durationMs=c.isNull(12)?0:c.getLong(12);width=c.isNull(13)?0:c.getInt(13);height=c.isNull(14)?0:c.getInt(14);
+            videoTracks=c.isNull(15)?0:c.getInt(15);audioTracks=c.isNull(16)?0:c.getInt(16);rotationDegrees=c.isNull(17)?0:c.getInt(17);
         }
     }
 
-    private static final String COLUMNS = "id,library_id,post_url,state,mime,filename,bytes,total,created_ms,error,category";
+    private static final String COLUMNS = "id,library_id,post_url,state,mime,filename,bytes,total,created_ms,error,category,media_kind,duration_ms,width,height,video_tracks,audio_tracks,rotation_degrees";
     public List<Asset> list(String libraryId) {
         requireLibrary(libraryId);
         List<Asset> result = new ArrayList<>();
@@ -111,9 +126,17 @@ public final class XsMediaRepository extends SQLiteOpenHelper {
 
     /** Only call after an explicit native selection of this post's image candidate. */
     public String enqueueImage(String libraryId, String postUrl, String mediaUrl) {
+        return enqueue(libraryId,postUrl,mediaUrl,false);
+    }
+    /** Requires current-post selection and explicit confirmation that saving is permitted. */
+    public String enqueueVideo(String libraryId,String postUrl,String mediaUrl) {
+        return enqueue(libraryId,postUrl,mediaUrl,true);
+    }
+    private String enqueue(String libraryId,String postUrl,String mediaUrl,boolean video) {
         requireLibrary(libraryId);
-        final String safeUrl = MediaDownloadPolicy.validateImage(postUrl, mediaUrl);
-        if(savedDir.getUsableSpace()<MediaDownloadPolicy.MAX_BYTES*2) throw new IllegalStateException("Insufficient free space");
+        final String safeUrl=validateUrl(postUrl,mediaUrl,video);
+        final long maxBytes=video?MediaDownloadPolicy.MAX_VIDEO_BYTES:MediaDownloadPolicy.MAX_BYTES;
+        if(savedDir.getUsableSpace()<maxBytes*2) throw new IllegalStateException("Insufficient free space");
         final String id=UUID.randomUUID().toString();
         XsLibraryWrites.Ticket ticket=XsLibraryWrites.ticket(libraryId);
         boolean queued=XsLibraryWrites.submit(ticket,()->{
@@ -124,11 +147,11 @@ public final class XsMediaRepository extends SQLiteOpenHelper {
                 }
                 ContentValues v=new ContentValues();
                 v.put("id",id); v.put("library_id",libraryId); v.put("post_url",PostUrls.canonicalLink(postUrl));
-                v.put("state",full?"FAILED":"QUEUED"); v.put("created_ms",System.currentTimeMillis());
-                if(full)v.put("error","Download queue full; select the image again later");
+                v.put("state",full?"FAILED":"QUEUED"); v.put("created_ms",System.currentTimeMillis());v.put("media_kind",video?"VIDEO":"IMAGE");
+                if(full)v.put("error","Download queue full; select the media again later");
                 getWritableDatabase().insertOrThrow("assets",null,v);
                 if(full)return;
-                try { worker.execute(() -> download(id, libraryId, postUrl, safeUrl, ticket)); }
+                try { worker.execute(() -> download(id, libraryId, postUrl, safeUrl, ticket,video)); }
                 catch (RuntimeException rejected) { fail(libraryId,id,"Download queue full"); }
             }
         });
@@ -139,9 +162,15 @@ public final class XsMediaRepository extends SQLiteOpenHelper {
     /** Retry is a new request using a newly confirmed candidate; signed URLs are not retained on disk. */
     public void retryImage(String libraryId, String id, String confirmedMediaUrl) {
         Asset asset=find(libraryId,id);
-        if(asset==null || !("FAILED".equals(asset.state)||"CANCELED".equals(asset.state))) throw new IllegalArgumentException("Select a failed task");
+        if(asset==null || !"IMAGE".equals(asset.mediaKind) || !("FAILED".equals(asset.state)||"CANCELED".equals(asset.state))) throw new IllegalArgumentException("Select a failed task");
         enqueueImage(libraryId,asset.postUrl,confirmedMediaUrl);
         delete(libraryId,id);
+    }
+
+    public void retryVideo(String libraryId,String id,String confirmedMediaUrl) {
+        Asset asset=find(libraryId,id);
+        if(asset==null||!"VIDEO".equals(asset.mediaKind)||!("FAILED".equals(asset.state)||"CANCELED".equals(asset.state)))throw new IllegalArgumentException("Select a failed video task");
+        enqueueVideo(libraryId,asset.postUrl,confirmedMediaUrl);delete(libraryId,id);
     }
 
     public void cancel(String libraryId, String id) {
@@ -195,32 +224,36 @@ public final class XsMediaRepository extends SQLiteOpenHelper {
     private synchronized boolean active(String id) {
         try(Cursor c=getReadableDatabase().rawQuery("SELECT 1 FROM assets WHERE id=? AND state IN ('QUEUED','DOWNLOADING')",new String[]{id})) {return c.moveToFirst();}
     }
-    private void download(String id,String libraryId,String postUrl,String mediaUrl,XsLibraryWrites.Ticket ticket) {
+    private static String validateUrl(String postUrl,String mediaUrl,boolean video) {
+        return video?MediaDownloadPolicy.validateVideo(postUrl,mediaUrl):MediaDownloadPolicy.validateImage(postUrl,mediaUrl);
+    }
+    private void download(String id,String libraryId,String postUrl,String mediaUrl,XsLibraryWrites.Ticket ticket,boolean video) {
         File part=new File(savedDir,id+".part"); HttpURLConnection connection=null; boolean completionQueued=false;
-        final long deadline=android.os.SystemClock.elapsedRealtime()+120000;
+        final long maxBytes=video?MediaDownloadPolicy.MAX_VIDEO_BYTES:MediaDownloadPolicy.MAX_BYTES;
+        final long deadline=android.os.SystemClock.elapsedRealtime()+(video?300000:120000);
         try {
-            if(!active(id)||!XsLibraryWrites.isCurrent(ticket)){fail(libraryId,id,"Observation context changed; select image again to restart");return;}
+            if(!active(id)||!XsLibraryWrites.isCurrent(ticket)){fail(libraryId,id,"Observation context changed; select media again to restart");return;}
             String current=mediaUrl;
             for(int redirects=0;;redirects++) {
                 if(android.os.SystemClock.elapsedRealtime()>deadline||!XsLibraryWrites.isCurrent(ticket))throw new IOException("Download context expired");
-                MediaDownloadPolicy.validateImage(postUrl,current);
+                validateUrl(postUrl,current,video);
                 connection=connections.open(new URL(current));
                 connection.setInstanceFollowRedirects(false); connection.setConnectTimeout(15000);connection.setReadTimeout(15000);
-                connection.setRequestProperty("Accept","image/jpeg,image/png,image/webp,image/gif");
+                connection.setRequestProperty("Accept",video?"video/mp4":"image/jpeg,image/png,image/webp,image/gif");
                 int status=connection.getResponseCode();
                 if(status>=300&&status<400) {
                     if(redirects>=MediaDownloadPolicy.MAX_REDIRECTS)throw new IOException("Too many redirects");
                     String location=connection.getHeaderField("Location");
                     if(location==null)throw new IOException("Invalid redirect");
                     String resolved=new URL(new URL(current),location).toExternalForm();
-                    MediaDownloadPolicy.validateImage(postUrl,resolved);
+                    validateUrl(postUrl,resolved,video);
                     connection.disconnect();connection=null;current=resolved;continue;
                 }
-                if(status!=200)throw new IOException("Server did not provide an image");
+                if(status!=200)throw new IOException("Server did not provide media");
                 break;
             }
             long declared=connection.getContentLengthLong();
-            if(declared==0||declared>MediaDownloadPolicy.MAX_BYTES)throw new IOException("Image size is not allowed");
+            if(declared==0||declared>maxBytes)throw new IOException("Media size is not allowed");
             String encoding=connection.getContentEncoding();
             if(encoding!=null&&!"identity".equalsIgnoreCase(encoding))throw new IOException("Encoded response is unsupported");
             XsLibraryWrites.submit(ticket,()->{
@@ -234,17 +267,25 @@ public final class XsMediaRepository extends SQLiteOpenHelper {
                 byte[] buffer=new byte[16384];int n;
                 while((n=input.read(buffer))!=-1) {
                     if(!active(id)||!XsLibraryWrites.isCurrent(ticket)||android.os.SystemClock.elapsedRealtime()>deadline)throw new IOException("Canceled or expired");
-                    bytes+=n;if(bytes>MediaDownloadPolicy.MAX_BYTES||savedDir.getUsableSpace()<1048576)throw new IOException("Image exceeds available storage");
+                    bytes+=n;if(bytes>maxBytes||savedDir.getUsableSpace()<1048576)throw new IOException("Media exceeds available storage");
                     int copy=Math.min(n,prefix.length-prefixLength);if(copy>0){System.arraycopy(buffer,0,prefix,prefixLength,copy);prefixLength+=copy;}
                     output.write(buffer,0,n);digest.update(buffer,0,n);
                     if(bytes-lastProgress>=262144){progress(ticket,libraryId,id,bytes);lastProgress=bytes;}
                 }
                 output.getFD().sync();
             }
-            if(!MediaDownloadPolicy.completeLength(declared,bytes))throw new IOException("Incomplete image");
-            String extension=MediaDownloadPolicy.imageExtension(prefix,connection.getContentType());
-            if(!MediaDownloadPolicy.hasCompleteEnvelope(part,extension))throw new IOException("Incomplete image file");
-            validateBitmap(part);
+            if(!MediaDownloadPolicy.completeLength(declared,bytes,maxBytes))throw new IOException("Incomplete media");
+            final VideoFileValidator.Info videoInfo;
+            final String extension;
+            if(video) {
+                String type=connection.getContentType();
+                if(type==null||!type.split(";",2)[0].trim().equalsIgnoreCase("video/mp4"))throw new IOException("Unsupported video response");
+                videoInfo=VideoFileValidator.validate(part);extension="mp4";
+            } else {
+                videoInfo=null;extension=MediaDownloadPolicy.imageExtension(prefix,connection.getContentType());
+                if(!MediaDownloadPolicy.hasCompleteEnvelope(part,extension))throw new IOException("Incomplete image file");
+                validateBitmap(part);
+            }
             String hash=hex(digest.digest());String filename=id+"."+extension; File completed=new File(savedDir,filename);
             final long completedBytes=bytes;
             completionQueued=XsLibraryWrites.submit(ticket,()->{
@@ -252,15 +293,16 @@ public final class XsMediaRepository extends SQLiteOpenHelper {
                     try {
                         // Same serial barrier as library erasure, checked at actual write time.
                         if(!active(id))return;
-                        if(!part.renameTo(completed))throw new IOException("Could not finalize image");
+                        if(!part.renameTo(completed))throw new IOException("Could not finalize media");
                         ContentValues v=new ContentValues();v.put("state","COMPLETED");v.put("bytes",completedBytes);v.put("total",completedBytes);
-                        v.put("filename",filename);v.put("mime",mime(extension));v.put("sha256",hash);v.putNull("media_url");v.putNull("error");
+                        v.put("filename",filename);v.put("mime",video?"video/mp4":mime(extension));v.put("sha256",hash);
+                        if(videoInfo!=null) {v.put("duration_ms",videoInfo.durationMs);v.put("width",videoInfo.width);v.put("height",videoInfo.height);v.put("video_tracks",videoInfo.videoTracks);v.put("audio_tracks",videoInfo.audioTracks);v.put("rotation_degrees",videoInfo.rotationDegrees);}v.putNull("media_url");v.putNull("error");
                         getWritableDatabase().update("assets",v,"id=? AND library_id=?",new String[]{id,libraryId});
-                    } catch(Exception failure) {completed.delete();fail(libraryId,id,"Could not finalize image");}
+                    } catch(Exception failure) {completed.delete();fail(libraryId,id,"Could not finalize media");}
                     finally {part.delete();}
                 }
-            },()->{part.delete();fail(libraryId,id,"Context changed before completion; select image again to restart");});
-            if(!completionQueued)fail(libraryId,id,"Write queue unavailable; restart image download");
+            },()->{part.delete();fail(libraryId,id,"Context changed before completion; select media again to restart");});
+            if(!completionQueued)fail(libraryId,id,"Write queue unavailable; restart media download");
         } catch(Exception failure) {fail(libraryId,id,safeFailure(failure));}
         finally {if(connection!=null)connection.disconnect();if(!completionQueued)part.delete();}
     }
@@ -287,7 +329,7 @@ public final class XsMediaRepository extends SQLiteOpenHelper {
             }
         });
     }
-    private static String safeFailure(Exception error){return error instanceof IllegalArgumentException?"Unsupported image response":"Download interrupted or invalid image; select the image to retry from the start";}
+    private static String safeFailure(Exception error){return error instanceof IllegalArgumentException?"Unsupported media response":"Download interrupted or invalid media; select the media to retry from the start";}
     private static String hex(byte[] value){StringBuilder s=new StringBuilder();for(byte b:value)s.append(String.format(java.util.Locale.ROOT,"%02x",b&255));return s.toString();}
     private static String mime(String ext){return "jpg".equals(ext)?"image/jpeg":"image/"+ext;}
     private static File[] files(File dir){File[] files=dir.listFiles();return files==null?new File[0]:files;}
@@ -315,7 +357,7 @@ public final class XsMediaRepository extends SQLiteOpenHelper {
         new File(shareDir,lease.token).delete();
     }
     public synchronized Lease resolveLease(String token,String filename) {
-        if(token==null||!token.matches("[0-9a-f-]{36}")||filename==null||!filename.matches("[0-9a-f-]{36}\\.(jpg|png|gif|webp)"))throw new IllegalArgumentException("Invalid file grant");
+        if(token==null||!token.matches("[0-9a-f-]{36}")||filename==null||!filename.matches("[0-9a-f-]{36}\\.(jpg|png|gif|webp|mp4)"))throw new IllegalArgumentException("Invalid file grant");
         try(Cursor c=getReadableDatabase().rawQuery("SELECT mime,bytes FROM leases WHERE token=? AND filename=? AND expires_ms>?",new String[]{token,filename,Long.toString(System.currentTimeMillis())})){
             if(!c.moveToFirst())throw new IllegalArgumentException("File grant expired");
             File f=new File(shareDir,token);if(!f.isFile()||f.length()!=c.getLong(1))throw new IllegalArgumentException("Share file unavailable");

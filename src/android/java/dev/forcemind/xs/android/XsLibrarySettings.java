@@ -40,4 +40,11 @@ public final class XsLibrarySettings {
         }
         prefs(context).edit().putLong("dwell_threshold_ms", value).apply();
     }
+    public static boolean isAdCleanupEnabled(Context context) { return prefs(context).getBoolean("cleanup_ads", false); }
+    public static boolean isSubscriptionCleanupEnabled(Context context) { return prefs(context).getBoolean("cleanup_subscription", false); }
+    public static boolean isRecommendationCleanupEnabled(Context context) { return prefs(context).getBoolean("cleanup_recommendations", false); }
+    public static void setAdCleanupEnabled(Context context, boolean enabled) { prefs(context).edit().putBoolean("cleanup_ads", enabled).apply(); }
+    public static void setSubscriptionCleanupEnabled(Context context, boolean enabled) { prefs(context).edit().putBoolean("cleanup_subscription", enabled).apply(); }
+    public static void setRecommendationCleanupEnabled(Context context, boolean enabled) { prefs(context).edit().putBoolean("cleanup_recommendations", enabled).apply(); }
+
 }

@@ -17,6 +17,10 @@ public final class ArchiveSearch {
         public String keyword;
         public String categoryId;
         public String actionType;
+        public boolean ownOnly = false;
+        public String actionState;
+        public String actorId;
+        public String actionSource;
         public Long fromMs;
         public Long toMs;
         public DateField dateField = DateField.LAST_SEEN;
@@ -50,6 +54,8 @@ public final class ArchiveSearch {
                "BOOKMARK".equals(type) || "LOCAL_SAVE".equals(type);
     }
 
+    private static boolean has(String value) { return value != null && !value.isEmpty(); }
+
     public static Query build(String accountId, Filter filter) {
         if (accountId == null || accountId.trim().isEmpty()) {
             throw new IllegalArgumentException("account ID required");
@@ -66,6 +72,13 @@ public final class ArchiveSearch {
             throw new IllegalArgumentException("Unsupported personal action type");
         }
 
+        if (filter.actionState != null && !filter.actionState.isEmpty() &&
+                !"ACTIVE".equals(filter.actionState) && !"REVERSED".equals(filter.actionState) &&
+                !"UNKNOWN".equals(filter.actionState)) throw new IllegalArgumentException("Unsupported action state");
+        if ((filter.actorId != null && filter.actorId.length() > 128) ||
+                (filter.actionSource != null && filter.actionSource.length() > 256)) {
+            throw new IllegalArgumentException("Action filter too long");
+        }
         if (filter.minDwellMs != null && filter.minDwellMs < 0) {
             throw new IllegalArgumentException("Negative dwell duration");
         }
@@ -112,6 +125,23 @@ public final class ArchiveSearch {
             args.add(Long.toString(filter.toMs));
         }
         matchedFeed.append(" GROUP BY e.account_id,e.post_id");
+        boolean ownType="ORIGINAL".equals(filter.actionType) || "REPLY".equals(filter.actionType) ||
+            "QUOTE".equals(filter.actionType) || "REPOST".equals(filter.actionType);
+        boolean legacyType="BOOKMARK".equals(filter.actionType) || "LOCAL_SAVE".equals(filter.actionType);
+        boolean ownRequired=filter.ownOnly || ownType || has(filter.actionState) || has(filter.actorId) || has(filter.actionSource);
+        StringBuilder matchedAction=new StringBuilder("SELECT a.account_id,a.post_id,MAX(a.action_at_ms) AS action_time," +
+            "GROUP_CONCAT(a.action_type||' / '||a.state||' / '||COALESCE(a.actor_id,'?')||' / '||a.actor_provenance, '; ') " +
+            "AS action_summary FROM own_actions a WHERE a.account_id=?");
+        args.add(accountId);
+        if (ownType) { matchedAction.append(" AND a.action_type=?"); args.add(filter.actionType); }
+        if (has(filter.actionState)) { matchedAction.append(" AND a.state=?"); args.add(filter.actionState); }
+        if (has(filter.actorId)) { matchedAction.append(" AND a.actor_id=?"); args.add(filter.actorId); }
+        if (has(filter.actionSource)) { matchedAction.append(" AND a.source=?"); args.add(filter.actionSource); }
+        if (filter.dateField == DateField.ACTION && !legacyType) {
+            if (filter.fromMs != null) { matchedAction.append(" AND a.action_at_ms>=CAST(? AS INTEGER)"); args.add(Long.toString(filter.fromMs)); }
+            if (filter.toMs != null) { matchedAction.append(" AND a.action_at_ms<=CAST(? AS INTEGER)"); args.add(Long.toString(filter.toMs)); }
+        }
+        matchedAction.append(" GROUP BY a.account_id,a.post_id");
         String dwellColumn = "matched_feed.max_dwell_ms";
         String favoriteTime = "(SELECT f.favorited_at_ms FROM favorites f WHERE " +
             "f.account_id=p.account_id AND f.post_id=p.post_id)";
@@ -122,13 +152,19 @@ public final class ArchiveSearch {
             case PUBLISHED: dateColumn = "p.published_at_ms"; break;
             case FAVORITED: dateColumn = favoriteTime; break;
             case ACTION:
-                // A strict allowlist ensures an action type cannot inject SQL.
-                String onlyAction = filter.actionType == null ||
-                    filter.actionType.isEmpty() ? "" :
-                    " AND a.action_type='" + filter.actionType + "'";
-                dateColumn = "(SELECT MAX(a.action_at_ms) FROM user_actions a " +
-                    "WHERE a.account_id=p.account_id AND a.post_id=p.post_id" +
-                    onlyAction + ")";
+                if (legacyType) {
+                    dateColumn = "(SELECT MAX(a.action_at_ms) FROM user_actions a " +
+                        "WHERE a.account_id=p.account_id AND a.post_id=p.post_id AND a.action_type='" +
+                        filter.actionType + "')";
+                } else if (ownRequired) dateColumn="matched_action.action_time";
+                else {
+                    // Preserve manual-link/bookmark date searches alongside the own-action index.
+                    String localTime="(SELECT MAX(l.action_at_ms) FROM user_actions l WHERE " +
+                        "l.account_id=p.account_id AND l.post_id=p.post_id AND l.action_type IN ('LOCAL_SAVE','BOOKMARK'))";
+                    dateColumn="CASE WHEN matched_action.action_time IS NULL THEN " + localTime +
+                        " WHEN " + localTime + " IS NULL THEN matched_action.action_time ELSE MAX(" +
+                        localTime + ",matched_action.action_time) END";
+                }
                 break;
             default: dateColumn = "p.last_seen_at_ms"; break;
         }
@@ -141,12 +177,15 @@ public final class ArchiveSearch {
             "f.post_id=p.post_id) AS note, " +
             "(SELECT GROUP_CONCAT(t.tag, ', ') FROM post_tags t WHERE t.account_id=p.account_id " +
             "AND t.post_id=p.post_id) AS tags, " +
-            "matched_feed.dwell_quality AS dwell_quality " +
+            "matched_feed.dwell_quality AS dwell_quality, matched_action.action_summary AS own_action_summary " +
             "FROM posts p LEFT JOIN (" + matchedFeed + ") matched_feed ON " +
             "matched_feed.account_id=p.account_id AND matched_feed.post_id=p.post_id " +
+            "LEFT JOIN (" + matchedAction + ") matched_action ON matched_action.account_id=p.account_id " +
+            "AND matched_action.post_id=p.post_id " +
             "WHERE p.account_id = ?");
         args.add(accountId);
 
+        if (ownRequired) sql.append(" AND matched_action.post_id IS NOT NULL");
         if (filter.openedOnly) sql.append(" AND p.opened_count > 0");
         if (filter.neverOpened) sql.append(" AND p.opened_count = 0 AND NOT EXISTS " +
             "(SELECT 1 FROM history_events o WHERE o.account_id=p.account_id " +
@@ -183,7 +222,7 @@ public final class ArchiveSearch {
                        "c.account_id=p.account_id AND c.post_id=p.post_id AND c.category_id=?)");
             args.add(filter.categoryId);
         }
-        if (filter.actionType != null && !filter.actionType.isEmpty()) {
+        if (legacyType) {
             sql.append(" AND EXISTS (SELECT 1 FROM user_actions a WHERE " +
                        "a.account_id=p.account_id AND a.post_id=p.post_id AND a.action_type=?)");
             args.add(filter.actionType);

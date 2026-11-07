@@ -23,8 +23,17 @@ public final class XsShareCoordinator {
     public static void shareText(Activity activity,String postUrl,String visibleText){activity.startActivity(Intent.createChooser(textIntent(postUrl,visibleText),null));}
     /** Copies preserve asynchronous receiver reads if the source is deleted afterward. */
     public static Intent assetIntent(Context context,String libraryId,List<String> assetIds)throws IOException {
-        if(assetIds==null||assetIds.isEmpty()||assetIds.size()>10)throw new IllegalArgumentException("Select 1 to 10 completed images");
+        if(assetIds==null||assetIds.isEmpty()||assetIds.size()>10)throw new IllegalArgumentException("Select one video or 1 to 10 images");
         XsMediaRepository repository=XsMediaRepository.get(context);ArrayList<Uri> uris=new ArrayList<>();String firstMime=null;boolean same=true;
+        boolean video=false;
+        for(String id:assetIds) {
+            XsMediaRepository.Asset asset=repository.find(libraryId,id);
+            if(asset==null||!"COMPLETED".equals(asset.state))throw new IllegalArgumentException("Completed media required");
+            if("video/mp4".equals(asset.mime)) {
+                if(assetIds.size()!=1||!"VIDEO".equals(asset.mediaKind)||asset.videoTracks!=1||asset.durationMs<=0)throw new IllegalArgumentException("Share one complete video at a time");
+                video=true;
+            } else if(asset.mime==null||!asset.mime.startsWith("image/"))throw new IllegalArgumentException("Unsupported share type");
+        }
         ArrayList<XsMediaRepository.Lease> copies=new ArrayList<>();
         try {
             for(String id:assetIds){XsMediaRepository.Lease l=repository.lease(libraryId,id);copies.add(l);if(firstMime==null)firstMime=l.mime;else if(!firstMime.equals(l.mime))same=false;
@@ -33,10 +42,10 @@ public final class XsShareCoordinator {
             for(XsMediaRepository.Lease copy:copies)repository.discardLease(copy);
             throw failure;
         }
-        String mime=same?firstMime:"image/*";
+        String mime=video?"video/mp4":same?firstMime:"image/*";
         Intent send=new Intent(uris.size()==1?Intent.ACTION_SEND:Intent.ACTION_SEND_MULTIPLE).setType(mime).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         if(uris.size()==1)send.putExtra(Intent.EXTRA_STREAM,uris.get(0));else send.putParcelableArrayListExtra(Intent.EXTRA_STREAM,uris);
-        ClipData clip=new ClipData("Selected Xs images",new String[]{mime},new ClipData.Item(uris.get(0)));for(int i=1;i<uris.size();i++)clip.addItem(new ClipData.Item(uris.get(i)));send.setClipData(clip);return send;
+        ClipData clip=new ClipData("Selected Xs media",new String[]{mime},new ClipData.Item(uris.get(0)));for(int i=1;i<uris.size();i++)clip.addItem(new ClipData.Item(uris.get(i)));send.setClipData(clip);return send;
     }
     public static void shareAssets(Activity activity,String libraryId,List<String> assetIds)throws IOException {activity.startActivity(Intent.createChooser(assetIntent(activity,libraryId,assetIds),null));}
 }

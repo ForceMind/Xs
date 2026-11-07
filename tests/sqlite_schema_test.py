@@ -19,6 +19,8 @@ def main() -> None:
           for line in lines if line.startswith("V2:")]
     v3 = [base64.b64decode(line.partition(":")[2], validate=True).decode("utf-8")
           for line in lines if line.startswith("V3:")]
+    v4 = [base64.b64decode(line.partition(":")[2], validate=True).decode("utf-8")
+          for line in lines if line.startswith("V4:")]
     actual_query = next(base64.b64decode(line.partition(":")[2], validate=True).decode("utf-8")
                         for line in lines if line.startswith("QUERY:"))
     actual_args = [base64.b64decode(line.partition(":")[2], validate=True).decode("utf-8")
@@ -162,6 +164,41 @@ def main() -> None:
     assert old.execute("SELECT snapshot_state FROM posts WHERE account_id='local:old'").fetchone()[0] == 'LINK_ONLY'
     assert old.execute("PRAGMA foreign_key_check").fetchall() == []
 
+    # v1/v2/v3 -> v4 preserves original rows and marks legacy provenance/time honestly.
+    before_actions=old.execute("SELECT * FROM user_actions ORDER BY id").fetchall()
+    old.execute("INSERT INTO user_actions(account_id,post_id,action_type,action_at_ms,source) VALUES ('account-B','88','QUOTE',15,'local_x_archive')")
+    for statement in v4:
+        old.executescript(statement + ";")
+    assert old.execute("SELECT * FROM user_actions ORDER BY id").fetchall()[:len(before_actions)] == before_actions
+    assert old.execute("SELECT actor_id,actor_provenance,state,action_at_ms,observed_at_ms FROM own_actions WHERE account_id='account-A'").fetchall() == [(None,'LEGACY_UNVERIFIED','UNKNOWN',None,None)]
+    assert old.execute("SELECT actor_id,actor_provenance,state,action_at_ms,observed_at_ms FROM own_actions WHERE account_id='account-B'").fetchall() == [(None,'USER_CONFIRMED_ARCHIVE','UNKNOWN',15,None)]
+    assert old.execute("SELECT event_type,event_at_ms,observed_at_ms FROM own_action_events WHERE account_id='account-B'").fetchall() == [('ARCHIVE_IMPORTED',15,None)]
+    assert old.execute("SELECT count(*) FROM own_action_events").fetchone()[0] == 2
+    assert old.execute("SELECT rowid,account_id,post_id,body,first_seen_at_ms,last_seen_at_ms FROM posts ORDER BY rowid").fetchall() == before_posts
+    assert old.execute("SELECT * FROM post_categories").fetchall() == before_categories
+    assert old.execute("SELECT account_id,post_id FROM posts_fts WHERE posts_fts MATCH 'historical*'").fetchall() == [('account-A','88')]
+    assert old.execute("PRAGMA foreign_key_check").fetchall() == []
+    # Native own-action type/state/actor/date/source filters must match the same action.
+    con.execute("INSERT INTO posts(account_id,post_id,body,first_seen_at_ms,last_seen_at_ms) VALUES ('local:own','901','own fixture',100,200)")
+    for key,actor,state,at in [('a','fixture:me','REVERSED',150),('b','fixture:other','REVERSED',160),('c','fixture:me','ACTIVE',170)]:
+        con.execute("INSERT INTO own_actions(account_id,action_key,post_id,action_type,actor_id,actor_provenance,source,action_at_ms,observed_at_ms,state) VALUES ('local:own',?,'901','REPOST',?,'NATIVE_FIXTURE','native_fixture',?,200,?)",(key,actor,at,state))
+    own_query=next(base64.b64decode(line.partition(":")[2],validate=True).decode('utf-8') for line in lines if line.startswith('OWN_QUERY:'))
+    own_args=[base64.b64decode(line.partition(":")[2],validate=True).decode('utf-8') for line in lines if line.startswith('OWN_ARG:')]
+    own_rows=con.execute(own_query,own_args).fetchall()
+    assert len(own_rows) == 1 and own_rows[0][1] == '901' and own_rows[0][8] == 150
+    assert 'fixture:other' not in own_rows[0][14] and 'ACTIVE' not in own_rows[0][14]
+    con.execute("UPDATE own_actions SET action_at_ms=50 WHERE action_key='a'")
+    assert con.execute(own_query,own_args).fetchall() == []
+    con.execute("INSERT INTO own_action_events(account_id,action_key,event_key,event_type,event_at_ms,observed_at_ms,source) VALUES ('local:own','a','operation:a','CONFIRMED',NULL,200,'native_fixture')")
+    try:
+        con.execute("INSERT INTO own_action_events(account_id,action_key,event_key,event_type,source) VALUES ('local:own','b','operation:a','CONFIRMED','native_fixture')")
+        raise AssertionError('Duplicate operation event accepted')
+    except sqlite3.IntegrityError:
+        pass
+    con.execute("DELETE FROM posts WHERE account_id='local:own'")
+    assert con.execute("SELECT count(*) FROM own_actions WHERE account_id='local:own'").fetchone()[0] == 0
+    assert con.execute("SELECT count(*) FROM own_action_events WHERE account_id='local:own'").fetchone()[0] == 0
+
     # Duration is nullable for legacy events, measured for new exposures, scoped and deduped.
     for ident in ['101','102','103']:
         con.execute("INSERT INTO posts(account_id,post_id,body,author_handle,first_seen_at_ms,last_seen_at_ms) VALUES ('local:test',?,'robot notes','alice',100,100)",(ident,))
@@ -213,7 +250,7 @@ def main() -> None:
     assert [(row[1],row[8],row[9]) for row in query_named('SOURCE_DATE')] == [('205',160,4000),('206',160,3500)]
     # Choosing published date explicitly continues filtering publication, not exposure time.
     assert [(row[1],row[9]) for row in query_named('PUBLISHED')] == [('203',10000),('202',9000),('201',5000)]
-    print("PASS SQLite v3 DDL, v1/v2 preserving migrations, scope mappings, FTS, exposure dedup, dwell/never-opened and same-exposure date/source queries, independent favorites")
+    print("PASS SQLite v4 DDL, v1/v2/v3 preserving migrations, honest own-action provenance/reversal and same-action filtering, scope mappings, FTS, exposure dedup, dwell/never-opened and same-exposure date/source queries, independent favorites")
 
 
 if __name__ == "__main__":

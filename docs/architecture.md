@@ -1,26 +1,20 @@
 # Xs architecture — app-owned library and native-pull plan
 
-当前代码进度以 [本轮实施与验收记录](IMPLEMENTATION_EVIDENCE.zh-CN.md) 为准；下文保留需求基线，待验收项不因源码存在而自动通过。
+当前代码进度以 [后续离线闭环记录](ROUND_C_EVIDENCE.zh-CN.md) 和 [A / early-B 记录](IMPLEMENTATION_EVIDENCE.zh-CN.md) 为准；下文保留需求基线，待验收项不因源码存在而自动通过。
 
 Updated 2026-11-06. Read [product](product.md), [ADR-0002](adr/0002-local-library-media.md), [ADR-0003](adr/0003-native-pull-delivery.md), [implementation](IMPLEMENTATION_PLAN.zh-CN.md) and [acceptance](ACCEPTANCE_MATRIX.zh-CN.md). This describes the target and names existing foundations separately; it does not claim live integration.
 
 ## 1. Runtime and target boundaries
 
-```text
-Official X web in the Xs Android browser
-  ├─ BrowserHost / controlled navigation / browser Profile [host exists; refactor planned]
-  └─ packaged X-specific observer and reversible styles [planned]
-       ↑ native-initiated evaluateJavascript; finite batch/snapshot result
-       ↓ untrusted observations, no archive-query/command interface
-NativePageController + consent/context/schema/budget checks [planned]
-       ↓ library generation + document ID + navigation ID + receipt clock
-Unified bounded CaptureCoordinator [planned]
-  ├─ SQLite / FTS / snapshots / events / favorites / categories [foundation exists]
-  ├─ explicit MediaResolver → DownloadCoordinator → AssetRepository [planned]
-  └─ native ShareCoordinator → selected completed files → Android Sharesheet [planned]
+```mermaid
+flowchart TD
+  W["System WebView"] -->|"explicit native selection"| M["Validated images / direct MP4"]
+  F["Offline WebView fixtures"] -->|"bounded native pull"| Q["Library queue / generation"]
+  Q --> D["SQLite v4 / FTS / events / favorites"]
+  M --> A["Saved assets / read-only share leases"]
 ```
 
-`app-android` currently hosts a system WebView with manual link save and incoming text sharing. `xs-runtime` contains archive UI/storage/import. `dev-harness` is a synthetic offline host, not a working X client. ObservationGate/Routes/WebObservationParser are inactive foundations. Automatic webpage history, native FAVORITE workflow, media downloader and outbound file provider are not made real by this diagram.
+`app-android` hosts retained System WebView with manual link favorites, selected-post media downloads and outbound file sharing. `xs-runtime` provides library storage/UI, fixtures, strict backups and explicit metadata consolidation. `dev-harness` is synthetic and offline. The packaged observer, reversible cleanup and own-action admission have no enabled real-X adapter; diagrams do not grant those privileges. Media support is bounded standard H.264/AAC MP4, with container/sample validation and representative decoding, not all-format or whole-film decode certification.
 
 ## 2. Browser engineering and reuse
 
@@ -52,7 +46,8 @@ Default library belongs to the application, not to the active X login. Distingui
 
 A website account switch invalidates observation context and unconfirmed social attribution; it does not delete or implicitly switch local favorites/assets. Do not pass a local UUID or scraped handle to the legacy `bindAuthenticatedAccount` as if authenticated.
 
-The v2 schema and its v1 migration exist. Proposed new models include library/legacy mapping, versioned snapshots, independent favorites, download tasks/assets and share leases; they are not existing tables. Final DDL/version must be fixed by migration tests before implementation. Preserve each legacy account_id namespace, counts, times, category links and FTS. Offer explicit consolidation, never a silent global constant or destructive recreation. Failed migration keeps the original data and an actionable error.
+SQLite v4 preserves v1/v2/v3 namespaces, library mappings, counts, times, category links and FTS. Separate own-action and action-event tables retain actor provenance, unknown time, related posts and reversal state. Favorites and local media/share leases exist; a separate versioned snapshot table remains future work. Explicit consolidation creates another space and preserves all sources; failed transactions keep original data. Browser sessions and library ownership are separate.
+
 
 ## 5. Event and snapshot semantics
 
@@ -70,7 +65,7 @@ One navigation ID admits at most one open per library/context; increasing messag
 
 See [feed dwell specification](FEED_DWELL_PLAN.zh-CN.md) / [ADR-0004](adr/0004-feed-dwell.md). A locally packaged X-specific observer will verify actual timeline cards, foreground visibility and readable-area ratio using bounded page observation; native code owns selected library, feature consent, current route, generation and monotonic timing. Thresholds are **1.2, 3 (recommended default), 5 seconds**; no threshold applies to deliberate OPEN_POST.
 
-Each continuous qualified exposure uses a stable `exposure_id`, persists FEED_VISIBLE separately from opening/favoriting and updates the same event duration as it continues. A real subsequent exposure may form a new event. Suggested new fields and a v2-preserving schema migration are **design targets**, not current runtime tables. Offline filters must support duration range and “never opened” in the local library without inferring server read status. Long cards normalize against actually readable viewport content; background, overlay, sensitive route and idle constraints require test fixtures and real-device evidence. The 1.2-second minimum currently enforced by FeedCapturePolicy is not by itself a shipped 3-second selector or measured duration index.
+Each continuous qualified exposure uses a stable `exposure_id`, persists FEED_VISIBLE separately from opening/favoriting and updates the same event duration as it continues. A real subsequent exposure may form a new event. The v3 duration/threshold/quality fields and v4 preserving migration are implemented for fixtures; live DOM adaptation remains pending. Offline filters must support duration range and “never opened” in the local library without inferring server read status. Long cards normalize against actually readable viewport content; background, overlay, sensitive route and idle constraints require test fixtures and real-device evidence. The 1.2-second minimum currently enforced by FeedCapturePolicy is not by itself a shipped 3-second selector or measured duration index.
 
 
 ## 6. Writes, deletion and invalidation
@@ -104,3 +99,9 @@ Preserve X web navigation. Add minimal native favorite/download/share/library ac
 Capture and filtering start off and have separate consent; cache is not durable saved media, and SQLite is not currently claimed encrypted. Reuse of device-key patterns does not encrypt existing FTS/WAL/backups automatically. Live login, target-device media, receiver apps, migrations, backups, signing and licensing need their own evidence.
 
 [Roadmap](roadmap.md) and [acceptance matrix](ACCEPTANCE_MATRIX.zh-CN.md) define stage completion. W0 gates enabling unvalidated real-site automation and release, not parallel offline development. Legacy APK integration contracts are retained history. No production release, website deployment or modification of the user's machines is authorized by this plan.
+
+## 10. Explicit portability and consolidation
+
+Metadata JSONL is bounded to 16 MiB / 20,000 records, schema 3 or 4, strict UTF-8/types/columns/references and a corruption checksum. Import creates a new UUID scope in one transaction, checks FKs and FTS, preserves sources/default, and never grants a browser identity from stored claims. Files are plaintext; media/downloads/web sessions/keys are excluded.
+
+Consolidation snapshots 2–4 registered sources through shared queues, validates an immutable preview, and copies that exact snapshot into a new scope after confirmation. Total 8 MiB / 20,000 source records; normal edits after preview require another preview, erasure invalidates it. Conflicting legacy action provenance or overflowing notes abort rather than discard content. Idle writer recycling uses instance-bound epoch tickets; all-busy capacity failure occurs before target rows are published. See evidence for policies and limitations.

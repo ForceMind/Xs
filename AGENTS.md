@@ -21,11 +21,12 @@ Keep this public independent repository and synchronized Chinese/English READMEs
 
 ## Existing versus planned
 
-- `src/main/java`: URL/v3 schema/query, CaptureSession, StrictJson, bounded SerialWriteCoordinator, image policy and legacy inactive observation gate.
-- `src/android/java`: SQLite v3, app-owned library/favorites UI, importer, native-pull fixture controller, shared writes, image tasks/assets and grant-only sharing.
+- `src/main/java`: URL/v4 schema/query, CaptureSession, OwnActionSession, StrictJson, bounded SerialWriteCoordinator, image/standard-MP4 policy, metadata backup/merge codecs and legacy inactive observation gate.
+- `src/android/java`: SQLite v4, app-owned library/favorites/own-activity UI, importer, native-pull/cleanup fixture controllers, shared writes, image/video tasks/assets, metadata portability/consolidation and grant-only sharing.
 - `xs-runtime`: AAR. `dev-harness`: synthetic offline host, never a real client.
 - `app-android`: retained System WebView, manual favorites/links, explicit image selection, outgoing sharing, incoming text target and synthetic instrumentation.
-- See docs/IMPLEMENTATION_EVIDENCE.zh-CN.md for the implemented offline slice and exact proof. Automatic live capture, own-action/reversal, complete video, filtering, consolidation, backup/recovery and release acceptance remain pending. Native browser favorites are link-only; existing local snapshots can be retained. Do not enable real X capture merely because fixture tests pass.
+- Prior history/dwell/image proof remains in docs/IMPLEMENTATION_EVIDENCE.zh-CN.md. The current v4 own-action/reversal, direct-MP4, cleanup-fixture, metadata backup/restore and consolidation increment is tracked in docs/ROUND_C_EVIDENCE.zh-CN.md; local Android builds/lint passed, while API 30/36 instrumentation is PENDING until source-specific results are recorded. This is a limited offline increment, not completion of C/D or release acceptance.
+- Live automatic capture, live own-action adapters and live cleanup remain disabled. Native browser favorites are link-only; existing local snapshots can be retained. Actual X video sources, physical devices and recipient apps remain unverified. Do not enable real X features merely because fixture tests pass.
 
 Do not make current code appear implemented just by documenting new component names. Maintain the [change record](docs/CHANGELOG.md) and source/test evidence per XS work package.
 
@@ -47,7 +48,11 @@ Default to one explicit app library; optional private libraries may be added lat
 
 The legacy bindAuthenticatedAccount API must not accept a scraped username/local UUID as verified identity. Local public-content favorites need no verified X account. Social action attribution requires provenance or remains unknown.
 
-Use one bounded controller for captures, imports, favorite changes, download completion and erasure. Recheck invalidation at write time; old callbacks may not revive cleared records. Disable relevant observation before destructive operations and serialize the storage barrier. Share copies/leases must support receiver read lifetime while avoiding permanent whole-library exposure.
+OwnActionSession's enabled factory is explicitly native/offline-fixture only. It issues non-reusable operation identities, matches the native result's actor/type/new post or repost target, and linearizes persistence with invalidation. ORIGINAL/REPLY/QUOTE must index the newly created post; replies/quotes retain their related parent. A page-reported success/author/menu, restored provenance string or old string-only action API cannot issue an Admission. Keep fixture provenance visible and the live factory disabled until a real adapter is validated. Archive ownership confirmation does not verify a browser login; actor/current platform state and unsupported action times remain unknown. Ambiguous `RT @` text alone is not a confirmed repost.
+
+Metadata backups are bounded plaintext (16 MiB / 20,000 records); validate exact schema/fields/FKs/checksum before restoring into a new scope. Schema-3 imports upgrade to v4 without invented actors or observation times. Checksums do not authenticate authorship. Backups exclude media files/tasks, browser storage and keys. Explicit 2–4-library consolidation uses a reviewed metadata snapshot within 8 MiB / 20,000 records, preserves sources/default and rejects conflicting legacy-action provenance. Later ordinary edits require another preview; erasure/epoch invalidation rejects commit. Deleting the new result provides rollback without deleting sources. Never call this a complete device/media recovery system.
+
+Use one bounded controller for captures, imports, favorite changes, download completion and erasure. Its 32-library registry may retire idle writers, but tickets must bind the writer instance as well as its epoch; retirement must not revive stale work. Recheck invalidation at write time; old callbacks may not revive cleared records. Disable relevant observation before destructive operations and serialize the storage barrier. Share copies/leases must support receiver read lifetime while avoiding permanent whole-library exposure.
 
 ## Web, media and sharing safety
 
@@ -56,6 +61,8 @@ Never collect passwords, verification codes, exported Cookie/Token, DMs, drafts,
 X itself may use its normal network; no Xs archive cloud/analytics without explicit approval. Explicit sharing hands chosen content to another app, which can upload it; do not promise it remains on-device afterward.
 
 Media resolution is scoped to explicit authorized post resources, not an arbitrary URL proxy. Validate destinations/redirects, filenames, type, size, disk capacity, retry/queue limits and permitted access. No DRM/payment/access-control bypass. Signed media URLs and authentication state must not leak into logs, captions or public evidence. Do not add a credential-export workaround when resolution fails.
+
+The current video scope is a selected direct standard MP4, ≤100 MiB/10 minutes, one H.264 track and optionally one AAC track. Container/sample-range and transfer checks plus limited first/tail video/audio decode do not prove all-frame playback. HLS/DASH, blob URLs, fragments, DRM/encryption and unsupported formats remain rejected. Interrupted work requires explicit source reselection; do not claim verified resume or background scheduling. Cleanup has three independent default-off preferences and reversible packaged fixture rules; NativePageCleanupController is not attached to the live BrowserActivity.
 
 Complete and validate downloads before marking/share. Resume only when verified; otherwise explain restart. FileProvider/equivalent exposes only selected completed assets or limited copies, never database/session/key/root directories or unfinished files; use temporary read-only grants. No automatic message sending, retry on chooser return, silent transcode/watermark or loss of the original on a target error.
 

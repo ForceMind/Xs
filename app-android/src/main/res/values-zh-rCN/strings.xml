@@ -49,5 +49,9 @@
     <string name="download_images">下载所选帖子图片</string>
     <string name="download">下载</string>
     <string name="image_item">图片 %1$d</string>
-    <string name="images_unavailable">此帖未找到支持的图片。真实 X 布局仍需验证；当前不支持视频。</string>
+    <string name="images_unavailable">此帖未找到支持的图片。真实 X 布局仍需验证。</string>
+    <string name="download_video">下载完整视频</string>
+    <string name="video_item">视频 %1$d</string>
+    <string name="video_unavailable">未找到允许保存的直达 MP4。暂不支持 blob、播放列表或受保护视频；真实 X 布局仍待验证。</string>
+    <string name="video_permission_notice">请仅在你有权保存且允许下载时继续。仅支持不超过 100 MiB / 10 分钟的完整标准 MP4；不截获流媒体、不绕过 DRM 或访问权限。真实 X 布局仍未验收。</string>
 </resources>

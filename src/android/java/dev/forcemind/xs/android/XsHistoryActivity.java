@@ -45,8 +45,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /** Native, offline app-owned library. Browsing identities never select its scope. */
 public final class XsHistoryActivity extends Activity {
-    private enum Mode { HISTORY, FEED, FAVORITES, SEARCH, FOLDERS }
+    private enum Mode { HISTORY, FEED, FAVORITES, SEARCH, FOLDERS, OWN }
     private static final int PAGE_SIZE = 80;
+    public static final String EXTRA_LIBRARY = "dev.forcemind.xs.LIBRARY";
     public static final String EXTRA_LOCAL_SPACE = "dev.forcemind.xs.LOCAL_SPACE";
     private static final int REQUEST_POSTS_JS = 7167;
     // Stable native IDs allow instrumentation to exercise the actual UI.
@@ -59,6 +60,8 @@ public final class XsHistoryActivity extends Activity {
     public static final int ID_SORT_DWELL = 0x8107;
     public static final int ID_SEARCH = 0x8108;
     public static final int ID_CLEAR_HISTORY = 0x8109;
+    public static final int ID_OWN_ACTIONS = 0x810a;
+    public static final int ID_BACKUP = 0x810b;
 
     private static final class Row {
         final String id, headline, detail, author, body, note, tags;
@@ -95,7 +98,7 @@ public final class XsHistoryActivity extends Activity {
     private String library, defaultLibrary, selectedFolder, actionType;
     private String pendingImportLibrary;
     private XsLibraryWrites.Ticket pendingImportTicket;
-    private String authorFilter, sourceFilter, tagFilter;
+    private String authorFilter, sourceFilter, tagFilter, actionStateFilter;
     private Long minTime, minDwellMs;
     private boolean neverOpened, favoriteOnly, sortByDwell, clearing, destroyed;
     private int nextOffset, dateChoice;
@@ -111,6 +114,7 @@ public final class XsHistoryActivity extends Activity {
         // Existing namespaces remain separate and selectable; no automatic consolidation.
         write(defaultLibrary, () -> archive.ensureLibrary(defaultLibrary, tr("Xs 本机资料库", "Xs local library")), null);
         buildScreen();
+        openRequestedLibrary();
     }
 
     @Override protected void onResume() {
@@ -156,7 +160,7 @@ public final class XsHistoryActivity extends Activity {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
             @Override public void afterTextChanged(Editable e) {}
             @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
-                if (mode == Mode.SEARCH || mode == Mode.FAVORITES) {
+                if (mode == Mode.SEARCH || mode == Mode.FAVORITES || mode == Mode.OWN) {
                     main.removeCallbacks(delayedSearch);
                     main.postDelayed(delayedSearch, 250);
                 }
@@ -213,6 +217,12 @@ public final class XsHistoryActivity extends Activity {
         addFolder.setOnClickListener(v -> showFolderEditor(null, null));
         importPosts.setOnClickListener(v -> chooseImportFile());
         erase.setOnClickListener(v -> confirmErase());
+        LinearLayout indexControls=horizontal();
+        Button own=button(tr("本人内容索引", "Own activity index")); own.setId(ID_OWN_ACTIONS);
+        own.setOnClickListener(v -> setMode(Mode.OWN)); indexControls.addView(own,weighted());
+        Button backup=button(tr("备份 / 恢复", "Backup / restore")); backup.setId(ID_BACKUP);
+        backup.setOnClickListener(v -> startActivity(XsBackupActivity.intent(this,library)));
+        indexControls.addView(backup,weighted()); root.addView(indexControls);
         setMode(Mode.HISTORY);
     }
 
@@ -228,9 +238,10 @@ public final class XsHistoryActivity extends Activity {
     private void setMode(Mode value) {
         if (value==Mode.FEED && mode!=Mode.FEED) dateBasis=ArchiveSearch.DateField.FEED_SEEN;
         else if (value==Mode.FAVORITES && mode!=Mode.FAVORITES) dateBasis=ArchiveSearch.DateField.FAVORITED;
+        else if (value==Mode.OWN && mode!=Mode.OWN) dateBasis=ArchiveSearch.DateField.ACTION;
         else if (value==Mode.HISTORY) dateBasis=ArchiveSearch.DateField.LAST_OPENED;
         mode = value;
-        boolean search = value == Mode.SEARCH || value == Mode.FAVORITES;
+        boolean search = value == Mode.SEARCH || value == Mode.FAVORITES || value == Mode.OWN;
         query.setVisibility(search ? View.VISIBLE : View.GONE);
         folderFilter.setVisibility(search ? View.VISIBLE : View.GONE);
         typeFilter.setVisibility(search ? View.VISIBLE : View.GONE);
@@ -284,7 +295,8 @@ public final class XsHistoryActivity extends Activity {
                             String detail = at + " · " + (opens == 0 ? tr("从未打开", "Never opened") :
                                 tr("打开 ", "Opens ") + opens) +
                                 (dwell == null ? "" : tr(" · 最长停留 ", " · Max dwell ") + duration(dwell, quality(c, "dwell_quality"))) +
-                                (favorite ? tr(" · Xs 收藏", " · Xs favorite") : "");
+                                (favorite ? tr(" · Xs 收藏", " · Xs favorite") : "") +
+                                (c.isNull(14) ? "" : "\n" + c.getString(14));
                             rows.add(new Row(id, headline(c.getString(2), c.getString(3), id), detail,
                                 false, c.getString(2), c.getString(3), c.isNull(4) ? null : c.getLong(4),
                                 favorite, c.getString(11), c.getString(12)));
@@ -315,6 +327,8 @@ public final class XsHistoryActivity extends Activity {
         filter.keyword = query.getText().toString();
         filter.categoryId = selectedFolder;
         filter.actionType = actionType;
+        filter.ownOnly = mode == Mode.OWN;
+        filter.actionState = actionStateFilter;
         filter.fromMs = minTime;
         filter.dateField = dateBasis;
         filter.minDwellMs = minDwellMs;
@@ -339,7 +353,7 @@ public final class XsHistoryActivity extends Activity {
         }
         adapter.notifyDataSetChanged();
         status.setText((library.equals(defaultLibrary) ? tr("Xs 本机资料库", "Xs local library") :
-            tr("独立旧资料空间", "Separate legacy space")) + " · " + visible.size() + tr(" 条结果", " results"));
+            tr("独立资料空间", "Separate library")) + " · " + visible.size() + tr(" 条结果", " results"));
     }
 
     private void showSearchFilters() {
@@ -358,6 +372,14 @@ public final class XsHistoryActivity extends Activity {
         folderAndType.addView(chooseCategory, weighted());
         folderAndType.addView(chooseType, weighted());
         fields.addView(folderAndType);
+        final String[] actionState={actionStateFilter};
+        Button state=button(tr("本人行为状态：", "Own activity state: ") + (actionState[0] == null ? tr("全部", "All") : actionState[0]));
+        state.setOnClickListener(v -> new AlertDialog.Builder(this).setTitle(tr("当前平台状态", "Current platform state"))
+            .setItems(new String[]{tr("全部", "All"),"ACTIVE","REVERSED","UNKNOWN"},(d,n) -> {
+                actionState[0]=new String[]{null,"ACTIVE","REVERSED","UNKNOWN"}[n];
+                state.setText(tr("本人行为状态：", "Own activity state: ") + (actionState[0] == null ? tr("全部", "All") : actionState[0]));
+            }).show());
+        fields.addView(state);
         fields.addView(text(tr("单次连续停留达到指定秒数；不会累加不同曝光。",
             "Minimum duration of one continuous exposure; separate visits are not added together.")));
         EditText dwell = entry(tr("最低停留秒数（空白为不限）", "Minimum dwell seconds (blank: any)"),
@@ -391,7 +413,7 @@ public final class XsHistoryActivity extends Activity {
             .setNegativeButton(tr("取消", "Cancel"), null)
             .setNeutralButton(tr("重置", "Reset"), (d, n) -> {
                 minDwellMs = null; neverOpened = false; favoriteOnly = false; sortByDwell = false;
-                authorFilter = null; sourceFilter = null; tagFilter = null;
+                authorFilter = null; sourceFilter = null; tagFilter = null; actionStateFilter = null;
                 dateBasis = ArchiveSearch.DateField.LAST_SEEN;
                 selectedFolder = null; actionType = null;
                 folderFilter.setText(tr("全部分类", "All folders"));
@@ -414,6 +436,7 @@ public final class XsHistoryActivity extends Activity {
                     dwell.setError(tr("请输入 0～86400 秒", "Enter 0–86400 seconds")); return;
                 }
             }
+            actionStateFilter=actionState[0];
             minDwellMs = threshold; neverOpened = never.isChecked();
             favoriteOnly = favorites.isChecked(); sortByDwell = durationSort.isChecked();
             authorFilter = emptyToNull(author.getText().toString().trim().replaceFirst("^@", ""));
@@ -446,7 +469,7 @@ public final class XsHistoryActivity extends Activity {
         new AlertDialog.Builder(this).setTitle(tr("本地资料操作", "Local library actions"))
             .setItems(new String[]{tr("收藏到 Xs", "Favorite in Xs"), tr("分类", "Folders"),
                 tr("编辑收藏备注与标签", "Edit favorite note & tags"),
-                tr("取消 Xs 收藏", "Remove Xs favorite"), tr("分享链接", "Share link")}, (d, n) -> {
+                tr("取消 Xs 收藏", "Remove Xs favorite"), tr("分享链接", "Share link"), tr("本人行为轨迹", "Own activity trail")}, (d, n) -> {
                 if (n == 0) saveFavorite(row, false);
                 else if (n == 1) organizePost(row.id);
                 else if (n == 2) saveFavorite(row, true);
@@ -455,6 +478,7 @@ public final class XsHistoryActivity extends Activity {
                     write(owner, () -> archive.removeFavorite(owner, row.id),
                         tr("已取消收藏；历史和资源保留", "Favorite removed; history and assets kept"));
                 }
+                else if (n == 5) showOwnActionTrail(row.id);
                 else {
                     Intent share = new Intent(Intent.ACTION_SEND).setType("text/plain")
                         .putExtra(Intent.EXTRA_TEXT, postUrl(row.id));
@@ -462,6 +486,33 @@ public final class XsHistoryActivity extends Activity {
                     catch (ActivityNotFoundException ignored) { toast(tr("没有兼容的分享应用", "No compatible share app")); }
                 }
             }).show();
+    }
+
+    private void showOwnActionTrail(String postId) {
+        final String owner=library;
+        read(() -> {
+            StringBuilder details=new StringBuilder(tr("导入与旧记录的当前平台状态可能未知；身份来源不是网页登录凭证。\n\n",
+                "Imported and legacy entries may have unknown current state. Provenance does not verify a web login.\n\n"));
+            try (Cursor c=archive.ownActions(owner,postId)) {
+                while (c.moveToNext()) {
+                    details.append(c.getString(2)).append(" / ").append(c.getString(8)).append("\n")
+                        .append(tr("执行者：", "Actor: ")).append(c.isNull(3) ? tr("未知", "Unknown") : c.getString(3)).append("\n")
+                        .append(c.getString(4)).append(" · ").append(c.getString(5)).append("\n")
+                        .append(tr("行为时间：", "Action time: ")).append(c.isNull(6) ? tr("未知", "Unknown") : date(c.getLong(6))).append("\n")
+                        .append(c.getString(10)).append(" · ").append(c.isNull(11) ? tr("事件时间未知", "Event time unknown") : date(c.getLong(11)))
+                        .append(tr(" · 本机收录 ", " · Indexed ")).append(c.isNull(12) ? tr("时间未知", "time unknown") : date(c.getLong(12))).append("\n");
+                    if (!c.isNull(14)) details.append(tr("关联原帖：", "Related post: ")).append(postUrl(c.getString(14))).append("\n");
+                    details.append("\n");
+                }
+            }
+            main.post(() -> {
+                if (destroyed || !owner.equals(library)) return;
+                TextView text=text(details.toString()); text.setTextIsSelectable(true);
+                text.setPadding(px(16),px(12),px(16),px(12)); ScrollView scroll=new ScrollView(this); scroll.addView(text);
+                new AlertDialog.Builder(this).setTitle(tr("本人行为轨迹", "Own activity trail")).setView(scroll)
+                    .setPositiveButton(tr("关闭", "Close"),null).show();
+            });
+        });
     }
 
     private void saveFavorite(Row row, boolean editAfter) {
@@ -506,6 +557,29 @@ public final class XsHistoryActivity extends Activity {
         });
     }
 
+    /** Native backup/consolidation may select an existing scope; never create one from an intent. */
+    private void openRequestedLibrary() {
+        final String wanted=getIntent().getStringExtra(EXTRA_LIBRARY);
+        if(wanted == null || wanted.length() > 256 || wanted.indexOf('\u0000') >= 0) return;
+        read(() -> {
+            String found=null,label=null;
+            try(Cursor libraries=archive.libraries()) {
+                while(libraries.moveToNext()) if(wanted.equals(libraries.getString(3))) {
+                    found=libraries.getString(3); label=libraries.getString(1); break;
+                }
+            }
+            final String selected=found, selectedLabel=label;
+            main.post(() -> {
+                if(destroyed || !defaultLibrary.equals(library)) return;
+                if(selected == null) { toast(tr("指定资料空间不存在", "Requested library does not exist")); return; }
+                requested.incrementAndGet(); library=selected;
+                libraryButton.setText(library.equals(defaultLibrary) ? tr("Xs 本机资料库", "Xs local library") :
+                    tr("独立资料空间：", "Separate library: ") + selectedLabel);
+                refresh();
+            });
+        });
+    }
+
     private void chooseLibrary() {
         if (clearing) return;
         read(() -> {
@@ -515,7 +589,7 @@ public final class XsHistoryActivity extends Activity {
                     String id = c.getString(3); // physical scope is intentionally retained
                     ids.add(id);
                     names.add((id.equals(defaultLibrary) ? tr("Xs 本机资料库", "Xs local library") :
-                        tr("旧空间：", "Legacy: ") + c.getString(1)));
+                        tr("独立资料空间：", "Separate library: ") + c.getString(1)));
                 }
             }
             main.post(() -> {
@@ -525,7 +599,9 @@ public final class XsHistoryActivity extends Activity {
                         requested.incrementAndGet(); library = ids.get(n);
                         selectedFolder = null; folderFilter.setText(tr("全部分类", "All folders"));
                         libraryButton.setText(names.get(n)); refresh();
-                    }).setNegativeButton(tr("取消", "Cancel"), null).show();
+                    }).setNeutralButton(tr("合并资料空间", "Combine libraries"),(d,n) ->
+                        startActivity(XsLibrariesActivity.intent(this)))
+                    .setNegativeButton(tr("取消", "Cancel"), null).show();
             });
         });
     }
@@ -550,12 +626,23 @@ public final class XsHistoryActivity extends Activity {
                 }).show());
         fields.addView(text(tr("停留表示可见曝光，不是已读证明。关闭记录会保留已有资料。",
             "Dwell measures visible exposure, not completed reading. Turning recording off preserves saved data.")));
+        Switch ads=new Switch(this); ads.setText(tr("隐藏推广（合成夹具）", "Hide ads (synthetic fixtures)"));
+        ads.setChecked(XsLibrarySettings.isAdCleanupEnabled(this)); fields.addView(ads);
+        Switch subscription=new Switch(this); subscription.setText(tr("隐藏会员营销（合成夹具）", "Hide subscription marketing (synthetic fixtures)"));
+        subscription.setChecked(XsLibrarySettings.isSubscriptionCleanupEnabled(this)); fields.addView(subscription);
+        Switch recommendations=new Switch(this); recommendations.setText(tr("隐藏推荐（合成夹具）", "Hide recommendations (synthetic fixtures)"));
+        recommendations.setChecked(XsLibrarySettings.isRecommendationCleanupEnabled(this)); fields.addView(recommendations);
+        fields.addView(text(tr("精简关闭时恢复页面；真实 X 规则尚未验收，偏好不启用真实网页精简。", "Turning cleanup off restores the page. Live X rules remain unvalidated; these preferences do not enable live cleanup.")));
+        ScrollView preferences=new ScrollView(this); preferences.addView(fields);
         new AlertDialog.Builder(this).setTitle(tr("记录设置", "Recording preferences"))
-            .setView(fields).setNegativeButton(tr("取消", "Cancel"), null)
+            .setView(preferences).setNegativeButton(tr("取消", "Cancel"), null)
             .setPositiveButton(tr("保存", "Save"), (d, n) -> {
                 XsLibrarySettings.setOpenEnabled(this, opens.isChecked());
                 XsLibrarySettings.setFeedEnabled(this, feed.isChecked());
                 XsLibrarySettings.setDwellThresholdMs(this, threshold[0]);
+                XsLibrarySettings.setAdCleanupEnabled(this, ads.isChecked());
+                XsLibrarySettings.setSubscriptionCleanupEnabled(this, subscription.isChecked());
+                XsLibrarySettings.setRecommendationCleanupEnabled(this, recommendations.isChecked());
                 XsLibraryWrites.invalidate(defaultLibrary);
                 toast(tr("偏好已保存；真实 X 采集仍待验收", "Preferences saved; live X capture remains gated"));
             }).show();
@@ -613,7 +700,7 @@ public final class XsHistoryActivity extends Activity {
         String[] types = {null,"ORIGINAL","REPLY","QUOTE","REPOST","BOOKMARK","LOCAL_SAVE"};
         String[] names = zh ? new String[]{"全部类型","原创","回复","引用","转帖","X 书签记录","手动链接"} :
             new String[]{"All types","Original","Reply","Quote","Repost","X bookmark record","Manual link"};
-        new AlertDialog.Builder(this).setTitle(tr("已确认的本人行为", "Confirmed own activity"))
+        new AlertDialog.Builder(this).setTitle(tr("本地收录类型（查看归属来源）", "Indexed type (check provenance)"))
             .setItems(names, (d, n) -> choice.selected(types[n], names[n])).show();
     }
 

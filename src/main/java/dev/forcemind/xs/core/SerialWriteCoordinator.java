@@ -12,9 +12,11 @@ public final class SerialWriteCoordinator implements AutoCloseable {
         new ArrayBlockingQueue<Runnable>(128), r -> new Thread(r,"xs-library-writer"),
         new ThreadPoolExecutor.AbortPolicy());
     private long epoch=1;
+    private int pending;
     private boolean closed;
     private final class Work implements Runnable {
         final long token; final Runnable write,skipped; final boolean mandatory;
+        private boolean finished;
         Work(long token,Runnable write,Runnable skipped){this(token,write,skipped,false);}
         Work(long token,Runnable write,Runnable skipped,boolean mandatory){this.token=token;this.write=write;this.skipped=skipped;this.mandatory=mandatory;}
         public void run(){
@@ -22,7 +24,15 @@ public final class SerialWriteCoordinator implements AutoCloseable {
             synchronized(SerialWriteCoordinator.this){accepted=mandatory||isCurrent(token);}
             // A barrier enqueued during this operation executes immediately after it.
             // Never hold the enqueue lock across database/file IO or host callbacks.
-            if(accepted)write.run();else skipped.run();
+            try { if(accepted)write.run();else skipped.run(); } finally { finish(); }
+        }
+        void discardQueued() {
+            try { if(mandatory)write.run();else skipped.run(); } finally { finish(); }
+        }
+        private void finish() {
+            synchronized(SerialWriteCoordinator.this) {
+                if(!finished) { finished=true;pending--; }
+            }
         }
     }
     public synchronized long token() { return epoch; }
@@ -31,19 +41,34 @@ public final class SerialWriteCoordinator implements AutoCloseable {
     public synchronized boolean submit(long token,Runnable write,Runnable skipped) {
         if(write==null||skipped==null)throw new IllegalArgumentException();
         if(!isCurrent(token))return false;
+        pending++;
         try{executor.execute(new Work(token,write,skipped));return true;}
-        catch(java.util.concurrent.RejectedExecutionException full){return false;}
+        catch(java.util.concurrent.RejectedExecutionException full){pending--;return false;}
     }
     /** Invalidate at enqueue time, then clean stale work and erase before future writes. */
     public synchronized boolean barrier(Runnable erase) {
         if(closed||erase==null)return false;
         epoch++;
         List<Runnable> stale=new ArrayList<>();executor.getQueue().drainTo(stale);
-        Runnable discard=() -> {for(Runnable task:stale){if(task instanceof SerialWriteCoordinator.Work){Work old=(Work)task;if(old.mandatory)old.write.run();else old.skipped.run();}}};
+        Runnable discard=() -> {
+            Throwable failure=null;
+            for(Runnable task:stale) {
+                try { if(task instanceof SerialWriteCoordinator.Work)((Work)task).discardQueued(); }
+                catch(RuntimeException|Error problem) { if(failure==null)failure=problem;else if(problem!=failure)failure.addSuppressed(problem); }
+            }
+            if(failure instanceof Error)throw (Error)failure;
+            if(failure!=null)throw (RuntimeException)failure;
+        };
         // Queue was drained atomically with submissions; the sole worker preserves erasure order.
+        pending++;
         executor.execute(new Work(epoch,() -> {try{discard.run();}finally{erase.run();}},discard,true));
         return true;
     }
     public synchronized long invalidate() { epoch++; return epoch; }
+    /** Retire only truly idle queues; issued tickets can never become current again. */
+    public synchronized boolean retireIfIdle() {
+        if(pending!=0)return false;
+        closed=true;epoch++;executor.shutdown();return true;
+    }
     @Override public synchronized void close() { closed=true;epoch++;executor.shutdown(); }
 }

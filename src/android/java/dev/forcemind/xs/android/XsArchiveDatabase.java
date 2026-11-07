@@ -9,6 +9,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 import dev.forcemind.xs.core.ArchiveSchema;
 import dev.forcemind.xs.core.ArchiveSearch;
 import dev.forcemind.xs.core.PostUrls;
+import dev.forcemind.xs.core.OwnActionSession;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,6 +47,10 @@ public final class XsArchiveDatabase extends SQLiteOpenHelper {
             for (String sql : ArchiveSchema.MIGRATE_2_TO_3) db.execSQL(sql);
             version = 3;
         }
+        if (version == 3 && newVersion >= 4) {
+            for (String sql : ArchiveSchema.MIGRATE_3_TO_4) db.execSQL(sql);
+            version = 4;
+        }
         if (version == newVersion) return;
         // Fail safely rather than deleting existing history for an unsupported version.
         throw new IllegalStateException("Xs migration required: " +
@@ -63,7 +68,7 @@ public final class XsArchiveDatabase extends SQLiteOpenHelper {
         try {
             insertPostIfMissing(db, accountId, id, author, text, publishedAtMs, openedAtMs);
             db.execSQL(
-                "UPDATE posts SET opened_count=opened_count+1, " +
+                "UPDATE posts SET opened_count=MIN(opened_count+1,2147483647), " +
                 "last_seen_at_ms=MAX(last_seen_at_ms, ?), " +
                 "last_opened_at_ms=MAX(COALESCE(last_opened_at_ms, 0), ?) " +
                 "WHERE account_id=? AND post_id=?",
@@ -111,7 +116,7 @@ public final class XsArchiveDatabase extends SQLiteOpenHelper {
             boolean inserted = db.insertWithOnConflict("history_events", null, event,
                 SQLiteDatabase.CONFLICT_IGNORE) != -1;
             if (inserted) {
-                db.execSQL("UPDATE posts SET opened_count=opened_count+1, " +
+                db.execSQL("UPDATE posts SET opened_count=MIN(opened_count+1,2147483647), " +
                     "last_seen_at_ms=MAX(last_seen_at_ms,?), " +
                     "last_opened_at_ms=MAX(COALESCE(last_opened_at_ms,0),?) " +
                     "WHERE account_id=? AND post_id=?",
@@ -282,39 +287,87 @@ public final class XsArchiveDatabase extends SQLiteOpenHelper {
         return valid(key) && key.length() <= 256;
     }
 
-    /**
-     * Record *verified* self-content activity separately from visits.
-     * No synthetic action timestamp; unknown action time stays NULL.
-     */
+    /** A string-only call cannot prove a successful action or actor. Kept inactive for binary callers. */
+    @Deprecated
     public boolean recordPersonalAction(String accountId, String postUrl,
                                         String actionType, String author, String text,
                                         Long publishedAtMs, Long actionAtMs,
                                         long observedAtMs) {
-        String id = PostUrls.extractPostId(postUrl);
-        if (!valid(accountId) || id == null || !validAction(actionType) ||
-                observedAtMs <= 0 || (actionAtMs != null && actionAtMs <= 0)) return false;
-        SQLiteDatabase db = getWritableDatabase();
+        return false;
+    }
+
+    /** Persist only a current native-owned admission. Call through the shared library write queue. */
+    public boolean recordConfirmedOwnAction(OwnActionSession.Admission admitted,
+                                             String author, String text, Long publishedAtMs) {
+        if (admitted == null) return false;
+        return admitted.persistIfCurrent(() -> persistConfirmedOwnAction(admitted,author,text,publishedAtMs));
+    }
+
+    private boolean persistConfirmedOwnAction(OwnActionSession.Admission admitted,
+                                               String author,String text,Long publishedAtMs) {
+        SQLiteDatabase db=getWritableDatabase();
         db.beginTransaction();
         try {
-            insertPostIfMissing(db, accountId, id, author, text, publishedAtMs, observedAtMs);
-            updateKnownMetadata(db, accountId, id, author, text, publishedAtMs);
-            db.execSQL("UPDATE posts SET last_seen_at_ms=MAX(last_seen_at_ms, ?) " +
-                       "WHERE account_id=? AND post_id=?",
-                       new Object[]{observedAtMs, accountId, id});
-            ContentValues values = new ContentValues();
-            values.put("account_id", accountId);
-            values.put("post_id", id);
-            values.put("action_type", actionType);
-            if (actionAtMs == null) values.putNull("action_at_ms");
-            else values.put("action_at_ms", actionAtMs);
-            values.put("source", "verified_self_activity");
-            // Idempotent when refreshing an existing action: keep its original timestamp.
-            db.insertWithOnConflict("user_actions", null, values, SQLiteDatabase.CONFLICT_IGNORE);
+            if (!admitted.isCurrent()) return false;
+            try (Cursor existing=db.rawQuery("SELECT 1 FROM own_action_events WHERE account_id=? AND event_key=?",
+                    new String[]{admitted.libraryId,admitted.eventKey})) {
+                if (existing.moveToFirst()) return false;
+            }
+            if (admitted.reversal) {
+                try (Cursor target=db.rawQuery("SELECT post_id,action_type,actor_id,state,actor_provenance,action_at_ms,observed_at_ms FROM own_actions " +
+                        "WHERE account_id=? AND action_key=?",new String[]{admitted.libraryId,admitted.actionKey})) {
+                    if (!target.moveToFirst() || !admitted.postId.equals(target.getString(0)) ||
+                            !"REPOST".equals(target.getString(1)) || !admitted.actorId.equals(target.getString(2)) ||
+                            !"ACTIVE".equals(target.getString(3)) || !"NATIVE_FIXTURE".equals(target.getString(4)) ||
+                            (!target.isNull(6) && admitted.observedAtMs < target.getLong(6)) ||
+                            (!target.isNull(5) && admitted.actionAtMs != null && admitted.actionAtMs < target.getLong(5))) return false;
+                }
+                ContentValues state=new ContentValues();
+                state.put("state","REVERSED");
+                if (admitted.actionAtMs == null) state.putNull("state_at_ms");
+                else state.put("state_at_ms",admitted.actionAtMs);
+                db.update("own_actions",state,"account_id=? AND action_key=?",
+                    new String[]{admitted.libraryId,admitted.actionKey});
+            } else {
+                // A repeated successful result must not become a second creation/active repost.
+                try (Cursor prior=db.rawQuery("SELECT 1 FROM own_actions WHERE account_id=? AND post_id=? " +
+                        "AND action_type=? AND actor_id=? AND source='native_fixture'" +
+                        (admitted.type == OwnActionSession.Type.REPOST ? " AND state='ACTIVE'" : ""),
+                        new String[]{admitted.libraryId,admitted.postId,admitted.type.name(),admitted.actorId})) {
+                    if (prior.moveToFirst()) return false;
+                }
+                insertPostIfMissing(db,admitted.libraryId,admitted.postId,author,text,publishedAtMs,admitted.observedAtMs);
+                updateKnownMetadata(db,admitted.libraryId,admitted.postId,author,text,publishedAtMs);
+                ContentValues action=new ContentValues();
+                action.put("account_id",admitted.libraryId); action.put("action_key",admitted.actionKey);
+                action.put("post_id",admitted.postId); action.put("related_post_id",admitted.relatedPostId); action.put("action_type",admitted.type.name());
+                action.put("actor_id",admitted.actorId); action.put("actor_provenance","NATIVE_FIXTURE");
+                action.put("source","native_fixture"); action.put("observed_at_ms",admitted.observedAtMs);
+                action.put("state","ACTIVE");
+                if (admitted.actionAtMs == null) { action.putNull("action_at_ms"); action.putNull("state_at_ms"); }
+                else { action.put("action_at_ms",admitted.actionAtMs); action.put("state_at_ms",admitted.actionAtMs); }
+                if (db.insertWithOnConflict("own_actions",null,action,SQLiteDatabase.CONFLICT_IGNORE) == -1) return false;
+            }
+            ContentValues event=new ContentValues();
+            event.put("account_id",admitted.libraryId); event.put("action_key",admitted.actionKey);
+            event.put("event_key",admitted.eventKey); event.put("event_type",admitted.reversal ? "REVERSED" : "CONFIRMED");
+            if (admitted.actionAtMs == null) event.putNull("event_at_ms"); else event.put("event_at_ms",admitted.actionAtMs);
+            event.put("observed_at_ms",admitted.observedAtMs); event.put("source","native_fixture");
+            db.insertOrThrow("own_action_events",null,event);
             db.setTransactionSuccessful();
             return true;
-        } finally {
-            db.endTransaction();
-        }
+        } finally { db.endTransaction(); }
+    }
+
+    /** Current entries and append-only provenance/reversal trail; never an identity authority. */
+    public Cursor ownActions(String libraryId,String postId) {
+        requireAccount(libraryId);
+        return getReadableDatabase().rawQuery("SELECT a.action_key,a.post_id,a.action_type,a.actor_id," +
+            "a.actor_provenance,a.source,a.action_at_ms,a.observed_at_ms,a.state,a.state_at_ms," +
+            "e.event_type,e.event_at_ms,e.observed_at_ms,e.source,a.related_post_id FROM own_actions a " +
+            "JOIN own_action_events e ON e.account_id=a.account_id AND e.action_key=a.action_key " +
+            "WHERE a.account_id=? AND a.post_id=? ORDER BY e.observed_at_ms DESC,e.event_key DESC",
+            new String[]{libraryId,postId});
     }
 
     /**
@@ -355,7 +408,7 @@ public final class XsArchiveDatabase extends SQLiteOpenHelper {
     /**
      * Batch-imports own posts from a user-provided archive file. This updates
      * the local index but never creates synthetic OPEN_POST or FEED_VISIBLE
-     * events. Duplicate archive actions are ignored by v2 unique indices.
+     * events. Duplicate archive actions retain their first provenance and import time.
      */
     public int importArchivedOwnPosts(String accountId,
                                       List<XsArchiveImporter.Record> rows,
@@ -370,8 +423,7 @@ public final class XsArchiveDatabase extends SQLiteOpenHelper {
         try {
             for (XsArchiveImporter.Record row : rows) {
                 if (row == null || row.postId == null ||
-                    !row.postId.matches("[0-9]{1,20}") ||
-                    !validAction(row.actionType)) continue;
+                    !row.postId.matches("[0-9]{1,20}")) continue;
                 insertPostIfMissing(db, accountId, row.postId, null,
                                     row.body, row.publishedAtMs, importedAtMs);
                 updateKnownMetadata(db, accountId, row.postId, null,
@@ -379,6 +431,8 @@ public final class XsArchiveDatabase extends SQLiteOpenHelper {
                 db.execSQL("UPDATE posts SET last_seen_at_ms=MAX(last_seen_at_ms, ?) " +
                            "WHERE account_id=? AND post_id=?",
                            new Object[]{importedAtMs, accountId, row.postId});
+                // Ambiguous exported text is searchable but not invented own activity.
+                if (!validOwnAction(row.actionType)) continue;
                 ContentValues action = new ContentValues();
                 action.put("account_id", accountId);
                 action.put("post_id", row.postId);
@@ -386,8 +440,31 @@ public final class XsArchiveDatabase extends SQLiteOpenHelper {
                 if (row.actionAtMs == null) action.putNull("action_at_ms");
                 else action.put("action_at_ms", row.actionAtMs);
                 action.put("source", "local_x_archive");
-                if (db.insertWithOnConflict("user_actions", null, action,
-                                            SQLiteDatabase.CONFLICT_IGNORE) != -1) {
+                db.insertWithOnConflict("user_actions", null, action, SQLiteDatabase.CONFLICT_IGNORE);
+                // v3 imports migrated with legacy IDs are already the same archive statement.
+                boolean exists;
+                try (Cursor old=db.rawQuery("SELECT 1 FROM own_actions WHERE account_id=? AND post_id=? " +
+                        "AND action_type=? AND source='local_x_archive' AND action_at_ms" +
+                        (row.actionAtMs == null ? " IS NULL" : "=?"),
+                        row.actionAtMs == null ? new String[]{accountId,row.postId,row.actionType} :
+                            new String[]{accountId,row.postId,row.actionType,Long.toString(row.actionAtMs)})) {
+                    exists=old.moveToFirst();
+                }
+                if (!exists) {
+                    String key="archive:" + row.postId + ":" + row.actionType + ":" + row.actionAtMs;
+                    ContentValues own=new ContentValues();
+                    own.put("account_id",accountId); own.put("action_key",key); own.put("post_id",row.postId);
+                    own.put("action_type",row.actionType); own.put("related_post_id",row.relatedPostId); own.putNull("actor_id");
+                    own.put("actor_provenance","USER_CONFIRMED_ARCHIVE"); own.put("source","local_x_archive");
+                    if (row.actionAtMs == null) own.putNull("action_at_ms"); else own.put("action_at_ms",row.actionAtMs);
+                    own.put("observed_at_ms",importedAtMs); own.put("state","UNKNOWN"); own.putNull("state_at_ms");
+                    db.insertOrThrow("own_actions",null,own);
+                    ContentValues event=new ContentValues();
+                    event.put("account_id",accountId); event.put("action_key",key); event.put("event_key",key);
+                    event.put("event_type","ARCHIVE_IMPORTED");
+                    if (row.actionAtMs == null) event.putNull("event_at_ms"); else event.put("event_at_ms",row.actionAtMs);
+                    event.put("observed_at_ms",importedAtMs); event.put("source","local_x_archive");
+                    db.insertOrThrow("own_action_events",null,event);
                     inserted++;
                 }
             }
@@ -431,10 +508,9 @@ public final class XsArchiveDatabase extends SQLiteOpenHelper {
         } finally { db.endTransaction(); }
     }
 
-    private static boolean validAction(String type) {
+    private static boolean validOwnAction(String type) {
         return "ORIGINAL".equals(type) || "REPLY".equals(type) ||
-               "QUOTE".equals(type) || "REPOST".equals(type) ||
-               "BOOKMARK".equals(type);
+               "QUOTE".equals(type) || "REPOST".equals(type);
     }
 
     private static void insertPostIfMissing(SQLiteDatabase db, String accountId, String id,

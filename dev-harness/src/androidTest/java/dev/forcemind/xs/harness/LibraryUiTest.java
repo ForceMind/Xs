@@ -23,6 +23,7 @@ import dev.forcemind.xs.android.XsLibrarySettings;
 import dev.forcemind.xs.android.XsLibraryWrites;
 import dev.forcemind.xs.android.XsLocalSpaces;
 import dev.forcemind.xs.core.ArchiveSearch;
+import dev.forcemind.xs.core.OwnActionSession;
 
 import org.junit.After;
 import org.junit.Before;
@@ -151,6 +152,60 @@ public final class LibraryUiTest {
             assertTrue(c.getString(12).contains("reviewed"));
             assertEquals(0, c.getInt(7));
         }
+    }
+
+    @Test public void nativeConfirmedActivityAndReversalAreSearchableInActualIndexUi() throws Exception {
+        OwnActionSession nativeOwner=OwnActionSession.forOfflineFixture(library,"ui-operation");
+        OwnActionSession.Admission confirmed=nativeOwner.confirm(nativeOwner.begin(OwnActionSession.Type.REPOST,url("920"),"fixture:me"),
+            "fixture:me",url("920"),OwnActionSession.Type.REPOST,true,null,System.currentTimeMillis());
+        OwnActionSession.Admission reversed=nativeOwner.confirm(nativeOwner.beginReversal(confirmed),"fixture:me",url("920"),
+            OwnActionSession.Type.REPOST,true,null,System.currentTimeMillis());
+        CountDownLatch written=new CountDownLatch(1);
+        java.util.concurrent.atomic.AtomicReference<Throwable> failure=new java.util.concurrent.atomic.AtomicReference<>();
+        assertTrue(XsLibraryWrites.submit(XsLibraryWrites.ticket(library), () -> {
+            try {
+                assertTrue(db.recordConfirmedOwnAction(confirmed,"other","ownneedle confirmed repost",null));
+                assertFalse(db.recordConfirmedOwnAction(confirmed,"other","duplicate",null));
+                assertTrue(db.recordConfirmedOwnAction(reversed,null,null,null));
+            } catch(Throwable problem) { failure.set(problem); }
+            finally { written.countDown(); }
+        }));
+        assertTrue(written.await(5,TimeUnit.SECONDS));
+        if(failure.get() != null) throw new AssertionError(failure.get());
+        openScreen(); click(XsHistoryActivity.ID_OWN_ACTIONS); awaitCount(1);
+        assertTrue(rowsText().contains("ownneedle")); assertTrue(rowsText().contains("REVERSED"));
+        assertTrue(rowsText().contains("NATIVE_FIXTURE"));
+        instrumentation.runOnMainSync(() -> ((EditText)screen.findViewById(XsHistoryActivity.ID_QUERY)).setText("ownneedle"));
+        awaitCount(1);
+        instrumentation.runOnMainSync(() -> {
+            ListView list=screen.findViewById(XsHistoryActivity.ID_RESULTS);
+            list.performItemClick(list.getChildAt(0),0,list.getAdapter().getItemId(0));
+        });
+        clickDialogButton(android.R.id.button3,label("整理","Organize"));
+        clickAccessible(label("本人行为轨迹","Own activity trail"));
+        accessible(label("本人行为轨迹","Own activity trail"));
+        assertTrue(instrumentation.getUiAutomation().getRootInActiveWindow().findAccessibilityNodeInfosByText("fixture:me").size() > 0);
+        clickDialogButton(android.R.id.button1,label("关闭","Close"));
+        try(Cursor views=db.timeline(library,null,20)) { assertEquals(0,views.getCount()); }
+    }
+
+    @Test public void existingLibraryIntentSelectsSeparateScopeWithoutChangingDefault() {
+        String separate="local:restored-fixture";
+        db.ensureLibrary(separate,"Restored fixture");
+        assertTrue(db.favorite(separate,url("940"),"author","restored-scope-marker",null,System.currentTimeMillis()));
+        screen=instrumentation.startActivitySync(new Intent(app,XsHistoryActivity.class)
+            .putExtra(XsHistoryActivity.EXTRA_LIBRARY,separate).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+        instrumentation.waitForIdleSync(); click(XsHistoryActivity.ID_FAVORITES);
+        awaitCount(1); assertTrue(rowsText().contains("restored-scope-marker"));
+        assertEquals(library,XsLocalSpaces.defaultLibrary(app));
+        instrumentation.runOnMainSync(screen::finish); instrumentation.waitForIdleSync();
+        screen=instrumentation.startActivitySync(new Intent(app,XsHistoryActivity.class)
+            .putExtra(XsHistoryActivity.EXTRA_LIBRARY,"local:does-not-exist").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+        instrumentation.waitForIdleSync(); click(XsHistoryActivity.ID_FAVORITES); awaitCount(0);
+        try(Cursor scopes=db.libraries()) {
+            while(scopes.moveToNext()) assertNotEquals("local:does-not-exist",scopes.getString(3));
+        }
+        assertEquals(library,XsLocalSpaces.defaultLibrary(app));
     }
 
     private void seed() {

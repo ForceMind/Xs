@@ -49,5 +49,9 @@
     <string name="download_images">Download selected post images</string>
     <string name="download">Download</string>
     <string name="image_item">Image %1$d</string>
-    <string name="images_unavailable">No supported images found for this post. Live X layouts still need validation; videos are not supported yet.</string>
+    <string name="images_unavailable">No supported images found for this post. Live X layouts still need validation.</string>
+    <string name="download_video">Download complete video</string>
+    <string name="video_item">Video %1$d</string>
+    <string name="video_unavailable">No permitted direct MP4 found. Blob, streaming playlists and protected videos are unsupported. Live X layouts still need validation.</string>
+    <string name="video_permission_notice">Continue only if you have permission to save this video and downloading is allowed. Only complete standard MP4 up to 100 MiB / 10 minutes is supported. No stream capture, DRM or access-control bypass. The live X layout remains unverified.</string>
 </resources>

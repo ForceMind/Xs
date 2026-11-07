@@ -4,15 +4,15 @@
 
 **Xs is an independent, local-first enhancement for using X.** Official X web supplies browsing and social features; an app-owned on-device library provides open history, local favorites, organization, own-activity indexing, image/video downloads and sharing selected resources to other apps. No official APK patching, new social backend or account proxy.
 
-> **Internal development PoC, not a production client.** Schema v3 preserves old namespaces and adds app-owned favorites, notes/tags and dwell queries. Packaged native-pull observation is wired only in synthetic WebViews; live X automatic capture stays disabled. Narrow image tasks, saved-image UI and grant-only actual-file sharing are implemented. Live login, X selectors and recipient applications remain unverified. See the [implementation evidence](docs/IMPLEMENTATION_EVIDENCE.zh-CN.md).
+> **Internal development PoC, not a production client.** The existing history/dwell, favorites and image-sharing slice now has schema v4 own-action/reversal indexing, narrow standard-MP4 downloads/sharing, reversible cleanup fixtures, metadata backup/restore and explicit library consolidation. Live X automatic capture, own-action confirmation and cleanup remain disabled. Local Android builds/lint passed; API 30/36 instrumentation for this increment is **PENDING**; actual login, X media sources and recipient apps need separate acceptance. See [this increment's evidence and limits](docs/ROUND_C_EVIDENCE.zh-CN.md). Prior offline results remain in the [existing implementation evidence](docs/IMPLEMENTATION_EVIDENCE.zh-CN.md).
 
 ## Current implementation boundary
 
-- Offline: immediate native-confirmed opens, late text enrichment, navigation/exposure deduplication, 1.2/3/5-second continuous dwell, never-opened and duration filters.
-- Local library: v1/v2→v3 preserving migrations, separate legacy namespaces, independent favorites/categories/notes/tags and history erasure. Explicit legacy consolidation is still pending.
-- Images: explicit current-post candidate selection, bounded downloads and file validation, offline preview/category/export, single/multiple read-only content-URI sharing with 24-hour copies. Interrupted downloads restart after reselecting the source; reliable background scheduling is pending.
-- Pending: live X activation, confirmed own-action/reversal capture, complete video, reversible filtering, backup/recovery, stable release signing and device/recipient compatibility. Synthetic success does not complete these gates.
-
+- Offline history: immediate native-confirmed opens, late text enrichment, navigation/exposure deduplication, 1.2/3/5-second continuous dwell, never-opened and duration filters.
+- Local data: v1/v2/v3→v4 preserving migrations, separate libraries, independent favorites/categories/notes/tags and history erasure. Own-action records keep actor provenance, unknown times/current state and reversal history. Native fixture operations require a matching successful result; page claims and restored provenance strings cannot issue confirmation proofs.
+- Media: explicit current-post image/standard-MP4 selection, bounded downloads, validation, offline preview/category/export and read-only actual-file sharing with 24-hour copies. Interrupted downloads require reselecting the source; resumable transfers and reliable background scheduling remain pending.
+- Portability: plaintext metadata backups up to 16 MiB/20,000 records, schema-3→4 restore into a separate library, and explicit consolidation of 2–4 libraries into a new library within 8 MiB/20,000 records. Media files, download tasks and web sessions are excluded.
+- Pending: this increment's Android instrumentation, live X enablement and selectors, real own-action adapters, X video downloads, recipient apps, long-running reliability, full media recovery and release signing. These additions do not complete batches C/D or their live gates.
 
 ## Continue development here
 
@@ -43,16 +43,21 @@
 | Capability | Current state |
 | --- | --- |
 | Android System WebView host | Implemented; live login, media and sustained physical-device acceptance pending |
-| SQLite/FTS, pagination, categories and archive UI | v3 preserves old namespaces and maps them to separate libraries; explicit consolidation pending |
+| SQLite/FTS, pagination, categories and archive UI | v4 preserves v1/v2/v3 data and separate scopes; own-activity index and provenance trail added |
 | Manual post-link saving and incoming share-to-Xs | Implemented; link-only is not a body snapshot or automatic history |
-| tweets.js/tweet.js import | One selected file/part up to 16 MiB; ownership confirmation required |
+| tweets.js/tweet.js import | One file/part up to 16 MiB; user-confirmed ownership does not verify a web login or actor; ambiguous RT text stays searchable without an invented repost |
 | Native-pull observer and strict JSON validation | Packaged implementation and synthetic integration tests; live X activation disabled |
 | Opens and dwell | Immediate opens, enrichment, deduplication, threshold selection and offline filters implemented for fixtures; live X pending |
-| Own activity | Existing confirmed-ownership archive import retained; real-time success/reversal pending |
+| Own activity | Native fixture operation/result confirmation, four types, reversal trail and archive provenance implemented; live adapter disabled; unknown actor/time/current state preserved |
 | App-native favorites, notes/tags and categories | Implemented; native browser favorites are link-only until live snapshots are validated |
 | Images, assets, outbound file sharing | Implemented narrow image pipeline and actual-file grants; actual X downloads and receiver apps unverified |
-| Complete video | Not implemented; manifests, blob URLs and fragments rejected |
-| Ad/subscription/recommendation cleanup | Reversible rules pending; no entitlement bypass or hiding security prompts |
+| Video downloads/sharing | Explicit direct standard-MP4 selection, validation, assets/preview/sharing implemented in source; H.264 with optional AAC, ≤100 MiB/10 minutes; local build/lint passed; Android instrumentation PENDING, actual X/receivers unverified |
+| Ad/subscription/recommendation cleanup | Three independent default-off switches, reversible rules and lifecycle control in synthetic fixtures; not attached to the live browser |
+| Metadata backup/restore and consolidation | Plaintext backup ≤16 MiB/20,000 records, schema-3→4 new-library restore; combine 2–4 libraries into another library, ≤8 MiB/20,000 records; sources/default preserved; no media files/tasks/web sessions |
+
+Video validation checks MP4 structure/sample ranges, transferred length, tracks and duration, plus limited decoding of first/tail video frames and optional AAC audio. It does not prove every frame plays or validate recipient apps. Blob URLs, HLS/DASH, fragments, encrypted and unknown formats are rejected; browser session material is not exported to obtain downloads.
+
+Backup files are plaintext and go to the document app the user selects. Checksums detect damage, not authorship or account identity; restoring provenance does not establish native action authority. Consolidation uses the metadata snapshot shown in the preview: later ordinary edits require a new preview, while source erasure or epoch invalidation rejects commit. Conflicting sources for the same legacy action identity reject consolidation. Removing the new combined library rolls back the result while source libraries and the default stay intact. Neither operation moves media files.
 
 ## Implementation direction
 
@@ -64,7 +69,7 @@ Delivery: **A browsing/immediate open history → early B optional no-click feed
 
 ## Available manual flow
 
-Use “Save this post locally” / “My local archive” in the browser menu, or the incoming Android “Save to Xs” action. Native confirmation creates a local space and saves the link without fake reading events. This is a companion entry, not a permanent substitute for automatic history.
+The browser menu can favorite the current post link, explicitly select images or a supported direct MP4, and open the asset library. Completed files support preview/export/system sharing. The native library provides opens, dwell, saved items, own-activity indexing, offline search, “Backup / restore” and explicit consolidation from the library chooser. Incoming “Save to Xs” remains a link-only companion path without fake reading events. A page without a supported direct resource reports it unavailable; a playing blob is not a finished download.
 
 ## Privacy, migration and deletion
 
@@ -75,11 +80,11 @@ Unfavorite, clear history, delete asset, clear cache, X logout and delete librar
 ## Layout and checks
 
 ```text
-app-android/          Browser, native favorites/image selection/sharing, fixture integration
+app-android/          Browser, native favorites/image and video selection/sharing, fixture integration
 xs-runtime/           Android on-device archive library
 dev-harness/          Offline synthetic host, NOT X
-src/main/java/        URL/v3 schema/query, capture state, bounded writes, strict JSON, media policy
-src/android/java/     SQLite/import/library UI, native pull, images and grant-only sharing
+src/main/java/        URL/v4 schema/query, action admission/capture state, bounded writes, media/backup/merge policy
+src/android/java/     SQLite/import/library UI, native pull, media and grant-only sharing
 tests/                JVM/SQLite/regression tests
 scripts/              Engineering checks
 docs/                 Current plans, decisions and acceptance
