@@ -142,10 +142,10 @@ public final class GovernanceUiTest {
         Set<String> before=libraries();
         screen=instrumentation.startActivitySync(XsLibrariesActivity.intent(app).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK));
         awaitText("Governance fixture A");clickText("Governance fixture A");clickText("Governance fixture B");setEditor(0,"Governance native merged fixture");
-        clickText("Check & preview","检查并预览");awaitText("Create a separate library?","创建独立资料空间？");
+        clickConsolidationPreview();awaitText("Create a separate library?","创建独立资料空间？");
         assertTrue(activeText().contains("Governance native merged fixture"));clickText("Cancel","取消");
         awaitText("Canceled; no library created.","已取消；未创建资料空间。");assertEquals(before,libraries());
-        clickText("Check & preview","检查并预览");awaitText("Create a separate library?","创建独立资料空间？");clickText("Create library","确认创建");
+        clickConsolidationPreview();awaitText("Create a separate library?","创建独立资料空间？");clickText("Create library","确认创建");
         String result=awaitNewLibrary(before);assertEquals(defaultLibrary,XsLocalSpaces.current(app));
         // Equal-time conflicting bodies retain one current selection and both source versions.
         // Search the version index to verify preservation without inventing a later edit time.
@@ -412,6 +412,32 @@ public final class GovernanceUiTest {
         // child document. The user's file-title tap goes through SAF's gesture handler.
         touchSystemDocument(awaitNode(n->systemDocumentNode(n)&&!isEditor(n)&&name.equals(text(n))));
         await(()->!documentsUiActive(),"SAF returned the selected document");
+    }
+    private void clickConsolidationPreview(){
+        AccessibilityNodeInfo preview=awaitNode(n->nativeFixtureNode(n)&&String.valueOf(n.getClassName()).endsWith("Button")&&
+            ("Check & preview".equals(text(n))||"检查并预览".equals(text(n))));
+        if(!preview.isVisibleToUser()&&inputMethodWindowVisible()) {
+            assertTrue("Only the fixed native consolidation form may dismiss its actual keyboard",fixedConsolidationForm());
+            android.util.Log.i("XsGovernanceFixture","Dismiss actual IME over fixed native consolidation form; name and two sources verified");
+            assertTrue("One real system Back dismisses the observed consolidation keyboard",
+                instrumentation.getUiAutomation().performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK));
+            await(()->!inputMethodWindowVisible()&&fixedConsolidationForm(),
+                "The keyboard closes while the fixed name and exactly the same two checked sources remain");
+        }
+        // Retain the original show-on-screen, visible-node and real native-click path.
+        clickText("Check & preview","检查并预览");
+    }
+    private boolean nativeFixtureNode(AccessibilityNodeInfo node){
+        return node.isEnabled()&&node.getPackageName()!=null&&app.getPackageName().contentEquals(node.getPackageName());
+    }
+    private boolean fixedConsolidationForm(){
+        AccessibilityNodeInfo active=instrumentation.getUiAutomation().getRootInActiveWindow();
+        if(!(screen instanceof XsLibrariesActivity)||active==null||!nativeFixtureNode(active))return false;
+        if(find(n->nativeFixtureNode(n)&&("Combine into a separate library".equals(text(n))||"合并到独立资料空间".equals(text(n))))==null)return false;
+        if(find(n->nativeFixtureNode(n)&&isEditor(n)&&"Governance native merged fixture".equals(text(n)))==null)return false;
+        List<String> checked=new ArrayList<>();
+        collect(active,n->{if(nativeFixtureNode(n)&&String.valueOf(n.getClassName()).endsWith("CheckBox")&&n.isCheckable()&&n.isChecked())checked.add(text(n));return false;},new int[]{0});
+        return checked.size()==2&&checked.contains("Governance fixture A")&&checked.contains("Governance fixture B");
     }
     private void setEditor(int index,String value) {
         List<AccessibilityNodeInfo> fields=new ArrayList<>();AccessibilityNodeInfo root=instrumentation.getUiAutomation().getRootInActiveWindow();collect(root,n->{if(isEditor(n)&&n.isVisibleToUser())fields.add(n);return false;},new int[]{0});

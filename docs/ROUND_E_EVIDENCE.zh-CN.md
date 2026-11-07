@@ -104,3 +104,16 @@ API30 Browser已实际PAUSED/STOPPED、真实DocsUI显示正确fixture目录，�
 下一修正限定合成触发契约：真实点击SPA arm并观察onclick/trusted生效，打开真实SAF并确认native上传仍pending后，由标准evaluateJavascript一次调用本地HTML定义的合成函数，执行真实history.pushState敏感路由→HOME。用例目标是实际pending选择器期间的瞬时SPA路由失效，不再依赖与该目标无关的visibilitychange必达时序。仍要求两个实际URL、原document marker、真实WebView native回调顺序、最终URL等于原URL、真实选择后的FileList为空和旧callback清空；不手调Client/Activity结果、伪造URI或写入通过标志。完整导航的visibility用例保留；未扩大超时/自动重跑/削弱业务断言。新增失败诊断仅含白名单合成方法的有限状态/路由类别，不采正文、私密输入或任意网页数据。
 
 CI80前实际编译app测试APK及appLint通过：121 tasks/16秒；[本地构建摘要](evidence/round-e-pre80-build.json)。Gov/生产/Provider/legacy未变，未以编译替代下一轮真实624/20验收。
+
+
+## CI80：SPA四版全部通过；API27合并表单按钮被IME压出可见区
+
+[CI80 42415353729](https://github.com/ForceMind/Xs/actions/runs/42415353729) 的head `22894747b40d64fcc00cc8d252257ab13ad40778` / tree `854c8661f8227637a5df9f897c3228b78e066fc8`。实际624主执行中623通过/1失败/0错误跳过；Browser24/24和四版真实legacy升级均通过。API26/30/36各156主用例及5driver通过；API27 client104全过，harness52中1项Gov合并预览点击前失败，其后四driver未运行。实际16attempted driver、36个外部native phase全通过；[完整原始报告](evidence/round-e-ci80-results.json)包含38 APK角色副本/27个不同字节摘要、ZIP/公开证书/8份真实UTP设备记录和原始driver证据。
+
+新的SPA刺激已在四版真实SAF pending状态执行一次真实pushState敏感→HOME，两个实际URL、原document marker、有序native回调及真实选文件后的旧结果拒绝断言均通过；这不是visibility事件必达验收。80四版Gov保存用例均未出现SAF IME关闭marker，故不能声称80触发了该条件分支；79的实际分支触发及同case ZIP PASS保留为独立历史证据。
+
+API27实际导出AX（没有PNG，原生Activity保持FLAG_SECURE）显示IME窗口(0,391)-(320,640)，app可见内容高至391；合并页固定名称和A/B已出现，Check & preview Button bounds(24,515)-(296,391)、enabled/clickable但不可见。失败尚未进入合并事务，不能据此声称生产滚动损坏。
+
+下一最小test helper仅在合并目标不可见且真实IME存在时，核对target owner、XsLibrariesActivity、固定标题/名称、恰好A/B两个已选来源，执行一次真实系统Back；必须确认IME消失、同表单/名称/两个来源选择保留，然后仍由原SHOW_ON_SCREEN→visible→native ACTION_CLICK进入预览。预览/取消/创建/撤销/版本/来源/default全部原断言保留，未增加超时或点击不可见控件。Browser/生产/Provider/legacy未变。
+
+CI81前最终helper含固定合成分支marker的测试APK及harnessLint实际构建通过：88 tasks/15秒；[本地摘要](evidence/round-e-pre81-build.json)。下一轮仍须实际624/20结果，条件marker仅在真实执行时计覆盖。
