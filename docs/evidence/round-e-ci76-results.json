@@ -1,0 +1,2300 @@
+{
+  "schema_version": 1,
+  "repository": "ForceMind/Xs",
+  "recorded_at_utc": "2026-11-07T20:17:59.729539+00:00",
+  "run": {
+    "id": 42409507801,
+    "number": 76,
+    "event": "pull_request",
+    "status": "completed",
+    "conclusion": "failure",
+    "url": "https://github.com/ForceMind/Xs/actions/runs/42409507801",
+    "head_branch": "feat/local-library-capture-media",
+    "head_sha": "72d4db537d4df635da39add3abd06f1896b36a33",
+    "created_at": "2026-11-07T20:07:27Z",
+    "updated_at": "2026-11-07T20:13:01Z"
+  },
+  "head_commit": "72d4db537d4df635da39add3abd06f1896b36a33",
+  "tested_merge_commit": "06f5eaaa748ed7a95dd2cce2b42d9d3730500987",
+  "tested_tree": "a6e225510610ee69ccb2bbd945c1a998c1a3bc5e",
+  "jobs": [
+    {
+      "id": 128514365205,
+      "name": "android-library",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 128514365466,
+      "name": "core",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 128514740786,
+      "name": "android-instrumentation (30, x86_64)",
+      "status": "completed",
+      "conclusion": "failure"
+    },
+    {
+      "id": 128514740814,
+      "name": "android-instrumentation (27, x86)",
+      "status": "completed",
+      "conclusion": "failure"
+    },
+    {
+      "id": 128514740840,
+      "name": "android-instrumentation (36, x86_64)",
+      "status": "completed",
+      "conclusion": "failure"
+    },
+    {
+      "id": 128514740860,
+      "name": "android-instrumentation (26, x86_64)",
+      "status": "completed",
+      "conclusion": "failure"
+    }
+  ],
+  "evidence_scope": "Synthetic GitHub-hosted KVM emulator run with real fixed f880 main APK/code1/schema2. All four old-target reflection native seeds passed; AndroidJUnitRunner appended its first status to its class progress prefix, which the host parser missed. No current-target installation or migration verify occurred, and all main/Browser cases plus the16 later probes were not run. APK availability/signature facts are separate from execution. No physical-device, production-key or live-X acceptance.",
+  "core": {
+    "jvm_assertions": 1287,
+    "sqlite_schema_version": 5,
+    "preserving_migrations": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "observer_dom": "passed",
+    "reversible_cleanup_dom": "passed",
+    "sqlite_fts4_compatibility": "passed for standard and enhanced query syntax",
+    "bounded_memory_encrypted_stream": {
+      "status": "passed",
+      "plaintext_bytes": 536870912,
+      "child_jvm_max_heap_bytes": 33554432
+    },
+    "capture_stress": {
+      "virtual_posts": 20000,
+      "simulated_minutes": 11,
+      "cards": 24,
+      "interval_ms": 200,
+      "writes_including_final_caps": 14400,
+      "lifecycle_cycles": 1000
+    },
+    "capacity_report": {
+      "result": "PASS",
+      "scope": "synthetic desktop SQLite; no Android/real-device timing claim",
+      "python": "3.12.3",
+      "sqlite": "3.45.1",
+      "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
+      "workloads": [
+        {
+          "posts": 10000,
+          "historyEvents": 11530,
+          "snapshotVersions": 10199,
+          "populateMs": 543.204,
+          "migrationMs": {
+            "v1_to_v2": 26.317,
+            "v2_to_v3": 23.971,
+            "v3_to_v4": 1.934,
+            "v4_to_v5": 132.456
+          },
+          "legacyLookupPlan": [
+            "SEARCH history_events USING INDEX idx_history_account_time (account_id=?)"
+          ],
+          "indexedLookupPlan": [
+            "SEARCH history_events USING COVERING INDEX idx_history_post_type_time (account_id=? AND post_id=? AND event_type=?)"
+          ],
+          "legacyBackfillSelectMs": null,
+          "databaseBytes": 13557760,
+          "ftsRowidIdentity": "PASS",
+          "foreignKeys": "PASS",
+          "integrity": "PASS",
+          "retainedOriginalRows": "PASS",
+          "queries": {
+            "AUTHOR": {
+              "matchedPosts": 100,
+              "returnedRows": 50,
+              "runsMs": [
+                16.623,
+                16.405,
+                16.516
+              ],
+              "medianMs": 16.516,
+              "explainQueryPlan": [
+                "MATERIALIZE matched_feed",
+                "SEARCH e USING INDEX idx_history_dwell (account_id=?)",
+                "MATERIALIZE matched_action",
+                "SEARCH a USING INDEX idx_own_actions_post (account_id=?)",
+                "SEARCH p USING INDEX idx_posts_opened (account_id=?)",
+                "SEARCH matched_feed USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "SEARCH matched_action USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "CORRELATED SCALAR SUBQUERY 1",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 2",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 3",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 4",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 5",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 6",
+                "SEARCH v USING COVERING INDEX idx_snapshot_versions_post (account_id=? AND post_id=?)",
+                "USE TEMP B-TREE FOR RIGHT PART OF ORDER BY"
+              ]
+            },
+            "CJK": {
+              "matchedPosts": 112,
+              "returnedRows": 50,
+              "runsMs": [
+                21.086,
+                21.026,
+                21.277
+              ],
+              "medianMs": 21.086,
+              "explainQueryPlan": [
+                "MATERIALIZE matched_feed",
+                "SEARCH e USING INDEX idx_history_dwell (account_id=?)",
+                "MATERIALIZE matched_action",
+                "SEARCH a USING INDEX idx_own_actions_post (account_id=?)",
+                "SEARCH p USING INDEX idx_posts_opened (account_id=?)",
+                "CORRELATED SCALAR SUBQUERY 9",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 10",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "SEARCH matched_feed USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "SEARCH matched_action USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "CORRELATED SCALAR SUBQUERY 1",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 2",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 3",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 4",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 5",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 6",
+                "SEARCH v USING COVERING INDEX idx_snapshot_versions_post (account_id=? AND post_id=?)",
+                "USE TEMP B-TREE FOR RIGHT PART OF ORDER BY"
+              ]
+            },
+            "DWELL_DATE_SOURCE": {
+              "matchedPosts": 141,
+              "returnedRows": 50,
+              "runsMs": [
+                12.08,
+                11.266,
+                11.299
+              ],
+              "medianMs": 11.299,
+              "explainQueryPlan": [
+                "MATERIALIZE matched_feed",
+                "SEARCH e USING INDEX idx_history_account_time (account_id=? AND event_at_ms>? AND event_at_ms<?)",
+                "USE TEMP B-TREE FOR GROUP BY",
+                "MATERIALIZE matched_action",
+                "SEARCH a USING INDEX idx_own_actions_post (account_id=?)",
+                "SEARCH p USING INDEX idx_posts_feed_time (account_id=?)",
+                "CORRELATED SCALAR SUBQUERY 9",
+                "SEARCH o USING COVERING INDEX idx_history_dwell (account_id=? AND post_id=? AND event_type=?)",
+                "SEARCH matched_feed USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "SEARCH matched_action USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "CORRELATED SCALAR SUBQUERY 1",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 2",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 3",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 4",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 5",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 6",
+                "SEARCH v USING COVERING INDEX idx_snapshot_versions_post (account_id=? AND post_id=?)",
+                "USE TEMP B-TREE FOR ORDER BY"
+              ]
+            },
+            "DWELL_NEVER_OPENED": {
+              "matchedPosts": 2823,
+              "returnedRows": 50,
+              "runsMs": [
+                19.153,
+                19.1,
+                19.003
+              ],
+              "medianMs": 19.1,
+              "explainQueryPlan": [
+                "MATERIALIZE matched_feed",
+                "SEARCH e USING INDEX idx_history_dwell (account_id=?)",
+                "MATERIALIZE matched_action",
+                "SEARCH a USING INDEX idx_own_actions_post (account_id=?)",
+                "SEARCH p USING INDEX idx_posts_feed_time (account_id=?)",
+                "CORRELATED SCALAR SUBQUERY 9",
+                "SEARCH o USING COVERING INDEX idx_history_dwell (account_id=? AND post_id=? AND event_type=?)",
+                "SEARCH matched_feed USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "SEARCH matched_action USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "CORRELATED SCALAR SUBQUERY 1",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 2",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 3",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 4",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 5",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 6",
+                "SEARCH v USING COVERING INDEX idx_snapshot_versions_post (account_id=? AND post_id=?)",
+                "USE TEMP B-TREE FOR ORDER BY"
+              ]
+            },
+            "FAVORITE_CATEGORY": {
+              "matchedPosts": 109,
+              "returnedRows": 50,
+              "runsMs": [
+                18.533,
+                18.398,
+                18.514
+              ],
+              "medianMs": 18.514,
+              "explainQueryPlan": [
+                "MATERIALIZE matched_feed",
+                "SEARCH e USING INDEX idx_history_dwell (account_id=?)",
+                "MATERIALIZE matched_action",
+                "SEARCH a USING INDEX idx_own_actions_post (account_id=?)",
+                "SEARCH p USING INDEX idx_posts_opened (account_id=?)",
+                "CORRELATED SCALAR SUBQUERY 9",
+                "SEARCH f USING COVERING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 10",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=? AND tag=?)",
+                "CORRELATED SCALAR SUBQUERY 11",
+                "SEARCH c USING COVERING INDEX sqlite_autoindex_post_categories_1 (account_id=? AND post_id=? AND category_id=?)",
+                "SEARCH matched_feed USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "SEARCH matched_action USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "CORRELATED SCALAR SUBQUERY 1",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 2",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 3",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 4",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 5",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 6",
+                "SEARCH v USING COVERING INDEX idx_snapshot_versions_post (account_id=? AND post_id=?)",
+                "USE TEMP B-TREE FOR RIGHT PART OF ORDER BY"
+              ]
+            },
+            "LATIN": {
+              "matchedPosts": 103,
+              "returnedRows": 50,
+              "runsMs": [
+                21.028,
+                20.866,
+                20.947
+              ],
+              "medianMs": 20.947,
+              "explainQueryPlan": [
+                "MATERIALIZE matched_feed",
+                "SEARCH e USING INDEX idx_history_dwell (account_id=?)",
+                "MATERIALIZE matched_action",
+                "SEARCH a USING INDEX idx_own_actions_post (account_id=?)",
+                "SEARCH p USING INDEX idx_posts_opened (account_id=?)",
+                "LIST SUBQUERY 9",
+                "SCAN posts_fts VIRTUAL TABLE INDEX 6:",
+                "CORRELATED SCALAR SUBQUERY 10",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 11",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "SEARCH matched_feed USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "SEARCH matched_action USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "CORRELATED SCALAR SUBQUERY 1",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 2",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 3",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 4",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 5",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 6",
+                "SEARCH v USING COVERING INDEX idx_snapshot_versions_post (account_id=? AND post_id=?)",
+                "USE TEMP B-TREE FOR RIGHT PART OF ORDER BY"
+              ]
+            },
+            "RECENT": {
+              "matchedPosts": 10000,
+              "returnedRows": 50,
+              "runsMs": [
+                14.858,
+                14.407,
+                14.724
+              ],
+              "medianMs": 14.724,
+              "explainQueryPlan": [
+                "MATERIALIZE matched_feed",
+                "SEARCH e USING INDEX idx_history_dwell (account_id=?)",
+                "MATERIALIZE matched_action",
+                "SEARCH a USING INDEX idx_own_actions_post (account_id=?)",
+                "SEARCH p USING INDEX idx_posts_opened (account_id=?)",
+                "SEARCH matched_feed USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "SEARCH matched_action USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "CORRELATED SCALAR SUBQUERY 1",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 2",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 3",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 4",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 5",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 6",
+                "SEARCH v USING COVERING INDEX idx_snapshot_versions_post (account_id=? AND post_id=?)",
+                "USE TEMP B-TREE FOR RIGHT PART OF ORDER BY"
+              ]
+            },
+            "VERSION_HISTORY": {
+              "matchedPosts": 99,
+              "returnedRows": 50,
+              "runsMs": [
+                22.287,
+                22.694,
+                22.379
+              ],
+              "medianMs": 22.379,
+              "explainQueryPlan": [
+                "MATERIALIZE matched_feed",
+                "SEARCH e USING INDEX idx_history_dwell (account_id=?)",
+                "MATERIALIZE matched_action",
+                "SEARCH a USING INDEX idx_own_actions_post (account_id=?)",
+                "SEARCH p USING INDEX idx_posts_opened (account_id=?)",
+                "LIST SUBQUERY 9",
+                "SCAN posts_fts VIRTUAL TABLE INDEX 6:",
+                "LIST SUBQUERY 10",
+                "SCAN snapshot_versions_fts VIRTUAL TABLE INDEX 7:",
+                "CORRELATED SCALAR SUBQUERY 11",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 12",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "SEARCH matched_feed USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "SEARCH matched_action USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "CORRELATED SCALAR SUBQUERY 1",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 2",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 3",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 4",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 5",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 6",
+                "SEARCH v USING COVERING INDEX idx_snapshot_versions_post (account_id=? AND post_id=?)",
+                "USE TEMP B-TREE FOR RIGHT PART OF ORDER BY"
+              ]
+            }
+          }
+        },
+        {
+          "posts": 100000,
+          "historyEvents": 115294,
+          "snapshotVersions": 101090,
+          "populateMs": 5728.828,
+          "migrationMs": {
+            "v1_to_v2": 394.086,
+            "v2_to_v3": 363.547,
+            "v3_to_v4": 1.385,
+            "v4_to_v5": 1303.473
+          },
+          "legacyLookupPlan": [
+            "SEARCH history_events USING INDEX idx_history_account_time (account_id=?)"
+          ],
+          "indexedLookupPlan": [
+            "SEARCH history_events USING COVERING INDEX idx_history_post_type_time (account_id=? AND post_id=? AND event_type=?)"
+          ],
+          "legacyBackfillSelectMs": null,
+          "databaseBytes": 136241152,
+          "ftsRowidIdentity": "PASS",
+          "foreignKeys": "PASS",
+          "integrity": "PASS",
+          "retainedOriginalRows": "PASS",
+          "queries": {
+            "AUTHOR": {
+              "matchedPosts": 1000,
+              "returnedRows": 50,
+              "runsMs": [
+                153.097,
+                153.154,
+                153.168
+              ],
+              "medianMs": 153.154,
+              "explainQueryPlan": [
+                "MATERIALIZE matched_feed",
+                "SEARCH e USING INDEX idx_history_dwell (account_id=?)",
+                "MATERIALIZE matched_action",
+                "SEARCH a USING INDEX idx_own_actions_post (account_id=?)",
+                "SEARCH p USING INDEX idx_posts_opened (account_id=?)",
+                "SEARCH matched_feed USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "SEARCH matched_action USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "CORRELATED SCALAR SUBQUERY 1",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 2",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 3",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 4",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 5",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 6",
+                "SEARCH v USING COVERING INDEX idx_snapshot_versions_post (account_id=? AND post_id=?)",
+                "USE TEMP B-TREE FOR RIGHT PART OF ORDER BY"
+              ]
+            },
+            "CJK": {
+              "matchedPosts": 1123,
+              "returnedRows": 50,
+              "runsMs": [
+                157.472,
+                157.125,
+                157.588
+              ],
+              "medianMs": 157.472,
+              "explainQueryPlan": [
+                "MATERIALIZE matched_feed",
+                "SEARCH e USING INDEX idx_history_dwell (account_id=?)",
+                "MATERIALIZE matched_action",
+                "SEARCH a USING INDEX idx_own_actions_post (account_id=?)",
+                "SEARCH p USING INDEX idx_posts_opened (account_id=?)",
+                "CORRELATED SCALAR SUBQUERY 9",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 10",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "SEARCH matched_feed USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "SEARCH matched_action USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "CORRELATED SCALAR SUBQUERY 1",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 2",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 3",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 4",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 5",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 6",
+                "SEARCH v USING COVERING INDEX idx_snapshot_versions_post (account_id=? AND post_id=?)",
+                "USE TEMP B-TREE FOR RIGHT PART OF ORDER BY"
+              ]
+            },
+            "DWELL_DATE_SOURCE": {
+              "matchedPosts": 141,
+              "returnedRows": 50,
+              "runsMs": [
+                117.338,
+                117.127,
+                116.69
+              ],
+              "medianMs": 117.127,
+              "explainQueryPlan": [
+                "MATERIALIZE matched_feed",
+                "SEARCH e USING INDEX idx_history_account_time (account_id=? AND event_at_ms>? AND event_at_ms<?)",
+                "USE TEMP B-TREE FOR GROUP BY",
+                "MATERIALIZE matched_action",
+                "SEARCH a USING INDEX idx_own_actions_post (account_id=?)",
+                "SEARCH p USING INDEX idx_posts_feed_time (account_id=?)",
+                "CORRELATED SCALAR SUBQUERY 9",
+                "SEARCH o USING COVERING INDEX idx_history_dwell (account_id=? AND post_id=? AND event_type=?)",
+                "SEARCH matched_feed USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "SEARCH matched_action USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "CORRELATED SCALAR SUBQUERY 1",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 2",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 3",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 4",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 5",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 6",
+                "SEARCH v USING COVERING INDEX idx_snapshot_versions_post (account_id=? AND post_id=?)",
+                "USE TEMP B-TREE FOR ORDER BY"
+              ]
+            },
+            "DWELL_NEVER_OPENED": {
+              "matchedPosts": 28235,
+              "returnedRows": 50,
+              "runsMs": [
+                213.883,
+                213.086,
+                212.581
+              ],
+              "medianMs": 213.086,
+              "explainQueryPlan": [
+                "MATERIALIZE matched_feed",
+                "SEARCH e USING INDEX idx_history_dwell (account_id=?)",
+                "MATERIALIZE matched_action",
+                "SEARCH a USING INDEX idx_own_actions_post (account_id=?)",
+                "SEARCH p USING INDEX idx_posts_feed_time (account_id=?)",
+                "CORRELATED SCALAR SUBQUERY 9",
+                "SEARCH o USING COVERING INDEX idx_history_dwell (account_id=? AND post_id=? AND event_type=?)",
+                "SEARCH matched_feed USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "SEARCH matched_action USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "CORRELATED SCALAR SUBQUERY 1",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 2",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 3",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 4",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 5",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 6",
+                "SEARCH v USING COVERING INDEX idx_snapshot_versions_post (account_id=? AND post_id=?)",
+                "USE TEMP B-TREE FOR ORDER BY"
+              ]
+            },
+            "FAVORITE_CATEGORY": {
+              "matchedPosts": 1098,
+              "returnedRows": 50,
+              "runsMs": [
+                155.225,
+                156.113,
+                155.072
+              ],
+              "medianMs": 155.225,
+              "explainQueryPlan": [
+                "MATERIALIZE matched_feed",
+                "SEARCH e USING INDEX idx_history_dwell (account_id=?)",
+                "MATERIALIZE matched_action",
+                "SEARCH a USING INDEX idx_own_actions_post (account_id=?)",
+                "SEARCH p USING INDEX idx_posts_opened (account_id=?)",
+                "CORRELATED SCALAR SUBQUERY 9",
+                "SEARCH f USING COVERING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 10",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=? AND tag=?)",
+                "CORRELATED SCALAR SUBQUERY 11",
+                "SEARCH c USING COVERING INDEX sqlite_autoindex_post_categories_1 (account_id=? AND post_id=? AND category_id=?)",
+                "SEARCH matched_feed USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "SEARCH matched_action USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "CORRELATED SCALAR SUBQUERY 1",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 2",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 3",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 4",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 5",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 6",
+                "SEARCH v USING COVERING INDEX idx_snapshot_versions_post (account_id=? AND post_id=?)",
+                "USE TEMP B-TREE FOR RIGHT PART OF ORDER BY"
+              ]
+            },
+            "LATIN": {
+              "matchedPosts": 1030,
+              "returnedRows": 50,
+              "runsMs": [
+                160.027,
+                158.366,
+                158.513
+              ],
+              "medianMs": 158.513,
+              "explainQueryPlan": [
+                "MATERIALIZE matched_feed",
+                "SEARCH e USING INDEX idx_history_dwell (account_id=?)",
+                "MATERIALIZE matched_action",
+                "SEARCH a USING INDEX idx_own_actions_post (account_id=?)",
+                "SEARCH p USING INDEX idx_posts_opened (account_id=?)",
+                "LIST SUBQUERY 9",
+                "SCAN posts_fts VIRTUAL TABLE INDEX 6:",
+                "CORRELATED SCALAR SUBQUERY 10",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 11",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "SEARCH matched_feed USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "SEARCH matched_action USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "CORRELATED SCALAR SUBQUERY 1",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 2",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 3",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 4",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 5",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 6",
+                "SEARCH v USING COVERING INDEX idx_snapshot_versions_post (account_id=? AND post_id=?)",
+                "USE TEMP B-TREE FOR RIGHT PART OF ORDER BY"
+              ]
+            },
+            "RECENT": {
+              "matchedPosts": 100000,
+              "returnedRows": 50,
+              "runsMs": [
+                152.079,
+                151.318,
+                151.174
+              ],
+              "medianMs": 151.318,
+              "explainQueryPlan": [
+                "MATERIALIZE matched_feed",
+                "SEARCH e USING INDEX idx_history_dwell (account_id=?)",
+                "MATERIALIZE matched_action",
+                "SEARCH a USING INDEX idx_own_actions_post (account_id=?)",
+                "SEARCH p USING INDEX idx_posts_opened (account_id=?)",
+                "SEARCH matched_feed USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "SEARCH matched_action USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "CORRELATED SCALAR SUBQUERY 1",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 2",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 3",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 4",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 5",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 6",
+                "SEARCH v USING COVERING INDEX idx_snapshot_versions_post (account_id=? AND post_id=?)",
+                "USE TEMP B-TREE FOR RIGHT PART OF ORDER BY"
+              ]
+            },
+            "VERSION_HISTORY": {
+              "matchedPosts": 990,
+              "returnedRows": 50,
+              "runsMs": [
+                161.838,
+                161.893,
+                161.275
+              ],
+              "medianMs": 161.838,
+              "explainQueryPlan": [
+                "MATERIALIZE matched_feed",
+                "SEARCH e USING INDEX idx_history_dwell (account_id=?)",
+                "MATERIALIZE matched_action",
+                "SEARCH a USING INDEX idx_own_actions_post (account_id=?)",
+                "SEARCH p USING INDEX idx_posts_opened (account_id=?)",
+                "LIST SUBQUERY 9",
+                "SCAN posts_fts VIRTUAL TABLE INDEX 6:",
+                "LIST SUBQUERY 10",
+                "SCAN snapshot_versions_fts VIRTUAL TABLE INDEX 7:",
+                "CORRELATED SCALAR SUBQUERY 11",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 12",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "SEARCH matched_feed USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "SEARCH matched_action USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "CORRELATED SCALAR SUBQUERY 1",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 2",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 3",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 4",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 5",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 6",
+                "SEARCH v USING COVERING INDEX idx_snapshot_versions_post (account_id=? AND post_id=?)",
+                "USE TEMP B-TREE FOR RIGHT PART OF ORDER BY"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "core_artifact": {
+      "id": 13588244808,
+      "sha256": "af4ec7b61ae6be9a72e116a55d71147663d59383777d4df8b1f58c633027c896",
+      "digest_verified": true
+    },
+    "host_driver_contract_tests": {
+      "status": "PASS",
+      "count": 20,
+      "classes": [
+        {
+          "class": "LowSpaceDriverTests",
+          "count": 10,
+          "scope": "Host-only fake subprocess failure/guard contracts, not native acceptance.",
+          "cases": [
+            {
+              "name": "test_cleanup_failure_or_remaining_file_can_never_report_pass",
+              "status": "passed"
+            },
+            {
+              "name": "test_current_quota_allows_only_scoped_allocator_then_ordinary_native_check",
+              "status": "passed"
+            },
+            {
+              "name": "test_failed_privilege_restore_can_never_report_pass",
+              "status": "passed"
+            },
+            {
+              "name": "test_global_guards_reject_before_any_allocation_or_privilege",
+              "status": "passed"
+            },
+            {
+              "name": "test_mismatched_native_uid_or_unproven_pressure_fails_and_restores",
+              "status": "passed"
+            },
+            {
+              "name": "test_non_quota_dd_error_does_not_authorize_root",
+              "status": "passed"
+            },
+            {
+              "name": "test_ordinary_allocation_never_requests_root",
+              "status": "passed"
+            },
+            {
+              "name": "test_quota_on_unapproved_platform_or_build_never_requests_root",
+              "status": "passed"
+            },
+            {
+              "name": "test_root_command_failure_with_partial_effect_still_cleans_and_unroots",
+              "status": "passed"
+            },
+            {
+              "name": "test_stale_quota_log_cannot_authorize_a_different_current_failure",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "class": "LegacyUpgradeDriverTests",
+          "count": 10,
+          "scope": "Host-only fake subprocess failure/guard contracts, not native acceptance.",
+          "cases": [
+            {
+              "name": "test_force_stop_absence_is_verified",
+              "status": "passed"
+            },
+            {
+              "name": "test_global_guards_reject_before_mutation",
+              "status": "passed"
+            },
+            {
+              "name": "test_installed_uid_change_rejects_before_native_verify",
+              "status": "passed"
+            },
+            {
+              "name": "test_native_cleanup_failure_cannot_report_pass",
+              "status": "passed"
+            },
+            {
+              "name": "test_native_verify_must_keep_schema_uid_path_scope_and_new_pid",
+              "status": "passed"
+            },
+            {
+              "name": "test_seed_must_run_old_schema_before_upgrade",
+              "status": "passed"
+            },
+            {
+              "name": "test_signature_version_and_source_mismatch_prevent_install",
+              "status": "passed"
+            },
+            {
+              "name": "test_success_is_actual_ordered_upgrade_and_owned_cleanup",
+              "status": "passed"
+            },
+            {
+              "name": "test_worktree_cleanup_failure_cannot_report_pass",
+              "status": "passed"
+            },
+            {
+              "name": "test_worktree_cleanup_failure_preserves_original_failure",
+              "status": "passed"
+            }
+          ]
+        }
+      ]
+    },
+    "browser_upload_policy_jvm_assertions": 132
+  },
+  "per_api": {
+    "26": {
+      "android_api": 26,
+      "android_release": "8.0.0",
+      "webview": {
+        "package": "com.android.chrome",
+        "version": "69.0.3497.100"
+      },
+      "device_configuration": "config: mcc310-mnc260-en-rUS-ldltr-sw320dp-w320dp-h616dp-normal-long-notround-lowdr-nowidecg-port-notnight-mdpi-finger-keysexposed-nokeys-navexposed-trackball-v26\nabi: x86_64,x86",
+      "locale_snapshot": "",
+      "night_mode": "Night mode: no",
+      "artifact": {
+        "id": 13588644360,
+        "name": "xs-android-test-reports-api-26",
+        "size_in_bytes": 2253427,
+        "digest": "sha256:795a262d54aa6cb335fbeb0896fc76e991e0b2f4388f61fb4d6393e47bfb0cb0",
+        "downloaded_zip_sha256": "795a262d54aa6cb335fbeb0896fc76e991e0b2f4388f61fb4d6393e47bfb0cb0",
+        "digest_verified": true
+      },
+      "modules": {
+        "dev-harness": {
+          "execution": "NOT RUN",
+          "reason": "No main-suite XML in this job; an earlier fixture/build step may have failed. This is not a zero-case pass.",
+          "xml_path": null,
+          "counts": {
+            "tests": 0,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          "time_seconds": null,
+          "class_counts": {},
+          "cases": []
+        },
+        "app-android": {
+          "execution": "NOT RUN",
+          "reason": "No main-suite XML in this job; an earlier fixture/build step may have failed. This is not a zero-case pass.",
+          "xml_path": null,
+          "counts": {
+            "tests": 0,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          "time_seconds": null,
+          "class_counts": {},
+          "cases": []
+        }
+      },
+      "totals": {
+        "tests": 0,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "job_local_apk_provenance": {
+        "schema_version": 1,
+        "recorded_at_utc": "2026-11-07T20:12:08.476315+00:00",
+        "evidence_scope": "Job-local APK availability and public signing certificates only; test execution/outcomes come from this job's instrumentation reports. This is not real-X, physical-device or recipient-app acceptance.",
+        "source": {
+          "head_commit": "06f5eaaa748ed7a95dd2cce2b42d9d3730500987",
+          "head_tree": "a6e225510610ee69ccb2bbd945c1a998c1a3bc5e",
+          "working_tree_clean": true,
+          "working_tree_status": []
+        },
+        "apksigner": "/usr/local/lib/android/sdk/build-tools/37.0.0/apksigner",
+        "artifacts": [
+          {
+            "module": "app-android",
+            "role": "application",
+            "path": "app-android/build/outputs/apk/debug/app-android-debug.apk",
+            "availability": "present",
+            "bytes": 338279,
+            "sha256": "d26cbb4b18c2a6fd6721462b296f7f33c75319153cd74e8d17d6407769d36fdc",
+            "signature_verification": {
+              "exit_code": 0,
+              "stdout": "V2 Signer: certificate DN: C=US, O=Android, CN=Android Debug\nV2 Signer: certificate SHA-256 digest: fed93faf615649220eb7a1ae6a6133aa2865134dd8346e20329010a25646d677\nV2 Signer: certificate SHA-1 digest: de5963ac11cdb86982419a8f6757947c52d71cef\nV2 Signer: certificate MD5 digest: 9c302b049fcad5677220dc30006af381",
+              "stderr": "",
+              "status": "passed"
+            }
+          },
+          {
+            "module": "app-android",
+            "role": "instrumentation",
+            "path": "app-android/build/outputs/apk/androidTest/debug/app-android-debug-androidTest.apk",
+            "availability": "present",
+            "bytes": 1829827,
+            "sha256": "40c55e86de01da0eadb96814c1d12214eb27e512f25fd56662ad7f2e103f0830",
+            "signature_verification": {
+              "exit_code": 0,
+              "stdout": "V2 Signer: certificate DN: C=US, O=Android, CN=Android Debug\nV2 Signer: certificate SHA-256 digest: fed93faf615649220eb7a1ae6a6133aa2865134dd8346e20329010a25646d677\nV2 Signer: certificate SHA-1 digest: de5963ac11cdb86982419a8f6757947c52d71cef\nV2 Signer: certificate MD5 digest: 9c302b049fcad5677220dc30006af381",
+              "stderr": "",
+              "status": "passed"
+            }
+          },
+          {
+            "module": "dev-harness",
+            "role": "application",
+            "path": "dev-harness/build/outputs/apk/debug/dev-harness-debug.apk",
+            "availability": "unavailable",
+            "bytes": null,
+            "sha256": null,
+            "signature_verification": {
+              "status": "unavailable",
+              "exit_code": null,
+              "stdout": "",
+              "stderr": "APK not built in this job"
+            }
+          },
+          {
+            "module": "dev-harness",
+            "role": "instrumentation",
+            "path": "dev-harness/build/outputs/apk/androidTest/debug/dev-harness-debug-androidTest.apk",
+            "availability": "unavailable",
+            "bytes": null,
+            "sha256": null,
+            "signature_verification": {
+              "status": "unavailable",
+              "exit_code": null,
+              "stdout": "",
+              "stderr": "APK not built in this job"
+            }
+          },
+          {
+            "module": "share-receiver-fixture",
+            "role": "independent-uid-receiver",
+            "path": "share-receiver-fixture/build/outputs/apk/debug/share-receiver-fixture-debug.apk",
+            "availability": "present",
+            "bytes": 11769,
+            "sha256": "1a2cc59fab4158085aae6ba824bc6ca243865d38c0dc9cfee5badfa91777780b",
+            "signature_verification": {
+              "exit_code": 0,
+              "stdout": "V2 Signer: certificate DN: C=US, O=Android, CN=Android Debug\nV2 Signer: certificate SHA-256 digest: fed93faf615649220eb7a1ae6a6133aa2865134dd8346e20329010a25646d677\nV2 Signer: certificate SHA-1 digest: de5963ac11cdb86982419a8f6757947c52d71cef\nV2 Signer: certificate MD5 digest: 9c302b049fcad5677220dc30006af381",
+              "stderr": "",
+              "status": "passed"
+            }
+          }
+        ]
+      },
+      "apk_provenance_validation": {
+        "present": 3,
+        "unavailable": 2,
+        "signature_failures": 0
+      },
+      "process_recovery": {
+        "status": "NOT RUN",
+        "reason": "Earlier cross-source legacy driver failed before the main suite and these later system probes."
+      },
+      "signed_debug_upgrade": {
+        "status": "NOT RUN",
+        "reason": "Earlier cross-source legacy driver failed before the main suite and these later system probes."
+      },
+      "emulator_reboot": {
+        "status": "NOT RUN",
+        "reason": "Earlier cross-source legacy driver failed before the main suite and these later system probes."
+      },
+      "low_space": {
+        "status": "NOT RUN",
+        "reason": "Earlier cross-source legacy driver failed before the main suite and these later system probes."
+      },
+      "legacy_upgrade": {
+        "status": "FAIL",
+        "scope": "Actual fixed old-main source APK/schema2 to current source APK/schema5, using one job-local debug signer on a disposable CI emulator. Synthetic native records only; not production-key, physical-device or live-X acceptance.",
+        "phases": [],
+        "old_independent_favorites": "NOT APPLICABLE: absent in this old main",
+        "old_media_library": "NOT APPLICABLE: absent in this old main",
+        "external_probe_invocations_counted_in_main_xml": false,
+        "emulator_serial": "emulator-5554",
+        "initial_shell_uid": 2000,
+        "initial_target_absent": true,
+        "current_source": {
+          "head_commit": "06f5eaaa748ed7a95dd2cce2b42d9d3730500987",
+          "head_tree": "a6e225510610ee69ccb2bbd945c1a998c1a3bc5e",
+          "working_tree_clean": true
+        },
+        "old_source": {
+          "head_commit": "f88003c8ec1ee193b75de7267db6ae7654ee77c4",
+          "head_tree": "82011cd71d591eb1a300e7dd07725628dcc6f1fd",
+          "working_tree_clean_before_build": true
+        },
+        "apk_artifacts": [
+          {
+            "role": "old-application",
+            "package": "dev.forcemind.xs",
+            "version_code": 1,
+            "bytes": 84446,
+            "sha256": "ad101e36f07dd7321c07b3e44cf24c161d082d11321f271c37a4c4d4b16e571c",
+            "certificate_sha256": "fed93faf615649220eb7a1ae6a6133aa2865134dd8346e20329010a25646d677",
+            "signature_verification": "passed"
+          },
+          {
+            "role": "current-application",
+            "package": "dev.forcemind.xs",
+            "version_code": 3,
+            "bytes": 338279,
+            "sha256": "d26cbb4b18c2a6fd6721462b296f7f33c75319153cd74e8d17d6407769d36fdc",
+            "certificate_sha256": "fed93faf615649220eb7a1ae6a6133aa2865134dd8346e20329010a25646d677",
+            "signature_verification": "passed"
+          },
+          {
+            "role": "current-instrumentation",
+            "package": "dev.forcemind.xs.test",
+            "version_code": null,
+            "bytes": 1829827,
+            "sha256": "40c55e86de01da0eadb96814c1d12214eb27e512f25fd56662ad7f2e103f0830",
+            "certificate_sha256": "fed93faf615649220eb7a1ae6a6133aa2865134dd8346e20329010a25646d677",
+            "signature_verification": "passed"
+          }
+        ],
+        "current_build_outputs_preserved": true,
+        "failure_stage": "old_install_and_seed",
+        "failure_type": "RuntimeError",
+        "failure_message": "Native status not unambiguously proven: seed/pid",
+        "native_probe_phase_results": [
+          {
+            "phase": "seed",
+            "status": "passed",
+            "call_attempted": true,
+            "test_cases": 1,
+            "failures": 0
+          },
+          {
+            "phase": "verify",
+            "status": "NOT RUN",
+            "call_attempted": false,
+            "test_cases": 0
+          },
+          {
+            "phase": "cleanup",
+            "status": "NOT RUN",
+            "call_attempted": false,
+            "test_cases": 0
+          }
+        ],
+        "native_probe_invocations_executed": 1,
+        "independent_artifact_verification": {
+          "status": "APK BYTES VERIFIED; EXTERNAL DRIVER FAILED",
+          "external_driver_status": "FAIL",
+          "scope": "Downloaded available APK bytes only; no new-target installation/data/migration success is inferred. Native phase outcomes are recorded separately.",
+          "artifacts": [
+            {
+              "role": "old-application",
+              "sha256": "ad101e36f07dd7321c07b3e44cf24c161d082d11321f271c37a4c4d4b16e571c",
+              "certificate_sha256": "fed93faf615649220eb7a1ae6a6133aa2865134dd8346e20329010a25646d677",
+              "version_code": 1,
+              "package": "dev.forcemind.xs",
+              "signature_verification": "passed"
+            },
+            {
+              "role": "current-application",
+              "sha256": "d26cbb4b18c2a6fd6721462b296f7f33c75319153cd74e8d17d6407769d36fdc",
+              "certificate_sha256": "fed93faf615649220eb7a1ae6a6133aa2865134dd8346e20329010a25646d677",
+              "version_code": 3,
+              "package": "dev.forcemind.xs",
+              "signature_verification": "passed"
+            },
+            {
+              "role": "current-instrumentation",
+              "sha256": "40c55e86de01da0eadb96814c1d12214eb27e512f25fd56662ad7f2e103f0830",
+              "certificate_sha256": "fed93faf615649220eb7a1ae6a6133aa2865134dd8346e20329010a25646d677",
+              "version_code": null,
+              "package": "dev.forcemind.xs.test",
+              "signature_verification": "passed"
+            }
+          ]
+        },
+        "independently_recovered_actual_old_seed": {
+          "schema": 2,
+          "uid": 10077,
+          "pid": 4571,
+          "db_path": "/data/data/dev.forcemind.xs/databases/xs-local-history.db",
+          "scope": "local:a35bc814-49b1-4cea-abd7-885e94fe2500"
+        },
+        "old_seed_native_case": {
+          "class": "dev.forcemind.xs.android.LegacyUpgradeProbe",
+          "name": "legacyNativeDataRoundTripAndActualApkUpgrade",
+          "phase": "seed",
+          "status": "passed",
+          "source_schema": 2,
+          "scope": "Real old-target native seed only; host did not acknowledge its first status due framing. No new-target upgrade or verification occurred."
+        },
+        "actual_command_argv_available": true
+      },
+      "primary_abi": "x86_64",
+      "supported_abis": "x86_64,x86",
+      "execution": "main_not_started",
+      "browser_ui_cases": [],
+      "new_browser_cases": {
+        "realMp4SafSelectionReadsCompleteFileAndUserGesturePlaysSelectedLocalVideo": {
+          "name": "realMp4SafSelectionReadsCompleteFileAndUserGesturePlaysSelectedLocalVideo",
+          "status": "NOT RUN",
+          "reason": "Main-suite case absent from this artifact"
+        },
+        "realSafMultipleSelectionReturnsOnlyTwoChosenPngFilesWithoutAssumingOrder": {
+          "name": "realSafMultipleSelectionReturnsOnlyTwoChosenPngFilesWithoutAssumingOrder",
+          "status": "NOT RUN",
+          "reason": "Main-suite case absent from this artifact"
+        },
+        "realSafResultAfterSameDocumentSensitiveRouteAndHomeRoundTripIsRejected": {
+          "name": "realSafResultAfterSameDocumentSensitiveRouteAndHomeRoundTripIsRejected",
+          "status": "NOT RUN",
+          "reason": "Main-suite case absent from this artifact"
+        }
+      },
+      "legacy_native_default_cases": [],
+      "process_fixture_preparation": {
+        "status": "NOT RUN",
+        "reason": "Earlier cross-source legacy host status parser failed before main instrumentation and later driver preparation."
+      },
+      "external_driver_unique_case_policy": "Repeated native probe invocations are independent driver executions, never added to main XML unique-case totals.",
+      "native_near_limit_backup": {
+        "status": "NOT RUN",
+        "case": "dev.forcemind.xs.android.FullBackupIntegrationTest.nearMaximumPayloadRestoresThirtyActualLargePngFilesThroughEncryptedStreams"
+      },
+      "ui_failure_diagnostics": {
+        "scope": "Main wrapper and Browser/Gov cases were not executed",
+        "available": false,
+        "gradle_exit_code": null,
+        "wrapper_execution": "NOT RUN"
+      },
+      "data_space_before": "Filesystem      1K-blocks  Used Available Use% Mounted on\n/dev/block/dm-0   8125880 75276   8034220   1% /data\n"
+    },
+    "27": {
+      "android_api": 27,
+      "android_release": "8.1.0",
+      "webview": {
+        "package": "com.android.chrome",
+        "version": "69.0.3497.100"
+      },
+      "device_configuration": "config: mcc310-mnc260-en-rUS-ldltr-sw320dp-w320dp-h616dp-normal-long-notround-lowdr-nowidecg-port-notnight-mdpi-finger-keysexposed-nokeys-navexposed-trackball-v27\nabi: x86\nrecentConfigs:\n  config: mcc310-mnc260-en-rUS-ldltr-sw320dp-w320dp-h616dp-normal-long-notround-lowdr-nowidecg-port-notnight-mdpi-finger-keyshidden-nokeys-navexposed-trackball-v27\n  config: en-rUS-ldltr-sw320dp-w320dp-h616dp-normal-long-notround-lowdr-nowidecg-port-mdpi-notouch-keyshidden-nokeys-navhidden-nonav-v27\n  config: en-rUS-ldltr-sw320dp-w320dp-h640dp-normal-long-notround-lowdr-nowidecg-port-mdpi-notouch-keyshidden-nokeys-navhidden-nonav-v27\n  config: en-rUS-ldltr-sw320dp-w320dp-h616dp-normal-long-notround-lowdr-nowidecg-port-notnight-mdpi-finger-keyshidden-nokeys-navexposed-trackball-v27\n  config: mcc310-mnc260-en-rUS-ldltr-sw320dp-w320dp-h616dp-normal-long-notround-lowdr-nowidecg-port-notnight-mdpi-finger-keysexposed-nokeys-navexposed-trackball-v27\n  config: en-rUS-ldltr-sw320dp-w320dp-h616dp-normal-long-notround-lowdr-nowidecg-port-notnight-mdpi-notouch-keyshidden-nokeys-navhidden-nonav-v27",
+      "locale_snapshot": "",
+      "night_mode": "Night mode: no",
+      "artifact": {
+        "id": 13589051668,
+        "name": "xs-android-test-reports-api-27",
+        "size_in_bytes": 2253607,
+        "digest": "sha256:de70f8a9c47eedaf0ce550eb43ae06b99ceeec8253e1bc3e7d86dfc364773325",
+        "downloaded_zip_sha256": "de70f8a9c47eedaf0ce550eb43ae06b99ceeec8253e1bc3e7d86dfc364773325",
+        "digest_verified": true
+      },
+      "modules": {
+        "dev-harness": {
+          "execution": "NOT RUN",
+          "reason": "No main-suite XML in this job; an earlier fixture/build step may have failed. This is not a zero-case pass.",
+          "xml_path": null,
+          "counts": {
+            "tests": 0,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          "time_seconds": null,
+          "class_counts": {},
+          "cases": []
+        },
+        "app-android": {
+          "execution": "NOT RUN",
+          "reason": "No main-suite XML in this job; an earlier fixture/build step may have failed. This is not a zero-case pass.",
+          "xml_path": null,
+          "counts": {
+            "tests": 0,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          "time_seconds": null,
+          "class_counts": {},
+          "cases": []
+        }
+      },
+      "totals": {
+        "tests": 0,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "job_local_apk_provenance": {
+        "schema_version": 1,
+        "recorded_at_utc": "2026-11-07T20:11:52.024006+00:00",
+        "evidence_scope": "Job-local APK availability and public signing certificates only; test execution/outcomes come from this job's instrumentation reports. This is not real-X, physical-device or recipient-app acceptance.",
+        "source": {
+          "head_commit": "06f5eaaa748ed7a95dd2cce2b42d9d3730500987",
+          "head_tree": "a6e225510610ee69ccb2bbd945c1a998c1a3bc5e",
+          "working_tree_clean": true,
+          "working_tree_status": []
+        },
+        "apksigner": "/usr/local/lib/android/sdk/build-tools/37.0.0/apksigner",
+        "artifacts": [
+          {
+            "module": "app-android",
+            "role": "application",
+            "path": "app-android/build/outputs/apk/debug/app-android-debug.apk",
+            "availability": "present",
+            "bytes": 338279,
+            "sha256": "c10fd2f8d445288e22a36783a60046ce09ce046745f2a99b1b1de3ee3df9301d",
+            "signature_verification": {
+              "exit_code": 0,
+              "stdout": "V2 Signer: certificate DN: C=US, O=Android, CN=Android Debug\nV2 Signer: certificate SHA-256 digest: bbffeb3da473df24cda919f79fad1316578903509da1c65f0fd8c4f0c039ac12\nV2 Signer: certificate SHA-1 digest: bc1215031bc463ede8595c1892add9f33343d560\nV2 Signer: certificate MD5 digest: efbeada796288ff672ba8d489e3267d7",
+              "stderr": "",
+              "status": "passed"
+            }
+          },
+          {
+            "module": "app-android",
+            "role": "instrumentation",
+            "path": "app-android/build/outputs/apk/androidTest/debug/app-android-debug-androidTest.apk",
+            "availability": "present",
+            "bytes": 1829827,
+            "sha256": "6855ade92c3c61ef6bd91f17e126ef63fa88ab512be71e7cccf6a5104827e13f",
+            "signature_verification": {
+              "exit_code": 0,
+              "stdout": "V2 Signer: certificate DN: C=US, O=Android, CN=Android Debug\nV2 Signer: certificate SHA-256 digest: bbffeb3da473df24cda919f79fad1316578903509da1c65f0fd8c4f0c039ac12\nV2 Signer: certificate SHA-1 digest: bc1215031bc463ede8595c1892add9f33343d560\nV2 Signer: certificate MD5 digest: efbeada796288ff672ba8d489e3267d7",
+              "stderr": "",
+              "status": "passed"
+            }
+          },
+          {
+            "module": "dev-harness",
+            "role": "application",
+            "path": "dev-harness/build/outputs/apk/debug/dev-harness-debug.apk",
+            "availability": "unavailable",
+            "bytes": null,
+            "sha256": null,
+            "signature_verification": {
+              "status": "unavailable",
+              "exit_code": null,
+              "stdout": "",
+              "stderr": "APK not built in this job"
+            }
+          },
+          {
+            "module": "dev-harness",
+            "role": "instrumentation",
+            "path": "dev-harness/build/outputs/apk/androidTest/debug/dev-harness-debug-androidTest.apk",
+            "availability": "unavailable",
+            "bytes": null,
+            "sha256": null,
+            "signature_verification": {
+              "status": "unavailable",
+              "exit_code": null,
+              "stdout": "",
+              "stderr": "APK not built in this job"
+            }
+          },
+          {
+            "module": "share-receiver-fixture",
+            "role": "independent-uid-receiver",
+            "path": "share-receiver-fixture/build/outputs/apk/debug/share-receiver-fixture-debug.apk",
+            "availability": "present",
+            "bytes": 11769,
+            "sha256": "a4d723c8c8edffafe00aac9b1c07497f2f42a602b9139f92da53638630f1058c",
+            "signature_verification": {
+              "exit_code": 0,
+              "stdout": "V2 Signer: certificate DN: C=US, O=Android, CN=Android Debug\nV2 Signer: certificate SHA-256 digest: bbffeb3da473df24cda919f79fad1316578903509da1c65f0fd8c4f0c039ac12\nV2 Signer: certificate SHA-1 digest: bc1215031bc463ede8595c1892add9f33343d560\nV2 Signer: certificate MD5 digest: efbeada796288ff672ba8d489e3267d7",
+              "stderr": "",
+              "status": "passed"
+            }
+          }
+        ]
+      },
+      "apk_provenance_validation": {
+        "present": 3,
+        "unavailable": 2,
+        "signature_failures": 0
+      },
+      "process_recovery": {
+        "status": "NOT RUN",
+        "reason": "Earlier cross-source legacy driver failed before the main suite and these later system probes."
+      },
+      "signed_debug_upgrade": {
+        "status": "NOT RUN",
+        "reason": "Earlier cross-source legacy driver failed before the main suite and these later system probes."
+      },
+      "emulator_reboot": {
+        "status": "NOT RUN",
+        "reason": "Earlier cross-source legacy driver failed before the main suite and these later system probes."
+      },
+      "low_space": {
+        "status": "NOT RUN",
+        "reason": "Earlier cross-source legacy driver failed before the main suite and these later system probes."
+      },
+      "legacy_upgrade": {
+        "status": "FAIL",
+        "scope": "Actual fixed old-main source APK/schema2 to current source APK/schema5, using one job-local debug signer on a disposable CI emulator. Synthetic native records only; not production-key, physical-device or live-X acceptance.",
+        "phases": [],
+        "old_independent_favorites": "NOT APPLICABLE: absent in this old main",
+        "old_media_library": "NOT APPLICABLE: absent in this old main",
+        "external_probe_invocations_counted_in_main_xml": false,
+        "emulator_serial": "emulator-5554",
+        "initial_shell_uid": 2000,
+        "initial_target_absent": true,
+        "current_source": {
+          "head_commit": "06f5eaaa748ed7a95dd2cce2b42d9d3730500987",
+          "head_tree": "a6e225510610ee69ccb2bbd945c1a998c1a3bc5e",
+          "working_tree_clean": true
+        },
+        "old_source": {
+          "head_commit": "f88003c8ec1ee193b75de7267db6ae7654ee77c4",
+          "head_tree": "82011cd71d591eb1a300e7dd07725628dcc6f1fd",
+          "working_tree_clean_before_build": true
+        },
+        "apk_artifacts": [
+          {
+            "role": "old-application",
+            "package": "dev.forcemind.xs",
+            "version_code": 1,
+            "bytes": 84446,
+            "sha256": "661210c3d8dafed00cd3dd4616265e279bc1148037687d452eafce3de93ecbca",
+            "certificate_sha256": "bbffeb3da473df24cda919f79fad1316578903509da1c65f0fd8c4f0c039ac12",
+            "signature_verification": "passed"
+          },
+          {
+            "role": "current-application",
+            "package": "dev.forcemind.xs",
+            "version_code": 3,
+            "bytes": 338279,
+            "sha256": "c10fd2f8d445288e22a36783a60046ce09ce046745f2a99b1b1de3ee3df9301d",
+            "certificate_sha256": "bbffeb3da473df24cda919f79fad1316578903509da1c65f0fd8c4f0c039ac12",
+            "signature_verification": "passed"
+          },
+          {
+            "role": "current-instrumentation",
+            "package": "dev.forcemind.xs.test",
+            "version_code": null,
+            "bytes": 1829827,
+            "sha256": "6855ade92c3c61ef6bd91f17e126ef63fa88ab512be71e7cccf6a5104827e13f",
+            "certificate_sha256": "bbffeb3da473df24cda919f79fad1316578903509da1c65f0fd8c4f0c039ac12",
+            "signature_verification": "passed"
+          }
+        ],
+        "current_build_outputs_preserved": true,
+        "failure_stage": "old_install_and_seed",
+        "failure_type": "RuntimeError",
+        "failure_message": "Native status not unambiguously proven: seed/db_path",
+        "native_probe_phase_results": [
+          {
+            "phase": "seed",
+            "status": "passed",
+            "call_attempted": true,
+            "test_cases": 1,
+            "failures": 0
+          },
+          {
+            "phase": "verify",
+            "status": "NOT RUN",
+            "call_attempted": false,
+            "test_cases": 0
+          },
+          {
+            "phase": "cleanup",
+            "status": "NOT RUN",
+            "call_attempted": false,
+            "test_cases": 0
+          }
+        ],
+        "native_probe_invocations_executed": 1,
+        "independent_artifact_verification": {
+          "status": "APK BYTES VERIFIED; EXTERNAL DRIVER FAILED",
+          "external_driver_status": "FAIL",
+          "scope": "Downloaded available APK bytes only; no new-target installation/data/migration success is inferred. Native phase outcomes are recorded separately.",
+          "artifacts": [
+            {
+              "role": "old-application",
+              "sha256": "661210c3d8dafed00cd3dd4616265e279bc1148037687d452eafce3de93ecbca",
+              "certificate_sha256": "bbffeb3da473df24cda919f79fad1316578903509da1c65f0fd8c4f0c039ac12",
+              "version_code": 1,
+              "package": "dev.forcemind.xs",
+              "signature_verification": "passed"
+            },
+            {
+              "role": "current-application",
+              "sha256": "c10fd2f8d445288e22a36783a60046ce09ce046745f2a99b1b1de3ee3df9301d",
+              "certificate_sha256": "bbffeb3da473df24cda919f79fad1316578903509da1c65f0fd8c4f0c039ac12",
+              "version_code": 3,
+              "package": "dev.forcemind.xs",
+              "signature_verification": "passed"
+            },
+            {
+              "role": "current-instrumentation",
+              "sha256": "6855ade92c3c61ef6bd91f17e126ef63fa88ab512be71e7cccf6a5104827e13f",
+              "certificate_sha256": "bbffeb3da473df24cda919f79fad1316578903509da1c65f0fd8c4f0c039ac12",
+              "version_code": null,
+              "package": "dev.forcemind.xs.test",
+              "signature_verification": "passed"
+            }
+          ]
+        },
+        "independently_recovered_actual_old_seed": {
+          "schema": 2,
+          "uid": 10079,
+          "pid": 4331,
+          "db_path": "/data/data/dev.forcemind.xs/databases/xs-local-history.db",
+          "scope": "local:1c846327-dbf4-4723-9093-3ccc28ddd8cd"
+        },
+        "old_seed_native_case": {
+          "class": "dev.forcemind.xs.android.LegacyUpgradeProbe",
+          "name": "legacyNativeDataRoundTripAndActualApkUpgrade",
+          "phase": "seed",
+          "status": "passed",
+          "source_schema": 2,
+          "scope": "Real old-target native seed only; host did not acknowledge its first status due framing. No new-target upgrade or verification occurred."
+        },
+        "actual_command_argv_available": true
+      },
+      "primary_abi": "x86",
+      "supported_abis": "x86",
+      "execution": "main_not_started",
+      "browser_ui_cases": [],
+      "new_browser_cases": {
+        "realMp4SafSelectionReadsCompleteFileAndUserGesturePlaysSelectedLocalVideo": {
+          "name": "realMp4SafSelectionReadsCompleteFileAndUserGesturePlaysSelectedLocalVideo",
+          "status": "NOT RUN",
+          "reason": "Main-suite case absent from this artifact"
+        },
+        "realSafMultipleSelectionReturnsOnlyTwoChosenPngFilesWithoutAssumingOrder": {
+          "name": "realSafMultipleSelectionReturnsOnlyTwoChosenPngFilesWithoutAssumingOrder",
+          "status": "NOT RUN",
+          "reason": "Main-suite case absent from this artifact"
+        },
+        "realSafResultAfterSameDocumentSensitiveRouteAndHomeRoundTripIsRejected": {
+          "name": "realSafResultAfterSameDocumentSensitiveRouteAndHomeRoundTripIsRejected",
+          "status": "NOT RUN",
+          "reason": "Main-suite case absent from this artifact"
+        }
+      },
+      "legacy_native_default_cases": [],
+      "process_fixture_preparation": {
+        "status": "NOT RUN",
+        "reason": "Earlier cross-source legacy host status parser failed before main instrumentation and later driver preparation."
+      },
+      "external_driver_unique_case_policy": "Repeated native probe invocations are independent driver executions, never added to main XML unique-case totals.",
+      "native_near_limit_backup": {
+        "status": "NOT RUN",
+        "case": "dev.forcemind.xs.android.FullBackupIntegrationTest.nearMaximumPayloadRestoresThirtyActualLargePngFilesThroughEncryptedStreams"
+      },
+      "ui_failure_diagnostics": {
+        "scope": "Main wrapper and Browser/Gov cases were not executed",
+        "available": false,
+        "gradle_exit_code": null,
+        "wrapper_execution": "NOT RUN"
+      },
+      "data_space_before": "Filesystem      1K-blocks  Used Available Use% Mounted on\n/dev/block/dm-0   8125880 74972   8034524   1% /data\n"
+    },
+    "30": {
+      "android_api": 30,
+      "android_release": "11",
+      "webview": {
+        "package": "com.google.android.webview",
+        "version": "83.0.4103.106"
+      },
+      "device_configuration": "config: mcc310-mnc260-en-rUS-ldltr-sw320dp-w320dp-h616dp-normal-long-notround-nowidecg-lowdr-port-notnight-mdpi-finger-keysexposed-qwerty-navhidden-nonav-640x320-v30\nabi: x86_64,x86,arm64-v8a,armeabi-v7a,armeabi",
+      "locale_snapshot": "",
+      "night_mode": "Night mode: no",
+      "artifact": {
+        "id": 13588877008,
+        "name": "xs-android-test-reports-api-30",
+        "size_in_bytes": 2254012,
+        "digest": "sha256:4777e9c914324bd7744c781975dbd907e1b6c34777f422f7f95edfce3f6404e5",
+        "downloaded_zip_sha256": "4777e9c914324bd7744c781975dbd907e1b6c34777f422f7f95edfce3f6404e5",
+        "digest_verified": true
+      },
+      "modules": {
+        "dev-harness": {
+          "execution": "NOT RUN",
+          "reason": "No main-suite XML in this job; an earlier fixture/build step may have failed. This is not a zero-case pass.",
+          "xml_path": null,
+          "counts": {
+            "tests": 0,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          "time_seconds": null,
+          "class_counts": {},
+          "cases": []
+        },
+        "app-android": {
+          "execution": "NOT RUN",
+          "reason": "No main-suite XML in this job; an earlier fixture/build step may have failed. This is not a zero-case pass.",
+          "xml_path": null,
+          "counts": {
+            "tests": 0,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          "time_seconds": null,
+          "class_counts": {},
+          "cases": []
+        }
+      },
+      "totals": {
+        "tests": 0,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "job_local_apk_provenance": {
+        "schema_version": 1,
+        "recorded_at_utc": "2026-11-07T20:11:58.490422+00:00",
+        "evidence_scope": "Job-local APK availability and public signing certificates only; test execution/outcomes come from this job's instrumentation reports. This is not real-X, physical-device or recipient-app acceptance.",
+        "source": {
+          "head_commit": "06f5eaaa748ed7a95dd2cce2b42d9d3730500987",
+          "head_tree": "a6e225510610ee69ccb2bbd945c1a998c1a3bc5e",
+          "working_tree_clean": true,
+          "working_tree_status": []
+        },
+        "apksigner": "/usr/local/lib/android/sdk/build-tools/37.0.0/apksigner",
+        "artifacts": [
+          {
+            "module": "app-android",
+            "role": "application",
+            "path": "app-android/build/outputs/apk/debug/app-android-debug.apk",
+            "availability": "present",
+            "bytes": 338279,
+            "sha256": "d6adb8a4073d32541116ddafc1eaa20b2c7e11ebb4337fc8f562ebbe9a77183d",
+            "signature_verification": {
+              "exit_code": 0,
+              "stdout": "V2 Signer: certificate DN: C=US, O=Android, CN=Android Debug\nV2 Signer: certificate SHA-256 digest: 6708d67d57d4c9e5fe2ff33b92841fa8c28825ca6411b3dff7a9c38713b1af27\nV2 Signer: certificate SHA-1 digest: 3b29eaceb4502616fb3d7aa4c47c46d4a4e4b90e\nV2 Signer: certificate MD5 digest: ea565fb903e897ddd2f3e8b435cf30ef",
+              "stderr": "",
+              "status": "passed"
+            }
+          },
+          {
+            "module": "app-android",
+            "role": "instrumentation",
+            "path": "app-android/build/outputs/apk/androidTest/debug/app-android-debug-androidTest.apk",
+            "availability": "present",
+            "bytes": 1829827,
+            "sha256": "3ad5f8dc05f08d903f857dfcd36d0c0bddff80e76edc9585d6ef7137acf47296",
+            "signature_verification": {
+              "exit_code": 0,
+              "stdout": "V2 Signer: certificate DN: C=US, O=Android, CN=Android Debug\nV2 Signer: certificate SHA-256 digest: 6708d67d57d4c9e5fe2ff33b92841fa8c28825ca6411b3dff7a9c38713b1af27\nV2 Signer: certificate SHA-1 digest: 3b29eaceb4502616fb3d7aa4c47c46d4a4e4b90e\nV2 Signer: certificate MD5 digest: ea565fb903e897ddd2f3e8b435cf30ef",
+              "stderr": "",
+              "status": "passed"
+            }
+          },
+          {
+            "module": "dev-harness",
+            "role": "application",
+            "path": "dev-harness/build/outputs/apk/debug/dev-harness-debug.apk",
+            "availability": "unavailable",
+            "bytes": null,
+            "sha256": null,
+            "signature_verification": {
+              "status": "unavailable",
+              "exit_code": null,
+              "stdout": "",
+              "stderr": "APK not built in this job"
+            }
+          },
+          {
+            "module": "dev-harness",
+            "role": "instrumentation",
+            "path": "dev-harness/build/outputs/apk/androidTest/debug/dev-harness-debug-androidTest.apk",
+            "availability": "unavailable",
+            "bytes": null,
+            "sha256": null,
+            "signature_verification": {
+              "status": "unavailable",
+              "exit_code": null,
+              "stdout": "",
+              "stderr": "APK not built in this job"
+            }
+          },
+          {
+            "module": "share-receiver-fixture",
+            "role": "independent-uid-receiver",
+            "path": "share-receiver-fixture/build/outputs/apk/debug/share-receiver-fixture-debug.apk",
+            "availability": "present",
+            "bytes": 11769,
+            "sha256": "cbbb905b99a083ac4c4aa954c3c218a0a9aee5f547789c454adc262452fbe2d7",
+            "signature_verification": {
+              "exit_code": 0,
+              "stdout": "V2 Signer: certificate DN: C=US, O=Android, CN=Android Debug\nV2 Signer: certificate SHA-256 digest: 6708d67d57d4c9e5fe2ff33b92841fa8c28825ca6411b3dff7a9c38713b1af27\nV2 Signer: certificate SHA-1 digest: 3b29eaceb4502616fb3d7aa4c47c46d4a4e4b90e\nV2 Signer: certificate MD5 digest: ea565fb903e897ddd2f3e8b435cf30ef",
+              "stderr": "",
+              "status": "passed"
+            }
+          }
+        ]
+      },
+      "apk_provenance_validation": {
+        "present": 3,
+        "unavailable": 2,
+        "signature_failures": 0
+      },
+      "process_recovery": {
+        "status": "NOT RUN",
+        "reason": "Earlier cross-source legacy driver failed before the main suite and these later system probes."
+      },
+      "signed_debug_upgrade": {
+        "status": "NOT RUN",
+        "reason": "Earlier cross-source legacy driver failed before the main suite and these later system probes."
+      },
+      "emulator_reboot": {
+        "status": "NOT RUN",
+        "reason": "Earlier cross-source legacy driver failed before the main suite and these later system probes."
+      },
+      "low_space": {
+        "status": "NOT RUN",
+        "reason": "Earlier cross-source legacy driver failed before the main suite and these later system probes."
+      },
+      "legacy_upgrade": {
+        "status": "FAIL",
+        "scope": "Actual fixed old-main source APK/schema2 to current source APK/schema5, using one job-local debug signer on a disposable CI emulator. Synthetic native records only; not production-key, physical-device or live-X acceptance.",
+        "phases": [],
+        "old_independent_favorites": "NOT APPLICABLE: absent in this old main",
+        "old_media_library": "NOT APPLICABLE: absent in this old main",
+        "external_probe_invocations_counted_in_main_xml": false,
+        "emulator_serial": "emulator-5554",
+        "initial_shell_uid": 2000,
+        "initial_target_absent": true,
+        "current_source": {
+          "head_commit": "06f5eaaa748ed7a95dd2cce2b42d9d3730500987",
+          "head_tree": "a6e225510610ee69ccb2bbd945c1a998c1a3bc5e",
+          "working_tree_clean": true
+        },
+        "old_source": {
+          "head_commit": "f88003c8ec1ee193b75de7267db6ae7654ee77c4",
+          "head_tree": "82011cd71d591eb1a300e7dd07725628dcc6f1fd",
+          "working_tree_clean_before_build": true
+        },
+        "apk_artifacts": [
+          {
+            "role": "old-application",
+            "package": "dev.forcemind.xs",
+            "version_code": 1,
+            "bytes": 84446,
+            "sha256": "3a890a7fb3fe610246bfdb43eb4c43012204b33cc8c56769415ab89ced9b4012",
+            "certificate_sha256": "6708d67d57d4c9e5fe2ff33b92841fa8c28825ca6411b3dff7a9c38713b1af27",
+            "signature_verification": "passed"
+          },
+          {
+            "role": "current-application",
+            "package": "dev.forcemind.xs",
+            "version_code": 3,
+            "bytes": 338279,
+            "sha256": "d6adb8a4073d32541116ddafc1eaa20b2c7e11ebb4337fc8f562ebbe9a77183d",
+            "certificate_sha256": "6708d67d57d4c9e5fe2ff33b92841fa8c28825ca6411b3dff7a9c38713b1af27",
+            "signature_verification": "passed"
+          },
+          {
+            "role": "current-instrumentation",
+            "package": "dev.forcemind.xs.test",
+            "version_code": null,
+            "bytes": 1829827,
+            "sha256": "3ad5f8dc05f08d903f857dfcd36d0c0bddff80e76edc9585d6ef7137acf47296",
+            "certificate_sha256": "6708d67d57d4c9e5fe2ff33b92841fa8c28825ca6411b3dff7a9c38713b1af27",
+            "signature_verification": "passed"
+          }
+        ],
+        "current_build_outputs_preserved": true,
+        "failure_stage": "old_install_and_seed",
+        "failure_type": "RuntimeError",
+        "failure_message": "Native status not unambiguously proven: seed/db_path",
+        "native_probe_phase_results": [
+          {
+            "phase": "seed",
+            "status": "passed",
+            "call_attempted": true,
+            "test_cases": 1,
+            "failures": 0
+          },
+          {
+            "phase": "verify",
+            "status": "NOT RUN",
+            "call_attempted": false,
+            "test_cases": 0
+          },
+          {
+            "phase": "cleanup",
+            "status": "NOT RUN",
+            "call_attempted": false,
+            "test_cases": 0
+          }
+        ],
+        "native_probe_invocations_executed": 1,
+        "independent_artifact_verification": {
+          "status": "APK BYTES VERIFIED; EXTERNAL DRIVER FAILED",
+          "external_driver_status": "FAIL",
+          "scope": "Downloaded available APK bytes only; no new-target installation/data/migration success is inferred. Native phase outcomes are recorded separately.",
+          "artifacts": [
+            {
+              "role": "old-application",
+              "sha256": "3a890a7fb3fe610246bfdb43eb4c43012204b33cc8c56769415ab89ced9b4012",
+              "certificate_sha256": "6708d67d57d4c9e5fe2ff33b92841fa8c28825ca6411b3dff7a9c38713b1af27",
+              "version_code": 1,
+              "package": "dev.forcemind.xs",
+              "signature_verification": "passed"
+            },
+            {
+              "role": "current-application",
+              "sha256": "d6adb8a4073d32541116ddafc1eaa20b2c7e11ebb4337fc8f562ebbe9a77183d",
+              "certificate_sha256": "6708d67d57d4c9e5fe2ff33b92841fa8c28825ca6411b3dff7a9c38713b1af27",
+              "version_code": 3,
+              "package": "dev.forcemind.xs",
+              "signature_verification": "passed"
+            },
+            {
+              "role": "current-instrumentation",
+              "sha256": "3ad5f8dc05f08d903f857dfcd36d0c0bddff80e76edc9585d6ef7137acf47296",
+              "certificate_sha256": "6708d67d57d4c9e5fe2ff33b92841fa8c28825ca6411b3dff7a9c38713b1af27",
+              "version_code": null,
+              "package": "dev.forcemind.xs.test",
+              "signature_verification": "passed"
+            }
+          ]
+        },
+        "independently_recovered_actual_old_seed": {
+          "schema": 2,
+          "uid": 10167,
+          "pid": 4091,
+          "db_path": "/data/data/dev.forcemind.xs/databases/xs-local-history.db",
+          "scope": "local:bdd11c99-80b2-4e35-abe8-76a3c3a7b1c0"
+        },
+        "old_seed_native_case": {
+          "class": "dev.forcemind.xs.android.LegacyUpgradeProbe",
+          "name": "legacyNativeDataRoundTripAndActualApkUpgrade",
+          "phase": "seed",
+          "status": "passed",
+          "source_schema": 2,
+          "scope": "Real old-target native seed only; host did not acknowledge its first status due framing. No new-target upgrade or verification occurred."
+        },
+        "actual_command_argv_available": true
+      },
+      "primary_abi": "x86_64",
+      "supported_abis": "x86_64,x86,arm64-v8a,armeabi-v7a,armeabi",
+      "execution": "main_not_started",
+      "browser_ui_cases": [],
+      "new_browser_cases": {
+        "realMp4SafSelectionReadsCompleteFileAndUserGesturePlaysSelectedLocalVideo": {
+          "name": "realMp4SafSelectionReadsCompleteFileAndUserGesturePlaysSelectedLocalVideo",
+          "status": "NOT RUN",
+          "reason": "Main-suite case absent from this artifact"
+        },
+        "realSafMultipleSelectionReturnsOnlyTwoChosenPngFilesWithoutAssumingOrder": {
+          "name": "realSafMultipleSelectionReturnsOnlyTwoChosenPngFilesWithoutAssumingOrder",
+          "status": "NOT RUN",
+          "reason": "Main-suite case absent from this artifact"
+        },
+        "realSafResultAfterSameDocumentSensitiveRouteAndHomeRoundTripIsRejected": {
+          "name": "realSafResultAfterSameDocumentSensitiveRouteAndHomeRoundTripIsRejected",
+          "status": "NOT RUN",
+          "reason": "Main-suite case absent from this artifact"
+        }
+      },
+      "legacy_native_default_cases": [],
+      "process_fixture_preparation": {
+        "status": "NOT RUN",
+        "reason": "Earlier cross-source legacy host status parser failed before main instrumentation and later driver preparation."
+      },
+      "external_driver_unique_case_policy": "Repeated native probe invocations are independent driver executions, never added to main XML unique-case totals.",
+      "native_near_limit_backup": {
+        "status": "NOT RUN",
+        "case": "dev.forcemind.xs.android.FullBackupIntegrationTest.nearMaximumPayloadRestoresThirtyActualLargePngFilesThroughEncryptedStreams"
+      },
+      "ui_failure_diagnostics": {
+        "scope": "Main wrapper and Browser/Gov cases were not executed",
+        "available": false,
+        "gradle_exit_code": null,
+        "wrapper_execution": "NOT RUN"
+      },
+      "data_space_before": "Filesystem      1K-blocks  Used Available Use% Mounted on\n/dev/block/dm-5   8107484 41480   7918548   1% /data/user/0\n"
+    },
+    "36": {
+      "android_api": 36,
+      "android_release": "16",
+      "webview": {
+        "package": "com.google.android.webview",
+        "version": "133.0.6943.137"
+      },
+      "device_configuration": "config: mcc310-mnc260-en-rUS-ldltr-sw320dp-w320dp-h640dp-normal-long-notround-nowidecg-lowdr-port-notnight-mdpi-finger-keysexposed-qwerty-navhidden-nonav-640x320-v36\nabi: x86_64,arm64-v8a",
+      "locale_snapshot": "",
+      "night_mode": "Night mode: custom_bedtime",
+      "artifact": {
+        "id": 13588723920,
+        "name": "xs-android-test-reports-api-36",
+        "size_in_bytes": 2254213,
+        "digest": "sha256:9648ea7dcbc39ab5bf9e25f98af765b36b493c101d71a6d5aceafdd9081015f5",
+        "downloaded_zip_sha256": "9648ea7dcbc39ab5bf9e25f98af765b36b493c101d71a6d5aceafdd9081015f5",
+        "digest_verified": true
+      },
+      "modules": {
+        "dev-harness": {
+          "execution": "NOT RUN",
+          "reason": "No main-suite XML in this job; an earlier fixture/build step may have failed. This is not a zero-case pass.",
+          "xml_path": null,
+          "counts": {
+            "tests": 0,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          "time_seconds": null,
+          "class_counts": {},
+          "cases": []
+        },
+        "app-android": {
+          "execution": "NOT RUN",
+          "reason": "No main-suite XML in this job; an earlier fixture/build step may have failed. This is not a zero-case pass.",
+          "xml_path": null,
+          "counts": {
+            "tests": 0,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          "time_seconds": null,
+          "class_counts": {},
+          "cases": []
+        }
+      },
+      "totals": {
+        "tests": 0,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "job_local_apk_provenance": {
+        "schema_version": 1,
+        "recorded_at_utc": "2026-11-07T20:12:55.949563+00:00",
+        "evidence_scope": "Job-local APK availability and public signing certificates only; test execution/outcomes come from this job's instrumentation reports. This is not real-X, physical-device or recipient-app acceptance.",
+        "source": {
+          "head_commit": "06f5eaaa748ed7a95dd2cce2b42d9d3730500987",
+          "head_tree": "a6e225510610ee69ccb2bbd945c1a998c1a3bc5e",
+          "working_tree_clean": true,
+          "working_tree_status": []
+        },
+        "apksigner": "/usr/local/lib/android/sdk/build-tools/37.0.0/apksigner",
+        "artifacts": [
+          {
+            "module": "app-android",
+            "role": "application",
+            "path": "app-android/build/outputs/apk/debug/app-android-debug.apk",
+            "availability": "present",
+            "bytes": 338279,
+            "sha256": "7084a94bb3f0ff64a81cce762bb5c5739e5e8a4e4fbb515a13153973d675a187",
+            "signature_verification": {
+              "exit_code": 0,
+              "stdout": "V2 Signer: certificate DN: C=US, O=Android, CN=Android Debug\nV2 Signer: certificate SHA-256 digest: 2805e4cdda2fe795e6bcd6c69aae5672b5dfcb050777f54cfda9c2319d89046e\nV2 Signer: certificate SHA-1 digest: acf30f0c00b6c21208174abcba4ac65163c6a8b4\nV2 Signer: certificate MD5 digest: 94c35c0adeaff2ee312858838c17f5a0",
+              "stderr": "",
+              "status": "passed"
+            }
+          },
+          {
+            "module": "app-android",
+            "role": "instrumentation",
+            "path": "app-android/build/outputs/apk/androidTest/debug/app-android-debug-androidTest.apk",
+            "availability": "present",
+            "bytes": 1829827,
+            "sha256": "860a97b167f4b9d75b5ed0f79e7cf140d5b6143be50e08fecb7baa111a15b5aa",
+            "signature_verification": {
+              "exit_code": 0,
+              "stdout": "V2 Signer: certificate DN: C=US, O=Android, CN=Android Debug\nV2 Signer: certificate SHA-256 digest: 2805e4cdda2fe795e6bcd6c69aae5672b5dfcb050777f54cfda9c2319d89046e\nV2 Signer: certificate SHA-1 digest: acf30f0c00b6c21208174abcba4ac65163c6a8b4\nV2 Signer: certificate MD5 digest: 94c35c0adeaff2ee312858838c17f5a0",
+              "stderr": "",
+              "status": "passed"
+            }
+          },
+          {
+            "module": "dev-harness",
+            "role": "application",
+            "path": "dev-harness/build/outputs/apk/debug/dev-harness-debug.apk",
+            "availability": "unavailable",
+            "bytes": null,
+            "sha256": null,
+            "signature_verification": {
+              "status": "unavailable",
+              "exit_code": null,
+              "stdout": "",
+              "stderr": "APK not built in this job"
+            }
+          },
+          {
+            "module": "dev-harness",
+            "role": "instrumentation",
+            "path": "dev-harness/build/outputs/apk/androidTest/debug/dev-harness-debug-androidTest.apk",
+            "availability": "unavailable",
+            "bytes": null,
+            "sha256": null,
+            "signature_verification": {
+              "status": "unavailable",
+              "exit_code": null,
+              "stdout": "",
+              "stderr": "APK not built in this job"
+            }
+          },
+          {
+            "module": "share-receiver-fixture",
+            "role": "independent-uid-receiver",
+            "path": "share-receiver-fixture/build/outputs/apk/debug/share-receiver-fixture-debug.apk",
+            "availability": "present",
+            "bytes": 11769,
+            "sha256": "ff09e9812aaada1d7214a5653bba307a20261ba2aae60dd3ad6a83cf939af42b",
+            "signature_verification": {
+              "exit_code": 0,
+              "stdout": "V2 Signer: certificate DN: C=US, O=Android, CN=Android Debug\nV2 Signer: certificate SHA-256 digest: 2805e4cdda2fe795e6bcd6c69aae5672b5dfcb050777f54cfda9c2319d89046e\nV2 Signer: certificate SHA-1 digest: acf30f0c00b6c21208174abcba4ac65163c6a8b4\nV2 Signer: certificate MD5 digest: 94c35c0adeaff2ee312858838c17f5a0",
+              "stderr": "",
+              "status": "passed"
+            }
+          }
+        ]
+      },
+      "apk_provenance_validation": {
+        "present": 3,
+        "unavailable": 2,
+        "signature_failures": 0
+      },
+      "process_recovery": {
+        "status": "NOT RUN",
+        "reason": "Earlier cross-source legacy driver failed before the main suite and these later system probes."
+      },
+      "signed_debug_upgrade": {
+        "status": "NOT RUN",
+        "reason": "Earlier cross-source legacy driver failed before the main suite and these later system probes."
+      },
+      "emulator_reboot": {
+        "status": "NOT RUN",
+        "reason": "Earlier cross-source legacy driver failed before the main suite and these later system probes."
+      },
+      "low_space": {
+        "status": "NOT RUN",
+        "reason": "Earlier cross-source legacy driver failed before the main suite and these later system probes."
+      },
+      "legacy_upgrade": {
+        "status": "FAIL",
+        "scope": "Actual fixed old-main source APK/schema2 to current source APK/schema5, using one job-local debug signer on a disposable CI emulator. Synthetic native records only; not production-key, physical-device or live-X acceptance.",
+        "phases": [],
+        "old_independent_favorites": "NOT APPLICABLE: absent in this old main",
+        "old_media_library": "NOT APPLICABLE: absent in this old main",
+        "external_probe_invocations_counted_in_main_xml": false,
+        "emulator_serial": "emulator-5554",
+        "initial_shell_uid": 2000,
+        "initial_target_absent": true,
+        "current_source": {
+          "head_commit": "06f5eaaa748ed7a95dd2cce2b42d9d3730500987",
+          "head_tree": "a6e225510610ee69ccb2bbd945c1a998c1a3bc5e",
+          "working_tree_clean": true
+        },
+        "old_source": {
+          "head_commit": "f88003c8ec1ee193b75de7267db6ae7654ee77c4",
+          "head_tree": "82011cd71d591eb1a300e7dd07725628dcc6f1fd",
+          "working_tree_clean_before_build": true
+        },
+        "apk_artifacts": [
+          {
+            "role": "old-application",
+            "package": "dev.forcemind.xs",
+            "version_code": 1,
+            "bytes": 84446,
+            "sha256": "c259dec7ab49788f9dc600baae339bdf15a6794451682d0715481f7075dc6c03",
+            "certificate_sha256": "2805e4cdda2fe795e6bcd6c69aae5672b5dfcb050777f54cfda9c2319d89046e",
+            "signature_verification": "passed"
+          },
+          {
+            "role": "current-application",
+            "package": "dev.forcemind.xs",
+            "version_code": 3,
+            "bytes": 338279,
+            "sha256": "7084a94bb3f0ff64a81cce762bb5c5739e5e8a4e4fbb515a13153973d675a187",
+            "certificate_sha256": "2805e4cdda2fe795e6bcd6c69aae5672b5dfcb050777f54cfda9c2319d89046e",
+            "signature_verification": "passed"
+          },
+          {
+            "role": "current-instrumentation",
+            "package": "dev.forcemind.xs.test",
+            "version_code": null,
+            "bytes": 1829827,
+            "sha256": "860a97b167f4b9d75b5ed0f79e7cf140d5b6143be50e08fecb7baa111a15b5aa",
+            "certificate_sha256": "2805e4cdda2fe795e6bcd6c69aae5672b5dfcb050777f54cfda9c2319d89046e",
+            "signature_verification": "passed"
+          }
+        ],
+        "current_build_outputs_preserved": true,
+        "failure_stage": "old_install_and_seed",
+        "failure_type": "RuntimeError",
+        "failure_message": "Native status not unambiguously proven: seed/db_path",
+        "native_probe_phase_results": [
+          {
+            "phase": "seed",
+            "status": "passed",
+            "call_attempted": true,
+            "test_cases": 1,
+            "failures": 0
+          },
+          {
+            "phase": "verify",
+            "status": "NOT RUN",
+            "call_attempted": false,
+            "test_cases": 0
+          },
+          {
+            "phase": "cleanup",
+            "status": "NOT RUN",
+            "call_attempted": false,
+            "test_cases": 0
+          }
+        ],
+        "native_probe_invocations_executed": 1,
+        "independent_artifact_verification": {
+          "status": "APK BYTES VERIFIED; EXTERNAL DRIVER FAILED",
+          "external_driver_status": "FAIL",
+          "scope": "Downloaded available APK bytes only; no new-target installation/data/migration success is inferred. Native phase outcomes are recorded separately.",
+          "artifacts": [
+            {
+              "role": "old-application",
+              "sha256": "c259dec7ab49788f9dc600baae339bdf15a6794451682d0715481f7075dc6c03",
+              "certificate_sha256": "2805e4cdda2fe795e6bcd6c69aae5672b5dfcb050777f54cfda9c2319d89046e",
+              "version_code": 1,
+              "package": "dev.forcemind.xs",
+              "signature_verification": "passed"
+            },
+            {
+              "role": "current-application",
+              "sha256": "7084a94bb3f0ff64a81cce762bb5c5739e5e8a4e4fbb515a13153973d675a187",
+              "certificate_sha256": "2805e4cdda2fe795e6bcd6c69aae5672b5dfcb050777f54cfda9c2319d89046e",
+              "version_code": 3,
+              "package": "dev.forcemind.xs",
+              "signature_verification": "passed"
+            },
+            {
+              "role": "current-instrumentation",
+              "sha256": "860a97b167f4b9d75b5ed0f79e7cf140d5b6143be50e08fecb7baa111a15b5aa",
+              "certificate_sha256": "2805e4cdda2fe795e6bcd6c69aae5672b5dfcb050777f54cfda9c2319d89046e",
+              "version_code": null,
+              "package": "dev.forcemind.xs.test",
+              "signature_verification": "passed"
+            }
+          ]
+        },
+        "independently_recovered_actual_old_seed": {
+          "schema": 2,
+          "uid": 10216,
+          "pid": 3247,
+          "db_path": "/data/data/dev.forcemind.xs/databases/xs-local-history.db",
+          "scope": "local:d22c6e6d-105d-41fe-bff6-0d999f6deb35"
+        },
+        "old_seed_native_case": {
+          "class": "dev.forcemind.xs.android.LegacyUpgradeProbe",
+          "name": "legacyNativeDataRoundTripAndActualApkUpgrade",
+          "phase": "seed",
+          "status": "passed",
+          "source_schema": 2,
+          "scope": "Real old-target native seed only; host did not acknowledge its first status due framing. No new-target upgrade or verification occurred."
+        },
+        "actual_command_argv_available": true
+      },
+      "primary_abi": "x86_64",
+      "supported_abis": "x86_64,arm64-v8a",
+      "execution": "main_not_started",
+      "browser_ui_cases": [],
+      "new_browser_cases": {
+        "realMp4SafSelectionReadsCompleteFileAndUserGesturePlaysSelectedLocalVideo": {
+          "name": "realMp4SafSelectionReadsCompleteFileAndUserGesturePlaysSelectedLocalVideo",
+          "status": "NOT RUN",
+          "reason": "Main-suite case absent from this artifact"
+        },
+        "realSafMultipleSelectionReturnsOnlyTwoChosenPngFilesWithoutAssumingOrder": {
+          "name": "realSafMultipleSelectionReturnsOnlyTwoChosenPngFilesWithoutAssumingOrder",
+          "status": "NOT RUN",
+          "reason": "Main-suite case absent from this artifact"
+        },
+        "realSafResultAfterSameDocumentSensitiveRouteAndHomeRoundTripIsRejected": {
+          "name": "realSafResultAfterSameDocumentSensitiveRouteAndHomeRoundTripIsRejected",
+          "status": "NOT RUN",
+          "reason": "Main-suite case absent from this artifact"
+        }
+      },
+      "legacy_native_default_cases": [],
+      "process_fixture_preparation": {
+        "status": "NOT RUN",
+        "reason": "Earlier cross-source legacy host status parser failed before main instrumentation and later driver preparation."
+      },
+      "external_driver_unique_case_policy": "Repeated native probe invocations are independent driver executions, never added to main XML unique-case totals.",
+      "native_near_limit_backup": {
+        "status": "NOT RUN",
+        "case": "dev.forcemind.xs.android.FullBackupIntegrationTest.nearMaximumPayloadRestoresThirtyActualLargePngFilesThroughEncryptedStreams"
+      },
+      "ui_failure_diagnostics": {
+        "scope": "Main wrapper and Browser/Gov cases were not executed",
+        "available": false,
+        "gradle_exit_code": null,
+        "wrapper_execution": "NOT RUN"
+      },
+      "data_space_before": "Filesystem       1K-blocks   Used Available Use% Mounted on\n/dev/block/dm-55   8107484 771276   7188752  10% /data/user/0\n"
+    }
+  },
+  "total": {
+    "tests": 0,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "required_round_e_fixture_coverage_complete": false,
+  "acceptance": "FAILED external host status framing:4/4 old-target native seed cases passed,0 main XML cases executed,0 cross-source upgrades completed,4 legacy drivers failed,16 later system drivers NOT RUN.",
+  "known_test_limitations": [
+    "All624 declared main cases and current-schema migration verification were NOT RUN in this failed run; only the four old-schema seed cases executed.",
+    "Some independent external drivers failed; see per-API exact status. A setup failure is not native low-space admission evidence.",
+    "Production-key upgrade and physical devices/power loss are NOT RUN",
+    "Live X login/automatic capture/own actions/media source compatibility not executed",
+    "WeChat/QQ/Feishu/Telegram recipient sending not executed",
+    "Job-local debug signing certificates differ across jobs and are not stable consumer upgrade identities"
+  ],
+  "external_driver_totals": {
+    "attempted_drivers": 4,
+    "passed_drivers": 0,
+    "failed_drivers": 4,
+    "native_probe_invocations": 4,
+    "native_probe_call_attempts": 4,
+    "probe_calls_without_proven_completed_test_count": 0,
+    "counted_in_main_xml_totals": false,
+    "legacy_apk_records_independently_verified": 12,
+    "not_run_drivers": 16,
+    "details": "Only the four cross-source drivers were attempted, and each stopped in host parsing after its real old-target seed passed. All four native old-schema2 seed cases passed. New-target installation/verify/cleanup, every main case and the existing16 system drivers were NOT RUN."
+  },
+  "apk_identity_totals": {
+    "artifact_role_records": 24,
+    "distinct_apk_byte_hashes": 16,
+    "duplicate_role_copies": 8,
+    "scope": "Role copies are not independent/unique APKs; main provenance and external copies can refer to identical bytes.",
+    "duplicate_hash_groups": [
+      {
+        "sha256": "d26cbb4b18c2a6fd6721462b296f7f33c75319153cd74e8d17d6407769d36fdc",
+        "roles": [
+          {
+            "api": 26,
+            "kind": "main job-local APK provenance",
+            "role": "app-android/application"
+          },
+          {
+            "api": 26,
+            "kind": "cross-source legacy downloaded APK",
+            "role": "current-application"
+          }
+        ]
+      },
+      {
+        "sha256": "40c55e86de01da0eadb96814c1d12214eb27e512f25fd56662ad7f2e103f0830",
+        "roles": [
+          {
+            "api": 26,
+            "kind": "main job-local APK provenance",
+            "role": "app-android/instrumentation"
+          },
+          {
+            "api": 26,
+            "kind": "cross-source legacy downloaded APK",
+            "role": "current-instrumentation"
+          }
+        ]
+      },
+      {
+        "sha256": "c10fd2f8d445288e22a36783a60046ce09ce046745f2a99b1b1de3ee3df9301d",
+        "roles": [
+          {
+            "api": 27,
+            "kind": "main job-local APK provenance",
+            "role": "app-android/application"
+          },
+          {
+            "api": 27,
+            "kind": "cross-source legacy downloaded APK",
+            "role": "current-application"
+          }
+        ]
+      },
+      {
+        "sha256": "6855ade92c3c61ef6bd91f17e126ef63fa88ab512be71e7cccf6a5104827e13f",
+        "roles": [
+          {
+            "api": 27,
+            "kind": "main job-local APK provenance",
+            "role": "app-android/instrumentation"
+          },
+          {
+            "api": 27,
+            "kind": "cross-source legacy downloaded APK",
+            "role": "current-instrumentation"
+          }
+        ]
+      },
+      {
+        "sha256": "d6adb8a4073d32541116ddafc1eaa20b2c7e11ebb4337fc8f562ebbe9a77183d",
+        "roles": [
+          {
+            "api": 30,
+            "kind": "main job-local APK provenance",
+            "role": "app-android/application"
+          },
+          {
+            "api": 30,
+            "kind": "cross-source legacy downloaded APK",
+            "role": "current-application"
+          }
+        ]
+      },
+      {
+        "sha256": "3ad5f8dc05f08d903f857dfcd36d0c0bddff80e76edc9585d6ef7137acf47296",
+        "roles": [
+          {
+            "api": 30,
+            "kind": "main job-local APK provenance",
+            "role": "app-android/instrumentation"
+          },
+          {
+            "api": 30,
+            "kind": "cross-source legacy downloaded APK",
+            "role": "current-instrumentation"
+          }
+        ]
+      },
+      {
+        "sha256": "7084a94bb3f0ff64a81cce762bb5c5739e5e8a4e4fbb515a13153973d675a187",
+        "roles": [
+          {
+            "api": 36,
+            "kind": "main job-local APK provenance",
+            "role": "app-android/application"
+          },
+          {
+            "api": 36,
+            "kind": "cross-source legacy downloaded APK",
+            "role": "current-application"
+          }
+        ]
+      },
+      {
+        "sha256": "860a97b167f4b9d75b5ed0f79e7cf140d5b6143be50e08fecb7baa111a15b5aa",
+        "roles": [
+          {
+            "api": 36,
+            "kind": "main job-local APK provenance",
+            "role": "app-android/instrumentation"
+          },
+          {
+            "api": 36,
+            "kind": "cross-source legacy downloaded APK",
+            "role": "current-instrumentation"
+          }
+        ]
+      }
+    ]
+  },
+  "failure_groups": [
+    {
+      "scope": "pre-main external legacy host status parser",
+      "apis": [
+        26,
+        27,
+        30,
+        36
+      ],
+      "failure_count": 4,
+      "native_test_failures": 0,
+      "main_test_cases_executed": 0,
+      "native_old_seed_cases_passed": 4,
+      "source": "scripts/test-legacy-upgrade.py:121",
+      "failure_stage": "old_install_and_seed",
+      "diagnosis": "The exact AndroidJUnitRunner class-progress prefix and first INSTRUMENTATION_STATUS share one line. API26 first key pid was missed; API27/30/36 first key db_path was missed. Original anchored regex required the status at the very beginning of its line. Remaining status fields and actual old JUnit case all passed.",
+      "next_fix": "Only accept an optional exact TEST_CLASS plus colon/horizontal-space prefix, keep every field unique and all original semantics. No native/DB/business assertions change."
+    }
+  ],
+  "follow_up_fix_verification": {
+    "scope": "Local host-only parser fix, not CI76/native acceptance",
+    "files": [
+      "scripts/test-legacy-upgrade.py",
+      "tests/test_legacy_upgrade_driver.py"
+    ],
+    "host_test_methods": 13,
+    "status": "PASS locally",
+    "regressions": [
+      "Actual API26 pid-first and27/30/36 db_path-first progress framing",
+      "All first-field permutations in seed and verify",
+      "Optional horizontal space and CRLF",
+      "Plain/prefixed duplicate fields rejected",
+      "Wrong-class/arbitrary embedded prefixes rejected"
+    ],
+    "actual_ci76_seed_stdout_replay": "All4 parsed successfully locally; verify framing reused only as a host contract, not a claimed new native run"
+  }
+}

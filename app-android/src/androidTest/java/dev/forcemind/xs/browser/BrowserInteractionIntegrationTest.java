@@ -193,6 +193,24 @@ public final class BrowserInteractionIntegrationTest {
                 "The fixed provider directory is active and its sidebar has closed");
         }
         fixtureDirectoryConfirmed=true;
+        try{instrumentation.getUiAutomation().waitForIdle(100,1000);}
+        catch(java.util.concurrent.TimeoutException backgroundEvents){/* Use fresh actual menu nodes below. */}
+        // Image-only picking can use GridPhotoHolder, whose tile intentionally has
+        // no filename TextView. Use the actual system List view action rather than
+        // treating its composite accessibility description as a filename.
+        AccessibilityNodeInfo listView=find(n->pickerViewAction(n,"sub_menu_list","List view"));
+        if(listView!=null) {
+            assertTrue("Only the confirmed fixture directory changes its presentation",confirmedFixtureDirectoryActive());
+            touchSystemDocument(listView);
+            await(()->confirmedFixtureDirectoryActive()&&find(n->pickerViewAction(n,"sub_menu_grid","Grid view"))!=null,
+                "The real system List view change exposes the opposite Grid view action");
+        }
+    }
+    private boolean pickerViewAction(AccessibilityNodeInfo node,String resource,String label){
+        if(!systemDocumentNode(node)||!node.isClickable())return false;
+        String id=node.getViewIdResourceName();
+        return id!=null&&id.endsWith(":id/"+resource)&&
+            (label.contentEquals(node.getText()==null?"":node.getText())||label.contentEquals(node.getContentDescription()==null?"":node.getContentDescription()));
     }
     private void activateFixtureSidebarRow(){
         AccessibilityNodeInfo title=awaitNode(this::fixtureSidebarRoot);
@@ -220,7 +238,8 @@ public final class BrowserInteractionIntegrationTest {
     }
     private AccessibilityNodeInfo awaitFixtureDocument(String name){
         assertTrue("Only fixed selectable filenames may be sought",selectableFixtureName(name));
-        long deadline=SystemClock.elapsedRealtime()+20000,nextScrollAt=0;int pages=0;boolean cannotAdvance=false;
+        long deadline=SystemClock.elapsedRealtime()+20000,nextScrollAt=0;int pages=0;
+        boolean towardStart=true,cannotAdvance=false;
         while(SystemClock.elapsedRealtime()<deadline) {
             assertTrue("Only the already-confirmed fixture directory may be searched/scrolled",confirmedFixtureDirectoryActive());
             AccessibilityNodeInfo file=find(n->systemDocumentNode(n)&&name.contentEquals(n.getText()==null?"":n.getText())&&enabledDocumentAncestors(n));
@@ -231,9 +250,17 @@ public final class BrowserInteractionIntegrationTest {
                     AccessibilityNodeInfo active=instrumentation.getUiAutomation().getRootInActiveWindow();
                     Rect item=new Rect(),window=new Rect();list.getBoundsInScreen(item);if(active!=null)active.getBoundsInScreen(window);
                     assertTrue("Only the active picker's actual directory list scrolls",active!=null&&systemDocumentNode(active)&&item.intersect(window)&&!item.isEmpty());
-                    pages++;cannotAdvance=!list.performAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD);
+                    // DocumentsUI restores its previous scroll position. Before searching
+                    // downward, genuinely rewind this directory; both directions share the
+                    // original five-action/20-second bound and preserve selection state.
+                    int direction=towardStart?AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD:AccessibilityNodeInfo.ACTION_SCROLL_FORWARD;
+                    if(towardStart&&(list.getActions()&AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD)==0) {
+                        towardStart=false;continue;
+                    }
+                    pages++;boolean advanced=list.performAction(direction);
+                    if(!advanced){if(towardStart)towardStart=false;else cannotAdvance=true;}
                     long remaining=deadline-SystemClock.elapsedRealtime();
-                    if(!cannotAdvance&&remaining>100)try{instrumentation.getUiAutomation().waitForIdle(100,Math.min(1000,remaining));}
+                    if(advanced&&remaining>100)try{instrumentation.getUiAutomation().waitForIdle(100,Math.min(1000,remaining));}
                     catch(java.util.concurrent.TimeoutException backgroundEvents){/* Keep the original deadline and require fresh visible file bounds below. */}
                     nextScrollAt=SystemClock.elapsedRealtime()+200;
                 }
@@ -261,7 +288,9 @@ public final class BrowserInteractionIntegrationTest {
         String description=String.valueOf(node.getContentDescription()).trim().toUpperCase(java.util.Locale.ROOT);
         String id=node.getViewIdResourceName(),type=String.valueOf(node.getClassName());
         boolean label=text.equals("OPEN")||text.equals("SELECT")||description.equals("OPEN")||description.equals("SELECT");
-        return label&&((id!=null&&(id.endsWith(":id/menu_open")||id.endsWith(":id/action_menu_select")||id.equals("android:id/button1")))||type.contains("Button")||type.contains("MenuItemView"));
+        // Android 8.1 action_mode_menu names its Open TextView action_menu_open.
+        // Its framework AX class is TextView, so the exact resource ID is essential.
+        return label&&((id!=null&&(id.endsWith(":id/menu_open")||id.endsWith(":id/action_menu_open")||id.endsWith(":id/action_menu_select")||id.equals("android:id/button1")))||type.contains("Button")||type.contains("MenuItemView"));
     }
     private boolean fixtureSidebarRoot(AccessibilityNodeInfo node){
         if(!systemDocumentNode(node)||!BrowserDocumentsProvider.TITLE.contentEquals(node.getText()==null?"":node.getText()))return false;
@@ -330,15 +359,50 @@ public final class BrowserInteractionIntegrationTest {
             for(android.view.accessibility.AccessibilityWindowInfo window:instrumentation.getUiAutomation().getWindows()) {
                 Rect bounds=new Rect();window.getBoundsInScreen(bounds);ax.append("WINDOW type=").append(window.getType()).append(" active=").append(window.isActive()).append(" focused=").append(window.isFocused()).append(" bounds=").append(bounds).append('\n');
             }
-            visit(active,n->{Rect bounds=new Rect();n.getBoundsInScreen(bounds);String text=n.isPassword()?"[password field]":String.valueOf(n.getText());text=text.replace('\n',' ').replace('\t',' ');if(text.length()>256)text=text.substring(0,256);
-                ax.append(n.getClassName()).append('\t').append(n.getViewIdResourceName()).append('\t').append(bounds).append(" visible=").append(n.isVisibleToUser()).append(" enabled=").append(n.isEnabled()).append(" clickable=").append(n.isClickable()).append('\t').append(text).append('\n');return false;},new int[]{0});
-            Files.write(new File(directory,name+".ax.txt").toPath(),ax.toString().getBytes(StandardCharsets.UTF_8));
-            Bitmap shot=instrumentation.getUiAutomation().takeScreenshot();if(shot!=null)try(FileOutputStream out=new FileOutputStream(new File(directory,name+".png"))){shot.compress(Bitmap.CompressFormat.PNG,100,out);}finally{shot.recycle();}
-            fixtureShell("mkdir -p /data/local/tmp/xs-governance-ui");fixtureShell("chmod 700 /data/local/tmp/xs-governance-ui");
-            for(String extension:new String[]{".ax.txt",".png"}){File file=new File(directory,name+extension);if(file.isFile())fixtureShell("cp "+shellQuote(file.getAbsolutePath())+" "+shellQuote("/data/local/tmp/xs-governance-ui/"+name+extension));}
+            visit(active,n->{
+                if(ax.length()>=65536)return false;
+                Rect bounds=new Rect();n.getBoundsInScreen(bounds);
+                String text=diagnosticText(n.isPassword()?"[password field]":n.getText());
+                String description=diagnosticText(n.isPassword()?"[password field]":n.getContentDescription());
+                AccessibilityNodeInfo parent=n.getParent();
+                ax.append(n.getClassName()).append('\t').append(n.getViewIdResourceName()).append('\t').append(bounds)
+                    .append(" visible=").append(n.isVisibleToUser()).append(" enabled=").append(n.isEnabled()).append(" clickable=").append(n.isClickable())
+                    .append(" longClickable=").append(n.isLongClickable()).append(" selected=").append(n.isSelected()).append(" checked=").append(n.isChecked())
+                    .append(" scrollable=").append(n.isScrollable()).append(" actions=").append(n.getActions())
+                    .append(" parent=").append(parent==null?"none":parent.getViewIdResourceName())
+                    .append(" text=").append(text).append(" description=").append(description).append('\n');return false;
+            },new int[]{0});
+            if(ax.length()>65536)ax.setLength(65536);
+            File axFile=new File(directory,name+".ax.txt");Files.write(axFile.toPath(),ax.toString().getBytes(StandardCharsets.UTF_8));
+            // Persist AX first. A secure-window screenshot failure must not discard the
+            // only native hierarchy, and a logcat fallback survives any later copy issue.
+            android.util.Log.i("XsBrowserFixture","SYNTHETIC_AX_BEGIN "+method);
+            for(int start=0;start<Math.min(ax.length(),32768);start+=2500)
+                android.util.Log.i("XsBrowserFixture",ax.substring(start,Math.min(start+2500,Math.min(ax.length(),32768))));
+            android.util.Log.i("XsBrowserFixture","SYNTHETIC_AX_END "+method);
+            preserveDiagnostic(axFile,name+".ax.txt");
+            File pngFile=new File(directory,name+".png");
+            try {
+                Bitmap shot=instrumentation.getUiAutomation().takeScreenshot();
+                if(shot!=null)try(FileOutputStream out=new FileOutputStream(pngFile)){shot.compress(Bitmap.CompressFormat.PNG,100,out);}finally{shot.recycle();}
+            }catch(Throwable screenshotUnavailable){android.util.Log.i("XsBrowserFixture","Synthetic screenshot unavailable; AX already preserved");}
+            preserveDiagnostic(pngFile,name+".png");
         }catch(Throwable unavailable){android.util.Log.i("XsBrowserFixture","Synthetic emulator failure capture unavailable");}
     }
-    private static String shellQuote(String text){return "'"+text.replace("'","'\\''")+"'";}
+    private static String diagnosticText(CharSequence value){String text=String.valueOf(value).replace('\n',' ').replace('\t',' ');return text.length()>256?text.substring(0,256):text;}
+    private void preserveDiagnostic(File file,String name){
+        if(!file.isFile())return;
+        try {
+            String source=file.getAbsolutePath(),target="/data/local/tmp/xs-governance-ui/"+name;
+            // UiAutomation executes argv through Runtime.exec, not a shell. These paths
+            // are generated from the fixed whitelist and contain no whitespace/metacharacters.
+            if(!source.matches("[/A-Za-z0-9._-]+")||!target.matches("[/A-Za-z0-9._-]+"))return;
+            fixtureShell("mkdir -p /data/local/tmp/xs-governance-ui");fixtureShell("chmod 700 /data/local/tmp/xs-governance-ui");
+            fixtureShell("cp "+source+" "+target);
+            boolean copied=target.equals(fixtureShell("ls "+target).trim());
+            android.util.Log.i("XsBrowserFixture","Synthetic diagnostic "+name+" bytes="+file.length()+" preserved="+copied);
+        }catch(Throwable unavailable){android.util.Log.i("XsBrowserFixture","Synthetic diagnostic copy unavailable");}
+    }
     private String fixtureShell(String command)throws java.io.IOException {
         try(android.os.ParcelFileDescriptor.AutoCloseInputStream input=new android.os.ParcelFileDescriptor.AutoCloseInputStream(instrumentation.getUiAutomation().executeShellCommand(command))) {
             ByteArrayOutputStream out=new ByteArrayOutputStream();byte[] bytes=new byte[1024];int n;while((n=input.read(bytes))!=-1)if(out.size()<8192)out.write(bytes,0,Math.min(n,8192-out.size()));return new String(out.toByteArray(),StandardCharsets.UTF_8);

@@ -60,3 +60,23 @@ LegacyUpgradeProbe 仅以 Android/Java/JUnit 类型和目标 classloader 反射�
 具体framing：AndroidJUnitRunner会将第一项状态紧接在`dev.forcemind.xs.android.LegacyUpgradeProbe:`进度前缀后，没有换行。API26首项为pid，另外三版首项为db_path；原parser只匹配严格行首`INSTRUMENTATION_STATUS`，因此漏掉一个字段。这是宿主parser错误，不是旧APK链接、SQL或浏览器测试失败。
 
 下一最小修正只接受两种明确格式：行首状态，或精确测试类名＋冒号/水平空白再状态；字段仍须唯一一次，schema/UID/PID/path/scope语义校验完全保留。新增[13项host方法回归](evidence/round-e-pre77-host.json)通过，包含真实首字段、CRLF、错误prefix和混合重复字段拒绝；四份实际CI76 seed stdout的宿主回放也已成功解析。以同格式替换schema测试verify解析分支只是host合同，不冒充真的新APK迁移。生产/Android源码未变化，没有重复构建来冒充新仪器结果；下一CI仍需实际执行624/20声明。
+
+
+[CI76完整原始汇总](evidence/round-e-ci76-results.json)保留四份ZIP摘要、实际旧seed输出和宿主失败阶段、24份实际APK角色记录及16个不同字节摘要（重复副本另计）、缺失harness/debug产物和NOT RUN范围；不借用CI75报告充当本轮执行。
+
+
+## CI77：四版真实旧库升级通过；九项浏览器选择步骤失败
+
+[CI77 42410468459](https://github.com/ForceMind/Xs/actions/runs/42410468459) 的head为 `5773aa0d8b6f081f5dd9bd48c844b6cac99d92a2`，实际merge `b86a21e2e3ca5307c42009341776d1ac7a56fd12` / tree `e64cb4084399b44852f188434d5c3f5985fae223`。core1287、23项host检查和构建通过；主XML实际执行624次，615通过、9失败、0错误/跳过，不能记为全量通过。
+
+四个API的跨源码旧main code1/schema2→当前code3/schema5 driver均完整通过：真实旧API seed、旧介绍页启动与force-stop、正常覆盖安装、同UID/路径/默认UUID、不同进程、原始行/分类/FTS/时间/私有文件保留及完整verify后自有夹具清理。四版MP4真实SAF、5783字节FileReader/hash、真实手势播放至ended均通过。
+
+API26主156次全过，并完成原4项系统driver；API27主155/156，仅双图确认按钮查找失败；API30/36各152/156，四个PNG/双图/SPA用例停在文件名查找。实际外部driver8/8通过（跨源码4＋API26原4），其余12项因主套件失败未运行，不能借用API26结果。完整输出、APK角色摘要、ZIP/命令证据及未运行范围见[CI77原始汇总](evidence/round-e-ci77-results.json)。
+
+已核实API27日志中的真实长按进入action mode；Android8.1官方DocumentsUI的确认项为`action_menu_open`，框架AX类可以是TextView，因此测试helper补精确ID。Android11官方GridPhotoHolder图片网格不提供文件名TextView；新helper仅在已确认的合成目录真实触摸“List view”，必须看到相反“Grid view”动作后继续精确文件名和真实FINGER选择。保留20秒/总5次真实滚动上限，支持回到目录开头，不放宽完整字节/权限/失效断言。
+
+CI77虽然运行了诊断pull，但实际没有图片/AX文件：UiAutomation执行命令不经shell，先前路径单引号变成了路径字面字符。修复为固定白名单ASCII路径，并分别保存AX、有限logcat和可用时的截图；安全窗口不解除。未声称看过不存在的截图。若下一轮全部通过未触发failure hook，诊断导出应记“未触发”，不能记实际导出通过。
+
+官方源码依据（未复制实现）：[Android8.1 action_mode_menu](https://android.googlesource.com/platform/packages/apps/DocumentsUI/+/refs/tags/android-8.1.0_r1/res/menu/action_mode_menu.xml)、[Android11 GridPhotoHolder](https://android.googlesource.com/platform/packages/apps/DocumentsUI/+/refs/tags/android-11.0.0_r1/src/com/android/documentsui/dirlist/GridPhotoHolder.java)、[Android11 sub_menu](https://android.googlesource.com/platform/packages/apps/DocumentsUI/+/refs/tags/android-11.0.0_r1/res/menu/sub_menu.xml)。这些是结合实际失败日志对UI分支的定位，不冒充CI77已导出的现场AX。
+
+CI78前仅改浏览器测试helper；生产源码/Provider/legacy driver不变。app测试APK及appLint实际编译通过，121 tasks/17秒；下一轮仍需实际执行624主用例和20项driver。
