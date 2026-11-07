@@ -223,13 +223,20 @@ public final class BrowserInteractionIntegrationTest {
 
     @Test public void realFileInputSafSelectionReadsExactPngAndCancelPathsDoNotSelect()throws Exception {
         Uri selected=DocumentsContract.buildDocumentUri(BrowserDocumentsProvider.AUTHORITY,BrowserDocumentsProvider.SELECTED);
-        Uri unselected=DocumentsContract.buildDocumentUri(BrowserDocumentsProvider.AUTHORITY,BrowserDocumentsProvider.BOUNDARY);
+        // BOUNDARY is intentionally selected by another case, so its existing task-owned
+        // grant is not evidence of a widened new grant. This document is never selected.
+        Uri neverSelected=DocumentsContract.buildDocumentUri(BrowserDocumentsProvider.AUTHORITY,BrowserDocumentsProvider.NEVER_SELECTED);
         assertEquals(PackageManager.PERMISSION_DENIED,app.checkSelfPermission("android.permission.MANAGE_DOCUMENTS"));
+        assertEquals("The selected document starts without an earlier URI grant",PackageManager.PERMISSION_DENIED,
+            app.checkUriPermission(selected,Process.myPid(),app.getApplicationInfo().uid,Intent.FLAG_GRANT_READ_URI_PERMISSION));
+        assertEquals("No test has selected or granted the negative-control document",PackageManager.PERMISSION_DENIED,
+            app.checkUriPermission(neverSelected,Process.myPid(),app.getApplicationInfo().uid,Intent.FLAG_GRANT_READ_URI_PERMISSION));
         openSystemPicker();chooseFixture("xs-browser-fixture.png");
         String data="data:image/png;base64,"+BrowserDocumentsProvider.PNG_BASE64;
         awaitJs("window.uploadResult&&window.uploadResult.name==='xs-browser-fixture.png'&&window.uploadResult.type==='image/png'&&window.uploadResult.size===68&&window.uploadResult.data==='"+data+"'");
         assertEquals(PackageManager.PERMISSION_GRANTED,app.checkUriPermission(selected,Process.myPid(),app.getApplicationInfo().uid,Intent.FLAG_GRANT_READ_URI_PERMISSION));
-        assertEquals(PackageManager.PERMISSION_DENIED,app.checkUriPermission(unselected,Process.myPid(),app.getApplicationInfo().uid,Intent.FLAG_GRANT_READ_URI_PERMISSION));
+        assertEquals("Choosing one PNG must not grant a never-selected sibling",PackageManager.PERMISSION_DENIED,
+            app.checkUriPermission(neverSelected,Process.myPid(),app.getApplicationInfo().uid,Intent.FLAG_GRANT_READ_URI_PERMISSION));
         try(InputStream input=app.getContentResolver().openInputStream(selected);ByteArrayOutputStream bytes=new ByteArrayOutputStream()){assertNotNull(input);byte[] chunk=new byte[128];int n;while((n=input.read(chunk))!=-1)bytes.write(chunk,0,n);assertArrayEquals(Base64.decode(BrowserDocumentsProvider.PNG_BASE64,Base64.NO_WRAP),bytes.toByteArray());}
         try{android.os.ParcelFileDescriptor write=app.getContentResolver().openFileDescriptor(selected,"w");if(write!=null)write.close();fail("Read-only fixture cannot be modified");}catch(SecurityException|FileNotFoundException expected){}
         tapHtml("reset");tapHtml("file");await(()->dialog("uploadDialog"),"Native upload consent appears");dialogButton(false);awaitJs("document.getElementById('file').files.length===0&&window.uploadResult===null");assertNull(field("upload"));

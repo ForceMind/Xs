@@ -109,7 +109,7 @@ def main():
             installed=run(["shell","dumpsys","package",PACKAGE],"installed-before-upgrade")
             version=re.search(r"versionCode=(\d+)",installed)
             if not version or int(version[1])!=proofs[0]["version_code"]:raise RuntimeError("Installed source version not proven")
-            output=run(["install","-r",str(args.upgrade_apk)],"upgrade-install",120)
+            output=run(["install","-r","-t",str(args.upgrade_apk)],"upgrade-install",120)
             if not re.search(r"\bSuccess\b",output):raise RuntimeError("Upgrade install did not succeed")
             installed=run(["shell","dumpsys","package",PACKAGE],"installed-after-upgrade")
             version=re.search(r"versionCode=(\d+)",installed)

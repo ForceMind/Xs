@@ -113,6 +113,8 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
+      - name: Install fixed tools for fixture upgrade verification
+        run: sdkmanager --install "platforms;android-35" "build-tools;35.0.0"
       - name: Enable KVM acceleration
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
@@ -138,6 +140,7 @@ jobs:
             adb shell dumpsys webviewupdate > app-android/build/compatibility/webview-provider.txt
             adb shell cmd uimode night > app-android/build/compatibility/night-mode.txt
             python3 scripts/run-android-instrumentation.py
+            python3 scripts/prepare-process-fixtures.py
             python3 scripts/test-process-recovery.py
             python3 scripts/test-debug-upgrade.py
             python3 scripts/test-process-recovery.py --reboot

@@ -67,7 +67,7 @@ public final class GovernanceUiTest {
     @Before public void setUp()throws Exception {
         instrumentation=InstrumentationRegistry.getInstrumentation();app=instrumentation.getTargetContext();
         AccessibilityServiceInfo info=instrumentation.getUiAutomation().getServiceInfo();
-        info.flags|=AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS;instrumentation.getUiAutomation().setServiceInfo(info);
+        info.flags|=AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS|AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS;instrumentation.getUiAutomation().setServiceInfo(info);
         assertTrue(admin("xs_fixture_reset",null).getBoolean("ok"));providerReady=true;
         archive=new XsArchiveDatabase(app);defaultLibrary=XsLocalSpaces.defaultLibrary(app);
         queued(defaultLibrary,()->archive.ensureLibrary(defaultLibrary,"Xs local fixture library"));
@@ -299,14 +299,39 @@ public final class GovernanceUiTest {
         // Only this synthetic host is installed by the CI suite. Capture before canceling
         // the picker; password field text stays redacted in the bounded AX diagnostic.
         try {
+            if(!"1".equals(fixtureShell("getprop ro.kernel.qemu").trim()))return;
+            String name=testName.getMethodName();
+            if(!Arrays.asList("metadataSafExportPreviewCancelAndConfirmUseActualDocumentBytes",
+                    "encryptedFullSafRoundTripValidatesPasswordAndRestoresActualImage",
+                    "consolidationNativePreviewCancelConfirmAndUndoPreserveSourcesAndDefault",
+                    "assetsMultiSelectSafZipContainsEverySelectedOriginalFile").contains(name))return;
             File directory=app.getExternalFilesDir("xs-governance-ui");if(directory==null||(!directory.isDirectory()&&!directory.mkdirs()))return;
-            String name=testName.getMethodName();StringBuilder ax=new StringBuilder();
+            StringBuilder ax=new StringBuilder();
+            for(android.view.accessibility.AccessibilityWindowInfo window:instrumentation.getUiAutomation().getWindows()) {
+                Rect rect=new Rect();window.getBoundsInScreen(rect);ax.append("WINDOW type=").append(window.getType()).append(" id=").append(window.getId()).append(" active=").append(window.isActive()).append(" focused=").append(window.isFocused()).append(" bounds=").append(rect).append('\n');
+            }
             collect(instrumentation.getUiAutomation().getRootInActiveWindow(),n->{Rect rect=new Rect();n.getBoundsInScreen(rect);
                 String value=text(n).replace('\n',' ').replace('\t',' ');if(value.length()>256)value=value.substring(0,256);
                 ax.append(n.getClassName()).append('\t').append(n.getViewIdResourceName()).append('\t').append(rect).append(" visible=").append(n.isVisibleToUser()).append(" enabled=").append(n.isEnabled()).append(" clickable=").append(n.isClickable()).append('\t').append(value).append('\n');return false;},new int[]{0});
             Files.write(new File(directory,name+".ax.txt").toPath(),ax.toString().getBytes(StandardCharsets.UTF_8));
             Bitmap shot=instrumentation.getUiAutomation().takeScreenshot();if(shot!=null)try(FileOutputStream out=new FileOutputStream(new File(directory,name+".png"))){shot.compress(Bitmap.CompressFormat.PNG,100,out);}finally{shot.recycle();}
+            // UTP uninstalls the target and removes its external files before Gradle returns.
+            // Preserve only these generated diagnostics in the disposable shell-owned folder.
+            fixtureShell("mkdir -p /data/local/tmp/xs-governance-ui");
+            fixtureShell("chmod 700 /data/local/tmp/xs-governance-ui");
+            for(String extension:new String[]{".ax.txt",".png"}) {
+                File generated=new File(directory,name+extension);
+                if(generated.isFile())fixtureShell("cp "+generated.getAbsolutePath()+" /data/local/tmp/xs-governance-ui/"+name+extension);
+            }
         }catch(Exception unavailable){android.util.Log.i("XsGovernanceFixture","Failure capture unavailable");}
+    }
+    private String fixtureShell(String command)throws java.io.IOException {
+        try(android.os.ParcelFileDescriptor.AutoCloseInputStream output=new android.os.ParcelFileDescriptor.AutoCloseInputStream(
+                instrumentation.getUiAutomation().executeShellCommand(command))) {
+            ByteArrayOutputStream captured=new ByteArrayOutputStream();byte[] bytes=new byte[1024];int count;
+            while((count=output.read(bytes))!=-1)if(captured.size()<8192)captured.write(bytes,0,Math.min(count,8192-captured.size()));
+            return new String(captured.toByteArray(),StandardCharsets.UTF_8);
+        }
     }
     private boolean documentsUiActive(){return find(n->n.getPackageName()!=null&&n.getPackageName().toString().contains("documentsui"))!=null;}
     private void saveInFixtureRoot(){fixtureRoot();clickText("Save","保存");await(()->!documentsUiActive(),"SAF returned the saved document");}

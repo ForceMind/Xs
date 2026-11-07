@@ -93,3 +93,30 @@ API26/30/36的真实WebView、SQLite、Job/Keystore、完整资源、SAF和新�
 19项失败为Gov每API3个SAF目录选择、API27额外1个原生合并按钮受键盘/滚动影响，以及26/27/30各2个Browser实际SAF文件选择未返回。没有把失败改为产品PASS；根因诊断集中于DocumentsUI对TOOL_TYPE_FINGER的判断、drawer呈现与陈旧/未可见节点。下一修复只改测试触摸/滚动/诊断：完整PointerProperties/PointerCoords、真实finger且当前时钟、fresh节点/窗口相交/稳定bounds和帧同步，仍强制真实目录、关闭drawer与真实导出/恢复/URI数据断言，时限不增加。
 
 [两测试APK编译/工程检查](evidence/round-d-pre70-local.json) PASS（132 tasks10秒）；runtime源码未变化，上一轮1155/Lint保留源身份。CI wrapper在Gradle失败前收集合成截图/AX并保留原退出码，[4个模拟主机故障场景](evidence/round-d-wrapper-control-flow.json)实际验证成功（不是Android结果）。外部四driver在CI69仍因主仪器失败NOT RUN；下一轮首次实际执行后才可报告OS强停/同jobdebug升级/guest reboot/真实低空间通过。
+
+
+## 手机现场验收的具体操作（全部NOT RUN）
+
+先在空白/隔离测试环境核对APK SHA256、公开签名证书、Android/API与实际WebView包/版本。现有资料机不要为更换调试证书直接卸载；先完成可恢复备份与固定签名路径。当前真实站点自动采集/本人动作/精简仍关闭：先完成正常X登录、2FA、核心浏览/发帖/回复/上传、旋转重启/过期/退出/切号的W0证据，再在经过站点选择器确认的限定测试构建中验以下自动场景。不能只打开开关就声称真实采集已获验证。
+
+| 场景 | 现场步骤 | 必须观察到的结果 |
+| --- | --- | --- |
+| 打开历史 H01～H05/L03 | 开启一次打开记录；主动进入一条有权测试的详情，少于1.2秒即返回；同导航刷新/旋转/正文补载；断网后按关键词/作者找回，查看打开时间 | 即时一条OPEN_POST，不需另存、不等停留；同导航不重复；先链接后补正文，离开再主动进入才新增打开；时间/正文质量如实，离线可查 |
+| 不打开的停留 D01～D09 | 单独开启停留，选3秒；帖子A在无遮挡前台可阅读区连续3.5秒且不点开，B仅1秒；返回后断网搜‘停留≥3秒且从未打开’，再主动点开A | A有FEED_VISIBLE/有效时长下界，B没有；原查询仅A，opened_count=0且未自动收藏；后来打开A有独立OPEN且曝光保留；后台/锁屏/遮罩/中断不能拼时长 |
+| 独立收藏 F01～F04/L02 | 在原帖明确点击收藏到Xs，分类/标签/备注；正常退出并切另一X账号；断网进同本机库再查；取消收藏 | 收藏与分类保留，不向X服务器调用书签/点赞；取消收藏后历史、已下载文件仍在；不同本机scope不串写 |
+| 图片/视频与接收 M01～M05/X01～X05/V01～V03 | 选择允许保存的单图/图组/直达完整标准MP4，完成后断网预览并核大小/时长/音轨；经系统分享分别手选微信/QQ/飞书/Telegram的会话并由用户确认发送；另测取消、延迟读取和删源库 | 实际文件完整可读/可播，接收端确实收到对应字节/媒体；选择目标或返回不能记送达；现仅直达MP4窄范围，blob/HLS/DASH/DRM/超限应明确不支持，不能冒充成品 |
+
+补测手机后台切网/用户停止/重启后任务状态、加密完整备份到SAF再恢复新库、旧正式版本覆盖升级/失败回退、多日长滚动/电量/存储压力。模拟器的guest reboot、同源debug3→4和合成接收方不替代这些设备/正式签名/真实聊天App结果。现场只回报脱敏结果、版本和必要公开摘要；不把密码、验证码、Cookie/Token、私信或私密截图贴到公开Issue。
+
+
+## CI70：152项完整通过的两个系统与外部启动准备
+
+[CI70 42378804866](https://github.com/ForceMind/Xs/actions/runs/42378804866) head `ce9cae7c1102d1efb2156e1f55907dbbd3d423b3`，merge `cc219a339b2466959dc5141eb502604dbba9d265`，tree `002bcab34404e57d8b99bf1821eed4ddd2ef8760`。**608主用例实际执行、605通过/3失败/0错误/跳过**；30/36各152全PASS，26仍有1个Gov选文件未返回和1个Browser权限负例，27有同1个权限负例。详细[完整原始报告](evidence/round-d-ci70-failures.json)保留4API/20APK/环境/ZIP摘要。
+
+权限负例原用BOUNDARY，但另一case此前已由用户真实选择过该URI，旧的合法临时授权不能当作“本次授权扩散”。下一fixture增加任何case都从不选择的第三文档：选择前selected/never均DENIED，选择后selected明确授权、68字节/写拒绝和never仍DENIED全部保留，不手动grant/revoke、不改生产权限。26偶发Gov仍需实际截图定位，没有给它增加盲重试/双击或放宽20秒时限。
+
+30/36主仪器通过后首次外部seed报`Unable to find instrumentation info`，实际原生探针调用0；UTP结束会卸载测试APK，后续组件并不存在。因此下一workflow在四driver前仅一次显式安装本job main3/test3（`-r -t`，不降级、不用别job的包），记录hash、真实`pm list instrumentation`组件与installedVersion3；升级后不再装回3。矩阵也明确安装35.0.0工具供升级验证。随后OS探针仍须实际首次跑通才可PASS。
+
+UTP同时删除target externalFilesDir，导致先前失败截图在Gradle返回时已丢失；下一Gov仅在证实qemu=1后，把白名单生成的PNG/脱敏AX经shell复制到chmod700的固定临时目录，wrapper在AVD alive时拉取。它只改诊断持久性，不掩盖原测试失败。源不包含真实用户手机/文件/网页数据。
+
+[本地新两测试APK和工程检查](evidence/round-d-pre71-local.json)PASS（132 tasks9秒），Python脚本语法通过。生产runtime源码未变化，core1155/双Lint沿用已核验源范围，下一CI仍完整执行608与四独立driver。
