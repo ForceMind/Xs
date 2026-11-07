@@ -117,3 +117,32 @@ API27实际导出AX（没有PNG，原生Activity保持FLAG_SECURE）显示IME窗
 下一最小test helper仅在合并目标不可见且真实IME存在时，核对target owner、XsLibrariesActivity、固定标题/名称、恰好A/B两个已选来源，执行一次真实系统Back；必须确认IME消失、同表单/名称/两个来源选择保留，然后仍由原SHOW_ON_SCREEN→visible→native ACTION_CLICK进入预览。预览/取消/创建/撤销/版本/来源/default全部原断言保留，未增加超时或点击不可见控件。Browser/生产/Provider/legacy未变。
 
 CI81前最终helper含固定合成分支marker的测试APK及harnessLint实际构建通过：88 tasks/15秒；[本地摘要](evidence/round-e-pre81-build.json)。下一轮仍须实际624/20结果，条件marker仅在真实执行时计覆盖。
+
+
+## CI81首次API36：SDK下载错误，原生未运行
+
+[CI81 42416903923](https://github.com/ForceMind/Xs/actions/runs/42416903923) 的head `e3990d5047c8e94f136c033fa7d92a6e5bfa882e` / tree `d0e68c50aa8cc15e304894b35e34887eeda53b44`。API36首次job `128537228135`在sdkmanager下载Android Emulator时报告`Error on ZipFile unknown archive`，模拟器没有启动：该job主XML0、legacy/全部driver和原生新分支均NOT RUN。仅产生3/5预编译APK provenance和1244字节小型artifact，不能当原生逻辑失败或通过。
+
+[原始基础设施失败摘要](evidence/round-e-ci81-attempt1-api36-infrastructure.json)保留job、原日志/小ZIP摘要及明确未运行范围。首次日志/ZIP与后续重跑分目录保存。GitHub在其余job运行时拒绝单job rerun（workflow already running），当时拟等待整run结束后仅重跑该明确SDK下载失败的job；随后API26的重启等待也失败，见下。源代码不变，不重跑已通过job来凑结果。最终总计须按同一source每个API的实际最新执行及各自attempt/job核算，首次0次不得塞入624/20或抹除。
+
+
+## CI81首次API26：主156通过，重启后ADB未恢复；定向重跑两个失败job
+
+API26首次job `128537228149`实际156/156主用例、legacy/force-stop/debug3→4均通过，合计8个已完成外部native phase；guest reboot只有seed和原活进程停止。`adb reboot`未报错，但`adb wait-for-device`180秒超时，结束时emu kill也报告TCP5554连接拒绝。没有执行重启后的native verify、没有low-space，不能声称恢复数据丢失或通过；原日志不含模拟器消失的根因。
+
+[首次重启等待失败原始摘要](evidence/round-e-ci81-attempt1-api26-reboot-failure.json)保留boot-before、PID、seed/stop和明确NOT RUN边界；与ZIP/原目录/全job日志分开保存，后续不覆盖。全部首次job终结后，API27/30各156主＋5driver通过，API36下载失败0主，API26如上。已只重跑同源的API26/API36两个failed job一次，API27/30/core/build不重复跑，源码和180秒门槛均不变。最后只按每API实际最终job记一份矩阵，保留第一次失败但不重复累加其156主/8phase。
+
+[CI81首次完整汇总](evidence/round-e-ci81-attempt1-results.json)实际计468主PASS、14 attempted driver中13PASS/1重启等待FAIL、30个已完成外部native phase；6driver未运行。最终attempt不能把这些重复加总。API26/36重跑新job分别128540458038/128540458107，其他成功项由GitHub沿用check结果，不是重新执行。
+
+
+## CI81第二次尝试：SDK恢复；旧版网格文件点击后未返回
+
+[CI81有效执行完整汇总](evidence/round-e-ci81-results.json)以API26/36 attempt2与API27/30 attempt1各自整job为准，不挑选同API不同attempt的最佳case拼通过：有效624主执行、623通过/唯API26 metadata SAF选择未返回失败，0错误/跳过；Browser24/24、SPA4/4、真实legacy4/4通过；16 attempted driver和36个有效外部native phase通过，API26其后四driver未运行。历史attempt1的468主/30phase/两个失败未擦除、未重复加总。
+
+API36 SDK经唯一一次定向重跑恢复并完整156主＋5driver通过；API26此次是新的真实UI失败，不是重启基础设施失败。真实PNG/AX已查看：正确fixture目录的网格文件xs-library-metadata.xsmeta，title bounds(66,302)-(142,324)可见；原日志有一次真实FINGER触摸，之后60秒选择器不返回，未出现选择状态。没有足够日志证明其具体原因是重绘或触摸race，不据此定因。新旧同名artifact均实际上传成功，无409，未为假设改上传流程。
+
+API27本源真实出现新的合并IME marker，并通过同case完整preview/cancel/create/undo/source/default断言。有效四版均未触发SAF-save IME marker，历史79的真实执行仍独立保留。
+
+下一test helper将备份文件选择规范为实际系统List view：确认固定fixture目录，仅精确匹配官方menu_list/menu_grid（8.0）、option_menu_list/option_menu_grid（8.1）、sub_menu_list/sub_menu_grid（新版）和实际标签，通过真实FINGER切换，并以相反Grid动作确认List模式，再走原精确文件名/稳定坐标/FINGER/真实SAF返回及全部内容断言。Browser已有同样模式helper也只补这三个精确官方ID；此前Browser全部通过，不声称存在同一实测失败。原IME guards、生产/Provider/legacy和超时不变，未盲重点击。
+
+CI82前双测试APK和app/harness Lint实际构建通过：171 tasks/16秒；[本地摘要](evidence/round-e-pre82-build.json)。下一轮仍需实际624/20，不将编译或81其他版本通过当新源仪器结果。

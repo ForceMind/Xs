@@ -210,7 +210,9 @@ public final class BrowserInteractionIntegrationTest {
     private boolean pickerViewAction(AccessibilityNodeInfo node,String resource,String label){
         if(!systemDocumentNode(node)||!node.isClickable())return false;
         String id=node.getViewIdResourceName();
-        return id!=null&&id.endsWith(":id/"+resource)&&
+        String suffix="sub_menu_list".equals(resource)?"list":"sub_menu_grid".equals(resource)?"grid":null;
+        // Official DocumentsUI actions: API26 menu_*, API27 option_menu_*, modern sub_menu_*.
+        return id!=null&&suffix!=null&&(id.endsWith(":id/menu_"+suffix)||id.endsWith(":id/option_menu_"+suffix)||id.endsWith(":id/sub_menu_"+suffix))&&
             (label.contentEquals(node.getText()==null?"":node.getText())||label.contentEquals(node.getContentDescription()==null?"":node.getContentDescription()));
     }
     private void activateFixtureSidebarRow(){

@@ -407,11 +407,33 @@ public final class GovernanceUiTest {
         return false;
     }
     private void openFixtureFile(String name){
-        fixtureRoot();
+        assertTrue("Only fixed synthetic backup names may be selected",METADATA.equals(name)||FULL.equals(name));
+        fixtureRoot();useFixtureListView();
         // A RecyclerView ancestor may report ACTION_CLICK success without activating its
         // child document. The user's file-title tap goes through SAF's gesture handler.
         touchSystemDocument(awaitNode(n->systemDocumentNode(n)&&!isEditor(n)&&name.equals(text(n))));
         await(()->!documentsUiActive(),"SAF returned the selected document");
+    }
+    private void useFixtureListView(){
+        assertTrue("Only the confirmed fixture directory changes presentation",confirmedFixtureDirectory());
+        try{instrumentation.getUiAutomation().waitForIdle(100,1000);}
+        catch(java.util.concurrent.TimeoutException backgroundEvents){/* Fresh exact system actions remain required below. */}
+        AccessibilityNodeInfo mode=awaitNode(n->fixtureViewAction(n,true)||fixtureViewAction(n,false));
+        if(fixtureViewAction(mode,true)) {
+            android.util.Log.i("XsGovernanceFixture","Switch fixed document directory through its actual List view action");
+            touchSystemDocument(mode);
+        }
+        await(()->confirmedFixtureDirectory()&&find(n->fixtureViewAction(n,false))!=null,
+            "Actual List view is confirmed by the visible opposite Grid view action");
+    }
+    private boolean confirmedFixtureDirectory(){return documentsUiActive()&&fixtureToolbarVisible()&&find(this::fixtureSidebarRoot)==null;}
+    private boolean fixtureViewAction(AccessibilityNodeInfo node,boolean list){
+        if(!systemDocumentNode(node)||!node.isClickable())return false;
+        String id=node.getViewIdResourceName(),suffix=list?"list":"grid",label=list?"List view":"Grid view";
+        // Official DocumentsUI resources: API26 menu_*, API27 option_menu_*,
+        // modern picker sub_menu_*. Require the exact resource and action label.
+        return id!=null&&(id.endsWith(":id/menu_"+suffix)||id.endsWith(":id/option_menu_"+suffix)||id.endsWith(":id/sub_menu_"+suffix))&&
+            (label.equals(text(node))||label.contentEquals(node.getContentDescription()==null?"":node.getContentDescription()));
     }
     private void clickConsolidationPreview(){
         AccessibilityNodeInfo preview=awaitNode(n->nativeFixtureNode(n)&&String.valueOf(n.getClassName()).endsWith("Button")&&

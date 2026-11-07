@@ -1,0 +1,777 @@
+{
+  "run_id": 42416903923,
+  "run_number": 81,
+  "attempt": 1,
+  "head_commit": "e3990d5047c8e94f136c033fa7d92a6e5bfa882e",
+  "tested_tree": "d0e68c50aa8cc15e304894b35e34887eeda53b44",
+  "jobs": [
+    {
+      "id": 128536867850,
+      "name": "core",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 42416903923,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-java@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Check bilingual docs and independent source tree",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Compile JVM code and check real SQLite",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Check cross-source upgrade driver safety and failure handling",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Check 10k and 100k preserving migrations and search capacity",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Post Run actions/setup-java@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17
+        }
+      ]
+    },
+    {
+      "id": 128536868046,
+      "name": "android-library",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 42416903923,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-java@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run android-actions/setup-android@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Install Android SDK 35",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Run gradle/actions/setup-gradle@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Compile independent Android archive AAR",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Upload Android library (not an APK)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Upload development test host (NOT X)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Record PoC build provenance",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "Upload non-instrumented browser feasibility APK (NOT Alpha)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        },
+        {
+          "name": "Post Run gradle/actions/setup-gradle@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 20
+        },
+        {
+          "name": "Post Run actions/setup-java@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 21
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 22
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 23
+        }
+      ]
+    },
+    {
+      "id": 128537228053,
+      "name": "android-instrumentation (30, x86_64)",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 42416903923,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-java@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run android-actions/setup-android@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Run gradle/actions/setup-gradle@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Install fixed tools for fixture upgrade verification",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Assemble current APKs before the old-source installation fixture",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Enable KVM acceleration",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Run reactivecircus/android-emulator-runner@v2",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Record job-local fixture APK hashes and public signing certificates",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "Upload synthetic Android test reports",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        },
+        {
+          "name": "Post Run gradle/actions/setup-gradle@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 20
+        },
+        {
+          "name": "Post Run actions/setup-java@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 21
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 22
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 23
+        }
+      ]
+    },
+    {
+      "id": 128537228135,
+      "name": "android-instrumentation (36, x86_64)",
+      "status": "completed",
+      "conclusion": "failure",
+      "run_id": 42416903923,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-java@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run android-actions/setup-android@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Run gradle/actions/setup-gradle@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Install fixed tools for fixture upgrade verification",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Assemble current APKs before the old-source installation fixture",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Enable KVM acceleration",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Run reactivecircus/android-emulator-runner@v2",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 9
+        },
+        {
+          "name": "Record job-local fixture APK hashes and public signing certificates",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "Upload synthetic Android test reports",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        },
+        {
+          "name": "Post Run gradle/actions/setup-gradle@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 20
+        },
+        {
+          "name": "Post Run actions/setup-java@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 21
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 22
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 23
+        }
+      ]
+    },
+    {
+      "id": 128537228139,
+      "name": "android-instrumentation (27, x86)",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 42416903923,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-java@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run android-actions/setup-android@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Run gradle/actions/setup-gradle@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Install fixed tools for fixture upgrade verification",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Assemble current APKs before the old-source installation fixture",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Enable KVM acceleration",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Run reactivecircus/android-emulator-runner@v2",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Record job-local fixture APK hashes and public signing certificates",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "Upload synthetic Android test reports",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        },
+        {
+          "name": "Post Run gradle/actions/setup-gradle@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 20
+        },
+        {
+          "name": "Post Run actions/setup-java@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 21
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 22
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 23
+        }
+      ]
+    },
+    {
+      "id": 128537228149,
+      "name": "android-instrumentation (26, x86_64)",
+      "status": "completed",
+      "conclusion": "failure",
+      "run_id": 42416903923,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-java@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run android-actions/setup-android@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Run gradle/actions/setup-gradle@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Install fixed tools for fixture upgrade verification",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Assemble current APKs before the old-source installation fixture",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Enable KVM acceleration",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Run reactivecircus/android-emulator-runner@v2",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 9
+        },
+        {
+          "name": "Record job-local fixture APK hashes and public signing certificates",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "Upload synthetic Android test reports",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        },
+        {
+          "name": "Post Run gradle/actions/setup-gradle@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 20
+        },
+        {
+          "name": "Post Run actions/setup-java@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 21
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 22
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 23
+        }
+      ]
+    }
+  ],
+  "per_api": {
+    "26": {
+      "modules": {
+        "dev-harness": {
+          "status": "executed",
+          "counts": {
+            "tests": 52,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          }
+        },
+        "app-android": {
+          "status": "executed",
+          "counts": {
+            "tests": 104,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          }
+        }
+      },
+      "drivers": {
+        "legacy-upgrade": {
+          "status": "PASS",
+          "completed_passed_native_phases": 3
+        },
+        "process-recovery": {
+          "status": "PASS",
+          "completed_passed_native_phases": 2
+        },
+        "signed-debug-upgrade": {
+          "status": "PASS",
+          "completed_passed_native_phases": 2
+        },
+        "emulator-reboot": {
+          "status": "FAIL",
+          "completed_passed_native_phases": 1
+        },
+        "low-space": {
+          "status": "NOT RUN",
+          "completed_passed_native_phases": 0
+        }
+      }
+    },
+    "27": {
+      "modules": {
+        "dev-harness": {
+          "status": "executed",
+          "counts": {
+            "tests": 52,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          }
+        },
+        "app-android": {
+          "status": "executed",
+          "counts": {
+            "tests": 104,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          }
+        }
+      },
+      "drivers": {
+        "legacy-upgrade": {
+          "status": "PASS",
+          "completed_passed_native_phases": 3
+        },
+        "process-recovery": {
+          "status": "PASS",
+          "completed_passed_native_phases": 2
+        },
+        "signed-debug-upgrade": {
+          "status": "PASS",
+          "completed_passed_native_phases": 2
+        },
+        "emulator-reboot": {
+          "status": "PASS",
+          "completed_passed_native_phases": 2
+        },
+        "low-space": {
+          "status": "PASS",
+          "completed_passed_native_phases": 2
+        }
+      }
+    },
+    "30": {
+      "modules": {
+        "dev-harness": {
+          "status": "executed",
+          "counts": {
+            "tests": 52,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          }
+        },
+        "app-android": {
+          "status": "executed",
+          "counts": {
+            "tests": 104,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          }
+        }
+      },
+      "drivers": {
+        "legacy-upgrade": {
+          "status": "PASS",
+          "completed_passed_native_phases": 3
+        },
+        "process-recovery": {
+          "status": "PASS",
+          "completed_passed_native_phases": 2
+        },
+        "signed-debug-upgrade": {
+          "status": "PASS",
+          "completed_passed_native_phases": 2
+        },
+        "emulator-reboot": {
+          "status": "PASS",
+          "completed_passed_native_phases": 2
+        },
+        "low-space": {
+          "status": "PASS",
+          "completed_passed_native_phases": 2
+        }
+      }
+    },
+    "36": {
+      "modules": {
+        "dev-harness": {
+          "status": "NOT RUN",
+          "counts": {
+            "tests": 0,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          }
+        },
+        "app-android": {
+          "status": "NOT RUN",
+          "counts": {
+            "tests": 0,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          }
+        }
+      },
+      "drivers": {
+        "legacy-upgrade": {
+          "status": "NOT RUN",
+          "completed_passed_native_phases": 0
+        },
+        "process-recovery": {
+          "status": "NOT RUN",
+          "completed_passed_native_phases": 0
+        },
+        "signed-debug-upgrade": {
+          "status": "NOT RUN",
+          "completed_passed_native_phases": 0
+        },
+        "emulator-reboot": {
+          "status": "NOT RUN",
+          "completed_passed_native_phases": 0
+        },
+        "low-space": {
+          "status": "NOT RUN",
+          "completed_passed_native_phases": 0
+        }
+      }
+    }
+  },
+  "main": {
+    "tests": 468,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "external_drivers": {
+    "attempted": 14,
+    "passed": 13,
+    "failed": 1,
+    "not_run": 6,
+    "native_completed_phases": 30
+  },
+  "scope": "Attempt1 only; immutable historical failure evidence, excluded from later effective-success matrix counts."
+}
