@@ -34,6 +34,8 @@ public final class XsMediaRepository extends SQLiteOpenHelper {
     private static XsMediaRepository instance;
     private final File savedDir;
     private final File shareDir;
+    interface ConnectionFactory { HttpURLConnection open(URL url) throws IOException; }
+    private final ConnectionFactory connections;
     private final ThreadPoolExecutor worker = new ThreadPoolExecutor(1, 1, 0L,
         TimeUnit.MILLISECONDS, new ArrayBlockingQueue<>(16));
 
@@ -43,7 +45,14 @@ public final class XsMediaRepository extends SQLiteOpenHelper {
     }
 
     private XsMediaRepository(Context context) {
+        this(context, url -> (HttpURLConnection)url.openConnection());
+    }
+
+    /** Instance-only transport seam for same-package synthetic tests; URL policy is unchanged. */
+    XsMediaRepository(Context context, ConnectionFactory connections) {
         super(context, "xs-media.db", null, 1);
+        if(connections==null)throw new IllegalArgumentException("Connection factory required");
+        this.connections=connections;
         savedDir = new File(context.getFilesDir(), "xs-saved-media");
         shareDir = new File(context.getFilesDir(), "xs-share-leases");
         if (!savedDir.isDirectory() && !savedDir.mkdirs()) throw new IllegalStateException("Media storage unavailable");
@@ -58,6 +67,12 @@ public final class XsMediaRepository extends SQLiteOpenHelper {
         }
         cleanupLeases();
     }
+
+    void stopWorkerForTests() throws InterruptedException {
+        worker.shutdownNow();
+        if(!worker.awaitTermination(10,TimeUnit.SECONDS))throw new IllegalStateException("Test transfer worker did not stop");
+    }
+    void workerMarkerForTests(Runnable marker) { worker.execute(marker); }
 
     @Override public void onCreate(SQLiteDatabase db) {
         db.execSQL("CREATE TABLE assets (id TEXT PRIMARY KEY, library_id TEXT NOT NULL, post_url TEXT NOT NULL, media_url TEXT, state TEXT NOT NULL, bytes INTEGER NOT NULL DEFAULT 0, total INTEGER NOT NULL DEFAULT -1, mime TEXT, filename TEXT, sha256 TEXT, created_ms INTEGER NOT NULL, error TEXT, category TEXT NOT NULL DEFAULT '')");
@@ -189,7 +204,7 @@ public final class XsMediaRepository extends SQLiteOpenHelper {
             for(int redirects=0;;redirects++) {
                 if(android.os.SystemClock.elapsedRealtime()>deadline||!XsLibraryWrites.isCurrent(ticket))throw new IOException("Download context expired");
                 MediaDownloadPolicy.validateImage(postUrl,current);
-                connection=(HttpURLConnection)new URL(current).openConnection();
+                connection=connections.open(new URL(current));
                 connection.setInstanceFollowRedirects(false); connection.setConnectTimeout(15000);connection.setReadTimeout(15000);
                 connection.setRequestProperty("Accept","image/jpeg,image/png,image/webp,image/gif");
                 int status=connection.getResponseCode();

@@ -28,15 +28,15 @@
 
 ## 验证状态
 
-本地工具链：JDK 17.0.21、Gradle 8.9、Android SDK 35 / Build Tools 35.0.0。云主机不提供 KVM，API 30 软件模拟器另行尝试；不得将启动进程当作测试成功。最终源 SHA、APK SHA256、签名证书、依赖与 OS/WebView 由本 PR CI artifacts 保存。
+本地工具链：JDK 17.0.21、Gradle 8.9、Android SDK 35 / Build Tools 35.0.0。`3068676` 的全部 AAR/APK/AndroidTest 构建和 Lint 通过（162 tasks，33秒）；443 项 JVM 断言及真实 SQLite、DOM 回归通过。源 SHA 与各包 SHA256 见 [构建记录](evidence/build-3068676.json)。云主机不提供 KVM，API30两次成功启动但应用测试均未开始，见 [环境诊断](evidence/api30-environment.json)。CI仍需实际报告，不能用构建通过代替仪器测试。
 
 | 验证 | 本地状态 | 证据/范围 |
 | --- | --- | --- |
 | `bash scripts/check-project.sh` | PASS | 双语/独立源码及历史 allowlist 回归；allowlist 不代表实时 X 接入 |
-| `bash scripts/test-core.sh` | PASS，最终计数随 CI 记录 | JVM + 严格 JSON/连续区间/队列/媒体策略；真实 SQLite v1/v2 迁移、FTS、scope、事件去重/时长/收藏查询 |
-| AAR / harness APK / browser APK / Lint | 首轮 PASS，最终工作树复验中 | `assembleDebug` / `lintDebug`，不代表设备登录或媒体兼容性 |
-| AndroidTest APK 编译 | 首轮 PASS，新增回归复验中 | 实际 WebView/SQLite/Provider/UI 合成测试，非伪造 PASS |
-| API 30 / 36 仪器测试 | 待本轮 CI 实际结果 | `NativeCaptureIntegrationTest`、`PostImageSelectionTest`、`MediaSharingTest`、`ArchiveIntegrationTest` 和资料库 UI 回归 |
+| `bash scripts/test-core.sh` | PASS，443 项 JVM 断言及 SQLite/DOM 回归 | JVM + 严格 JSON/连续区间/队列/媒体策略；真实 SQLite v1/v2 迁移、FTS、scope、事件去重/时长/收藏查询 |
+| AAR / harness APK / browser APK / Lint | PASS，最终代码复验通过 | `assembleDebug` / `lintDebug`，不代表设备登录或媒体兼容性 |
+| AndroidTest APK 编译 | PASS，新增回归编译通过 | 实际 WebView/SQLite/Provider/UI 合成测试，非伪造 PASS |
+| API 30 / 36 仪器测试 | 本地 BLOCKED（0 应用用例）；CI 排队 | `NativeCaptureIntegrationTest`、`PostImageSelectionTest`、`MediaSharingTest`、`ArchiveIntegrationTest` 和资料库 UI 回归 |
 | 真实 X / 真机 / 微信、QQ、飞书、Telegram | NOT RUN | 没有访问用户手机、真实账号或聊天会话 |
 
 测试映射：H01–H05、D01–D08、L01–L03、F01–F04、M01/M02 的策略部分、X01/X02/X04 的本地契约、Q01–Q03、S01 有离线源码和回归。上述编号包含多项实机条件，**只对具体测试的合成子场景声明结果，不将整行产品验收标为通过**。M03–M05 的实际网络中断/磁盘满/下载、X03/X05 的真实接收应用仍未验收。
