@@ -362,7 +362,50 @@ public final class GovernanceUiTest {
         }
     }
     private boolean documentsUiActive(){return find(n->n.getPackageName()!=null&&n.getPackageName().toString().contains("documentsui"))!=null;}
-    private void saveInFixtureRoot(){fixtureRoot();clickText("Save","保存");await(()->!documentsUiActive(),"SAF returned the saved document");}
+    private void saveInFixtureRoot(){
+        fixtureRoot();
+        AccessibilityNodeInfo save=awaitNode(this::fixtureSaveButton);
+        // On API26 the IME can cover the save form in the accessibility window
+        // geometry even while its adjusted position is visible in the screenshot.
+        // Close only a real input-method window over this fixed create-document
+        // form; an unguarded Back could otherwise cancel SAF itself.
+        if(!save.isVisibleToUser()&&inputMethodWindowVisible()) {
+            AccessibilityNodeInfo filename=find(this::fixtureExportFilename);
+            assertTrue("The keyboard belongs to the confirmed synthetic create-document form",
+                fixtureToolbarVisible()&&find(this::fixtureSidebarRoot)==null&&filename!=null&&save.refresh()&&fixtureSaveButton(save));
+            String intendedName=text(filename);
+            android.util.Log.i("XsGovernanceFixture","Dismiss actual IME over fixed SAF save form: "+intendedName);
+            assertTrue("One real system Back dismisses the observed keyboard",
+                instrumentation.getUiAutomation().performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK));
+            await(()->!inputMethodWindowVisible()&&documentsUiActive()&&fixtureToolbarVisible()&&find(this::fixtureSidebarRoot)==null&&
+                find(n->fixtureExportFilename(n)&&intendedName.equals(text(n)))!=null,
+                "The keyboard closes while the same synthetic save form remains active");
+        }
+        awaitNode(n->fixtureSaveButton(n)&&n.isVisibleToUser());
+        clickText("Save","保存");await(()->!documentsUiActive(),"SAF returned the saved document");
+    }
+    private boolean fixtureSaveButton(AccessibilityNodeInfo node){
+        return documentSaveFormNode(node)&&"android:id/button1".equals(node.getViewIdResourceName())&&node.isClickable()&&
+            ("Save".equalsIgnoreCase(text(node))||"保存".equals(text(node)));
+    }
+    private boolean fixtureExportFilename(AccessibilityNodeInfo node){
+        return documentSaveFormNode(node)&&"android:id/title".equals(node.getViewIdResourceName())&&isEditor(node)&&
+            (METADATA.equals(text(node))||FULL.equals(text(node))||"Xs-selected-media.zip".equals(text(node)));
+    }
+    private boolean documentSaveFormNode(AccessibilityNodeInfo node){
+        if(!node.isEnabled()||node.getPackageName()==null||!node.getPackageName().toString().contains("documentsui"))return false;
+        for(int depth=0;node!=null&&depth<10;depth++,node=node.getParent()) {
+            String id=node.getViewIdResourceName();if(id!=null&&id.endsWith(":id/container_save"))return true;
+        }
+        return false;
+    }
+    private boolean inputMethodWindowVisible(){
+        for(android.view.accessibility.AccessibilityWindowInfo window:instrumentation.getUiAutomation().getWindows()) {
+            Rect bounds=new Rect();window.getBoundsInScreen(bounds);
+            if(window.getType()==android.view.accessibility.AccessibilityWindowInfo.TYPE_INPUT_METHOD&&!bounds.isEmpty())return true;
+        }
+        return false;
+    }
     private void openFixtureFile(String name){
         fixtureRoot();
         // A RecyclerView ancestor may report ACTION_CLICK success without activating its

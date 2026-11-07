@@ -80,3 +80,14 @@ CI77虽然运行了诊断pull，但实际没有图片/AX文件：UiAutomation执
 官方源码依据（未复制实现）：[Android8.1 action_mode_menu](https://android.googlesource.com/platform/packages/apps/DocumentsUI/+/refs/tags/android-8.1.0_r1/res/menu/action_mode_menu.xml)、[Android11 GridPhotoHolder](https://android.googlesource.com/platform/packages/apps/DocumentsUI/+/refs/tags/android-11.0.0_r1/src/com/android/documentsui/dirlist/GridPhotoHolder.java)、[Android11 sub_menu](https://android.googlesource.com/platform/packages/apps/DocumentsUI/+/refs/tags/android-11.0.0_r1/res/menu/sub_menu.xml)。这些是结合实际失败日志对UI分支的定位，不冒充CI77已导出的现场AX。
 
 CI78前仅改浏览器测试helper；生产源码/Provider/legacy driver不变。app测试APK及appLint实际编译通过，121 tasks/17秒；下一轮仍需实际执行624主用例和20项driver。
+
+
+## CI78：全部浏览器用例通过，API26导出保存受IME遮挡
+
+[CI78 42412703904](https://github.com/ForceMind/Xs/actions/runs/42412703904) 的head `c04d9738cbc3583f67f4d1872d7480248d2f11d6` / source tree `176fdec125339be9d1f068d8daea78752b1e262c`。四API主XML实际624次，623通过/1失败/0错误/跳过。24次Browser用例全部通过：真实PNG、MP4读取/手势播放、双PNG多选、SPA敏感路由回返拒绝及原有边界均有各系统独立结果。API27/30/36主套件全156通过且各5项driver通过；API26的client104全过，harness52中1项Gov导出失败，legacy通过，其余四driver未运行。完整计数/源身份/原始摘要以[CI78汇总](evidence/round-e-ci78-results.json)为准。
+
+失败为`GovernanceUiTest.assetsMultiSelectSafZipContainsEverySelectedOriginalFile`在`saveInFixtureRoot`等待可见“Save”。这次**真正导出了并查看了PNG/AX**：目录和Xs-selected-media.zip正确，SAVE截图位于(237,345)-(310,381)，但AX保存表单/editor/button1被标为visible=false；TYPE_INPUT_METHOD窗口bounds(0,311)-(320,640)覆盖该区域。不是ZIP字节、provider或根目录失败。Gov诊断导出已实际验证；Browser没有失败，不能将其未触发的failure hook记为实际捕获通过。
+
+下一最小修正仅在已确认fixture目录/关闭侧栏、固定三个导出文件名之一、exact container_save内android:id/button1 Save且实际IME窗口存在、Save不可见时，执行一次真实系统Back收键盘。随后必须确认IME消失、原目录/文件名保留、原Save可见，再走原系统ACTION_CLICK和SAF返回，全部ZIP原文件字节断言不变。未无条件Back、未点不可见节点、未加超时、未降低验收。
+
+该单文件helper通过测试APK和dev-harness Lint实际构建（88 tasks/30秒；0错误/16警告），无生产/Browser/Provider/legacy修改。下一CI79需重跑真实四API，不将本地编译当原生通过。
