@@ -1,7 +1,13 @@
 # Xs 完整实施计划 v2.2
 
+本轮E（XS-02/15）正在接续已通过的D/CI75：BrowserUploadPolicy让picker与返回结果共用原请求的不可变accept MIME/扩展名、单选/多选（最多8项）策略，拒绝空/重复/超量/声明类型不符结果；SPA任何URL变化即取消旧上传，回调前先清旧状态。新增132条JVM已执行，总core1287及SQLite/DOM/20k、512MiB容器32MiB JVM与10项host检查通过；本轮Android构建、原生新增用例和新CI仍PENDING，D的通过不覆盖新改动。详见[本轮E证据](ROUND_E_EVIDENCE.zh-CN.md)。
+
+本轮待运行目标：真实SAF选择5783字节MP4并由WebView FileReader/用户手势播放、两份新PNG的实际SAF多选/逐文件字节核对、敏感SPA路由再返回HOME仍拒旧结果；另有固定旧main f88003c8ec1ee193b75de7267db6ae7654ee77c4 code1/schema2→当前code3/schema5的同job调试签名真实APK覆盖升级driver。默认LegacyUpgradeProbe用例只是current roundtrip；真正旧包升级单独记账。声明主用例624=4×(52+104)、外部driver20=既有16+跨source4，均非已通过数量。
+
+上传MIME来自provider声明，不证明文件内容真实、完整或已上传到X；不套用下载的20/100MiB上限，不增加权限、不由原生全读或转码。旧版本无独立收藏/媒体库，相应迁移为N/A；保留生成文件只证明文件保留。真实X/CDN/聊天App/物理设备/生产签名和live适配关闭边界不变。
+
 当前v5/可靠性增量见 [本轮证据](ROUND_D_EVIDENCE.zh-CN.md)；CI74云端回归全部通过；现场总体验收仍NOT RUN。历史 [阶段C证据](ROUND_C_EVIDENCE.zh-CN.md) 的933条JVM/146项API30/36通过仅覆盖旧源码，之前打开/停留/图片证据保留在 [既有实施记录](IMPLEMENTATION_EVIDENCE.zh-CN.md)。源码、编译、模拟器与现场验收分开记录。
-当前验证源码 `0d193e4689d649970d9705818d33e8706b470d8f` / tested tree `c8551cd4a09e4466cd84e7973039aba06a5f87b2`：[CI74](https://github.com/ForceMind/Xs/actions/runs/42386764024) 六项任务全部成功。1155项JVM、构建/双Lint及API26/27/30/36主仪器608/608通过，0失败/错误/跳过；独立force-stop、同job同源debug3→4升级、guest reboot与真实低空间各4/4，共16/16通过，不并入608主XML。
+D轮已验证源码 `0d193e4689d649970d9705818d33e8706b470d8f` / tested tree `c8551cd4a09e4466cd84e7973039aba06a5f87b2`：[CI74](https://github.com/ForceMind/Xs/actions/runs/42386764024) 六项任务全部成功。1155项JVM、构建/双Lint及API26/27/30/36主仪器608/608通过，0失败/错误/跳过；独立force-stop、同job同源debug3→4升级、guest reboot与真实低空间各4/4，共16/16通过，不并入608主XML。
 
 低空间断言以普通应用原UID和实际可用空间为准，验证新任务拒绝、原文件/hash/离线搜索保留及压力文件清理；仅CI可丢弃旧userdebug模拟器的分配器在严格环境/当次quota/UID门后临时root，并已核实finally删除、unroot及shell UID恢复。10项host故障/安全门回归另行通过。完整case、身份/包摘要与CI66～73失败历史见本轮证据；这不是物理断电、用户手机提权或无限后台保证。
 
@@ -16,6 +22,8 @@ A/早期B和C的离线代码继续保留，本轮实际补XS-06/07/09/14/15，�
 
 | 范围 | 当前已有源码与边界 | 本轮执行与剩余工作 |
 | --- | --- | --- |
+| XS-02 E轮上传 | 不可变accept/MIME与单选/多选策略；picker/result一致；最多8、重复/空/错型拒绝、SPA逐URL失效和回调重入安全 | 新132项JVM/core1287已通过；Android构建与MP4/双PNG/敏感SPA实际SAF原生用例待新CI |
+| XS-15 E轮跨source升级 | 固定f880 code1/schema2→当前code3/schema5的同job同签名真实APK覆盖；原default/UID/DBpath/事件/分类/FTS迁移验证 | 默认LegacyUpgradeProbe仅current roundtrip；4个真实旧包driver待跑，旧收藏/媒体库N/A，不代表生产签名升级 |
 | XS-03/04 | v1～v4→v5保留迁移；32活动写入器及实例/epoch票据；整库删除持久tombstone、事务内revocation guard、默认UUID轮换、失败pending重试 | CI74并发/删除回归PASS；真实旧资料升级、容量/多日异常仍待验收 |
 | XS-06 | snapshot_versions/current pointer、来源/时间/质量与历史正文搜索/每页50条的只读版本翻页/关键词查询；更新的较短COMPLETE可成为current，PARTIAL不降级COMPLETE | CI74版本/合并/JVM/SQLite/UI回归PASS；COMPLETE不等于服务端全文 |
 | XS-07/09 | 批量收藏/分类/标签追加或替换/取消收藏，资源分页搜索/类型状态筛选/多选分类删除分享，单项或多项ZIP导出≤200MiB | CI74原生UI/SAF与320dp/大字号配置PASS；真机/接收应用另验 |

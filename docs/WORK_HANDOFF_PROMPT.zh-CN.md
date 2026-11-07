@@ -1,5 +1,11 @@
 # Xs｜持续研发 Work 交接指令
 
+本轮E（XS-02/15）正在接续已通过的D/CI75：BrowserUploadPolicy让picker与返回结果共用原请求的不可变accept MIME/扩展名、单选/多选（最多8项）策略，拒绝空/重复/超量/声明类型不符结果；SPA任何URL变化即取消旧上传，回调前先清旧状态。新增132条JVM已执行，总core1287及SQLite/DOM/20k、512MiB容器32MiB JVM与10项host检查通过；本轮Android构建、原生新增用例和新CI仍PENDING，D的通过不覆盖新改动。详见[本轮E证据](ROUND_E_EVIDENCE.zh-CN.md)。
+
+本轮待运行目标：真实SAF选择5783字节MP4并由WebView FileReader/用户手势播放、两份新PNG的实际SAF多选/逐文件字节核对、敏感SPA路由再返回HOME仍拒旧结果；另有固定旧main f88003c8ec1ee193b75de7267db6ae7654ee77c4 code1/schema2→当前code3/schema5的同job调试签名真实APK覆盖升级driver。默认LegacyUpgradeProbe用例只是current roundtrip；真正旧包升级单独记账。声明主用例624=4×(52+104)、外部driver20=既有16+跨source4，均非已通过数量。
+
+上传MIME来自provider声明，不证明文件内容真实、完整或已上传到X；不套用下载的20/100MiB上限，不增加权限、不由原生全读或转码。旧版本无独立收藏/媒体库，相应迁移为N/A；保留生成文件只证明文件保留。真实X/CDN/聊天App/物理设备/生产签名和live适配关闭边界不变。
+
 > 本文件是可直接粘贴到 ChatGPT Work 的执行指令；**不是功能完成报告**。所有最新决定以仓库当前 main 和文档索引为准，不能仅凭本文静态 SHA 认定仓库仍处于旧版本。
 
 你现在接管 **Xs** 的后续产品、Android Web-first 客户端、网页观察/精简、独立本地资料库、媒体下载与分享、测试、CI 及 GitHub 维护工作。**这是已有项目的持续研发，不是重新制定计划，不是重写仓库，也不是一次性审查。**
@@ -20,11 +26,11 @@
 4. `docs/ACCEPTANCE_MATRIX.zh-CN.md`、`docs/roadmap.md`、`docs/CHATGPT_STUDIO_REUSE.zh-CN.md`
 5. `docs/adr/0002-local-library-media.md`、`docs/adr/0003-native-pull-delivery.md`、**`docs/adr/0004-feed-dwell.md`**
 6. GitHub Issue #3（真实 X 浏览兼容）、Issue #4（产品功能/实现）；最新未合并 PR、Actions/CI、当前数据库版本与实际源码。
-7. `docs/ROUND_D_EVIDENCE.zh-CN.md`（本轮v5/系统下载/加密资源/批量/删库和当前CI）、`docs/ROUND_C_EVIDENCE.zh-CN.md`（历史v4证据）及 `docs/IMPLEMENTATION_EVIDENCE.zh-CN.md`（早期A/B）；不要用旧CI代替新提交。
+7. `docs/ROUND_E_EVIDENCE.zh-CN.md`（本轮上传/跨source升级，初始原生CI待跑）、`docs/ROUND_D_EVIDENCE.zh-CN.md`（本轮v5/系统下载/加密资源/批量/删库和当前CI）、`docs/ROUND_C_EVIDENCE.zh-CN.md`（历史v4证据）及 `docs/IMPLEMENTATION_EVIDENCE.zh-CN.md`（早期A/B）；不要用旧CI代替新提交。
 
 ## 接续代码基线（2026-11-07，仍需核对最新提交）
 
-当前验证源码 `0d193e4689d649970d9705818d33e8706b470d8f` / tested tree `c8551cd4a09e4466cd84e7973039aba06a5f87b2`：[CI74](https://github.com/ForceMind/Xs/actions/runs/42386764024) 六项任务全部成功。1155项JVM、构建/双Lint及API26/27/30/36主仪器608/608通过，0失败/错误/跳过；独立force-stop、同job同源debug3→4升级、guest reboot与真实低空间各4/4，共16/16通过，不并入608主XML。
+D轮已验证源码 `0d193e4689d649970d9705818d33e8706b470d8f` / tested tree `c8551cd4a09e4466cd84e7973039aba06a5f87b2`：[CI74](https://github.com/ForceMind/Xs/actions/runs/42386764024) 六项任务全部成功。1155项JVM、构建/双Lint及API26/27/30/36主仪器608/608通过，0失败/错误/跳过；独立force-stop、同job同源debug3→4升级、guest reboot与真实低空间各4/4，共16/16通过，不并入608主XML。
 
 低空间断言以普通应用原UID和实际可用空间为准，验证新任务拒绝、原文件/hash/离线搜索保留及压力文件清理；仅CI可丢弃旧userdebug模拟器的分配器在严格环境/当次quota/UID门后临时root，并已核实finally删除、unroot及shell UID恢复。10项host故障/安全门回归另行通过。完整case、身份/包摘要与CI66～73失败历史见本轮证据；这不是物理断电、用户手机提权或无限后台保证。
 
@@ -48,7 +54,7 @@ CI74已实际通过核心/SQLite/DOM压力与Android构建检查；已验证的�
 - 独立UID receiver真实Intent/ClipData read grant、拒绝未授权/未选/写/DB及删库后Activity存活延迟hash读取，Browser真实SAF PNG文件选择、只读URI/68字节FileReader读取/触摸window.open已编码；不等于聊天App送达/真实X。外部ADB force-stop消失PID/不同PID恢复、同jobdebug3→4覆盖升级与guest reboot已在CI74各四API通过；不把in-process重启或app-owned lease恢复冒充接收grant跨reboot，也不代表物理断电/production key/跨schema。
 - 手动签名候选workflow只接受确切main祖先SHA、预配secret与证书pin，产内部候选与来源摘要，不发布GitHub Release或商店。生产key/cert未配置，稳定升级/回退与正式发布门槛未过；根GPL-3.0不变，不能抹历史授权或跳过rights/notice审查。
 
-继续已有PR而不覆盖未合并进展，保留CI74低空间脚本/普通UID原生断言/清理恢复的实际证据；不要将CI74已通过的主用例、reboot/升级/大资源恢复重复列为未实现。再推进设备/现场适配。真实Browser尚未挂载自动打开/停留、本人动作和网页精简的live适配器；开关不能把fixture能力变为现场验收。真实X登录/DOM/媒体CDN、微信/QQ/飞书/Telegram接收、厂商后台与多日电量、物理断电、生产key/跨schema升级仍缺独立证据。如选择切换自定义许可，须另行确定权利范围与条款；当前GPL及历史授权/第三方义务继续有效。所有现场启用受独立证据门槛；不能将W0变成停止离线研发的理由。
+继续已有PR而不覆盖未合并进展；优先运行本轮E的Android构建和新增SAF/跨source driver，624/20只是声明，不能套D/CI75通过。保留CI74低空间脚本/普通UID原生断言/清理恢复的实际证据；不要将CI74已通过的主用例、reboot/升级/大资源恢复重复列为未实现。再推进设备/现场适配。真实Browser尚未挂载自动打开/停留、本人动作和网页精简的live适配器；开关不能把fixture能力变为现场验收。真实X登录/DOM/媒体CDN、微信/QQ/飞书/Telegram接收、厂商后台与多日电量、物理断电、生产key/跨schema升级仍缺独立证据。如选择切换自定义许可，须另行确定权利范围与条款；当前GPL及历史授权/第三方义务继续有效。所有现场启用受独立证据门槛；不能将W0变成停止离线研发的理由。
 
 CI调试证书可能每个job不同，不能保证覆盖旧PoC升级。有资料的旧Xs不要为换装直接卸载；即使已有完整备份源码，也应先在隔离环境实际验证导出/恢复，再操作真实个人资料。
 

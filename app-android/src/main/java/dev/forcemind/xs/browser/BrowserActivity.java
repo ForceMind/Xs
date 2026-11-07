@@ -35,6 +35,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import dev.forcemind.xs.core.BrowserNavigation;
+import dev.forcemind.xs.core.BrowserUploadPolicy;
 import dev.forcemind.xs.core.PostUrls;
 import dev.forcemind.xs.android.XsArchiveDatabase;
 import dev.forcemind.xs.android.XsLocalSpaces;
@@ -62,6 +63,8 @@ public final class BrowserActivity extends Activity {
     private ValueCallback<Uri[]> upload;
     private AlertDialog uploadDialog;
     private String uploadPage;
+    private BrowserUploadPolicy uploadPolicy;
+    private WebView uploadOwner;
     private long pageEpoch;
     private long uploadEpoch;
     private boolean failed;
@@ -313,6 +316,12 @@ public final class BrowserActivity extends Activity {
             progress.setVisibility(View.GONE);
             if (!failed) status.setText(safeBrowsingAvailable?R.string.ready:R.string.safe_browsing_unavailable);
         }
+        @Override public void doUpdateVisitedHistory(WebView view, String url, boolean isReload) {
+            if(view!=web || privacyClearing)return;
+            // SPA history changes may not start a document load. Use each callback URL,
+            // including a sensitive route followed immediately by a return to the old URL.
+            if(upload!=null && (uploadPage==null || !uploadPage.equals(url)))cancelUpload();
+        }
         @Override public void onReceivedError(WebView view, WebResourceRequest request,
                 WebResourceError error) {
             if (view==web && !privacyClearing && request.isForMainFrame()) showFailure(R.string.failed);
@@ -409,29 +418,35 @@ public final class BrowserActivity extends Activity {
                 FileChooserParams params) {
             if(owner!=web || view!=web || privacyClearing){callback.onReceiveValue(null);return true;}
             cancelUpload();
-            if (view!=web || privacyClearing || !foreground || !uploadRouteAllowed(view.getUrl()) ||
-                    params.getMode() == FileChooserParams.MODE_SAVE) {
+            // A canceled callback may synchronously issue another request; do not replace it.
+            if (upload!=null || view!=web || privacyClearing || !foreground || !uploadRouteAllowed(view.getUrl())) {
                 callback.onReceiveValue(null);
                 return true;
             }
-            final WebView uploadOwner=view;
+            final BrowserUploadPolicy policy;
+            try {policy=BrowserUploadPolicy.create(params.getMode(),params.getAcceptTypes());}
+            catch(IllegalArgumentException unsupported){callback.onReceiveValue(null);return true;}
+            final WebView requestingOwner=view;
             upload = callback;
             uploadPage = view.getUrl();
             uploadEpoch = pageEpoch;
-            boolean multiple = params.getMode() == FileChooserParams.MODE_OPEN_MULTIPLE;
+            uploadPolicy = policy;
+            uploadOwner = requestingOwner;
             uploadDialog = new AlertDialog.Builder(BrowserActivity.this)
                 .setTitle(R.string.upload).setMessage(R.string.upload_body)
-                .setNegativeButton(R.string.cancel, (d, w) -> cancelUpload())
-                .setOnCancelListener(d -> cancelUpload())
+                .setNegativeButton(R.string.cancel, (d, w) -> cancelUpload(callback))
+                .setOnCancelListener(d -> cancelUpload(callback))
                 .setPositiveButton(R.string.open, (d, w) -> {
-                    if(privacyClearing || web!=uploadOwner || upload!=callback || uploadEpoch!=pageEpoch)return;
-                    if(uploadPage==null || !uploadPage.equals(web.getUrl()) || !uploadRouteAllowed(web.getUrl())){cancelUpload();return;}
+                    if(upload!=callback)return;
+                    if(privacyClearing || web!=requestingOwner || uploadEpoch!=pageEpoch ||
+                        uploadPage==null || !uploadPage.equals(web.getUrl()) || !uploadRouteAllowed(web.getUrl())){cancelUpload(callback);return;}
+                    String[] mimeTypes=policy.mimeTypes().toArray(new String[0]);
                     Intent pick = new Intent(Intent.ACTION_OPEN_DOCUMENT)
-                        .addCategory(Intent.CATEGORY_OPENABLE).setType("*/*")
-                        .putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"image/*", "video/*"})
-                        .putExtra(Intent.EXTRA_ALLOW_MULTIPLE, multiple);
+                        .addCategory(Intent.CATEGORY_OPENABLE).setType(mimeTypes.length==1?mimeTypes[0]:"*/*")
+                        .putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes)
+                        .putExtra(Intent.EXTRA_ALLOW_MULTIPLE, policy.allowsMultiple());
                     try {uploadRequest=BrowserPrivacy.nextUploadRequest(BrowserActivity.this);startActivityForResult(pick,uploadRequest);}
-                    catch (RuntimeException missing) { cancelUpload(); toast(R.string.upload_failed); }
+                    catch (RuntimeException missing) { cancelUpload(callback); toast(R.string.upload_failed); }
                 }).show();
             return true;
         }
@@ -462,15 +477,20 @@ public final class BrowserActivity extends Activity {
     @Override protected void onActivityResult(int request, int result, Intent data) {
         super.onActivityResult(request, result, data);
         if (request != uploadRequest || upload == null) return;
-        uploadRequest=-1;
         ValueCallback<Uri[]> callback = upload;
-        upload = null;
+        final String requestingPage=uploadPage;
+        final long requestingEpoch=uploadEpoch;
+        final WebView requestingOwner=uploadOwner;
+        final BrowserUploadPolicy policy=uploadPolicy;
+        // Detach all old state before metadata calls or the WebView callback can reenter.
+        clearPendingUpload();
         List<Uri> media = new ArrayList<>();
-        if (!privacyClearing && result == RESULT_OK && data != null && web != null && pageEpoch == uploadEpoch &&
-                uploadPage != null && uploadPage.equals(web.getUrl()) &&
+        if (!privacyClearing && result == RESULT_OK && data != null && web != null && web==requestingOwner &&
+                policy!=null && pageEpoch == requestingEpoch &&
+                requestingPage != null && requestingPage.equals(web.getUrl()) &&
                 uploadRouteAllowed(web.getUrl())) {
             if (data.getClipData() != null) {
-                if (data.getClipData().getItemCount() <= 8) {
+                if (data.getClipData().getItemCount() <= (policy.allowsMultiple()?BrowserUploadPolicy.MAX_FILES:1)) {
                     for (int i = 0; i < data.getClipData().getItemCount(); i++) {
                         media.add(data.getClipData().getItemAt(i).getUri());
                     }
@@ -478,22 +498,30 @@ public final class BrowserActivity extends Activity {
             } else if (data.getData() != null) media.add(data.getData());
         }
         boolean valid = !media.isEmpty();
+        List<String> uris=new ArrayList<>(),types=new ArrayList<>();
         for (Uri uri : media) {
             if (uri == null || !"content".equals(uri.getScheme()) || uri.getAuthority() == null ||
                     uri.getAuthority().startsWith(getPackageName())) { valid = false; break; }
             try {
-                String mime = getContentResolver().getType(uri);
-                if (mime == null || !(mime.startsWith("image/") || mime.startsWith("video/"))) valid = false;
+                uris.add(uri.toString());types.add(getContentResolver().getType(uri));
             } catch (RuntimeException denied) { valid = false; }
         }
+        valid=valid && policy!=null && policy.acceptsResult(uris,types);
         callback.onReceiveValue(valid ? media.toArray(new Uri[0]) : null);
-        uploadPage = null;
         if (!valid && result == RESULT_OK) toast(R.string.upload_failed);
     }
 
+    private void clearPendingUpload() {
+        AlertDialog dialog=uploadDialog;
+        uploadDialog=null;upload=null;uploadPage=null;uploadPolicy=null;uploadOwner=null;uploadRequest=-1;uploadEpoch=0;
+        if(dialog!=null)dialog.dismiss();
+    }
+    private void cancelUpload(ValueCallback<Uri[]> expected) {
+        if(upload==expected)cancelUpload();
+    }
     private void cancelUpload() {
-        if (uploadDialog != null) { uploadDialog.dismiss(); uploadDialog = null; }
-        ValueCallback<Uri[]> cancelled=upload;upload=null;uploadPage=null;uploadRequest=-1;
+        ValueCallback<Uri[]> cancelled=upload;
+        clearPendingUpload();
         if(cancelled!=null)cancelled.onReceiveValue(null);
     }
     private void closePopup() {

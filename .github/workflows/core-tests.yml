@@ -25,6 +25,8 @@ jobs:
         run: bash scripts/check-project.sh
       - name: Compile JVM code and check real SQLite
         run: bash scripts/test-core.sh
+      - name: Check cross-source upgrade driver safety and failure handling
+        run: python3 tests/test_legacy_upgrade_driver.py
       - name: Check 10k and 100k preserving migrations and search capacity
         run: |
           mkdir -p build/core-provenance
@@ -103,6 +105,8 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -115,6 +119,8 @@ jobs:
           gradle-version: '8.9'
       - name: Install fixed tools for fixture upgrade verification
         run: sdkmanager --install "platforms;android-35" "build-tools;35.0.0"
+      - name: Assemble current APKs before the old-source installation fixture
+        run: gradle --no-daemon :app-android:assembleDebug :app-android:assembleDebugAndroidTest
       - name: Enable KVM acceleration
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
@@ -139,6 +145,7 @@ jobs:
             adb shell am get-config > app-android/build/compatibility/device-configuration.txt
             adb shell dumpsys webviewupdate > app-android/build/compatibility/webview-provider.txt
             adb shell cmd uimode night > app-android/build/compatibility/night-mode.txt
+            python3 scripts/test-legacy-upgrade.py
             python3 scripts/run-android-instrumentation.py
             python3 scripts/prepare-process-fixtures.py
             python3 scripts/test-process-recovery.py

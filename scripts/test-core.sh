@@ -8,6 +8,7 @@ javac --release 8 -encoding UTF-8 -d "$OUT" "${SOURCES[@]}" "$ROOT/src/android/j
 java -ea -cp "$OUT" dev.forcemind.xs.tests.CoreSmokeTest
 java -ea -cp "$OUT" dev.forcemind.xs.tests.ObservationGateTest
 java -ea -cp "$OUT" dev.forcemind.xs.tests.SharedPostParserTest
+java -ea -cp "$OUT" dev.forcemind.xs.tests.BrowserUploadPolicyTest
 java -ea -cp "$OUT" dev.forcemind.xs.tests.CaptureSessionTest
 java -ea -cp "$OUT" dev.forcemind.xs.tests.MediaDownloadPolicyTest
 java -ea -cp "$OUT" dev.forcemind.xs.tests.OwnActionSessionTest

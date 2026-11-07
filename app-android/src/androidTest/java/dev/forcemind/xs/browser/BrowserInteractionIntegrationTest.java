@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Rect;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Process;
 import android.os.SystemClock;
@@ -26,10 +27,18 @@ import dev.forcemind.xs.core.StrictJson;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.nio.file.Files;
 import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.security.MessageDigest;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -37,6 +46,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
 import java.util.function.Predicate;
 import org.junit.After;
+import org.junit.Rule;
+import org.junit.rules.TestName;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -53,21 +64,39 @@ public final class BrowserInteractionIntegrationTest {
     private Context app;
     private ActivityScenario<BrowserActivity> scenario;
     private Map<String,?> previousBrowser,previousPrivacy;
-    private boolean bodyCompleted;
+    private boolean bodyCompleted,fixtureDirectoryConfirmed;
+    @Rule public final TestName testName=new TestName();
     private final AtomicReference<CountDownLatch> loaded=new AtomicReference<>();
-    private static final String HTML="<!doctype html><meta name='viewport' content='width=device-width,initial-scale=1'>"+
-        "<style>body{margin:8px}button,input{display:block;box-sizing:border-box;width:100%;height:44px;margin:8px 0;font-size:16px}</style>"+
-        "<input id='file' type='file' accept='image/png' aria-label='Select synthetic PNG'>"+
-        "<button id='reset' onclick=\"document.getElementById('file').value='';window.uploadResult=null\">Reset selection</button>"+
-        "<button id='arm' onclick='window.rejectOnHide=true'>Arm navigation boundary</button>"+
-        "<button id='internal' onclick=\"window.popupReturned=window.open('"+POPUP+"','_blank')!==null\">Open synthetic authentication window</button>"+
-        "<button id='external' onclick=\"window.popupReturned=window.open('https://example.invalid/xs-fixture','_blank')!==null\">Open external fixture link</button>"+
-        "<button id='blocked' onclick=\"window.popupReturned=window.open('intent://xs-fixture','_blank')!==null\">Open blocked scheme</button>"+
-        "<script>window.uploadResult=null;window.rejectOnHide=false;window.lastFixturePointer=null;"+
-        "document.addEventListener('pointerdown',function(e){window.lastFixturePointer={id:e.target.id,trusted:e.isTrusted}},true);"+
-        "document.getElementById('file').onchange=function(){var f=this.files[0];if(!f)return;var r=new FileReader();"+
-        "r.onload=function(){window.uploadResult={name:f.name,type:f.type,size:f.size,data:r.result}};r.readAsDataURL(f)};"+
-        "document.addEventListener('visibilitychange',function(){if(window.rejectOnHide&&document.visibilityState==='hidden'){window.rejectOnHide=false;location.href='"+SENSITIVE+"'}});</script>";
+    private final List<String> nativeHistoryCallbacks=new CopyOnWriteArrayList<>();
+    private static final String HTML=(
+        "<!doctype html><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\n" +
+        "<style>body{margin:8px}button,input{display:block;box-sizing:border-box;width:100%;height:44px;margin:8px 0;font-size:16px}video{display:block;width:128px;height:128px}</style>\n" +
+        "<input id=\"file\" type=\"file\" accept=\"image/png\" aria-label=\"Select synthetic PNG\">\n" +
+        "<input id=\"videoFile\" type=\"file\" accept=\"video/mp4\" aria-label=\"Select synthetic MP4\">\n" +
+        "<input id=\"multiFile\" type=\"file\" accept=\"image/png\" multiple aria-label=\"Select two synthetic PNGs\">\n" +
+        "<button id=\"reset\" onclick=\"document.getElementById('file').value='';window.uploadResult=null\">Reset selection</button>\n" +
+        "<button id=\"arm\" onclick=\"window.rejectOnHide=true\">Arm navigation boundary</button>\n" +
+        "<button id=\"armSpa\" onclick=\"window.spaOnHide=true\">Arm same-document navigation boundary</button>\n" +
+        "<button id=\"internal\" onclick=\"window.popupReturned=window.open('__POPUP__','_blank')!==null\">Open synthetic authentication window</button>\n" +
+        "<button id=\"external\" onclick=\"window.popupReturned=window.open('https://example.invalid/xs-fixture','_blank')!==null\">Open external fixture link</button>\n" +
+        "<button id=\"blocked\" onclick=\"window.popupReturned=window.open('intent://xs-fixture','_blank')!==null\">Open blocked scheme</button>\n" +
+        "<video id=\"videoPreview\" playsinline controls preload=\"metadata\"></video>\n" +
+        "<button id=\"playVideo\" onclick=\"window.videoState.playGestureTrusted=event.isTrusted;var p=document.getElementById('videoPreview').play();if(p&amp;&amp;p.catch)p.catch(function(e){window.videoState.error=e.name})\">Play selected local MP4</button>\n" +
+        "<script>\n" +
+        "window.uploadResult=null;window.videoResult=null;window.multiResult=null;window.multiError=null;\n" +
+        "window.rejectOnHide=false;window.spaOnHide=false;window.spaVisitLog=[];window.fixtureDocumentMarker={};window.lastFixturePointer=null;\n" +
+        "window.videoState={metadata:false,playing:false,ended:false,timeUpdates:0,playGestureTrusted:false,error:null};\n" +
+        "document.addEventListener('pointerdown',function(e){window.lastFixturePointer={id:e.target.id,trusted:e.isTrusted}},true);\n" +
+        "document.getElementById('file').onchange=function(){var f=this.files[0];if(!f)return;var r=new FileReader();r.onload=function(){window.uploadResult={name:f.name,type:f.type,size:f.size,data:r.result}};r.readAsDataURL(f)};\n" +
+        "var video=document.getElementById('videoPreview');\n" +
+        "video.onloadedmetadata=function(){window.videoState.metadata=true;window.videoState.duration=video.duration;window.videoState.width=video.videoWidth;window.videoState.height=video.videoHeight};\n" +
+        "video.onplaying=function(){window.videoState.playing=true};video.ontimeupdate=function(){window.videoState.timeUpdates++;window.videoState.currentTime=video.currentTime};\n" +
+        "video.onended=function(){window.videoState.ended=true;window.videoState.currentTime=video.currentTime};video.onerror=function(){window.videoState.error=video.error?video.error.code:'unknown'};\n" +
+        "document.getElementById('videoFile').onchange=function(){var f=this.files[0];if(!f)return;var r=new FileReader();r.onload=function(){window.videoResult={name:f.name,type:f.type,size:f.size,data:r.result}};r.onerror=function(){window.videoState.error='file-read'};r.readAsDataURL(f);video.src=URL.createObjectURL(f);video.load()};\n" +
+        "document.getElementById('multiFile').onchange=function(){var files=Array.prototype.slice.call(this.files);Promise.all(files.map(function(f){return new Promise(function(resolve,reject){var r=new FileReader();r.onload=function(){resolve({name:f.name,type:f.type,size:f.size,data:r.result})};r.onerror=reject;r.readAsDataURL(f)})})).then(function(results){window.multiResult=results},function(){window.multiError='file-read'})};\n" +
+        "document.addEventListener('visibilitychange',function(){if(document.visibilityState!=='hidden')return;if(window.rejectOnHide){window.rejectOnHide=false;location.href='__SENSITIVE__'}else if(window.spaOnHide){window.spaOnHide=false;var marker=window.fixtureDocumentMarker;history.pushState({fixture:'sensitive'},'','__SENSITIVE__');window.spaVisitLog.push(location.href);history.pushState({fixture:'home'},'','__HOME__');window.spaVisitLog.push(location.href);window.spaSameDocument=window.fixtureDocumentMarker===marker}});\n" +
+        "</script>"
+        ).replace("__POPUP__",POPUP).replace("__SENSITIVE__",SENSITIVE).replace("__HOME__",HOME);
     @Before public void setup()throws Exception {
         instrumentation=InstrumentationRegistry.getInstrumentation();app=instrumentation.getTargetContext();
         previousBrowser=new HashMap<>(app.getSharedPreferences("browser.BrowserActivity",Context.MODE_PRIVATE).getAll());
@@ -75,14 +104,16 @@ public final class BrowserInteractionIntegrationTest {
         assertFalse(BrowserPrivacy.pending(app));
         app.getSharedPreferences("browser.BrowserActivity",Context.MODE_PRIVATE).edit().clear().commit();
         app.getSharedPreferences("xs_browser_privacy",Context.MODE_PRIVATE).edit().putBoolean("needs_explicit_navigation",false).commit();
-        AccessibilityServiceInfo info=instrumentation.getUiAutomation().getServiceInfo();info.flags|=AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS;instrumentation.getUiAutomation().setServiceInfo(info);
+        AccessibilityServiceInfo info=instrumentation.getUiAutomation().getServiceInfo();info.flags|=AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS|AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS;instrumentation.getUiAutomation().setServiceInfo(info);
         scenario=ActivityScenario.launch(BrowserActivity.class);
         scenario.onActivity(a->{WebView web=a.findViewById(R.id.browser_view);web.setWebViewClient(a.new Client(){
             @Override public WebResourceResponse shouldInterceptRequest(WebView view,WebResourceRequest request){return new WebResourceResponse("text/html","UTF-8",new ByteArrayInputStream(HTML.getBytes(StandardCharsets.UTF_8)));}
+            @Override public void doUpdateVisitedHistory(WebView view,String url,boolean reload){nativeHistoryCallbacks.add(url);super.doUpdateVisitedHistory(view,url,reload);}
             @Override public void onPageFinished(WebView view,String url){super.onPageFinished(view,url);CountDownLatch done=loaded.get();if(done!=null)done.countDown();}
         });});load(HOME);
     }
     @After public void cleanup(){
+        if(!bodyCompleted)saveFailureArtifacts();
         Throwable cleanupFailure=null;
         try{if(isDocumentsUi())backFromPicker();}catch(Throwable failure){cleanupFailure=failure;}
         try{if(scenario!=null)scenario.close();}catch(Throwable failure){if(cleanupFailure==null)cleanupFailure=failure;else cleanupFailure.addSuppressed(failure);}
@@ -119,7 +150,9 @@ public final class BrowserInteractionIntegrationTest {
         tap(pixels[0],pixels[1]);
         awaitJs("window.lastFixturePointer&&window.lastFixturePointer.id==='"+id+"'&&window.lastFixturePointer.trusted===true");
     }
-    private void tap(float x,float y){
+    private void tap(float x,float y){finger(x,y,20);}
+    private void longPress(float x,float y){finger(x,y,android.view.ViewConfiguration.getLongPressTimeout()+100L);}
+    private void finger(float x,float y,long holdMs){
         MotionEvent.PointerProperties finger=new MotionEvent.PointerProperties();finger.id=0;finger.toolType=MotionEvent.TOOL_TYPE_FINGER;
         MotionEvent.PointerCoords point=new MotionEvent.PointerCoords();point.x=x;point.y=y;point.pressure=1;point.size=1;
         MotionEvent.PointerProperties[] pointers={finger};MotionEvent.PointerCoords[] coordinates={point};
@@ -127,7 +160,7 @@ public final class BrowserInteractionIntegrationTest {
         MotionEvent down=MotionEvent.obtain(time,time,MotionEvent.ACTION_DOWN,1,pointers,coordinates,0,0,1,1,0,0,android.view.InputDevice.SOURCE_TOUCHSCREEN,0);
         assertEquals("The gesture is a real finger, not TOOL_TYPE_UNKNOWN",MotionEvent.TOOL_TYPE_FINGER,down.getToolType(0));
         try{assertTrue(instrumentation.getUiAutomation().injectInputEvent(down,true));}finally{down.recycle();}
-        SystemClock.sleep(20);point.pressure=0;
+        SystemClock.sleep(holdMs);point.pressure=0;
         MotionEvent up=MotionEvent.obtain(time,SystemClock.uptimeMillis(),MotionEvent.ACTION_UP,1,pointers,coordinates,0,0,1,1,0,0,android.view.InputDevice.SOURCE_TOUCHSCREEN,0);
         try{assertTrue(instrumentation.getUiAutomation().injectInputEvent(up,true));}finally{up.recycle();}
     }
@@ -137,11 +170,15 @@ public final class BrowserInteractionIntegrationTest {
         assertTrue("The identified native control is clicked through accessibility",node.performAction(AccessibilityNodeInfo.ACTION_CLICK));
     }
     private void dialogButton(boolean positive){String id="android:id/button"+(positive?"1":"2");AccessibilityNodeInfo node=awaitNode(n->id.equals(n.getViewIdResourceName())&&n.isVisibleToUser()&&n.isEnabled());assertTrue(node.performAction(AccessibilityNodeInfo.ACTION_CLICK));}
+    private static boolean selectableFixtureName(String name){return BrowserDocumentsProvider.SELECTED_NAME.equals(name)||BrowserDocumentsProvider.BOUNDARY_NAME.equals(name)||BrowserDocumentsProvider.MULTI_ONE_NAME.equals(name)||BrowserDocumentsProvider.MULTI_TWO_NAME.equals(name)||BrowserDocumentsProvider.VIDEO_NAME.equals(name)||BrowserDocumentsProvider.SPA_RESULT_NAME.equals(name);}
     private void chooseFixture(String name){
-        assertTrue("Only fixed synthetic filenames may be selected","xs-browser-fixture.png".equals(name)||"xs-browser-boundary.png".equals(name));
+        assertTrue("Only explicitly selectable fixed synthetic names are permitted",selectableFixtureName(name));
+        openFixtureDirectory();
+        touchSystemDocument(awaitFixtureDocument(name));
+        await(()->!isDocumentsUi(),"Real SAF result returns to Xs");
+    }
+    private void openFixtureDirectory(){
         await(this::isDocumentsUi,"System DocumentsUI opens");
-        // A picker can restore this exact root. Opening its drawer again can otherwise
-        // make the same title resolve to the toolbar/Recent section rather than the root.
         if(!(fixtureToolbarVisible()&&find(this::fixtureSidebarRoot)==null)) {
             if(find(this::fixtureSidebarRoot)==null) {
                 AccessibilityNodeInfo navigation=awaitNode(n->systemDocumentNode(n)&&n.getClassName()!=null&&
@@ -151,14 +188,80 @@ public final class BrowserInteractionIntegrationTest {
                      n.getContentDescription().toString().toLowerCase(java.util.Locale.ROOT).contains("drawer")));
                 touchSystemDocument(navigation);
             }
-            touchSystemDocument(awaitNode(this::fixtureSidebarRoot));
+            activateFixtureSidebarRow();
             await(()->fixtureToolbarVisible()&&find(this::fixtureSidebarRoot)==null,
                 "The fixed provider directory is active and its sidebar has closed");
         }
-        // DocumentsUI's ancestor AX click can return true without activating its child.
-        // Always send a finger gesture to this exact visible file title instead.
-        touchSystemDocument(awaitNode(n->systemDocumentNode(n)&&name.contentEquals(n.getText()==null?"":n.getText())));
-        await(()->!isDocumentsUi(),"Real SAF result returns to Xs");
+        fixtureDirectoryConfirmed=true;
+    }
+    private void activateFixtureSidebarRow(){
+        AccessibilityNodeInfo title=awaitNode(this::fixtureSidebarRoot);
+        for(int depth=0;title!=null&&depth<12;depth++) {
+            AccessibilityNodeInfo parent=title.getParent();if(parent==null)break;
+            String id=parent.getViewIdResourceName();CharSequence type=parent.getClassName();
+            boolean rootList=(id!=null&&(id.equals("android:id/list")||id.endsWith(":id/roots_list")))||
+                (type!=null&&type.toString().equals("android.widget.ListView"));
+            if(rootList) {
+                assertTrue("Only the actual clickable system sidebar item is activated",title.refresh()&&systemDocumentNode(title)&&title.isClickable());
+                assertNotNull("The refreshed direct item still contains this exact fixture title",visit(title,
+                    n->systemDocumentNode(n)&&BrowserDocumentsProvider.TITLE.contentEquals(n.getText()==null?"":n.getText()),new int[]{0}));
+                AccessibilityNodeInfo active=instrumentation.getUiAutomation().getRootInActiveWindow();
+                assertTrue("The system picker remains active",active!=null&&systemDocumentNode(active));
+                Rect row=new Rect(),window=new Rect();title.getBoundsInScreen(row);active.getBoundsInScreen(window);
+                assertTrue("The direct fixture item is clipped inside the active picker",row.intersect(window)&&!row.isEmpty());
+                assertTrue("Activate the exact actual roots-list item",title.performAction(AccessibilityNodeInfo.ACTION_CLICK));return;
+            }
+            title=parent;
+        }
+        throw new AssertionError("The exact fixture title has no direct system roots-list item");
+    }
+    private boolean confirmedFixtureDirectoryActive(){
+        return fixtureDirectoryConfirmed&&isDocumentsUi()&&find(this::fixtureSidebarRoot)==null;
+    }
+    private AccessibilityNodeInfo awaitFixtureDocument(String name){
+        assertTrue("Only fixed selectable filenames may be sought",selectableFixtureName(name));
+        long deadline=SystemClock.elapsedRealtime()+20000,nextScrollAt=0;int pages=0;boolean cannotAdvance=false;
+        while(SystemClock.elapsedRealtime()<deadline) {
+            assertTrue("Only the already-confirmed fixture directory may be searched/scrolled",confirmedFixtureDirectoryActive());
+            AccessibilityNodeInfo file=find(n->systemDocumentNode(n)&&name.contentEquals(n.getText()==null?"":n.getText())&&enabledDocumentAncestors(n));
+            if(file!=null&&file.refresh()&&systemDocumentNode(file)&&enabledDocumentAncestors(file))return file;
+            if(!cannotAdvance&&pages<5&&SystemClock.elapsedRealtime()>=nextScrollAt) {
+                AccessibilityNodeInfo list=find(this::documentScrollContainer);
+                if(list!=null&&list.refresh()&&documentScrollContainer(list)) {
+                    AccessibilityNodeInfo active=instrumentation.getUiAutomation().getRootInActiveWindow();
+                    Rect item=new Rect(),window=new Rect();list.getBoundsInScreen(item);if(active!=null)active.getBoundsInScreen(window);
+                    assertTrue("Only the active picker's actual directory list scrolls",active!=null&&systemDocumentNode(active)&&item.intersect(window)&&!item.isEmpty());
+                    pages++;cannotAdvance=!list.performAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD);
+                    long remaining=deadline-SystemClock.elapsedRealtime();
+                    if(!cannotAdvance&&remaining>100)try{instrumentation.getUiAutomation().waitForIdle(100,Math.min(1000,remaining));}
+                    catch(java.util.concurrent.TimeoutException backgroundEvents){/* Keep the original deadline and require fresh visible file bounds below. */}
+                    nextScrollAt=SystemClock.elapsedRealtime()+200;
+                }
+            }
+            SystemClock.sleep(40);
+        }
+        throw new AssertionError("Fixed document not visible within the original 20s / five-page bound: "+name);
+    }
+    private boolean documentScrollContainer(AccessibilityNodeInfo node){
+        if(!systemDocumentNode(node)||!node.isScrollable())return false;
+        String id=node.getViewIdResourceName(),type=String.valueOf(node.getClassName());
+        return (id!=null&&id.endsWith(":id/dir_list"))||type.endsWith(".RecyclerView")||type.equals("android.widget.GridView");
+    }
+    private void chooseTwoPngFixtures(){
+        openFixtureDirectory();
+        touchSystemDocument(awaitFixtureDocument(BrowserDocumentsProvider.MULTI_ONE_NAME),true);
+        await(()->find(this::openPickerButton)!=null,"A real long press enters SAF multiple-selection mode");
+        touchSystemDocument(awaitFixtureDocument(BrowserDocumentsProvider.MULTI_TWO_NAME));
+        touchSystemDocument(awaitNode(this::openPickerButton));
+        await(()->!isDocumentsUi(),"The real SAF OPEN action returns both chosen documents");
+    }
+    private boolean openPickerButton(AccessibilityNodeInfo node){
+        if(!systemDocumentNode(node))return false;
+        String text=String.valueOf(node.getText()).trim().toUpperCase(java.util.Locale.ROOT);
+        String description=String.valueOf(node.getContentDescription()).trim().toUpperCase(java.util.Locale.ROOT);
+        String id=node.getViewIdResourceName(),type=String.valueOf(node.getClassName());
+        boolean label=text.equals("OPEN")||text.equals("SELECT")||description.equals("OPEN")||description.equals("SELECT");
+        return label&&((id!=null&&(id.endsWith(":id/menu_open")||id.endsWith(":id/action_menu_select")||id.equals("android:id/button1")))||type.contains("Button")||type.contains("MenuItemView"));
     }
     private boolean fixtureSidebarRoot(AccessibilityNodeInfo node){
         if(!systemDocumentNode(node)||!BrowserDocumentsProvider.TITLE.contentEquals(node.getText()==null?"":node.getText()))return false;
@@ -177,8 +280,13 @@ public final class BrowserInteractionIntegrationTest {
         }
         return false;
     })!=null;}
+    private boolean enabledDocumentAncestors(AccessibilityNodeInfo node){
+        for(int depth=0;node!=null&&depth<12;depth++,node=node.getParent())if(!node.isEnabled())return false;
+        return true;
+    }
     private static boolean systemDocumentNode(AccessibilityNodeInfo node){return node.isVisibleToUser()&&node.isEnabled()&&node.getPackageName()!=null&&node.getPackageName().toString().contains("documentsui");}
-    private void touchSystemDocument(AccessibilityNodeInfo node){
+    private void touchSystemDocument(AccessibilityNodeInfo node){touchSystemDocument(node,false);}
+    private void touchSystemDocument(AccessibilityNodeInfo node,boolean hold){
         assertTrue("Only visible system document controls are touched",systemDocumentNode(node));
         final String text=String.valueOf(node.getText()),id=node.getViewIdResourceName(),type=String.valueOf(node.getClassName()),description=String.valueOf(node.getContentDescription());
         final boolean sidebar=fixtureSidebarRoot(node);
@@ -187,7 +295,7 @@ public final class BrowserInteractionIntegrationTest {
         while(SystemClock.elapsedRealtime()<deadline) {
             AccessibilityNodeInfo fresh=find(n->systemDocumentNode(n)&&text.equals(String.valueOf(n.getText()))&&
                 java.util.Objects.equals(id,n.getViewIdResourceName())&&type.equals(String.valueOf(n.getClassName()))&&
-                description.equals(String.valueOf(n.getContentDescription()))&&(!sidebar||fixtureSidebarRoot(n)));
+                description.equals(String.valueOf(n.getContentDescription()))&&(!sidebar||fixtureSidebarRoot(n))&&(!selectableFixtureName(text)||enabledDocumentAncestors(n)));
             AccessibilityNodeInfo active=instrumentation.getUiAutomation().getRootInActiveWindow();
             if(fresh!=null&&fresh.refresh()&&active!=null&&active.getPackageName()!=null&&active.getPackageName().toString().contains("documentsui")) {
                 Rect candidate=new Rect(),window=new Rect();fresh.getBoundsInScreen(candidate);active.getBoundsInScreen(window);
@@ -199,9 +307,43 @@ public final class BrowserInteractionIntegrationTest {
             SystemClock.sleep(16);
         }
         assertNotNull("The exact system control has stable clipped bounds in its active window",bounds);
-        tap(bounds.exactCenterX(),bounds.exactCenterY());
+        if(hold)longPress(bounds.exactCenterX(),bounds.exactCenterY());else tap(bounds.exactCenterX(),bounds.exactCenterY());
     }
     private boolean isDocumentsUi(){return find(n->n.getPackageName()!=null&&n.getPackageName().toString().contains("documentsui"))!=null;}
+    private void saveFailureArtifacts(){
+        try {
+            if(instrumentation==null||app==null||!"1".equals(fixtureShell("getprop ro.kernel.qemu").trim()))return;
+            String method=testName.getMethodName();
+            if(!Arrays.asList("realFileInputSafSelectionReadsExactPngAndCancelPathsDoNotSelect",
+                "realPickerResultAfterPageNavigationIsRejectedAndSensitivePageCannotChoose",
+                "trustedWindowOpenUsesNativeConfirmationAndNeverRunsChildContent",
+                "realMp4SafSelectionReadsCompleteFileAndUserGesturePlaysSelectedLocalVideo",
+                "realSafMultipleSelectionReturnsOnlyTwoChosenPngFilesWithoutAssumingOrder",
+                "realSafResultAfterSameDocumentSensitiveRouteAndHomeRoundTripIsRejected").contains(method))return;
+            AccessibilityNodeInfo active=instrumentation.getUiAutomation().getRootInActiveWindow();
+            if(active==null||active.getPackageName()==null)return;
+            String owner=active.getPackageName().toString();
+            if(!app.getPackageName().equals(owner)&&!(owner.contains("documentsui")&&(fixtureDirectoryConfirmed||fixtureToolbarVisible()||find(this::fixtureSidebarRoot)!=null)))return;
+            String name="browser-"+method;File directory=app.getExternalFilesDir("xs-governance-ui");
+            if(directory==null||(!directory.isDirectory()&&!directory.mkdirs()))return;
+            StringBuilder ax=new StringBuilder();
+            for(android.view.accessibility.AccessibilityWindowInfo window:instrumentation.getUiAutomation().getWindows()) {
+                Rect bounds=new Rect();window.getBoundsInScreen(bounds);ax.append("WINDOW type=").append(window.getType()).append(" active=").append(window.isActive()).append(" focused=").append(window.isFocused()).append(" bounds=").append(bounds).append('\n');
+            }
+            visit(active,n->{Rect bounds=new Rect();n.getBoundsInScreen(bounds);String text=n.isPassword()?"[password field]":String.valueOf(n.getText());text=text.replace('\n',' ').replace('\t',' ');if(text.length()>256)text=text.substring(0,256);
+                ax.append(n.getClassName()).append('\t').append(n.getViewIdResourceName()).append('\t').append(bounds).append(" visible=").append(n.isVisibleToUser()).append(" enabled=").append(n.isEnabled()).append(" clickable=").append(n.isClickable()).append('\t').append(text).append('\n');return false;},new int[]{0});
+            Files.write(new File(directory,name+".ax.txt").toPath(),ax.toString().getBytes(StandardCharsets.UTF_8));
+            Bitmap shot=instrumentation.getUiAutomation().takeScreenshot();if(shot!=null)try(FileOutputStream out=new FileOutputStream(new File(directory,name+".png"))){shot.compress(Bitmap.CompressFormat.PNG,100,out);}finally{shot.recycle();}
+            fixtureShell("mkdir -p /data/local/tmp/xs-governance-ui");fixtureShell("chmod 700 /data/local/tmp/xs-governance-ui");
+            for(String extension:new String[]{".ax.txt",".png"}){File file=new File(directory,name+extension);if(file.isFile())fixtureShell("cp "+shellQuote(file.getAbsolutePath())+" "+shellQuote("/data/local/tmp/xs-governance-ui/"+name+extension));}
+        }catch(Throwable unavailable){android.util.Log.i("XsBrowserFixture","Synthetic emulator failure capture unavailable");}
+    }
+    private static String shellQuote(String text){return "'"+text.replace("'","'\\''")+"'";}
+    private String fixtureShell(String command)throws java.io.IOException {
+        try(android.os.ParcelFileDescriptor.AutoCloseInputStream input=new android.os.ParcelFileDescriptor.AutoCloseInputStream(instrumentation.getUiAutomation().executeShellCommand(command))) {
+            ByteArrayOutputStream out=new ByteArrayOutputStream();byte[] bytes=new byte[1024];int n;while((n=input.read(bytes))!=-1)if(out.size()<8192)out.write(bytes,0,Math.min(n,8192-out.size()));return new String(out.toByteArray(),StandardCharsets.UTF_8);
+        }
+    }
     private void backFromPicker(){
         for(int i=0;i<4&&isDocumentsUi();i++){
             // The short KeyEvent(action,code) constructor has eventTime=0; modern input
@@ -219,7 +361,8 @@ public final class BrowserInteractionIntegrationTest {
     private AccessibilityNodeInfo visit(AccessibilityNodeInfo node,Predicate<AccessibilityNodeInfo> predicate,int[] count){if(node==null||++count[0]>2000)return null;if(predicate.test(node))return node;for(int i=0;i<node.getChildCount();i++){AccessibilityNodeInfo found=visit(node.getChild(i),predicate,count);if(found!=null)return found;}return null;}
     private void await(BooleanSupplier condition,String explanation){long end=SystemClock.elapsedRealtime()+20000;do{if(condition.getAsBoolean())return;SystemClock.sleep(40);}while(SystemClock.elapsedRealtime()<end);AccessibilityNodeInfo active=instrumentation.getUiAutomation().getRootInActiveWindow();throw new AssertionError(explanation+"; active package="+(active==null?"none":active.getPackageName()));}
     private void awaitJs(String expression){await(()->{try{return "true".equals(evaluate(expression));}catch(Exception failure){throw new AssertionError(failure);}},expression);}
-    private void openSystemPicker()throws Exception {tapHtml("file");await(()->dialog("uploadDialog"),"Trusted file-input gesture opens native consent");dialogButton(true);await(this::isDocumentsUi,"Actual ACTION_OPEN_DOCUMENT runs");}
+    private void openSystemPicker()throws Exception {openSystemPicker("file");}
+    private void openSystemPicker(String input)throws Exception {fixtureDirectoryConfirmed=false;tapHtml(input);await(()->dialog("uploadDialog"),"Trusted file-input gesture opens native consent");dialogButton(true);await(this::isDocumentsUi,"Actual ACTION_OPEN_DOCUMENT runs");}
 
     @Test public void realFileInputSafSelectionReadsExactPngAndCancelPathsDoNotSelect()throws Exception {
         Uri selected=DocumentsContract.buildDocumentUri(BrowserDocumentsProvider.AUTHORITY,BrowserDocumentsProvider.SELECTED);
@@ -248,6 +391,84 @@ public final class BrowserInteractionIntegrationTest {
         chooseFixture("xs-browser-boundary.png");
         awaitJs("location.href==='"+SENSITIVE+"'&&document.getElementById('file').files.length===0&&window.uploadResult===null");assertNull(field("upload"));
         tapHtml("file");SystemClock.sleep(300);assertFalse("Security route never opens native file consent",dialog("uploadDialog"));assertFalse(isDocumentsUi());awaitJs("document.getElementById('file').files.length===0&&window.uploadResult===null");bodyCompleted=true;
+    }
+    @SuppressWarnings("unchecked") private Object jsonFromPage(String expression)throws Exception {
+        Object encoded=StrictJson.parse(evaluate("JSON.stringify("+expression+")"));
+        assertTrue("The synthetic page returns JSON text",encoded instanceof String);return StrictJson.parse((String)encoded);
+    }
+    private byte[] videoAsset()throws Exception {
+        try(InputStream input=instrumentation.getContext().getAssets().open("standard-video.mp4.b64");ByteArrayOutputStream bytes=new ByteArrayOutputStream()) {
+            byte[] buffer=new byte[4096];int n;while((n=input.read(buffer))!=-1){assertTrue(bytes.size()+n<=16384);bytes.write(buffer,0,n);}
+            return Base64.decode(bytes.toByteArray(),Base64.DEFAULT);
+        }
+    }
+    private static String sha256(byte[] bytes)throws Exception {
+        byte[] digest=MessageDigest.getInstance("SHA-256").digest(bytes);StringBuilder out=new StringBuilder(64);
+        for(byte value:digest){out.append(Character.forDigit((value>>>4)&15,16));out.append(Character.forDigit(value&15,16));}return out.toString();
+    }
+    private static byte[] fileReaderBytes(Map<String,Object> result,String mime) {
+        assertEquals(mime,result.get("type"));assertTrue(result.get("data") instanceof String);
+        String data=(String)result.get("data"),prefix="data:"+mime+";base64,";
+        assertTrue("FileReader returns the actual selected media type",data.startsWith(prefix));return Base64.decode(data.substring(prefix.length()),Base64.DEFAULT);
+    }
+    private Uri document(String id){return DocumentsContract.buildDocumentUri(BrowserDocumentsProvider.AUTHORITY,id);}
+    private void assertNeverSelectedDenied(){
+        Uri sibling=document(BrowserDocumentsProvider.NEVER_SELECTED);
+        assertEquals("The never-selected sibling has no inherited document permission",PackageManager.PERMISSION_DENIED,
+            app.checkUriPermission(sibling,Process.myPid(),app.getApplicationInfo().uid,Intent.FLAG_GRANT_READ_URI_PERMISSION));
+        try(InputStream ignored=app.getContentResolver().openInputStream(sibling)){fail("An unselected sibling must not be opened");}
+        catch(SecurityException|FileNotFoundException expected){}catch(java.io.IOException unavailable){throw new AssertionError(unavailable);}
+    }
+    private void assertSelectedReadOnly(String id)throws Exception {
+        Uri selected=document(id);assertEquals(PackageManager.PERMISSION_GRANTED,
+            app.checkUriPermission(selected,Process.myPid(),app.getApplicationInfo().uid,Intent.FLAG_GRANT_READ_URI_PERMISSION));
+        try{android.os.ParcelFileDescriptor write=app.getContentResolver().openFileDescriptor(selected,"w");if(write!=null)write.close();fail("A real SAF selection grants no writable synthetic document");}
+        catch(SecurityException|FileNotFoundException expected){}
+    }
+    @SuppressWarnings("unchecked") @Test public void realMp4SafSelectionReadsCompleteFileAndUserGesturePlaysSelectedLocalVideo()throws Exception {
+        byte[] expected=videoAsset();assertEquals(BrowserDocumentsProvider.VIDEO_BYTES,expected.length);assertEquals(BrowserDocumentsProvider.VIDEO_SHA256,sha256(expected));
+        assertNeverSelectedDenied();openSystemPicker("videoFile");chooseFixture(BrowserDocumentsProvider.VIDEO_NAME);
+        awaitJs("window.videoResult&&window.videoResult.name==='"+BrowserDocumentsProvider.VIDEO_NAME+"'&&window.videoResult.type==='video/mp4'&&window.videoResult.size==="+BrowserDocumentsProvider.VIDEO_BYTES);
+        Map<String,Object> result=(Map<String,Object>)jsonFromPage("window.videoResult");byte[] actual=fileReaderBytes(result,"video/mp4");
+        assertEquals(BrowserDocumentsProvider.VIDEO_BYTES,actual.length);assertEquals(BrowserDocumentsProvider.VIDEO_SHA256,sha256(actual));assertArrayEquals(expected,actual);
+        assertSelectedReadOnly(BrowserDocumentsProvider.VIDEO);assertNeverSelectedDenied();assertNull(field("upload"));
+        awaitJs("window.videoState.metadata&&window.videoState.width===64&&window.videoState.height===64&&window.videoState.duration>0.8&&window.videoState.duration<1.5");
+        awaitJs("document.getElementById('videoPreview').paused===true&&document.getElementById('videoPreview').autoplay===false&&!window.videoState.playGestureTrusted&&!window.videoState.playing");
+        tapHtml("playVideo");
+        awaitJs("window.videoState.playGestureTrusted===true&&window.videoState.playing===true&&window.videoState.ended===true&&window.videoState.timeUpdates>0&&window.videoState.currentTime>0.8&&window.videoState.error===null");
+        bodyCompleted=true;
+    }
+    @SuppressWarnings("unchecked") @Test public void realSafMultipleSelectionReturnsOnlyTwoChosenPngFilesWithoutAssumingOrder()throws Exception {
+        assertNeverSelectedDenied();
+        for(String id:new String[]{BrowserDocumentsProvider.MULTI_ONE,BrowserDocumentsProvider.MULTI_TWO})assertEquals("This distinct document starts without an earlier legitimate grant",PackageManager.PERMISSION_DENIED,
+            app.checkUriPermission(document(id),Process.myPid(),app.getApplicationInfo().uid,Intent.FLAG_GRANT_READ_URI_PERMISSION));
+        openSystemPicker("multiFile");chooseTwoPngFixtures();
+        awaitJs("document.getElementById('multiFile').files.length===2&&window.multiResult&&window.multiResult.length===2&&window.multiError===null");
+        Object result=jsonFromPage("window.multiResult");assertTrue(result instanceof List);assertEquals(2,((List<?>)result).size());
+        Map<String,byte[]> expected=new HashMap<>();expected.put(BrowserDocumentsProvider.MULTI_ONE_NAME,Base64.decode(BrowserDocumentsProvider.PNG_BASE64,Base64.NO_WRAP));
+        expected.put(BrowserDocumentsProvider.MULTI_TWO_NAME,Base64.decode(BrowserDocumentsProvider.SECOND_PNG_BASE64,Base64.NO_WRAP));
+        assertFalse("The two fixtures contain different bytes",Arrays.equals(expected.get(BrowserDocumentsProvider.MULTI_ONE_NAME),expected.get(BrowserDocumentsProvider.MULTI_TWO_NAME)));
+        for(Object item:(List<?>)result) {
+            assertTrue(item instanceof Map);Map<String,Object> file=(Map<String,Object>)item;
+            assertTrue("Each returned filename is chosen exactly once",expected.containsKey(file.get("name")));
+            byte[] bytes=expected.remove(file.get("name")),actual=fileReaderBytes(file,"image/png");assertEquals(bytes.length,((Number)file.get("size")).intValue());assertArrayEquals(bytes,actual);assertEquals(sha256(bytes),sha256(actual));
+        }
+        assertTrue(expected.isEmpty());assertSelectedReadOnly(BrowserDocumentsProvider.MULTI_ONE);assertSelectedReadOnly(BrowserDocumentsProvider.MULTI_TWO);
+        assertNeverSelectedDenied();assertNull(field("upload"));bodyCompleted=true;
+    }
+    @Test public void realSafResultAfterSameDocumentSensitiveRouteAndHomeRoundTripIsRejected()throws Exception {
+        nativeHistoryCallbacks.clear();tapHtml("armSpa");openSystemPicker();
+        awaitJs("window.spaVisitLog.length===2&&window.spaVisitLog[0]==='"+SENSITIVE+"'&&window.spaVisitLog[1]==='"+HOME+"'&&window.spaSameDocument===true&&location.href==='"+HOME+"'");
+        await(()->{
+            int sensitive=nativeHistoryCallbacks.indexOf(SENSITIVE);if(sensitive<0)return false;
+            for(int i=sensitive+1;i<nativeHistoryCallbacks.size();i++)if(HOME.equals(nativeHistoryCallbacks.get(i)))return true;
+            return false;
+        },"Both transient route callbacks come from the real WebView in order");
+        assertEquals("The final URL deliberately equals the original picker URL",HOME,currentUrl());
+        chooseFixture(BrowserDocumentsProvider.SPA_RESULT_NAME);
+        awaitJs("location.href==='"+HOME+"'&&window.spaVisitLog.length===2&&window.spaSameDocument===true&&document.getElementById('file').files.length===0&&window.uploadResult===null");
+        assertNull("A transient sensitive route invalidates the old callback even after returning HOME",field("upload"));
+        assertNeverSelectedDenied();bodyCompleted=true;
     }
     @Test public void trustedWindowOpenUsesNativeConfirmationAndNeverRunsChildContent()throws Exception {
         CountDownLatch ready=new CountDownLatch(1);loaded.set(ready);clickNativeId(R.id.open_x);
