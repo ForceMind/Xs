@@ -74,7 +74,7 @@ public final class VideoDownloadEngineTest {
         }while(android.os.SystemClock.elapsedRealtime()<end);
         XsMediaRepository.Asset row=engine.find(LIBRARY,id);fail("Expected "+state+", actual "+(row==null?"missing":row.state));return null;
     }
-    private File part(String id){return new File(context.getFilesDir(),"xs-saved-media/"+id+".part");}
+    private File part(String id){File folder=new File(context.getFilesDir(),"xs-saved-media");File[] candidates=folder.listFiles();if(candidates!=null)for(File file:candidates)if(file.getName().startsWith(id+".")&&file.getName().endsWith(".part"))return file;return new File(folder,id+".part");}
     @Test public void fullMp4WithAudioCompletesPlaysAndSharesOriginalFile()throws Exception {
         byte[] movie=fixture("standard");AtomicInteger requests=new AtomicInteger();
         engine=new XsMediaRepository(context,address->{requests.incrementAndGet();return new Response(address,movie,movie.length);});
@@ -148,7 +148,7 @@ public final class VideoDownloadEngineTest {
         engine=new XsMediaRepository(legacyContext,address->{throw new java.io.IOException("No transport in migration");});
         XsMediaRepository.Asset retained=engine.find(LIBRARY,id);assertEquals("IMAGE",retained.mediaKind);assertEquals("Legacy",retained.category);assertEquals(123,retained.createdMs);assertEquals(0,retained.durationMs);
         assertArrayEquals(image,java.nio.file.Files.readAllBytes(engine.completedFile(LIBRARY,id).toPath()));assertEquals(image.length,engine.resolveLease(token,filename).bytes);
-        assertEquals(2,engine.getReadableDatabase().getVersion());
+        assertEquals(3,engine.getReadableDatabase().getVersion());
     }
     private String seedImage()throws Exception {
         String id=UUID.randomUUID().toString(),filename=id+".png";byte[] bytes=png();try(FileOutputStream out=new FileOutputStream(new File(context.getFilesDir(),"xs-saved-media/"+filename))){out.write(bytes);}

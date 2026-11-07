@@ -20,21 +20,27 @@
 4. `docs/ACCEPTANCE_MATRIX.zh-CN.md`、`docs/roadmap.md`、`docs/CHATGPT_STUDIO_REUSE.zh-CN.md`
 5. `docs/adr/0002-local-library-media.md`、`docs/adr/0003-native-pull-delivery.md`、**`docs/adr/0004-feed-dwell.md`**
 6. GitHub Issue #3（真实 X 浏览兼容）、Issue #4（产品功能/实现）；最新未合并 PR、Actions/CI、当前数据库版本与实际源码。
-7. `docs/ROUND_C_EVIDENCE.zh-CN.md`（本轮v4/视频/精简/备份合并边界和新CI）及 `docs/IMPLEMENTATION_EVIDENCE.zh-CN.md`（此前A/早期B证据）；不要用旧CI代替新提交。
+7. `docs/ROUND_D_EVIDENCE.zh-CN.md`（本轮v5/系统下载/加密资源/批量/删库和当前CI）、`docs/ROUND_C_EVIDENCE.zh-CN.md`（历史v4证据）及 `docs/IMPLEMENTATION_EVIDENCE.zh-CN.md`（早期A/B）；不要用旧CI代替新提交。
 
 ## 接续代码基线（2026-11-07，仍需核对最新提交）
 
-已保留 A/早期 B 的即时打开、无点击停留、收藏、图片及受限文件分享闭环。本轮新增 v4 本人行为/撤销与档案来源、直链标准MP4、可撤销精简夹具、元数据备份恢复及显式空间合并。本地933条JVM断言、SQLite/观察与精简DOM回归、Android构建/Lint通过；源码 `4ee242e` 的 [CI 42357220689](https://github.com/ForceMind/Xs/actions/runs/42357220689) 四任务通过：API30/36每套36项宿主＋37项客户端、共146项，零失败/错误/跳过；详见 [CI摘要](evidence/round-c-ci64.json)。双模块Lint各0 Error/0 NewApi/11 Warning；API26/27实际运行仍NOT RUN，SAF及新增备份/合并UI未专项自动化、真机NOT RUN，不能以DB/helper测试替代。不能从旧方案重新把这些实现列为“尚未编码”，也不能据此宣称整个C/D或真实客户端完成。
+保留A/早期B/C已有即时打开、无点击停留、独立收藏、图片与标准MP4分享、本人行为与可撤销精简夹具。当前源码继续实际推进以下XS-06/07/09/14/15范围；本轮API26/30/36、完整构建和新增SAF/备份/合并/批量/删除UI当前**PENDING**，先查看 [本轮证据](ROUND_D_EVIDENCE.zh-CN.md) 与最新CI，再决定是否已通过。测试编码或编译不是仪器执行，不能把pending写成pass。
 
-- 本人行为只接受native fixture操作身份与成功结果匹配的不可伪造Admission；浏览、作者、菜单、页面自报成功和恢复文件里的provenance字符串都不能建立现场权限。真实X适配关闭；导入归属需用户确认，执行者/动作时间/当前平台状态未知时保持未知。REPLY/QUOTE索引成功新帖并保留关联原帖，转帖撤销保留轨迹。
-- 视频限用户显式选择支持的直链标准MP4，≤100 MiB/10分钟，H.264与可选AAC；容器/样本范围/传输完整性检查和首尾有限解码不等于逐帧播放、真实X或目标聊天App验收。blob/HLS/DASH/片段/加密及未知格式拒绝；中断明确重新选择来源，不宣称续传/可靠后台下载。
-- 精简三开关默认关闭，只有合成fixture挂载可撤销规则；实际BrowserActivity未挂载，不能把偏好开启当真实X规则验收。
-- 明文元数据备份≤16 MiB/20,000条，支持schema3→4且只恢复到新库，不包含媒体文件/下载任务/网页会话/密钥，校验和不证明身份。合并选2～4库、≤8 MiB/20,000条元数据，使用用户预览时的快照建立新库；源与默认空间不变，旧行为同身份来源冲突拒绝；即时撤销仅限刚创建、元数据未修改且无媒体/任务的新结果，已修改或有媒体时拒绝并保留现有任务。普通编辑需重新预览才加入，源清理/epoch失效拒绝提交。
-- 统一写入器32库上限、空闲回收与实例/epoch绑定票据已存在；新增入口继续复用，不能因回收误接纳旧票据。
+历史源码4ee242e的 [CI42357220689](https://github.com/ForceMind/Xs/actions/runs/42357220689) 已通过933条JVM、SQLite/DOM、构建/Lint及API30/36共146项；这些仅属历史v4提交，不覆盖当前修改。API27、真机、真实X与目标接收应用、真实耗电/多日soak仍缺证据。
 
-继续保留当前源码的CI证据，再推进API26/27、SAF/新增UI、可靠性、真实站点适配与对应验收。保留未合并PR上的进度，不能用旧main覆盖它；所有现场启用仍受独立证据门槛约束。
+- SQLite v5保留v1～v4数据/旧命名空间，新增snapshot_versions/current pointer、来源/收录时间/质量、历史正文全文搜索和只读版本浏览。COMPLETE仅表示原生证据支持的接受可见DOM正文，不保证服务器全文；更新但较短COMPLETE可成为current，PARTIAL不能覆盖COMPLETE，全部旧版本保留（版本面板每页50条、前后翻页及正文关键词查询，点选才读单版本正文，不无限累积UI行）。显式合并按SnapshotPolicy保留版本，源/default不覆盖，不能恢复成“最长文本永远正确”。
+- History批量收藏/分类/标签追加替换/取消与Assets分页搜索/类型状态/多选分类删除分享/导出已有实现。导出单项原文件、多项ZIP，每批≤200MiB；完成文件才能导出/分享。测试实际操作UI后检查SQLite/bytes，不能只跑helper或放宽assert。
+- 下载任务JobScheduler：API34+用户显式请求先UIDT，拒绝后普通持久任务，API26～33普通任务；候选URL由AndroidKeystore AES-GCM密封并绑定task/library/post/kind。最多3次总网络尝试（首次+2次指定网络错误自动重试），每次从byte0重下。onStopJob保留PAUSED并尊重系统，恢复只沿用OS已有任务，missing job不盲目重排绕过stop。FAILED/PAUSED可显式重试保存来源，取消/完成清候选；不支持Range续传，不承诺后台及时完成。
+- 标准MP4仍限≤100MiB/10分钟H.264和可选AAC；容器/样本/长度及首尾有限解码不等于全程或目标聊天App播放验收。拒绝blob/HLS/DASH/分片/DRM，不通过导出会话或绕过认证补资源。
+- 口令完整资源备份独立于原明文元数据选项。64KiB分块AES-256-GCM、PBKDF2-HMAC-SHA256/600k、最终认证块/EOF，明文负载≤512MiB/500完成资源；内层元数据≤16MiB/20,000、图≤20MiB/视频≤100MiB。口令8～1024字符不持久保存，遗失不可恢复。全部认证、元数据/FK/每资源哈希及native媒体校验后预览；新UUID恢复，media-first/archive-last与崩溃markers，源/default保留。任务、候选URL、会话、密钥、lease不备份；SQLite/FTS/WAL未加密。
+- 明文元数据仍≤16MiB/20,000、schema3/4→5；显式合并2～4来源、≤8MiB/20,000，仅合并预览快照，不搬媒体。预览后编辑需重新预览，来源清理/epoch失效拒绝；即时撤销仅限刚建且未改、无媒体/任务结果，不影响源/default和已有任务。
+- 完整删库先持久tombstone再写入barrier；资料库Archive公开写入口在实际取得写事务后重查deleted，媒体批量helper只经同一shared writer调用；旧票据/未来普通提交不得复活。仅删default时轮换UUID；清所选scope的全部快照/事件/收藏/分类/本人记录与媒体，另库/网页会话/既有24h接收lease保留。失败保持pending，启动或用户重试只可继续purge，不重新开放空间。
+- 停留更新1秒合并、达到10分钟cap后停止反复写，暂停停止JS timer。合成stress不等于真实多日soak/耗电。即时打开、停留、本人行为和精简真实适配仍关闭；native fixture Admission不可由页面/导入provenance字符串伪造。
+- 手动签名候选workflow只接受确切main祖先SHA、预配secret与证书pin，产内部候选与来源摘要，不发布GitHub Release或商店。生产key/cert未配置，稳定升级/回退与正式发布门槛未过；根GPL-3.0不变，不能抹历史授权或跳过rights/notice审查。
 
-CI调试证书可能每个job不同，不保证覆盖旧PoC升级。有数据的旧Xs不要为换装直接卸载；当前元数据备份不含媒体。优先空白/隔离测试安装，正式稳定签名仍待完成。
+继续已有PR而不覆盖未合并进展，先完成当前源码的core/SQLite/DOM/build/lint和API26/30/36/newUI执行与失败修复，再补API27/设备/容量/恢复/现场适配。所有现场启用受独立证据门槛；不能将W0变成停止离线研发的理由。
+
+CI调试证书可能每个job不同，不能保证覆盖旧PoC升级。有资料的旧Xs不要为换装直接卸载；即使已有完整备份源码，也应先在隔离环境实际验证导出/恢复，再操作真实个人资料。
 
 ## 产品必须达到的真实用户体验
 
@@ -57,7 +63,7 @@ CI调试证书可能每个job不同，不保证覆盖旧PoC升级。有数据的
 - 先查最新 HEAD、CI、Issue/PR 和代码；确认前一阶段证据与阻塞，不从零开始。遇到旧文档冲突按 docs/README.md 指定优先级。
 - 按 **XS-01～XS-15 工作包**推进：A 浏览底座 + 本机资料归属 + 即点即记；B 早期 XS-14 无需点开的停留记录，同期 XS-07～10 收藏/图片/资源/分享；C 转帖/视频/可撤销精简；D 性能、配额、迁移、签名与真实兼容性发布。
 - XS-02 浏览容器改善与 XS-03/04 数据/写入控制可并行；先在**合成/脱敏离线 X 页面**验证 SPA、点击/正文延迟/停留/去重，再按明确的 W0 真机登录和站点行为证据决定是否启用真实采集。真实登录不通过时不得用伪装 User-Agent、复制 Cookie 或绕过验证补齐。
-- **实际编码**：修改可运行源码、编写迁移、网页脚本与 Android 测试，执行现有 Java/SQLite 检查、Android Gradle/Lint、API 30/36 模拟器回归；记录失败并修复。不能因为自动测试通过就宣称真机或 X 登录已验收。
+- **实际编码**：修改可运行源码、编写迁移、网页脚本与 Android 测试，执行现有 Java/SQLite 检查、Android Gradle/Lint、API 26/30/36 模拟器回归，并另列API27待测；记录失败并修复。不能因为自动测试通过就宣称真机或 X 登录已验收。
 - 每完成一个可验收阶段就提交代码到 GitHub（适当使用 PR、合并前核验 CI），更新 AGENTS/中英文 README/CHANGELOG/Issue #4 的真实状态和测试证据。不要每写一个文件都停下等待确认；直到本次可执行目标达到或遇到**客观阻塞**再汇总。
 - 真机验收尚未进行时，继续推进不依赖真机的源码、模拟器测试、兼容性夹具和资源分享合同；明确列出需要我在 Android 真机完成的具体步骤与版本记录。**不得假称已经在用户设备验证或异步后台持续工作。**
 

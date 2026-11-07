@@ -3,6 +3,8 @@ package dev.forcemind.xs.browser;
 import android.content.Context;
 import android.database.Cursor;
 import android.os.SystemClock;
+import android.os.ParcelFileDescriptor;
+import android.os.PowerManager;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebView;
@@ -14,6 +16,7 @@ import dev.forcemind.xs.android.XsArchiveDatabase;
 import dev.forcemind.xs.android.XsLibraryWrites;
 import dev.forcemind.xs.core.ArchiveSearch;
 import dev.forcemind.xs.core.CaptureSession;
+import dev.forcemind.xs.core.SnapshotPolicy;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CountDownLatch;
@@ -40,6 +43,7 @@ public class NativeCaptureIntegrationTest {
     private final AtomicReference<String> html=new AtomicReference<>("");
     private final AtomicReference<String> navId=new AtomicReference<>("");
     private volatile boolean deliberate;
+    private final AtomicReference<CaptureSession.Event> lastOpen=new AtomicReference<>(),lastFeed=new AtomicReference<>();
 
     @Before public void setup() {
         app=InstrumentationRegistry.getInstrumentation().getTargetContext();
@@ -57,9 +61,9 @@ public class NativeCaptureIntegrationTest {
                         }
                     });
                 }
-                public void opened(CaptureSession.Event e){write(e,()->db.recordObservedOpen(LIBRARY,e.url,e.author,e.body,e.publishedAtMs,e.wallTimeMs,e.navigationId),openSaved);}
-                public void enriched(CaptureSession.Event e){write(e,()->db.enrichSnapshot(LIBRARY,e.url,e.author,e.body,e.publishedAtMs),bodySaved);}
-                public void feed(CaptureSession.Event e){write(e,()->db.recordMeasuredFeed(LIBRARY,e.url,e.source,e.author,e.body,e.publishedAtMs,e.wallTimeMs,e.exposureId,e.durationMs,e.thresholdMs),feedSaved);}
+                public void opened(CaptureSession.Event e){lastOpen.set(e);write(e,()->db.recordObservedOpen(LIBRARY,e.url,e.author,null,e.publishedAtMs,e.wallTimeMs,e.navigationId),openSaved);}
+                public void enriched(CaptureSession.Event e){write(e,()->db.recordSnapshot(LIBRARY,e.url,e.author,e.body,e.publishedAtMs,e.capturedAtMs,SnapshotPolicy.Source.POST_DETAIL,e.snapshotQuality),bodySaved);}
+                public void feed(CaptureSession.Event e){lastFeed.set(e);write(e,()->{db.recordMeasuredFeed(LIBRARY,e.url,e.source,e.author,null,e.publishedAtMs,e.wallTimeMs,e.exposureId,e.durationMs,e.thresholdMs);db.recordSnapshot(LIBRARY,e.url,e.author,e.body,e.publishedAtMs,e.capturedAtMs,SnapshotPolicy.Source.FEED_VISIBLE,SnapshotPolicy.Quality.PARTIAL);},feedSaved);}
             });
             controller.set(capture);capture.setConsent(true,true,3000);capture.resume();
             web.setWebViewClient(activity.new Client(){
@@ -84,10 +88,22 @@ public class NativeCaptureIntegrationTest {
         scenario.onActivity(activity->((WebView)activity.findViewById(R.id.browser_view)).loadUrl(url));
         assertTrue("Fixture page load",latch.await(20,TimeUnit.SECONDS));
     }
-    private void evaluate(String js)throws Exception {
-        CountDownLatch latch=new CountDownLatch(1);
-        scenario.onActivity(activity->((WebView)activity.findViewById(R.id.browser_view)).evaluateJavascript(js,result->latch.countDown()));
-        assertTrue(latch.await(10,TimeUnit.SECONDS));
+    private void evaluate(String js)throws Exception { evaluateValue(js); }
+    private String evaluateValue(String js)throws Exception {
+        CountDownLatch latch=new CountDownLatch(1);AtomicReference<String> value=new AtomicReference<>();
+        scenario.onActivity(activity->((WebView)activity.findViewById(R.id.browser_view)).evaluateJavascript(js,result->{value.set(result);latch.countDown();}));
+        assertTrue(latch.await(10,TimeUnit.SECONDS));return value.get();
+    }
+    private void awaitJs(String predicate)throws Exception {
+        long until=SystemClock.elapsedRealtime()+10000;
+        do {if("true".equals(evaluateValue(predicate)))return;SystemClock.sleep(30);}while(SystemClock.elapsedRealtime()<until);
+        fail("Fixture condition: "+predicate);
+    }
+    private void shell(String command)throws Exception {
+        try(ParcelFileDescriptor descriptor=InstrumentationRegistry.getInstrumentation().getUiAutomation().executeShellCommand(command);
+            java.io.InputStream input=new ParcelFileDescriptor.AutoCloseInputStream(descriptor)) {
+            byte[] bytes=new byte[256];while(input.read(bytes)!=-1) { /* drain only fixture-shell completion */ }
+        }
     }
     private static String page(String body){return "<!doctype html><meta name='viewport' content='width=device-width,initial-scale=1'>"+
         "<style>body{margin:0}article{box-sizing:border-box;width:100vw;height:65vh;padding:20px;background:#fff}a{display:block}</style>"+body;}
@@ -143,4 +159,99 @@ public class NativeCaptureIntegrationTest {
         scenario.onActivity(activity->controller.get().pause());
         try(Cursor c=db.timeline(LIBRARY,null,10,"FEED_VISIBLE")){assertEquals(0,c.getCount());}
     }
+    @Test public void pauseOverlayAndDestroyStopPageWorkAndOldConsentCannotRevive()throws Exception {
+        openSaved.set(new CountDownLatch(1));
+        load("https://x.com/alice/status/950","native-admission",true,page(card("950","admission body")));
+        assertTrue(openSaved.get().await(5,TimeUnit.SECONDS));
+        CaptureSession.Event oldOpen=lastOpen.get();assertNotNull(oldOpen);
+        scenario.onActivity(activity->{controller.get().setConsent(false,false,1200);controller.get().setConsent(true,true,1200);});
+        assertFalse("An old admission stays revoked after re-enabling",controller.get().isCurrent(oldOpen));
+        feedSaved.set(new CountDownLatch(1));
+        String ticker="<script>window.__fixtureTicks=0;var originalInterval=window.setInterval;"+
+            "window.setInterval=function(fn,ms){return originalInterval(function(){window.__fixtureTicks++;fn();},ms)};</script>";
+        load("https://x.com/home","native-work-budget",false,page(ticker+card("951","budget body")));
+        awaitJs("window.__xsObserver&&window.__xsObserver.read().cards.length===1");
+        assertTrue(feedSaved.get().await(8,TimeUnit.SECONDS));CaptureSession.Event oldFeed=lastFeed.get();assertNotNull(oldFeed);
+        scenario.onActivity(activity->controller.get().setOverlay(true));
+        String stopped=evaluateValue("window.__fixtureTicks");SystemClock.sleep(600);
+        assertEquals(stopped,evaluateValue("window.__fixtureTicks"));
+        assertEquals("0",evaluateValue("window.__xsObserver.read().cards.length"));
+        scenario.onActivity(activity->controller.get().setOverlay(false));
+        awaitJs("window.__xsObserver.read().cards.length===1");
+        scenario.onActivity(activity->controller.get().pause());
+        stopped=evaluateValue("window.__fixtureTicks");SystemClock.sleep(600);
+        assertEquals(stopped,evaluateValue("window.__fixtureTicks"));
+        evaluate("document.getElementById('p951').style.opacity='0';window.dispatchEvent(new Event('scroll'))");
+        assertEquals("0",evaluateValue("window.__xsObserver.read().cards.length"));
+        // Exercise the exact native-owned transport expression, before WebView marshals IPC.
+        java.lang.reflect.Field readField=NativePageCaptureController.class.getDeclaredField("READ");readField.setAccessible(true);
+        String boundedRead=(String)readField.get(null);
+        evaluate("window.__originalRead=window.__xsObserver.read;window.__xsObserver.read=function(){return {v:1,url:location.href,cards:[],extra:'x'.repeat(70000)}}");
+        assertEquals("null",evaluateValue(boundedRead));
+        evaluate("window.__xsObserver.read=window.__originalRead;delete window.__originalRead");
+        scenario.onActivity(activity->{controller.get().setConsent(false,false,1200);controller.get().setConsent(true,true,1200);controller.get().resume();});
+        assertFalse(controller.get().isCurrent(oldFeed));
+        evaluate("document.getElementById('p951').style.opacity='1'");
+        awaitJs("window.__xsObserver.read().cards.length===1");
+        scenario.onActivity(activity->controller.get().destroy());
+        stopped=evaluateValue("window.__fixtureTicks");
+        scenario.onActivity(activity->{controller.get().resume();controller.get().setConsent(true,true,1200);controller.get().pageReady();});
+        SystemClock.sleep(600);assertEquals(stopped,evaluateValue("window.__fixtureTicks"));
+        assertFalse(controller.get().isCurrent(oldFeed));assertFalse(controller.get().isCurrent(oldOpen));
+    }
+    @Test public void transparentParentsAndVirtualRebindsNeverCreateNativeOpens()throws Exception {
+        load("https://x.com/home","native-virtual",false,page("<div id='parent' style='opacity:0'>"+card("960","virtual body")+"</div>"));
+        awaitJs("!!window.__xsObserver");assertEquals("0",evaluateValue("window.__xsObserver.read().cards.length"));
+        evaluate("document.getElementById('parent').style.opacity='1'");
+        awaitJs("window.__xsObserver.read().cards.length===1");
+        assertEquals("true",evaluateValue("(function(){var p=document.getElementById('p960'),a=p.querySelector('a'),prev=null;"+
+            "for(var i=0;i<256;i++){a.href='https://x.com/alice/status/'+(10000+i);var first=window.__xsObserver.read().cards;"+
+            "if(first.length!==1||first[0].run===prev)return false;prev=first[0].run;"+
+            "p.outerHTML=p.outerHTML;p=document.querySelector('article');a=p.querySelector('a');"+
+            "if(window.__xsObserver.read().cards[0].run!==prev)return false;}return true})()"));
+        scenario.onActivity(activity->controller.get().pause());
+        try(Cursor c=db.timeline(LIBRARY,null,10,"OPEN_POST")){assertEquals(0,c.getCount());}
+    }
+    @Test public void screenOffBreaksDwellAndStopsTheFixtureObserver()throws Exception {
+        scenario.onActivity(activity->controller.get().setConsent(false,true,3000));
+        load("https://x.com/home","native-screen",false,page(card("970","screen boundary")));
+        awaitJs("window.__xsObserver&&window.__xsObserver.read().cards.length===1");
+        SystemClock.sleep(1300);
+        PowerManager power=(PowerManager)app.getSystemService(Context.POWER_SERVICE);
+        try {
+            shell("input keyevent 223");
+            assertFalse("The emulator screen actually turns off",power.isInteractive());
+            SystemClock.sleep(1800);
+        } finally {shell("input keyevent 224");}
+        // This synthetic emulator has no user lock credential; no unlock/authentication flow is automated.
+        assertTrue(power.isInteractive());
+        SystemClock.sleep(1300);scenario.onActivity(activity->controller.get().pause());
+        CountDownLatch drained=new CountDownLatch(1);XsLibraryWrites.submit(LIBRARY,drained::countDown);assertTrue(drained.await(5,TimeUnit.SECONDS));
+        try(Cursor c=db.timeline(LIBRARY,null,10,"FEED_VISIBLE")){assertEquals(0,c.getCount());}
+    }
+
+    @Test public void nativeTextEvidenceKeepsPartialAndAcceptsNewerShortCompleteBody()throws Exception {
+        bodySaved.set(new CountDownLatch(1));
+        load("https://x.com/alice/status/980","native-completeness",true,page(card("980","original complete body with additional words")));
+        assertTrue(bodySaved.get().await(10,TimeUnit.SECONDS));
+        try(Cursor c=db.getReadableDatabase().rawQuery("SELECT v.quality FROM posts p JOIN snapshot_versions v ON v.account_id=p.account_id AND v.post_id=p.post_id AND v.snapshot_key=p.current_snapshot_key WHERE p.account_id=? AND p.post_id='980'",new String[]{LIBRARY})) {
+            assertTrue(c.moveToFirst());assertEquals("COMPLETE",c.getString(0));
+        }
+        bodySaved.set(new CountDownLatch(1));
+        evaluate("var body=document.querySelector('[data-testid=tweetText]');body.style.display='-webkit-box';body.style.webkitBoxOrient='vertical';body.style.webkitLineClamp='2';body.style.overflow='hidden';body.innerText='short edited body'");
+        assertTrue(bodySaved.get().await(10,TimeUnit.SECONDS));
+        try(Cursor c=db.getReadableDatabase().rawQuery("SELECT body FROM posts WHERE account_id=? AND post_id='980'",new String[]{LIBRARY})) {
+            assertTrue(c.moveToFirst());assertEquals("original complete body with additional words",c.getString(0));
+        }
+        bodySaved.set(new CountDownLatch(1));
+        evaluate("var body=document.querySelector('[data-testid=tweetText]');body.style.display='block';body.style.webkitLineClamp='none';body.style.overflow='visible'");
+        assertTrue(bodySaved.get().await(10,TimeUnit.SECONDS));
+        try(Cursor c=db.getReadableDatabase().rawQuery("SELECT p.body,v.quality,v.captured_at_ms FROM posts p JOIN snapshot_versions v ON v.account_id=p.account_id AND v.post_id=p.post_id AND v.snapshot_key=p.current_snapshot_key WHERE p.account_id=? AND p.post_id='980'",new String[]{LIBRARY})) {
+            assertTrue(c.moveToFirst());assertEquals("short edited body",c.getString(0));assertEquals("COMPLETE",c.getString(1));assertTrue(c.getLong(2)>0);
+        }
+        try(Cursor c=db.getReadableDatabase().rawQuery("SELECT count(*) FROM snapshot_versions WHERE account_id=? AND post_id='980'",new String[]{LIBRARY})) {
+            assertTrue(c.moveToFirst());assertEquals(3,c.getInt(0));
+        }
+    }
+
 }

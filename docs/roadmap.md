@@ -1,13 +1,11 @@
 # Xs delivery roadmap — current A–D plan
 
-当前代码范围与限制见 [阶段 C 与资料治理证据](ROUND_C_EVIDENCE.zh-CN.md)：[CI 42357220689](https://github.com/ForceMind/Xs/actions/runs/42357220689) 的 core/构建/API30/API36 均通过。此前 A/早期 B 结果保留在 [既有实施记录](IMPLEMENTATION_EVIDENCE.zh-CN.md)；待验收项不因源码存在而自动通过。
-
+当前v5与可靠性源码见 [本轮证据](ROUND_D_EVIDENCE.zh-CN.md)；API26/30/36 CI与新增UI验证当前PENDING。历史 [阶段C](ROUND_C_EVIDENCE.zh-CN.md) 和 [早期实施记录](IMPLEMENTATION_EVIDENCE.zh-CN.md) 仅覆盖各自提交。
 Updated 2026-11-07. Start at [documentation index](README.md). Product authority: [ADR-0002](adr/0002-local-library-media.md); implementation: [ADR-0003](adr/0003-native-pull-delivery.md). The older Web-first plan remains historical/non-conflicting guidance, not a reason to revert app-owned libraries or block offline work.
 
 ## Present baseline
 
-The existing A/early-B offline slice includes preserving SQLite migrations, native libraries/favorites, immediate-open/dwell fixtures, image tasks/assets and actual-file sharing. This increment adds v4 own-action/provenance/reversal records, explicit narrow standard-MP4 downloads, reversible cleanup fixtures, metadata backups/restoration and explicit consolidation into a new library. Local 933 JVM assertions, SQLite/observer/cleanup-DOM regressions and Android builds/lint pass; source `4ee242e` passed [CI 42357220689](https://github.com/ForceMind/Xs/actions/runs/42357220689) with 36 harness + 37 client cases per API, 146 total and zero failures/errors/skips. Client/runtime lint each report 0 errors/0 NewApi/11 warnings. API 26/27 execution and SAF/new backup/consolidation UI acceptance remain NOT RUN. Live X capture, own-action adapters and cleanup remain disabled; C/D and release are not complete.
-
+The A/early-B/C offline implementation remains. Current source adds v5 snapshot versions/current-pointer/historical-text search, batch favorites and paged asset management, JobScheduler with sealed pending URLs, passphrase/chunked AES-GCM resource backup and new-scope crash recovery, durable whole-library tombstones/default rotation, and coalesced/capped dwell writes. New SAF/backup/consolidation/batch/deletion UI and API26/30/36 tests are implemented; their source-specific execution is PENDING. Historical source `4ee242e` / CI42357220689 passed 933 JVM assertions and 146 API30/36 cases, but does not validate this increment. API27/physical-device/recipient/multi-day power evidence remains absent; live X capture/actions/cleanup remain disabled, and C/D/release are not complete.
 The original requirements baseline `eb5aa4dbbb0499fb632202a27aaf24e898718818` remains historical; it is not a current HEAD assertion. Always inspect current main, open PRs and source-specific CI before continuing.
 
 Do not replace this status with a percentage. Use the [XS-01–XS-15 work packages](IMPLEMENTATION_PLAN.zh-CN.md) and [acceptance IDs](ACCEPTANCE_MATRIX.zh-CN.md), with evidence for each completed scope. Docs-only updates do not rerun or pass runtime tests.
@@ -39,15 +37,17 @@ The primary client remains Android. Standard desktop browser extensions are a po
 
 ## Next executable slice
 
-1. Preserve the current [API 30/36 results](evidence/round-c-ci64.json), then add dedicated SAF/new backup/consolidation UI and API 26/27 execution coverage. Database/helper passes do not validate a document picker or the entire new UI. Keep previous passing builds separate.
-2. Extend reliability/portability tests for native writes, v1/v2/v3→v4 migration, plaintext metadata restore, source-preserving consolidation, cancellation, low space and process death. Backup is limited to 16 MiB/20,000 metadata records; consolidation selects 2–4 libraries within 8 MiB/20,000 records. Neither includes media files/tasks or web sessions.
-3. Preserve the native own-action boundary: only fixture-issued operation/result proof is currently enabled; archive/restored provenance is metadata, not authenticated actor authority. Keep unknown time/state honest and add a separately validated live adapter before recording actual X success/reversal.
-4. Validate supported direct H.264/optional-AAC MP4 resources (≤100 MiB/10 minutes), full playback and target-app reception on exact devices. Current structure/sample checks plus first/tail decode are limited evidence; blob/HLS/DASH/fragments/DRM and unsupported formats stay rejected. Resume/background scheduling remain pending.
-5. Validate actual X cleanup selectors and sensitive routes before attaching cleanup to the live browser. Three default-off toggles currently apply only to synthetic fixtures. Bring immediate-open and no-click dwell loops into an explicitly validated live context, retaining W0 and recipient gates.
-
+1. Execute current core/SQLite/DOM/build/lint plus API26/30/36 suites, including actual SAF/new backup/consolidation/batch/deletion UI. Fix failures and record exact source/artifacts. Do not treat compilation or earlier API30/36 success as current UI acceptance.
+2. Retain v1–v4→v5 migration, snapshot policy/source/current-pointer and full historical-text evidence. COMPLETE means accepted visible DOM text; newer shorter COMPLETE can become current, PARTIAL cannot downgrade it, and all versions remain. Keep source/default scopes unchanged during consolidation.
+3. Exercise JobScheduler and sealed pending-source durability under real process/system stop, quota/network/storage pressure and exact OS versions. API34+ tries UIDT for explicit user requests; earlier/fallback jobs are ordinary persisted work. Maximum 3 total transient attempts, each from byte zero. Missing jobs remain paused until explicit retry; no stop-bypass, range-resume or prompt-background guarantee.
+4. Validate passphrase full-resource recovery in isolation: ≤512MiB/500 completed assets, inner metadata≤16MiB/20,000; full authentication and media checks, new UUID, media-first/archive-last and crash markers. Preserve plaintext metadata choice and explicit 2–4-source metadata consolidation≤8MiB/20,000. Neither path exports sessions/keys/tasks/pending URLs/leases; the working database is not encrypted.
+5. Add API27 and physical-device long-scroll/capacity/power/multi-day soak, upgrade/rollback and exact recipient-app playback/receive evidence. v5/batch/tombstone logic and one-second dwell coalescing are source work, not those field results.
+6. Configure a reviewed production signing identity only through an explicit acceptance workflow; current manual main-ancestor/certificate-pinned candidate tooling is not a release. Finish rights/notice review without removing historical GPL grants. Validate live X login/selectors/action confirmation/cleanup separately before enabling any live adapter.
 Consolidation commits the metadata snapshot shown during user preview. Ordinary edits after preview are not included automatically and need a new preview; source erasure/epoch invalidation rejects commit. Conflicting sources for one legacy-action identity reject consolidation. Source libraries/default stay intact. Immediate undo applies only to the just-created result with unchanged metadata and no media/download tasks; changed or media-bearing results are rejected without invalidating existing tasks.
 
 ## Historical milestones retained
+
+- 2026-11-07 current increment: v5 versions, system download durability, encrypted resources, batch management, tombstone deletion and signed-candidate tooling implemented; current CI PENDING, no production release.
 
 - 2026-10-29: [ADR-0001](adr/0001-web-first.md) adopted Web-first over official APK modification.
 - 2026-11-02: W0 PoC authored; see [execution record](W0-EXECUTION.md) and [device matrix](../compat/web/W0-MATRIX.md).

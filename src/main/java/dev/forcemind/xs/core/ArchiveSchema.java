@@ -1,11 +1,11 @@
 package dev.forcemind.xs.core;
 
 /**
- * App-private SQLite database v4. Legacy namespace keys remain unchanged. FTS4 is supported by the Android SQLite stack.
+ * App-private SQLite database v5. Legacy namespace keys remain unchanged. FTS4 is supported by the Android SQLite stack.
  * China-language substring fallback is provided by ArchiveSearch.
  */
 public final class ArchiveSchema {
-    public static final int VERSION = 4;
+    public static final int VERSION = 5;
 
     public static final String[] CREATE_V2 = {
         "CREATE TABLE IF NOT EXISTS posts (" +
@@ -67,6 +67,9 @@ public final class ArchiveSchema {
     public static final String[] MIGRATE_1_TO_2 = {
         "ALTER TABLE posts ADD COLUMN last_opened_at_ms INTEGER",
         "ALTER TABLE posts ADD COLUMN last_feed_seen_at_ms INTEGER",
+        // Install before the per-post backfill: account/time alone repeatedly scans a whole library.
+        "CREATE INDEX IF NOT EXISTS idx_history_post_type_time ON " +
+            "history_events(account_id,post_id,event_type,event_at_ms DESC)",
         "UPDATE posts SET last_opened_at_ms=(" +
             "SELECT MAX(e.event_at_ms) FROM history_events e " +
             "WHERE e.account_id=posts.account_id AND e.post_id=posts.post_id " +
@@ -149,7 +152,35 @@ public final class ArchiveSchema {
     };
 
     public static final String[] CREATE_V3 = concatenate(CREATE_V2, MIGRATE_2_TO_3);
-    public static final String[] CREATE = concatenate(CREATE_V3, MIGRATE_3_TO_4);
+    public static final String[] MIGRATE_4_TO_5 = {
+        "CREATE INDEX IF NOT EXISTS idx_history_post_type_time ON " +
+            "history_events(account_id,post_id,event_type,event_at_ms DESC)",
+        "ALTER TABLE posts ADD COLUMN current_snapshot_key TEXT",
+        "CREATE TABLE IF NOT EXISTS snapshot_versions (account_id TEXT NOT NULL, post_id TEXT NOT NULL, " +
+            "snapshot_key TEXT NOT NULL, author_handle TEXT, body TEXT NOT NULL, published_at_ms INTEGER, " +
+            "captured_at_ms INTEGER, source TEXT NOT NULL, quality TEXT NOT NULL CHECK(quality IN " +
+            "('LINK_ONLY','PARTIAL','COMPLETE','LEGACY_UNKNOWN')), content_hash TEXT, " +
+            "PRIMARY KEY(account_id,post_id,snapshot_key), FOREIGN KEY(account_id,post_id) " +
+            "REFERENCES posts(account_id,post_id) ON DELETE CASCADE)",
+        "CREATE INDEX IF NOT EXISTS idx_snapshot_versions_post ON snapshot_versions(account_id,post_id,captured_at_ms DESC)",
+        "CREATE VIRTUAL TABLE IF NOT EXISTS snapshot_versions_fts USING fts4(account_id,post_id,snapshot_key,author_handle,body,tokenize=unicode61)",
+        "CREATE TRIGGER IF NOT EXISTS snapshots_ai AFTER INSERT ON snapshot_versions BEGIN " +
+            "INSERT INTO snapshot_versions_fts(rowid,account_id,post_id,snapshot_key,author_handle,body) " +
+            "VALUES(new.rowid,new.account_id,new.post_id,new.snapshot_key,new.author_handle,new.body); END",
+        "CREATE TRIGGER IF NOT EXISTS snapshots_au AFTER UPDATE OF body,author_handle ON snapshot_versions BEGIN " +
+            "DELETE FROM snapshot_versions_fts WHERE rowid=old.rowid; " +
+            "INSERT INTO snapshot_versions_fts(rowid,account_id,post_id,snapshot_key,author_handle,body) " +
+            "VALUES(new.rowid,new.account_id,new.post_id,new.snapshot_key,new.author_handle,new.body); END",
+        "CREATE TRIGGER IF NOT EXISTS snapshots_ad AFTER DELETE ON snapshot_versions BEGIN " +
+            "DELETE FROM snapshot_versions_fts WHERE rowid=old.rowid; END",
+        "INSERT INTO snapshot_versions(account_id,post_id,snapshot_key,author_handle,body,published_at_ms," +
+            "captured_at_ms,source,quality,content_hash) SELECT account_id,post_id,'migration:v4',author_handle," +
+            "body,published_at_ms,NULL,'legacy_migration','LEGACY_UNKNOWN',NULL FROM posts WHERE body IS NOT NULL AND length(body)>0",
+        "UPDATE posts SET current_snapshot_key='migration:v4' WHERE body IS NOT NULL AND length(body)>0"
+    };
+
+    public static final String[] CREATE_V4 = concatenate(CREATE_V3, MIGRATE_3_TO_4);
+    public static final String[] CREATE = concatenate(CREATE_V4, MIGRATE_4_TO_5);
 
     private static String[] concatenate(String[] first, String[] second) {
         String[] joined = new String[first.length + second.length];

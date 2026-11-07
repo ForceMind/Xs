@@ -2,111 +2,65 @@
 
 [简体中文](README.md) | [English](README.en.md)
 
-**Xs is an independent, local-first enhancement for using X.** Official X web supplies browsing and social features; an app-owned on-device library provides open history, local favorites, organization, own-activity indexing, image/video downloads and sharing selected resources to other apps. No official APK patching, new social backend or account proxy.
+**Xs is an independent, local-first enhancement client for X.** Browse official X web normally while an app-owned library keeps open history, optional feed dwell, independent favorites and media. Share selected actual files through Android. No official APK modification, new social backend or account proxy.
 
-> **Internal development PoC, not a production client.** The existing history/dwell, favorites and image-sharing slice now has schema v4 own-action/reversal indexing, narrow standard-MP4 downloads/sharing, reversible cleanup fixtures, metadata backup/restore and explicit library consolidation. Live X automatic capture, own-action confirmation and cleanup remain disabled. [CI 42357220689](https://github.com/ForceMind/Xs/actions/runs/42357220689) passed core/build and API 30/36, with **146 synthetic instrumentation cases** (36 harness + 37 client per API, zero failures/errors/skips); actual login, X media sources and recipient apps need separate acceptance. See [this increment's evidence and limits](docs/ROUND_C_EVIDENCE.zh-CN.md). Prior offline results remain in the [existing implementation evidence](docs/IMPLEMENTATION_EVIDENCE.zh-CN.md).
+> **Internal development PoC; no production release.** This increment adds SQLite v5 snapshot versions, batch organization, system download scheduling, passphrase-encrypted resource backups and persistent whole-library deletion. Live X automatic capture, own-action confirmation and cleanup remain disabled. See [current reliability and library evidence](docs/ROUND_D_EVIDENCE.zh-CN.md). This increment's API **26 / 30 / 36** CI is **PENDING**; earlier results do not validate this source.
 
-Validated source: `4ee242e`; 933 JVM assertions and SQLite/observer/cleanup-DOM regressions passed. Client/runtime lint each report 0 errors, 0 NewApi and 11 warnings. API 26/27 execution remains NOT RUN. Backup/consolidation database and transaction tests passed; the SAF picker and new backup/consolidation UI have no dedicated automation and remain NOT RUN on physical devices. See the [CI summary](docs/evidence/round-c-ci64.json).
+Historical source `4ee242e` passed [CI 42357220689](https://github.com/ForceMind/Xs/actions/runs/42357220689): 933 JVM assertions plus SQLite/DOM regressions, builds/lint and 146 synthetic API30/36 instrumentation cases. Those results belong to the earlier build. [Round C evidence](docs/ROUND_C_EVIDENCE.zh-CN.md) and [earlier history/dwell/image evidence](docs/IMPLEMENTATION_EVIDENCE.zh-CN.md) remain available. Actual accounts, physical devices and recipient apps are unverified.
 
-CI debug certificates may differ by job, so upgrading an existing PoC installation is not guaranteed. Do not uninstall an old Xs containing data just to install a new debug APK: current backups exclude media. Prefer a blank or isolated test environment; stable signing remains pending.
+## Implementation and boundaries
 
-## Current implementation boundary
+| Capability | Current source | Remaining limits |
+| --- | --- | --- |
+| System WebView | Retained pages, controlled authentication navigation, native link favorites and explicit media selection | Actual X login, authentication providers and sustained physical-device use |
+| Opens and dwell | Fixture immediate opens, late text enrichment, deduplication; separate default-off 1.2/3 (recommended default)/5-second continuous dwell and offline duration/never-opened search | Live adapter disabled; exposure does not prove reading |
+| Local library | Preserving v1–v4→v5 migration, FTS, categories/notes/tags, batch favorite/category/tag/unfavorite; independent of X login | Personal-data upgrades, narrow/large-font UI and long-term capacity need acceptance |
+| Snapshot versions | Text versions with source/capture time and LINK_ONLY/PARTIAL/COMPLETE/LEGACY_UNKNOWN quality, historical-text search and read-only version browsing | COMPLETE means the accepted visible DOM text, not guaranteed server-full content; browsing never replaces current text; the version panel keeps 50 rows per page with previous/next and keyword search |
+| Own activity | Native fixture operation/result matching for original/reply/quote/repost/reversal; imports preserve unknown actors/times | Live X action adapter disabled; seeing another person's repost is not an own action |
+| Images and standard video | Explicit image/image-set or direct standard MP4 selection, validation, offline preview and actual-file sharing; H.264/optional AAC, ≤100MiB/10 minutes | Reject blob/HLS/DASH/fragments/encryption/DRM/unknown formats; actual X video, entire playback and recipient apps unverified |
+| Download durability | JobScheduler; API34+ explicit requests first try user-initiated transfer jobs, otherwise regular persisted jobs; API26–33 regular persisted jobs; sealed source URLs, cancel and bounded retries | At most 3 network attempts (initial + 2 automatic retries), each from byte zero; system delay/stop is respected; no timely-background or range-resume guarantee |
+| Asset library | Paged offline search, type/state filters, multiple selection/category/delete/share/export; multiple exports become ZIP, ≤200MiB per batch | Only completed files can export/share; physical-device SAF and recipient compatibility need separate evidence |
+| Backup/restore | Existing plaintext metadata ≤16MiB/20,000 records; additional passphrase/chunked AES-256-GCM resource backup with plaintext payload ≤512MiB/500 completed assets | Excludes browser sessions, keys, tasks, candidate URLs and share leases; lost passphrases cannot be recovered; SQLite/FTS/WAL itself is not encrypted |
+| Consolidation/deletion | Explicit 2–4-library metadata merge to a new library, ≤8MiB/20,000 records, preserving sources/default; persistent deletion tombstones, default UUID rotation and retryable cleanup | Consolidation excludes media; production signing, real capacity, multi-day reliability and upgrade/rollback need acceptance |
+| Cleanup | Three default-off promotion/subscription/recommendation controls and reversible fixture rules | Not attached to the live browser; synthetic success does not enable live X |
 
-- Offline history: immediate native-confirmed opens, late text enrichment, navigation/exposure deduplication, 1.2/3/5-second continuous dwell, never-opened and duration filters.
-- Local data: v1/v2/v3→v4 preserving migrations, separate libraries, independent favorites/categories/notes/tags and history erasure. Own-action records keep actor provenance, unknown times/current state and reversal history. Native fixture operations require a matching successful result; page claims and restored provenance strings cannot issue confirmation proofs.
-- Media: explicit current-post image/standard-MP4 selection, bounded downloads, validation, offline preview/category/export and read-only actual-file sharing with 24-hour copies. Interrupted downloads require reselecting the source; resumable transfers and reliable background scheduling remain pending.
-- Portability: plaintext metadata backups up to 16 MiB/20,000 records, schema-3→4 restore into a separate library, and explicit consolidation of 2–4 libraries into a new library within 8 MiB/20,000 records. Media files, download tasks and web sessions are excluded.
-- Pending: API 26/27 execution, SAF/new backup/consolidation UI acceptance, live X enablement and selectors, real own-action adapters, X video downloads, recipient apps, long-running reliability, full media recovery and release signing. These additions do not complete batches C/D or their live gates.
+## Experience and data semantics
 
-## Continue development here
+**Immediate opens, optional no-click dwell.** After opting in, deliberate entry into valid post detail saves a history event without a delay or extra save tap; pending text starts link-only. Independently enabled dwell records qualifying continuous exposures without opening, supporting “dwell ≥3 seconds and never opened.” Background, lock, overlays and page-generation changes interrupt timing rather than joining short exposures. Qualified fixture duration writes are coalesced to one-second intervals and stop at the ten-minute measurement cap, with lower-bound/capped quality displayed.
 
-- **[Documentation index](docs/README.md)**: authority, current state and tracking.
-- **[Implementation plan v2.1](docs/IMPLEMENTATION_PLAN.zh-CN.md)**: XS-01–XS-15 work packages, dependencies, A–D delivery batches and next steps (Chinese).
-- **[Work development handoff prompt](docs/WORK_HANDOFF_PROMPT.zh-CN.md)**: instructions for implementing, testing, committing, and validating the existing project in a new Work session (Chinese).
-- **[Product requirements](docs/product.md)** · [Local library/media specification](docs/LOCAL_LIBRARY_MEDIA_PLAN.zh-CN.md).
-- **[ChatGPT Studio reuse review](docs/CHATGPT_STUDIO_REUSE.zh-CN.md)**: pinned sources, browser lifecycle, native snapshots and exclusions.
-- **[Architecture](docs/architecture.md)** · [Roadmap](docs/roadmap.md) · [Acceptance matrix](docs/ACCEPTANCE_MATRIX.zh-CN.md) · [Change record](docs/CHANGELOG.md).
-- [ADR-0002: app-owned library/media](docs/adr/0002-local-library-media.md) · [ADR-0003: native-pull and parallel delivery](docs/adr/0003-native-pull-delivery.md) · [Licensing decision](docs/LICENSING.md).
+**Favorites belong to Xs.** Native favorites, tags, notes and folders never call X bookmarks/likes/reposts. X logout/account changes preserve the library. Unfavorite, history clear, asset deletion, browser cache clear, X logout and whole-library deletion have different scopes. Whole-library deletion erases that scope's snapshots/events/favorites/folders/own activity/downloads, preserves other scopes/web sessions and prevents stale callback revival. Existing receiver copies remain until their 24-hour lease expires.
 
-[Issue #4](https://github.com/ForceMind/Xs/issues/4) tracks this scope; [Issue #3](https://github.com/ForceMind/Xs/issues/3) retains live browser evidence. The older [Web-first plan](docs/WEB_FIRST_PLAN.zh-CN.md) and [ADR-0001](docs/adr/0001-web-first.md) remain history and non-conflicting safeguards; use the documentation index to resolve conflicts.
+**Actual-file sharing.** Share canonical links/text, 1–10 completed images or one complete video. The user selects a compatible app, conversation and sending. No contacts/chat tokens, automatic sending or delivery claim from chooser callbacks. Downloads are separate from cache. A receiver can upload content deliberately shared with it.
 
-**[Timeline dwell specification (Chinese)](docs/FEED_DWELL_PLAN.zh-CN.md)** · [ADR-0004](docs/adr/0004-feed-dwell.md) · [D01–D09 acceptance](docs/ACCEPTANCE_MATRIX.zh-CN.md): stop on a post in the timeline without opening it, and optionally remember that visible exposure locally. Baseline dwell moves into early batch B; large-scale optimization stays in D.
+**Restore creates a new scope.** The 8–1024-character passphrase is used in a secure native window and never persisted. Authentication, metadata/FK and per-resource hash/type validation precede preview. Resources commit first; library registration commits last. Private crash markers clean an unregistered target; sources/default are not overwritten. A newer shorter COMPLETE version can become current while all prior versions remain; PARTIAL cannot replace COMPLETE.
 
-## Confirmed experience
+## Development and checks
 
-**Record deliberate opens immediately—and remember qualifying feed dwell without opening.** After opt-in, entering valid post detail creates history without a delay or extra save tap. Independently opt in to feed exposure with **1.2s / 3s (recommended default) / 5s** continuous-visible thresholds, allowing local search for posts seen for ≥5 seconds but **never opened**. This measures visibility, not proven reading. Reload, rotation and content enrichment do not create fake opens; own repost activity requires confirmed success.
+[Documentation index](docs/README.md) · [XS-01–XS-15 implementation plan](docs/IMPLEMENTATION_PLAN.zh-CN.md) · [Work handoff](docs/WORK_HANDOFF_PROMPT.zh-CN.md) · [Product](docs/product.md) · [Feed dwell](docs/FEED_DWELL_PLAN.zh-CN.md) · [Library/media](docs/LOCAL_LIBRARY_MEDIA_PLAN.zh-CN.md) · [Architecture](docs/architecture.md) · [Acceptance matrix](docs/ACCEPTANCE_MATRIX.zh-CN.md) · [Roadmap](docs/roadmap.md) · [Changelog](docs/CHANGELOG.md).
 
-**Favorites belong to Xs.** A distinct “Favorite in Xs” button, categories, tags and notes do not invoke X bookmarks, likes or reposts. Logging out or switching X accounts must not delete or implicitly switch local history/favorites/assets. Browser Profile, library ownership and social actor attribution are different concepts.
-
-**Downloads belong in an asset library.** Explicit image, image-set and video download supports offline preview, source links, time/category organization, retry, cancel, export and deletion. Favoriting does not silently download every attachment. Browser cache is not a saved download, and clearing cache must not delete saved assets.
-
-**Share actual files.** Select a link, text, one/multiple images or video through the Android Sharesheet to WeChat, QQ, Feishu, Telegram or another installed compatible app; the user chooses a conversation and sends. Direct conversation targets depend on the receiver. No messaging tokens, automated sending or delivery claim from opening a chooser.
-
-## Capabilities versus implementation
-
-| Capability | Current state |
-| --- | --- |
-| Android System WebView host | Implemented; live login, media and sustained physical-device acceptance pending |
-| SQLite/FTS, pagination, categories and archive UI | v4 preserves v1/v2/v3 data and separate scopes; own-activity index and provenance trail added |
-| Manual post-link saving and incoming share-to-Xs | Implemented; link-only is not a body snapshot or automatic history |
-| tweets.js/tweet.js import | One file/part up to 16 MiB; user-confirmed ownership does not verify a web login or actor; ambiguous RT text stays searchable without an invented repost |
-| Native-pull observer and strict JSON validation | Packaged implementation and synthetic integration tests; live X activation disabled |
-| Opens and dwell | Immediate opens, enrichment, deduplication, threshold selection and offline filters implemented for fixtures; live X pending |
-| Own activity | Native fixture operation/result confirmation, four types, reversal trail and archive provenance implemented; live adapter disabled; unknown actor/time/current state preserved |
-| App-native favorites, notes/tags and categories | Implemented; native browser favorites are link-only until live snapshots are validated |
-| Images, assets, outbound file sharing | Implemented narrow image pipeline and actual-file grants; actual X downloads and receiver apps unverified |
-| Video downloads/sharing | Explicit direct standard-MP4 selection, validation, assets/preview/sharing implemented in source; H.264 with optional AAC, ≤100 MiB/10 minutes; synthetic download/decode/Provider regression passed; actual X/receivers unverified |
-| Ad/subscription/recommendation cleanup | Three independent default-off switches, reversible rules and lifecycle control in synthetic fixtures; not attached to the live browser |
-| Metadata backup/restore and consolidation | Plaintext backup ≤16 MiB/20,000 records, schema-3→4 new-library restore; combine 2–4 libraries into another library, ≤8 MiB/20,000 records; sources/default preserved; no media files/tasks/web sessions |
-
-Video validation checks MP4 structure/sample ranges, transferred length, tracks and duration, plus limited decoding of first/tail video frames and optional AAC audio. It does not prove every frame plays or validate recipient apps. Blob URLs, HLS/DASH, fragments, encrypted and unknown formats are rejected; browser session material is not exported to obtain downloads.
-
-Backup files are plaintext and go to the document app the user selects. Checksums detect damage, not authorship or account identity; restoring provenance does not establish native action authority. Consolidation uses the metadata snapshot shown in the preview: later ordinary edits require a new preview, while source erasure or epoch invalidation rejects commit. Conflicting sources for the same legacy action identity reject consolidation. The result dialog can undo only the just-created result whose metadata is unchanged and which has no media/download tasks. Changed results or results with media are rejected without invalidating existing tasks; sources and the default stay intact. Neither operation moves media files.
-
-## Implementation direction
-
-Review ChatGPT Studio's Android lifecycle, Profile, controlled windows and native-initiated observation patterns. Preserve Xs SQLite/FTS/UI and write an X-specific packaged observer. Prefer bounded native-pull results for the first history loop; a generic bidirectional bridge is not a prerequisite. Returned data stays untrusted and must pass context, consent, generation and navigation checks again at write time.
-
-Offline observation, migration, favorite and media implementation can proceed alongside device verification. Do not default-enable unvalidated live capture. The old interpretation that all work must wait for W0 is not the current execution order.
-
-Delivery: **A browsing/immediate open history → early B optional no-click feed dwell plus favorites/images/assets/sharing → C own reposts/videos/cleanup → D dwell performance/retention and release hardening.**
-
-## Available manual flow
-
-The browser menu can favorite the current post link, explicitly select images or a supported direct MP4, and open the asset library. Completed files support preview/export/system sharing. The native library provides opens, dwell, saved items, own-activity indexing, offline search, “Backup / restore” and explicit consolidation from the library chooser. Incoming “Save to Xs” remains a link-only companion path without fake reading events. A page without a supported direct resource reports it unavailable; a playing blob is not a finished download.
-
-## Privacy, migration and deletion
-
-Separate consent for open history, dwell and filtering. No passwords, verification codes, cookies/tokens, DMs, drafts or hidden-state collection. X pages still use their normal network; Xs adds no archive-upload service. Explicitly shared files are then handled by the receiving app, so they are not guaranteed to remain on-device afterward.
-
-Unfavorite, clear history, delete asset, clear cache, X logout and delete library are distinct. Preserve legacy account_id mappings instead of silent merging or destructive recreation. Queued imports/downloads/shares must not revive cleared data. Existing SQLite is not claimed encrypted; webpages get no whole-archive reads, arbitrary SQL, export or erasure capability.
-
-## Layout and checks
+The [pinned ChatGPT Studio review](docs/CHATGPT_STUDIO_REUSE.zh-CN.md) informs browser lifecycle, Profiles, controlled windows and native snapshots. X observation is implemented separately, excluding chat drafts/automatic-send logic. [Issue #4](https://github.com/ForceMind/Xs/issues/4) tracks work packages; [Issue #3](https://github.com/ForceMind/Xs/issues/3) tracks actual browsing. Order: A browser/automatic opens → B early dwell/favorites/images/sharing → C own activity/video/cleanup → D reliability/delivery. Offline engineering continues alongside device checks; enabling live features needs its own evidence.
 
 ```text
-app-android/          Browser, native favorites/image and video selection/sharing, fixture integration
-xs-runtime/           Android on-device archive library
-dev-harness/          Offline synthetic host, NOT X
-src/main/java/        URL/v4 schema/query, action admission/capture state, bounded writes, media/backup/merge policy
-src/android/java/     SQLite/import/library UI, native pull, media and grant-only sharing
-tests/                JVM/SQLite/regression tests
-scripts/              Engineering checks
-docs/                 Current plans, decisions and acceptance
-compat/               Device matrix and legacy APK metadata
+app-android/      System WebView client and synthetic integration tests
+xs-runtime/       Android library, observer and media runtime
+dev-harness/      Offline synthetic host, not X
+src/main/java/    v5 policies/queries, observation state, media/backup codecs
+src/android/java/ SQLite, native library/assets UI, system jobs, scoped sharing
+tests/ scripts/   JVM, SQLite, DOM, signed-candidate and engineering checks
 ```
 
 ```bash
 bash scripts/check-project.sh
 bash scripts/test-core.sh
-# Android SDK, JDK 17, Gradle 8.9:
+# Android SDK, JDK17, Gradle8.9:
 gradle --no-daemon :xs-runtime:assembleDebug :dev-harness:assembleDebug :app-android:assembleDebug :app-android:lintDebug :xs-runtime:lintDebug
 gradle --no-daemon --no-parallel :dev-harness:connectedDebugAndroidTest :app-android:connectedDebugAndroidTest
 ```
 
-[W0 execution evidence](docs/W0-EXECUTION.md) · [Device matrix](compat/web/W0-MATRIX.md). A documentation commit is not a new build/test result. Synthetic/emulator passes do not replace actual login, recipient-file compatibility or personal-data upgrade testing.
+New SAF, backup/consolidation, batch and deletion UI tests are implemented; compilation and execution are recorded separately, and current CI is PENDING. API27, physical devices, actual power/multi-day scrolling, X login/media and WeChat/QQ/Feishu/Telegram reception remain NOT RUN. Emulator results cannot replace those checks.
 
-## License and disclaimer
+## Installation, signing and licensing
 
-The operative root text remains [GNU GPL v3.0](LICENSE). The owner permits a custom-license direction; see [LICENSING](docs/LICENSING.md). This plan update does not replace the license, invent commercial restrictions, remove third-party notices or rewrite earlier grants.
+CI debug certificates can differ by job and do not guarantee in-place PoC upgrades. Do not uninstall a data-bearing installation just to replace it; first validate backups/restoration in isolation. The new manual signed-candidate workflow accepts an exact reviewed commit on main's ancestry, requires configured environment secrets and a pinned certificate SHA-256, and outputs an internal candidate/provenance artifact. It does not publish a GitHub Release or upload to a store. Production key/certificate configuration and release acceptance remain incomplete.
 
-Xs is unaffiliated with X Corp. and includes no official package, credentials or subscription entitlements. Process/download only authorized, permitted resources without DRM, payment or access-control bypass. Source licensing does not grant third-party content/service rights; no zero-risk or store-approval promise.
+[GNU GPL v3.0](LICENSE) remains the effective root license. The owner permits a future custom license after [rights and historical-grant review](docs/LICENSING.md); this increment changes neither LICENSE nor previous grants/third-party notices. Xs is unaffiliated with X Corp. No authentication/DRM/access/paywall bypass, Cookie/Token export, zero-account-risk promise or store-approval claim.

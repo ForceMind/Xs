@@ -6,6 +6,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import dev.forcemind.xs.core.ArchiveSchema;
 import dev.forcemind.xs.core.LibraryBackupCodec;
+import dev.forcemind.xs.core.SnapshotPolicy;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -25,7 +26,8 @@ import java.util.UUID;
 public final class XsLibraryBackup {
     private static final LinkedHashMap<String,String[]> COLUMNS=new LinkedHashMap<>();
     static {
-        COLUMNS.put("posts",csv("post_id,author_handle,body,published_at_ms,first_seen_at_ms,last_seen_at_ms,last_opened_at_ms,last_feed_seen_at_ms,opened_count,snapshot_state"));
+        COLUMNS.put("posts",csv("post_id,author_handle,body,published_at_ms,first_seen_at_ms,last_seen_at_ms,last_opened_at_ms,last_feed_seen_at_ms,opened_count,snapshot_state,current_snapshot_key"));
+        COLUMNS.put("snapshot_versions",csv("post_id,snapshot_key,author_handle,body,published_at_ms,captured_at_ms,source,quality,content_hash"));
         COLUMNS.put("categories",csv("category_id,label"));
         COLUMNS.put("history_events",csv("post_id,event_type,event_at_ms,source,event_key,duration_ms,threshold_ms,duration_quality"));
         COLUMNS.put("user_actions",csv("post_id,action_type,action_at_ms,source"));
@@ -73,7 +75,8 @@ public final class XsLibraryBackup {
     public static ValidatedBackup inspect(InputStream in)throws IOException {
         LibraryBackupCodec.Data data=LibraryBackupCodec.read(in);
         ValidatedBackup backup=validate(data.header(),data.records());
-        return backup.schemaVersion()==3&&ArchiveSchema.VERSION>=4?upgradeLegacy(backup):backup;
+        if(backup.schemaVersion()==3&&ArchiveSchema.VERSION>=4)backup=upgradeLegacy(backup);
+        return backup.schemaVersion()<5&&ArchiveSchema.VERSION>=5?upgradeSnapshots(backup):backup;
     }
     /** Caller uses the selected library's shared write ticket, then writes the native snapshot. */
     public static void exportLibrary(Context context,String library,OutputStream out)throws IOException {
@@ -137,10 +140,15 @@ public final class XsLibraryBackup {
     }
     static String restoreNewLibrary(Context context,ValidatedBackup backup,String requestedLabel,
                                     java.util.function.BooleanSupplier guard) {
+        return restoreIntoNewLibrary(context,backup,requestedLabel,"local:"+UUID.randomUUID(),guard);
+    }
+    /** Native generated, unpublished UUID only; used to publish fully verified media and metadata together. */
+    static String restoreIntoNewLibrary(Context context,ValidatedBackup backup,String requestedLabel,String library,
+                                       java.util.function.BooleanSupplier guard) {
         if(context==null||backup==null)throw invalid();
+        if(library==null||!library.matches("local:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")||XsLibraryWrites.isDeleted(library))throw invalid();
         // The private constructor + frozen rows prevent post-preview substitution.
         validate(backup.header,backup.records);
-        String library="local:"+UUID.randomUUID();
         String label=requestedLabel==null?"Restored · "+backup.label():requestedLabel.trim();
         if(requestedLabel==null)label=shortLabel(label);
         if(label.isEmpty()||label.length()>120)throw invalid();
@@ -149,7 +157,7 @@ public final class XsLibraryBackup {
         try(XsArchiveDatabase helper=new XsArchiveDatabase(context)) {
             SQLiteDatabase db=helper.getWritableDatabase();db.beginTransaction();
             try {
-                if(guard==null||!guard.getAsBoolean())throw invalid();
+                if(guard==null||!guard.getAsBoolean()||XsLibraryWrites.isDeleted(library))throw invalid();
                 ContentValues owner=new ContentValues();owner.put("library_id",library);owner.put("storage_scope",library);
                 owner.put("label",label);owner.put("origin","RESTORED");owner.put("created_at_ms",System.currentTimeMillis());
                 db.insertOrThrow("libraries",null,owner);
@@ -164,7 +172,7 @@ public final class XsLibraryBackup {
                 }
                 // FTS triggers apply during inserts. This checks every FK including v4 action links.
                 try(Cursor check=db.rawQuery("PRAGMA foreign_key_check",null)){if(check.moveToFirst())throw invalid();}
-                if(!guard.getAsBoolean()||!XsLibraryWrites.isCurrent(reservation))throw invalid();
+                if(!guard.getAsBoolean()||!XsLibraryWrites.isCurrent(reservation)||XsLibraryWrites.isDeleted(library))throw invalid();
                 db.setTransactionSuccessful();
             }finally{db.endTransaction();}
             published=true;return library;
@@ -189,13 +197,39 @@ public final class XsLibraryBackup {
         ValidatedBackup upgraded=validate(new LibraryBackupCodec.Header(4,old.createdAtMs(),old.label()),records);
         return new ValidatedBackup(upgraded.header,upgraded.records,upgraded.tables,3);
     }
+    private static ValidatedBackup upgradeSnapshots(ValidatedBackup old) {
+        List<LibraryBackupCodec.Record> records=new ArrayList<>(),snapshots=new ArrayList<>();
+        for(LibraryBackupCodec.Record record:old.records) {
+            if(!"posts".equals(record.table)){records.add(record);continue;}
+            LinkedHashMap<String,Object> post=new LinkedHashMap<>(record.values);
+            Object body=post.get("body");boolean hasText=body instanceof String&&!((String)body).isEmpty();
+            post.put("current_snapshot_key",hasText?"migration:v4":null);
+            records.add(new LibraryBackupCodec.Record("posts",post));
+            if(hasText) {
+                LinkedHashMap<String,Object> version=new LinkedHashMap<>();
+                version.put("post_id",post.get("post_id"));version.put("snapshot_key","migration:v4");
+                version.put("author_handle",post.get("author_handle"));version.put("body",body);
+                version.put("published_at_ms",post.get("published_at_ms"));version.put("captured_at_ms",null);
+                version.put("source","legacy_migration");version.put("quality","LEGACY_UNKNOWN");version.put("content_hash",null);
+                snapshots.add(new LibraryBackupCodec.Record("snapshot_versions",version));
+            }
+        }
+        records.addAll(snapshots);
+        ValidatedBackup upgraded=validate(new LibraryBackupCodec.Header(5,old.createdAtMs(),old.label()),records);
+        return new ValidatedBackup(upgraded.header,upgraded.records,upgraded.tables,old.sourceSchemaVersion());
+    }
+    private static String[] columns(int schema,String table) {
+        if(schema<5&&"snapshot_versions".equals(table))return null;
+        String[] values=COLUMNS.get(table);
+        return schema<5&&"posts".equals(table)?Arrays.copyOf(values,values.length-1):values;
+    }
     private static ValidatedBackup validate(LibraryBackupCodec.Header header,List<LibraryBackupCodec.Record> records) {
         if(header.schemaVersion>ArchiveSchema.VERSION||records.size()>LibraryBackupCodec.MAX_RECORDS)throw invalid();
         LinkedHashMap<String,List<Map<String,Object>>> tables=new LinkedHashMap<>();
         Map<String,Set<String>> keys=new HashMap<>();for(String name:COLUMNS.keySet()){tables.put(name,new ArrayList<>());keys.put(name,new HashSet<>());}
         long estimate=0;int sequence=0;
         for(LibraryBackupCodec.Record record:records) {
-            String[] columns=COLUMNS.get(record.table);
+            String[] columns=columns(header.schemaVersion,record.table);
             if(columns==null||(header.schemaVersion==3&&record.table.startsWith("own_"))||record.values.size()!=columns.length)throw invalid();
             for(String column:columns)if(!record.values.containsKey(column))throw invalid();
             Map<String,Object> row=record.values;validateRow(record.table,row);
@@ -212,6 +246,16 @@ public final class XsLibraryBackup {
             if(table.getKey().equals("post_tags")&&!favorites.contains((String)row.get("post_id")))throw invalid();
             if(table.getKey().equals("own_action_events")&&!actions.contains((String)row.get("action_key")))throw invalid();
         }
+        if(header.schemaVersion>=5) {
+            Map<String,Map<String,Object>> versions=new HashMap<>();
+            for(Map<String,Object> row:tables.get("snapshot_versions"))versions.put(tuple(row.get("post_id"),row.get("snapshot_key")),row);
+            for(Map<String,Object> post:tables.get("posts")) {
+                Object pointer=post.get("current_snapshot_key"),body=post.get("body");
+                if(pointer==null){if(body instanceof String&&!((String)body).isEmpty())throw invalid();continue;}
+                Map<String,Object> current=versions.get(tuple(post.get("post_id"),pointer));
+                if(current==null||!java.util.Objects.equals(body,current.get("body")))throw invalid();
+            }
+        }
         return new ValidatedBackup(header,records,tables);
     }
     private static void validateRow(String table,Map<String,Object> row) {
@@ -227,6 +271,15 @@ public final class XsLibraryBackup {
             positive(row,"first_seen_at_ms",false);positive(row,"last_seen_at_ms",false);
             positive(row,"published_at_ms",true);positive(row,"last_opened_at_ms",true);positive(row,"last_feed_seen_at_ms",true);
             oneOf(row,"snapshot_state","LINK_ONLY","VISIBLE_TEXT");
+            if(row.containsKey("current_snapshot_key"))text(row,"current_snapshot_key",256,true);
+        } else if(table.equals("snapshot_versions")) {
+            text(row,"snapshot_key",256,false);text(row,"author_handle",100,true,true);text(row,"body",16000,false,true);
+            positive(row,"published_at_ms",true);positive(row,"captured_at_ms",true);
+            oneOf(row,"quality","LINK_ONLY","PARTIAL","COMPLETE","LEGACY_UNKNOWN");
+            SnapshotPolicy.Source.parse((String)row.get("source"));
+            Object hash=row.get("content_hash");
+            if(hash!=null&&(!(hash instanceof String)||!hash.equals(SnapshotPolicy.hash((String)row.get("body")))))throw invalid();
+            if(hash==null&&!"LEGACY_UNKNOWN".equals(row.get("quality")))throw invalid();
         } else if(table.equals("categories")){text(row,"category_id",256,false);text(row,"label",120,false);}
         else if(table.equals("history_events")) {
             oneOf(row,"event_type","OPEN_POST","FEED_VISIBLE");positive(row,"event_at_ms",false);text(row,"source",128,false);text(row,"event_key",256,true);
@@ -255,6 +308,7 @@ public final class XsLibraryBackup {
     }
     private static String primaryKey(String table,Map<String,Object> row,int sequence) {
         if(table.equals("posts")||table.equals("favorites"))return(String)row.get("post_id");
+        if(table.equals("snapshot_versions"))return tuple(row.get("post_id"),row.get("snapshot_key"));
         if(table.equals("categories"))return(String)row.get("category_id");
         if(table.equals("post_categories"))return tuple(row.get("post_id"),row.get("category_id"));
         if(table.equals("post_tags"))return tuple(row.get("post_id"),row.get("tag"));

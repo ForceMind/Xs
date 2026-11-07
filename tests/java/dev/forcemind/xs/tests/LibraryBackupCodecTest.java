@@ -22,7 +22,7 @@ public final class LibraryBackupCodecTest {
         String raw=new String(backup,StandardCharsets.UTF_8);
         reject(raw.replace("中文","损坏").getBytes(StandardCharsets.UTF_8));
         reject(raw.replace("\"version\":1","\"version\":2").getBytes(StandardCharsets.UTF_8));
-        reject(raw.replace("\"schema\":4","\"schema\":5").getBytes(StandardCharsets.UTF_8));
+        reject(raw.replace("\"schema\":4","\"schema\":6").getBytes(StandardCharsets.UTF_8));
         reject(raw.replace("\"schema\":4","\"schema\":4294967300").getBytes(StandardCharsets.UTF_8));
         reject(raw.replace("\"version\":1","\"version\":1.0").getBytes(StandardCharsets.UTF_8));
         reject(raw.replace("\"version\":1","\"version\":1,\"version\":1").getBytes(StandardCharsets.UTF_8));

@@ -106,8 +106,8 @@ public final class XsLibrariesActivity extends Activity {
         for(Map.Entry<String,Integer> count:prepared.counts().entrySet())if(count.getValue()!=null&&count.getValue()>0)
             summary.append(tableName(count.getKey())).append(": ").append(count.getValue()).append('\n');
         summary.append(tr(
-            "\n同一帖子保留较长正文；作者和发布时间按来源顺序取首个已知值。打开次数相加，每条历史事件都保留。同名分类保持独立，标签按帖子去重。单份备注原样保留，多份备注按来源顺序标明来源。\n旧行为的同一帖子、类型和时间对应不同来源，或合并备注超过 8000 字符时会中止，请让冲突来源保持分开。所选元数据合计最多 8 MiB、20000 条记录。\n\n提交的是此次预览的快照；之后的普通编辑不会自动补入。要包含后续改动，请取消并重新预览。清除来源空间会使预览失效。\n\n确认后只创建一个独立资料空间。所有来源和默认库保留；不复制媒体文件或浏览会话。本人行为来源仍是原记录声明，不验证当前 X 账号身份。",
-            "\nFor the same post, the longer body is retained; author and publication time use the first known value in source order. Open counts are added and every history event is retained. Same-named folders remain separate; tags are deduplicated per post. A single note stays unchanged; multiple notes include their sources in source order.\nLegacy actions for the same post/type/time with conflicting sources, or combined notes over 8,000 characters, stop the operation. Keep conflicting sources separate. Selected metadata is limited to 8 MiB / 20,000 records.\n\nThis commits the snapshot shown in this preview. Later ordinary edits are not added automatically. Cancel and preview again to include subsequent changes. Clearing a source library invalidates the preview.\n\nConfirmation creates a separate library only. All sources and the default library are preserved. Media files and browser sessions are excluded. Own-action provenance remains the original stored claim and does not verify the current X account."));
+            "\n保留每个来源的所有正文版本。当前正文按捕获时间与完整度选择；较新的完整可见快照可以更短，部分或旧快照不会覆盖已知完整版本。没有完整度证据的旧内容保持保守选择。作者和发布时间按来源顺序取首个已知值。打开次数相加，每条历史事件都保留。同名分类保持独立，标签按帖子去重。单份备注原样保留，多份备注按来源顺序标明来源。\n旧行为的同一帖子、类型和时间对应不同来源，或合并备注超过 8000 字符时会中止，请让冲突来源保持分开。所选元数据合计最多 8 MiB、20000 条记录。\n\n提交的是此次预览的快照；之后的普通编辑不会自动补入。要包含后续改动，请取消并重新预览。清除来源空间会使预览失效。\n\n确认后只创建一个独立资料空间。所有来源和默认库保留；不复制媒体文件或浏览会话。本人行为来源仍是原记录声明，不验证当前 X 账号身份。",
+            "\nAll source text versions are retained. Current text uses capture time and completeness: a newer complete visible snapshot may be shorter; partial or older snapshots do not replace a known complete version. Legacy content without completeness evidence uses conservative selection. Author and publication time use the first known value in source order. Open counts are added and every history event is retained. Same-named folders remain separate; tags are deduplicated per post. A single note stays unchanged; multiple notes include their sources in source order.\nLegacy actions for the same post/type/time with conflicting sources, or combined notes over 8,000 characters, stop the operation. Keep conflicting sources separate. Selected metadata is limited to 8 MiB / 20,000 records.\n\nThis commits the snapshot shown in this preview. Later ordinary edits are not added automatically. Cancel and preview again to include subsequent changes. Clearing a source library invalidates the preview.\n\nConfirmation creates a separate library only. All sources and the default library are preserved. Media files and browser sessions are excluded. Own-action provenance remains the original stored claim and does not verify the current X account."));
         status.setText(tr("检查完成，等待你的确认。","Checked; waiting for your confirmation."));
         new AlertDialog.Builder(this).setTitle(tr("创建独立资料空间？","Create a separate library?"))
             .setMessage(summary).setNegativeButton(android.R.string.cancel,(dialog,which)->done(tr("已取消；未创建资料空间。","Canceled; no library created.")))
@@ -141,8 +141,9 @@ public final class XsLibrariesActivity extends Activity {
                         XsLibraryConsolidation.rollback(getApplicationContext(),prepared);
                         runOnUiThread(()-> {if(!destroyed){done(tr("新空间已撤销，来源和默认库保留。","New library undone; sources and default preserved."));
                             load(tr("新空间已撤销，来源和默认库保留。","New library undone; sources and default preserved."));}});
-                    }catch(Exception failure){runOnUiThread(()->done(tr("无法安全撤销：新空间可能已有修改或媒体，或删除未完成。请保留并检查结果；来源不受影响。",
-                        "Undo could not complete safely: the result may have changes or media, or deletion did not complete. Keep and inspect the result; source libraries are unaffected.")));}
+                    }catch(Exception failure){runOnUiThread(()->done(prepared.undoPending()?tr("删除尚未完成，新空间已停用；可在资料空间管理重试，重启也会重试。来源保留。",
+                        "Deletion is pending and the new library is disabled. Retry in library management or restart. Sources are preserved."):tr("无法安全撤销：新空间可能已有修改或媒体。结果和任务保留，来源不受影响。",
+                        "Undo refused: the result may have later changes or media. Its data and tasks are preserved; sources are unaffected.")));}
                 });
             }).show();
     }
@@ -154,7 +155,7 @@ public final class XsLibrariesActivity extends Activity {
         switch(table){case "posts":return tr("帖子","Posts");case "categories":return tr("分类","Folders");
             case "history_events":return tr("打开/停留事件","Open/dwell events");case "user_actions":return tr("旧行为索引","Legacy actions");
             case "favorites":return tr("收藏","Favorites");case "post_categories":return tr("分类关联","Folder links");case "post_tags":return tr("标签","Tags");
-            case "own_actions":return tr("本人行为记录","Own-action records");case "own_action_events":return tr("行为事件","Action events");default:return tr("记录","Records");}
+            case "snapshot_versions":return tr("正文版本","Snapshot versions");case "own_actions":return tr("本人行为记录","Own-action records");case "own_action_events":return tr("行为事件","Action events");default:return tr("记录","Records");}
     }
     private void toast(String message){if(!destroyed)Toast.makeText(this,message,Toast.LENGTH_LONG).show();}
     private String tr(String chinese,String english){return getResources().getConfiguration().getLocales().get(0).getLanguage().equals("zh")?chinese:english;}

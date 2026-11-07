@@ -20,6 +20,7 @@ public final class LibraryWritesTest {
         busyWriterSurvivesIdleReclamation();
         allBusyWritersRejectAnotherLibrary();
         throwingStaleCleanupStillFinishesEveryDiscardedTask();
+        durableDeletionNeverReopensTheOldNamespace();
         System.out.println("PASS "+checks+" library writer lifetime/concurrency assertions");
     }
 
@@ -123,6 +124,36 @@ public final class LibraryWritesTest {
             yes(retired,"All drained work finished accounting; idle writer retires");
             yes(!writer.isCurrent(writer.token()),"Retired coordinator stays closed");
         }finally{release.countDown();writer.close();}
+    }
+
+    private static void durableDeletionNeverReopensTheOldNamespace()throws Exception {
+        String scope="delete:closed";XsLibraryWrites.Ticket old=XsLibraryWrites.ticket(scope);
+        CountDownLatch entered=new CountDownLatch(1),release=new CountDownLatch(1),runningDone=new CountDownLatch(1),erased=new CountDownLatch(1);
+        AtomicInteger stale=new AtomicInteger(),skipped=new AtomicInteger();
+        try {
+            yes(XsLibraryWrites.submit(old,()->block(entered,release,runningDone)),"Pre-deletion operation accepted");await(entered,"Pre-deletion operation started");
+            yes(XsLibraryWrites.submit(old,stale::incrementAndGet,skipped::incrementAndGet),"Stale mutation was queued");
+            yes(XsLibraryWrites.deleteAndSubmit(scope,erased::countDown),"Deletion barrier accepted");
+            yes(XsLibraryWrites.isDeleted(scope),"Deletion closes the namespace immediately");
+            yes(!XsLibraryWrites.isCurrent(old),"Deletion invalidates the old ticket");
+            yes(!XsLibraryWrites.submit(old,stale::incrementAndGet),"Deleted ticket cannot submit");
+            yes(!XsLibraryWrites.submit(scope,stale::incrementAndGet),"Stale UI callback is rejected without throwing");
+            try{XsLibraryWrites.ticket(scope);throw new AssertionError("Deleted namespace reopened");}catch(IllegalStateException expected){yes(true,"New ticket cannot reopen deleted namespace");}
+            yes(!XsLibraryWrites.invalidateAndSubmit(scope,stale::incrementAndGet),"Ordinary erasure cannot reopen deleted namespace");
+            release.countDown();await(runningDone,"Old operation ended before deletion");await(erased,"Mandatory deletion executed");
+            yes(stale.get()==0&&skipped.get()==1,"Queued stale writes cannot revive deleted data");
+            CountDownLatch retry=new CountDownLatch(1);yes(XsLibraryWrites.submitDeletion(scope,retry::countDown),"Only explicit deletion retry is permitted");await(retry,"Retry cleanup completed");
+            String loaded="delete:persistent";XsLibraryWrites.Ticket before=XsLibraryWrites.ticket(loaded);
+            XsLibraryWrites.installDeletedLibraries(java.util.Collections.singleton(loaded));
+            yes(!XsLibraryWrites.isCurrent(before)&&XsLibraryWrites.isDeleted(loaded),"Loaded native tombstone revokes an existing ticket");
+            yes(XsLibraryWrites.releaseUnused(before),"Deleted idle writer can retire without reopening it");
+            XsLibraryWrites.installDeletedLibraries(java.util.Collections.singleton(loaded));
+            try{XsLibraryWrites.ticket(loaded);throw new AssertionError("Reloaded tombstone lost");}catch(IllegalStateException expected){yes(true,"Tombstones are additive across initialization");}
+            yes(!XsLibraryWrites.submitDeletion("never-deleted",stale::incrementAndGet),"Retry cannot delete an arbitrary live namespace");
+        }finally{
+            release.countDown();long until=System.nanoTime()+TimeUnit.SECONDS.toNanos(WAIT_SECONDS);
+            while(!XsLibraryWrites.releaseUnused(old)&&System.nanoTime()<until)Thread.sleep(1);
+        }
     }
 
     private static void block(CountDownLatch entered,CountDownLatch release,CountDownLatch done) {

@@ -17,6 +17,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import dev.forcemind.xs.android.XsArchiveDatabase;
+import dev.forcemind.xs.android.XsArchiveLibraryOperations;
 import dev.forcemind.xs.android.XsCaptureBridge;
 import dev.forcemind.xs.android.XsHistoryActivity;
 import dev.forcemind.xs.android.XsLibrarySettings;
@@ -208,6 +209,101 @@ public final class LibraryUiTest {
         assertEquals(library,XsLocalSpaces.defaultLibrary(app));
     }
 
+    @Test public void batchFavoriteTagCategoryAndUnfavoriteUseActualNativeControls() {
+        long now=System.currentTimeMillis();
+        db.recordObservedOpen(library,url("960"),"alice","batch first",null,now,"batch-open-960");
+        db.recordObservedOpen(library,url("961"),"bob","batch second",null,now+1,"batch-open-961");
+        db.putCategory(library,"batch-folder","Research");
+        openScreen(); awaitCount(2);
+        selectLoadedPosts(); clickAccessible(label("收藏并追加标签","Favorite & append tags"));
+        setAccessibleText(label("批量标签","Batch tags"),"reviewed, research");
+        clickDialogButton(android.R.id.button1,label("应用","Apply"));
+        awaitCondition("both selected posts favorited and tagged",()->{
+            ArchiveSearch.Filter f=new ArchiveSearch.Filter();f.favoriteOnly=true;f.tag="reviewed";
+            try(Cursor rows=db.search(library,f)){return rows.getCount()==2;}
+        });
+        awaitCount(2); selectLoadedPosts(); clickAccessible(label("加入分类","Add to folder"));
+        clickAccessible("Research");
+        awaitCondition("both selected posts assigned folder",()->{
+            ArchiveSearch.Filter f=new ArchiveSearch.Filter();f.categoryId="batch-folder";
+            try(Cursor rows=db.search(library,f)){return rows.getCount()==2;}
+        });
+        awaitCount(2); selectLoadedPosts(); clickAccessible(label("取消所选收藏","Unfavorite selected"));
+        clickDialogButton(android.R.id.button1,label("取消收藏","Unfavorite"));
+        awaitCondition("favorites removed",()->{ArchiveSearch.Filter f=new ArchiveSearch.Filter();f.favoriteOnly=true;try(Cursor c=db.search(library,f)){return c.getCount()==0;}});
+        try(Cursor events=db.timeline(library,null,20)){assertEquals("Unfavorite preserves open history",2,events.getCount());}
+        ArchiveSearch.Filter f=new ArchiveSearch.Filter();f.categoryId="batch-folder";
+        try(Cursor rows=db.search(library,f)){assertEquals("Unfavorite preserves category",2,rows.getCount());}
+    }
+    @Test public void batchFailureRollsBackFavoritesAndKeepsOtherScope() {
+        long now=System.currentTimeMillis();db.recordObservedOpen(library,url("962"),"alice","first",null,now,"batch-962");
+        db.favorite("other-batch-scope",url("963"),"bob","other",null,now);
+        try{XsArchiveLibraryOperations.favorite(db,library,java.util.Arrays.asList("962","963"));fail("Cross-scope post accepted");}catch(IllegalArgumentException expected){}
+        ArchiveSearch.Filter favorites=new ArchiveSearch.Filter();favorites.favoriteOnly=true;
+        try(Cursor c=db.search(library,favorites)){assertEquals(0,c.getCount());}
+        try(Cursor c=db.search("other-batch-scope",favorites)){assertEquals(1,c.getCount());}
+    }
+    @Test public void historicalTextSearchAndSnapshotBrowserDoNotReplaceCurrent() {
+        long now=System.currentTimeMillis();assertTrue(db.recordObservedOpen(library,url("964"),"alice","oldversionuniquemarker",null,now,"snapshot-open"));
+        assertTrue(db.recordSnapshot(library,url("964"),"alice","currentversionuniquemarker",null,now+1,dev.forcemind.xs.core.SnapshotPolicy.Source.POST_DETAIL,dev.forcemind.xs.core.SnapshotPolicy.Quality.COMPLETE));
+        openScreen();click(XsHistoryActivity.ID_SEARCH);
+        instrumentation.runOnMainSync(()->((EditText)screen.findViewById(XsHistoryActivity.ID_QUERY)).setText("oldversionuniquemarker"));awaitCount(0);
+        click(XsHistoryActivity.ID_FILTERS);
+        clickAccessible(label("包含历史快照正文","Include historical snapshots"));
+        clickDialogButton(android.R.id.button1,label("应用","Apply"));awaitCount(1);
+        assertTrue(rowsText().contains("currentversionuniquemarker"));assertFalse(rowsText().contains("oldversionuniquemarker"));
+        instrumentation.runOnMainSync(()->{ListView list=screen.findViewById(XsHistoryActivity.ID_RESULTS);list.performItemClick(list.getChildAt(0),0,list.getAdapter().getItemId(0));});
+        clickDialogButton(android.R.id.button3,label("整理","Organize"));clickAccessible(label("快照版本","Snapshot versions"));
+        accessible(label("本机快照版本","Local snapshot versions"));
+        final AccessibilityNodeInfo[] oldVersion={null};
+        awaitCondition("two rendered snapshot versions",()->{
+            AccessibilityNodeInfo active=instrumentation.getUiAutomation().getRootInActiveWindow();if(active==null)return false;
+            for(AccessibilityNodeInfo list:active.findAccessibilityNodeInfosByText(label("快照版本列表","Snapshot version list"))){
+                if(list.getChildCount()==2&&list.getChild(1)!=null&&list.getChild(1).isVisibleToUser()){oldVersion[0]=list.getChild(1);return true;}
+            }return false;
+        });
+        assertTrue(oldVersion[0].performAction(AccessibilityNodeInfo.ACTION_CLICK));instrumentation.waitForIdleSync();
+        awaitCondition("historical version detail body",()->instrumentation.getUiAutomation().getRootInActiveWindow().findAccessibilityNodeInfosByText("native_post_detail").size()>0);
+        try(Cursor c=db.search(library,new ArchiveSearch.Filter())){assertTrue(c.moveToFirst());assertEquals("currentversionuniquemarker",c.getString(3));}
+    }
+    @Test public void snapshotPaginationReachesOldestBeyondTwoHundredAndSearchKeepsCurrent() {
+        long now=System.currentTimeMillis();String post="965",oldest="ancientpagedmarker";
+        assertTrue(db.recordObservedOpen(library,url(post),"alice",oldest,null,now,"snapshot-pages-open"));
+        for(int i=1;i<=205;i++)assertTrue(db.recordSnapshot(library,url(post),"alice","later version "+i+" currentpagedmarker",null,now+i,
+            dev.forcemind.xs.core.SnapshotPolicy.Source.POST_DETAIL,dev.forcemind.xs.core.SnapshotPolicy.Quality.COMPLETE));
+        try(Cursor page=db.listSnapshots(library,post,50,200)){assertEquals(6,page.getCount());assertTrue(page.moveToLast());assertEquals(oldest,page.getString(2));}
+        openScreen();awaitCount(1);
+        instrumentation.runOnMainSync(()->{ListView list=screen.findViewById(XsHistoryActivity.ID_RESULTS);list.performItemClick(list.getChildAt(0),0,list.getAdapter().getItemId(0));});
+        clickDialogButton(android.R.id.button3,label("整理","Organize"));clickAccessible(label("快照版本","Snapshot versions"));
+        awaitSnapshotPage(1,50);
+        for(int page=2;page<=5;page++){clickAccessible(label("下一页版本","Next snapshot page"));awaitSnapshotPage(page,page==5?6:50);}
+        assertFalse("Last page has no next page",accessible(label("下一页版本","Next snapshot page")).isEnabled());
+        final AccessibilityNodeInfo[] oldestRow={null};
+        awaitCondition("oldest version visible on fifth bounded page",()->{
+            AccessibilityNodeInfo active=instrumentation.getUiAutomation().getRootInActiveWindow();if(active==null)return false;
+            for(AccessibilityNodeInfo node:active.findAccessibilityNodeInfosByText(oldest))if(node.isVisibleToUser()){oldestRow[0]=node;return true;}
+            accessible(label("快照版本列表","Snapshot version list")).performAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD);instrumentation.waitForIdleSync();return false;
+        });
+        assertTrue(oldestRow[0].performAction(AccessibilityNodeInfo.ACTION_CLICK));instrumentation.waitForIdleSync();
+        awaitCondition("oldest detail has native source",()->instrumentation.getUiAutomation().getRootInActiveWindow().findAccessibilityNodeInfosByText("native_post_detail").size()>0);
+        assertEquals("later version 205 currentpagedmarker",currentBody());
+        clickDialogButton(android.R.id.button1,label("关闭","Close"));
+        setAccessibleText(label("版本正文关键词","Snapshot text keyword"),oldest);awaitSnapshotPage(1,1);
+        assertFalse(accessible(label("下一页版本","Next snapshot page")).isEnabled());
+        assertFalse(accessible(label("上一页版本","Previous snapshot page")).isEnabled());
+        assertEquals("later version 205 currentpagedmarker",currentBody());
+        try(Cursor hit=db.searchSnapshots(library,post,oldest,50,0)){assertEquals(1,hit.getCount());assertTrue(hit.moveToFirst());assertEquals(oldest,hit.getString(2));assertEquals("Browsing does not select old version",0,hit.getInt(8));}
+    }
+    private String currentBody(){try(Cursor rows=db.search(library,new ArchiveSearch.Filter())){assertTrue(rows.moveToFirst());return rows.getString(3);}}
+    private void awaitSnapshotPage(int page,int count){
+        String expected=label("第 ","Page ")+page+label(" 页 · "," · ")+count+label(" 条（每页50条）"," shown (50 per page)");
+        awaitCondition("snapshot page "+page+" / "+count,()->expected.contentEquals(accessible(label("版本页状态","Snapshot page status")).getText()));
+    }
+    private void selectLoadedPosts(){
+        awaitCondition("previous batch finished",()->{final boolean[] ready={false};instrumentation.runOnMainSync(()->ready[0]=label("批量","Select").equals(((android.widget.Button)screen.findViewById(XsHistoryActivity.ID_BATCH)).getText().toString()));return ready[0];});
+        click(XsHistoryActivity.ID_BATCH);click(XsHistoryActivity.ID_BATCH);clickAccessible(label("选择已加载的帖子","Select loaded posts"));click(XsHistoryActivity.ID_BATCH);
+    }
+
     private void seed() {
         long now = System.currentTimeMillis();
         assertTrue(db.recordMeasuredFeed(library, url("901"), "home_following", "alice",
@@ -264,7 +360,10 @@ public final class LibraryUiTest {
         return found[0];
     }
     private void clickAccessible(String text) {
-        assertTrue(accessible(text).performAction(AccessibilityNodeInfo.ACTION_CLICK));
+        AccessibilityNodeInfo target=accessible(text);
+        if(!target.isVisibleToUser()){assertTrue("Scroll control into view: "+text,target.performAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_SHOW_ON_SCREEN.getId()));instrumentation.waitForIdleSync();target=accessible(text);}
+        assertTrue("Control must be visible: "+text,target.isVisibleToUser());
+        assertTrue(target.performAction(AccessibilityNodeInfo.ACTION_CLICK));
         instrumentation.waitForIdleSync();
     }
     /** Framework AlertDialog buttons apply theme-specific all-caps transformations. */

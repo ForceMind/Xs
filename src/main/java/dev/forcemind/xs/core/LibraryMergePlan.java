@@ -19,7 +19,7 @@ public final class LibraryMergePlan {
     public static final long MAX_TEXT_BYTES=8L*1024*1024;
     public static final List<String> TABLES=Collections.unmodifiableList(Arrays.asList(
         "posts","history_events","user_actions","categories","post_categories",
-        "favorites","post_tags","own_actions","own_action_events"));
+        "favorites","post_tags","own_actions","own_action_events","snapshot_versions"));
     public static final class Input {
         public final String scope,label;
         private final Map<String,List<Map<String,Object>>> tables;
@@ -69,6 +69,7 @@ public final class LibraryMergePlan {
         Map<String,List<Map<String,Object>>> out=new LinkedHashMap<>();
         for(String table:TABLES)out.put(table,new ArrayList<>());
         Map<String,Map<String,Object>> posts=new LinkedHashMap<>(),favorites=new LinkedHashMap<>();
+        Map<String,SnapshotPolicy.Version> selectedVersions=new LinkedHashMap<>();
         Map<String,List<String>> notes=new LinkedHashMap<>();
         Map<String,String> firstNotes=new LinkedHashMap<>();
         Map<String,Map<String,Object>> actions=new LinkedHashMap<>();
@@ -76,9 +77,27 @@ public final class LibraryMergePlan {
         int sourceOrdinal=0;
         for(Input input:inputs) {
             sourceOrdinal++;
+            Map<String,Map<String,Object>> sourceVersions=new LinkedHashMap<>();
+            for(Map<String,Object> original:rows(input,"snapshot_versions")) {
+                String post=text(original,"post_id"),oldKey=text(original,"snapshot_key");
+                sourceVersions.put(post+"\n"+oldKey,original);
+                Map<String,Object> version=copy(original);
+                version.put("snapshot_key",key("snapshot",input.scope,post+"\n"+oldKey));
+                out.get("snapshot_versions").add(version);
+            }
             for(Map<String,Object> original:rows(input,"posts")) {
                 sourcePosts++;String id=text(original,"post_id");Map<String,Object> previous=posts.get(id);
-                if(previous==null)posts.put(id,copy(original));
+                Map<String,Object> candidate=copy(original);SnapshotPolicy.Version version=null;
+                Object pointer=original.get("current_snapshot_key");
+                if(pointer!=null) {
+                    Map<String,Object> snapshot=sourceVersions.get(id+"\n"+pointer);
+                    if(snapshot==null||!java.util.Objects.equals(original.get("body"),snapshot.get("body")))throw invalid("Missing current snapshot reference");
+                    candidate.put("current_snapshot_key",key("snapshot",input.scope,id+"\n"+pointer));
+                    version=new SnapshotPolicy.Version((String)snapshot.get("body"),(String)snapshot.get("author_handle"),
+                        (Long)snapshot.get("published_at_ms"),(Long)snapshot.get("captured_at_ms"),
+                        SnapshotPolicy.Source.parse((String)snapshot.get("source")),SnapshotPolicy.Quality.valueOf((String)snapshot.get("quality")));
+                }
+                if(previous==null) {posts.put(id,candidate);if(version!=null)selectedVersions.put(id,version);}
                 else {
                     long count=Math.addExact(number(previous,"opened_count",0),number(original,"opened_count",0));
                     if(count>Integer.MAX_VALUE)throw invalid("Merged open count exceeds supported range");
@@ -89,8 +108,13 @@ public final class LibraryMergePlan {
                     for(String field:Arrays.asList("author_handle","published_at_ms"))
                         if(previous.get(field)==null||"".equals(previous.get(field)))previous.put(field,original.get(field));
                     String body=(String)original.get("body"),old=(String)previous.get("body");
-                    if(body!=null&&(old==null||body.length()>old.length())) {
+                    SnapshotPolicy.Version current=selectedVersions.get(id);
+                    boolean select=version!=null?SnapshotPolicy.decide(current,null,version).selectCurrent:
+                        current==null&&body!=null&&(old==null||body.length()>old.length());
+                    if(select) {
                         previous.put("body",body);previous.put("snapshot_state",original.get("snapshot_state"));
+                        if(candidate.containsKey("current_snapshot_key"))previous.put("current_snapshot_key",candidate.get("current_snapshot_key"));
+                        if(version!=null)selectedVersions.put(id,version);
                     }
                 }
             }

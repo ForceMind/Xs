@@ -16,7 +16,7 @@ final class PostImageSelection {
         return "(()=>{if(window.top!==window||document.visibilityState!=='visible'||"+
             "document.querySelector('[role=dialog],[aria-modal=true]'))return JSON.stringify([]);"+
             "const id='"+id+"',result=[];"+
-            "const postId=u=>{try{return new URL(u,location.href).pathname.match(/\\/status\\/(\\d+)(?:\\/|$)/)?.[1]}catch(e){return null}};"+
+            "const postId=u=>{try{const match=new URL(u,location.href).pathname.match(/\\/status\\/(\\d+)(?:\\/|$)/);return match?match[1]:null}catch(e){return null}};"+
             "if(postId(location.href)!==id)return JSON.stringify([]);"+
             "for(const card of Array.from(document.querySelectorAll('article[data-testid=tweet]')).slice(0,64)){"+
             "const time=card.querySelector('time'),anchor=time&&time.closest('a');"+

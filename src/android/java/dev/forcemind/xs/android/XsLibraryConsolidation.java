@@ -4,6 +4,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import dev.forcemind.xs.core.LibraryMergePlan;
+import dev.forcemind.xs.core.ArchiveSchema;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -33,6 +34,7 @@ public final class XsLibraryConsolidation {
         }
         public Map<String,Integer> counts(){return backup.counts();}
         public String label(){return backup.label();}
+        public boolean undoPending(){String target=createdLibrary.get();return target!=null&&!rolledBack.get()&&XsLibraryWrites.isDeleted(target);}
         private boolean current(){for(XsLibraryWrites.Ticket ticket:tickets)if(!XsLibraryWrites.isCurrent(ticket))return false;return true;}
     }
     /** Background thread only. Snapshots are taken on each source's shared write queue. */
@@ -69,7 +71,7 @@ public final class XsLibraryConsolidation {
         }
         LibraryMergePlan.Result merged=LibraryMergePlan.merge(inputs);
         ByteArrayOutputStream out=new ByteArrayOutputStream();
-        XsLibraryBackup.writeCandidate(merged.tables,4,label.trim(),out);
+        XsLibraryBackup.writeCandidate(merged.tables,ArchiveSchema.VERSION,label.trim(),out);
         Prepared preview=new Prepared(XsLibraryBackup.inspect(new ByteArrayInputStream(out.toByteArray())),tickets);
         if(!preview.current())throw new IllegalStateException("Source changed; preview again");return preview;
     }
@@ -107,37 +109,31 @@ public final class XsLibraryConsolidation {
             if(target==null||!target.startsWith("local:")||target.equals(XsLocalSpaces.current(app)))throw cannotUndo();
             AtomicReference<Exception> failure=new AtomicReference<>();AtomicBoolean canceled=new AtomicBoolean();
             CountDownLatch done=new CountDownLatch(1);
-            Runnable erase=()-> {
+            XsLibraryWrites.Ticket targetTicket=XsLibraryWrites.ticket(target);
+            boolean accepted=XsLibraryWrites.submit(targetTicket,()-> {
                 try {
                     if(canceled.get())throw cannotUndo();checkUnchanged(app,prepared,target);
                     try(XsArchiveDatabase archive=new XsArchiveDatabase(app)) {
                         SQLiteDatabase db=archive.getWritableDatabase();db.beginTransaction();
                         try {
-                            // Registration must still be this exact generated, separate result.
                             try(Cursor row=db.rawQuery("SELECT library_id,label,origin FROM libraries WHERE storage_scope=?",new String[]{target})) {
                                 if(!row.moveToFirst()||!target.equals(row.getString(0))||!prepared.label().equals(row.getString(1))||!"RESTORED".equals(row.getString(2)))throw cannotUndo();
                             }
-                            if(canceled.get()||target.equals(XsLocalSpaces.current(app)))throw cannotUndo();
-                            archive.clearAccount(target);
-                            if(db.delete("libraries","storage_scope=? AND library_id=? AND origin='RESTORED'",new String[]{target,target})!=1)throw cannotUndo();
-                            if(canceled.get()||target.equals(XsLocalSpaces.current(app)))throw cannotUndo();
+                            if(canceled.get()||target.equals(XsLocalSpaces.current(app))||
+                                !XsLibraryWrites.isCurrent(targetTicket)||!matchesRows(db,prepared.backup,target)||hasMedia(app,target))throw cannotUndo();
+                            // All refusal checks precede durable revocation, under the actual SQLite
+                            // writer lock and current target queue. Once persisted, this is an accepted
+                            // deletion commitment: any IO failure is a pending purge, never a deferred
+                            // rejection which could later delete newly changed data.
+                            XsDeletedLibraries.markDeleted(app,target);
+                            if(!XsLibraryWrites.deleteAndSubmit(target,()->{}))throw new IllegalStateException("Deletion queued for startup retry");
+                            archive.deleteLibraryScope(target);
                             db.setTransactionSuccessful();
                         }finally{db.endTransaction();}
                     }
                     prepared.rolledBack.set(true);
-                    // Discard work admitted while this destructive operation was being checked.
-                    XsLibraryWrites.invalidate(target);
+                    try{XsDeletedLibraries.completeDeletion(app,target);}catch(RuntimeException housekeeping){/* idempotent durable retry */}
                 }catch(Exception problem){failure.set(problem);}finally{done.countDown();}
-            };
-            // Rejection must preserve existing downloads and edits. Check on the ordinary target
-            // queue first, then enqueue its destructive barrier within that same callback. No
-            // other target write can execute between this preflight and the barrier's recheck.
-            XsLibraryWrites.Ticket targetTicket=XsLibraryWrites.ticket(target);
-            boolean accepted=XsLibraryWrites.submit(targetTicket,()-> {
-                try {
-                    if(canceled.get())throw cannotUndo();checkUnchanged(app,prepared,target);
-                    if(!XsLibraryWrites.invalidateAndSubmit(target,erase))throw cannotUndo();
-                }catch(Exception problem){failure.set(problem);done.countDown();}
             },()->{failure.set(cannotUndo());done.countDown();});
             if(!accepted)throw cannotUndo();
             boolean interrupted=false;
@@ -161,6 +157,31 @@ public final class XsLibraryConsolidation {
     }
     private static Map<Map<String,Object>,Integer> multiplicity(List<Map<String,Object>> rows) {
         Map<Map<String,Object>,Integer> counts=new HashMap<>();for(Map<String,Object> row:rows)counts.put(row,counts.getOrDefault(row,0)+1);return counts;
+    }
+    /** Native allowlisted row comparison inside the erase transaction; no export of deleted data. */
+    private static boolean matchesRows(SQLiteDatabase db,XsLibraryBackup.ValidatedBackup expected,String target) {
+        for(Map.Entry<String,List<String>> table:XsLibraryBackup.allowedColumns().entrySet()) {
+            Map<Map<String,Object>,Integer> counts=multiplicity(expected.rows(table.getKey()));
+            int seen=0;
+            try(Cursor cursor=db.rawQuery("SELECT "+String.join(",",table.getValue())+" FROM "+table.getKey()+" WHERE account_id=?",new String[]{target})) {
+                while(cursor.moveToNext()) {
+                    if(++seen>expected.rows(table.getKey()).size())return false;
+                    Map<String,Object> row=new LinkedHashMap<>();
+                    for(int i=0;i<table.getValue().size();i++) {
+                        Object value;
+                        if(cursor.isNull(i))value=null;
+                        else if(cursor.getType(i)==Cursor.FIELD_TYPE_INTEGER)value=cursor.getLong(i);
+                        else if(cursor.getType(i)==Cursor.FIELD_TYPE_STRING)value=cursor.getString(i);
+                        else return false;
+                        row.put(table.getValue().get(i),value);
+                    }
+                    Integer count=counts.get(row);if(count==null||count==0)return false;
+                    if(count==1)counts.remove(row);else counts.put(row,count-1);
+                }
+            }
+            if(!counts.isEmpty())return false;
+        }
+        return true;
     }
     private static boolean hasMedia(Context context,String target) {
         // Fixed app-private database only. Do not initialize the download repository or touch files.

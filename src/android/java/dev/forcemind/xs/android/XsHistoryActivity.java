@@ -16,6 +16,7 @@ import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -38,6 +39,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -47,6 +50,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 public final class XsHistoryActivity extends Activity {
     private enum Mode { HISTORY, FEED, FAVORITES, SEARCH, FOLDERS, OWN }
     private static final int PAGE_SIZE = 80;
+    public static final int ID_BATCH = 0x8120;
+    public static final int ID_MANAGE = 0x8121;
+    public static final int SNAPSHOT_PAGE_SIZE = 50;
     public static final String EXTRA_LIBRARY = "dev.forcemind.xs.LIBRARY";
     public static final String EXTRA_LOCAL_SPACE = "dev.forcemind.xs.LOCAL_SPACE";
     private static final int REQUEST_POSTS_JS = 7167;
@@ -86,6 +92,10 @@ public final class XsHistoryActivity extends Activity {
     private final AtomicInteger requested = new AtomicInteger();
     private final AtomicInteger databaseUsers = new AtomicInteger(1);
     private final List<Row> visible = new ArrayList<>();
+    private final Set<String> selectedPosts = new LinkedHashSet<>();
+    private boolean selecting;
+    private ListView results;
+    private Button batchButton;
     private final List<Map<String,String>> displayedData = new ArrayList<>();
     private final Handler main = new Handler(Looper.getMainLooper());
     private final Runnable delayedSearch = this::refresh;
@@ -100,7 +110,7 @@ public final class XsHistoryActivity extends Activity {
     private XsLibraryWrites.Ticket pendingImportTicket;
     private String authorFilter, sourceFilter, tagFilter, actionStateFilter;
     private Long minTime, minDwellMs;
-    private boolean neverOpened, favoriteOnly, sortByDwell, clearing, destroyed;
+    private boolean neverOpened, favoriteOnly, sortByDwell, includeSnapshotVersions, clearing, destroyed;
     private int nextOffset, dateChoice;
     private ArchiveSearch.DateField dateBasis = ArchiveSearch.DateField.LAST_SEEN;
     private boolean zh;
@@ -119,6 +129,12 @@ public final class XsHistoryActivity extends Activity {
 
     @Override protected void onResume() {
         super.onResume();
+        if (XsDeletedLibraries.isDeleted(this, library)) {
+            defaultLibrary = XsLocalSpaces.defaultLibrary(this); library = defaultLibrary;
+            resetSelection(); selectedFolder = null; actionType = null;
+            libraryButton.setText(tr("Xs 本机资料库", "Xs local library"));
+            write(library, () -> archive.ensureLibrary(library, tr("Xs 本机资料库", "Xs local library")), null);
+        }
         refresh();
     }
 
@@ -181,15 +197,21 @@ public final class XsHistoryActivity extends Activity {
         filters.addView(extraFilter, weighted());
         root.addView(filters);
 
-        ListView results = new ListView(this);
+        results = new ListView(this);
         results.setId(ID_RESULTS);
-        adapter = new SimpleAdapter(this, displayedData, android.R.layout.simple_list_item_2,
+        adapter = new SimpleAdapter(this, displayedData, android.R.layout.simple_list_item_activated_2,
             new String[]{"title", "detail"}, new int[]{android.R.id.text1, android.R.id.text2});
         results.setAdapter(adapter);
         root.addView(results, new LinearLayout.LayoutParams(-1, 0, 1));
         results.setOnItemClickListener((p, v, position, id) -> {
             if (position >= visible.size()) return;
             Row row = visible.get(position);
+            if (selecting && !row.folder) {
+                if (selectedPosts.contains(row.id)) selectedPosts.remove(row.id);
+                else if (selectedPosts.size() < XsArchiveLibraryOperations.MAX_BATCH) selectedPosts.add(row.id);
+                else toast(tr("每批最多选择 200 条", "Select up to 200 posts per batch"));
+                updateSelection(); return;
+            }
             if (row.folder) {
                 selectedFolder = row.id;
                 folderFilter.setText(row.headline);
@@ -222,7 +244,12 @@ public final class XsHistoryActivity extends Activity {
         own.setOnClickListener(v -> setMode(Mode.OWN)); indexControls.addView(own,weighted());
         Button backup=button(tr("备份 / 恢复", "Backup / restore")); backup.setId(ID_BACKUP);
         backup.setOnClickListener(v -> startActivity(XsBackupActivity.intent(this,library)));
-        indexControls.addView(backup,weighted()); root.addView(indexControls);
+        indexControls.addView(backup,weighted());
+        batchButton=button(tr("批量", "Select")); batchButton.setId(ID_BATCH);
+        batchButton.setOnClickListener(v -> batchMenu()); indexControls.addView(batchButton,weighted());
+        Button manage=button(tr("管理", "Manage")); manage.setId(ID_MANAGE);
+        manage.setOnClickListener(v -> startActivity(XsLibraryManagementActivity.intent(this,library)));
+        indexControls.addView(manage,weighted()); root.addView(indexControls);
         setMode(Mode.HISTORY);
     }
 
@@ -254,6 +281,7 @@ public final class XsHistoryActivity extends Activity {
 
     private void loadPage(boolean append) {
         if (destroyed) return;
+        if(XsLibraryWrites.isDeleted(library)){requested.incrementAndGet();visible.clear();displayedData.clear();adapter.notifyDataSetChanged();resetSelection();more.setVisibility(View.GONE);status.setText(tr("此资料空间已停用；请切换本机库或重试删除清理。","This library is disabled. Choose the local library or retry deletion cleanup."));return;}
         final int request = requested.incrementAndGet();
         final int offset = append ? nextOffset : 0;
         more.setEnabled(false);
@@ -296,7 +324,8 @@ public final class XsHistoryActivity extends Activity {
                                 tr("打开 ", "Opens ") + opens) +
                                 (dwell == null ? "" : tr(" · 最长停留 ", " · Max dwell ") + duration(dwell, quality(c, "dwell_quality"))) +
                                 (favorite ? tr(" · Xs 收藏", " · Xs favorite") : "") +
-                                (c.isNull(14) ? "" : "\n" + c.getString(14));
+                                (c.isNull(14) ? "" : "\n" + c.getString(14)) +
+                                (c.getColumnCount()>18 && c.getInt(18)>0 ? tr(" · 快照 ", " · Snapshots ")+c.getInt(18)+" · "+c.getString(16) : "");
                             rows.add(new Row(id, headline(c.getString(2), c.getString(3), id), detail,
                                 false, c.getString(2), c.getString(3), c.isNull(4) ? null : c.getLong(4),
                                 favorite, c.getString(11), c.getString(12)));
@@ -314,6 +343,7 @@ public final class XsHistoryActivity extends Activity {
             }
             main.post(() -> {
                 if (destroyed || requested.get() != request || !owner.equals(library) || selectedMode != mode) return;
+                if(XsLibraryWrites.isDeleted(owner)){loadPage(false);return;}
                 showRows(rows, append);
                 nextOffset = offset + rows.size();
                 more.setVisibility(selectedMode != Mode.FOLDERS && rows.size() == PAGE_SIZE ? View.VISIBLE : View.GONE);
@@ -335,6 +365,7 @@ public final class XsHistoryActivity extends Activity {
         filter.neverOpened = neverOpened;
         filter.favoriteOnly = mode == Mode.FAVORITES || favoriteOnly;
         filter.sortByDwell = sortByDwell;
+        filter.includeSnapshotVersions = includeSnapshotVersions;
         filter.author = authorFilter;
         filter.source = sourceFilter;
         filter.tag = tagFilter;
@@ -352,6 +383,7 @@ public final class XsHistoryActivity extends Activity {
             displayedData.add(data);
         }
         adapter.notifyDataSetChanged();
+        updateSelection();
         status.setText((library.equals(defaultLibrary) ? tr("Xs 本机资料库", "Xs local library") :
             tr("独立资料空间", "Separate library")) + " · " + visible.size() + tr(" 条结果", " results"));
     }
@@ -391,6 +423,8 @@ public final class XsHistoryActivity extends Activity {
         never.setId(ID_NEVER_OPENED); never.setContentDescription(tr("从未主动打开", "Never deliberately opened")); fields.addView(never);
         CheckBox favorites = check(tr("仅 Xs 收藏", "Xs favorites only"), favoriteOnly || mode == Mode.FAVORITES);
         fields.addView(favorites);
+        CheckBox versions=check(tr("搜索包含历史快照正文（结果显示当前版本）","Search historical snapshot text (results show current version)"),includeSnapshotVersions);
+        versions.setContentDescription(tr("包含历史快照正文","Include historical snapshots")); fields.addView(versions);
         CheckBox durationSort = check(tr("按最长单次停留排序", "Sort by longest single dwell"), sortByDwell);
         durationSort.setId(ID_SORT_DWELL); fields.addView(durationSort);
         EditText author = entry(tr("作者（不含 @）", "Author (without @)"), authorFilter);
@@ -412,7 +446,7 @@ public final class XsHistoryActivity extends Activity {
             .setView(scroll)
             .setNegativeButton(tr("取消", "Cancel"), null)
             .setNeutralButton(tr("重置", "Reset"), (d, n) -> {
-                minDwellMs = null; neverOpened = false; favoriteOnly = false; sortByDwell = false;
+                minDwellMs = null; neverOpened = false; favoriteOnly = false; sortByDwell = false; includeSnapshotVersions=false;
                 authorFilter = null; sourceFilter = null; tagFilter = null; actionStateFilter = null;
                 dateBasis = ArchiveSearch.DateField.LAST_SEEN;
                 selectedFolder = null; actionType = null;
@@ -438,7 +472,7 @@ public final class XsHistoryActivity extends Activity {
             }
             actionStateFilter=actionState[0];
             minDwellMs = threshold; neverOpened = never.isChecked();
-            favoriteOnly = favorites.isChecked(); sortByDwell = durationSort.isChecked();
+            favoriteOnly = favorites.isChecked(); sortByDwell = durationSort.isChecked(); includeSnapshotVersions=versions.isChecked();
             authorFilter = emptyToNull(author.getText().toString().trim().replaceFirst("^@", ""));
             sourceFilter = emptyToNull(source.getText().toString().trim());
             tagFilter = emptyToNull(tag.getText().toString().trim());
@@ -469,7 +503,7 @@ public final class XsHistoryActivity extends Activity {
         new AlertDialog.Builder(this).setTitle(tr("本地资料操作", "Local library actions"))
             .setItems(new String[]{tr("收藏到 Xs", "Favorite in Xs"), tr("分类", "Folders"),
                 tr("编辑收藏备注与标签", "Edit favorite note & tags"),
-                tr("取消 Xs 收藏", "Remove Xs favorite"), tr("分享链接", "Share link"), tr("本人行为轨迹", "Own activity trail")}, (d, n) -> {
+                tr("取消 Xs 收藏", "Remove Xs favorite"), tr("分享链接", "Share link"), tr("本人行为轨迹", "Own activity trail"), tr("快照版本", "Snapshot versions")}, (d, n) -> {
                 if (n == 0) saveFavorite(row, false);
                 else if (n == 1) organizePost(row.id);
                 else if (n == 2) saveFavorite(row, true);
@@ -479,6 +513,7 @@ public final class XsHistoryActivity extends Activity {
                         tr("已取消收藏；历史和资源保留", "Favorite removed; history and assets kept"));
                 }
                 else if (n == 5) showOwnActionTrail(row.id);
+                else if (n == 6) showSnapshots(row.id);
                 else {
                     Intent share = new Intent(Intent.ACTION_SEND).setType("text/plain")
                         .putExtra(Intent.EXTRA_TEXT, postUrl(row.id));
@@ -486,6 +521,114 @@ public final class XsHistoryActivity extends Activity {
                     catch (ActivityNotFoundException ignored) { toast(tr("没有兼容的分享应用", "No compatible share app")); }
                 }
             }).show();
+    }
+
+    private void resetSelection() { selecting=false;selectedPosts.clear();updateSelection(); }
+    private void updateSelection() {
+        if(batchButton==null||results==null)return;
+        batchButton.setText(selecting ? tr("已选 ","Selected ")+selectedPosts.size() : tr("批量","Select"));
+        results.setChoiceMode(selecting?ListView.CHOICE_MODE_MULTIPLE:ListView.CHOICE_MODE_NONE);
+        for(int i=0;i<visible.size();i++)results.setItemChecked(i,selecting&&selectedPosts.contains(visible.get(i).id));
+    }
+    private void batchMenu() {
+        if(clearing||mode==Mode.FOLDERS)return;
+        if(!selecting){selecting=true;updateSelection();toast(tr("点选帖子，可跨页选择最多 200 条。再次点“已选”执行批量操作。","Tap posts to select up to 200 across pages, then tap Selected for actions."));return;}
+        final String owner=library;
+        final List<String> ids=new ArrayList<>(selectedPosts);
+        new AlertDialog.Builder(this).setTitle(tr("所选帖子：","Selected posts: ")+ids.size())
+            .setItems(new String[]{tr("选择已加载的帖子","Select loaded posts"),tr("清空选择","Clear selection"),
+                tr("收藏所选到 Xs","Favorite selected in Xs"),tr("加入分类","Add to folder"),
+                tr("收藏并追加标签","Favorite & append tags"),tr("收藏并替换标签","Favorite & replace tags"),
+                tr("取消所选收藏","Unfavorite selected"),tr("退出选择","Exit selection")},(dialog,which)->{
+                if(which==0){for(Row row:visible)if(!row.folder&&selectedPosts.size()<200)selectedPosts.add(row.id);updateSelection();return;}
+                if(which==1){selectedPosts.clear();updateSelection();return;}
+                if(which==7){resetSelection();return;}
+                if(ids.isEmpty()){toast(tr("请先选择帖子","Select posts first"));return;}
+                if(which==2)write(owner,()->XsArchiveLibraryOperations.favorite(archive,owner,ids),tr("已收藏所选帖子","Selected posts saved"),this::resetSelection);
+                else if(which==3)chooseFolder((id,label)->{
+                    if(id!=null)write(owner,()->XsArchiveLibraryOperations.assignCategory(archive,owner,ids,id),tr("所选已分类","Selected posts organized"),this::resetSelection);
+                });
+                else if(which==4||which==5){
+                    EditText tags=entry(tr("标签，以逗号分隔；最多 20 个","Comma-separated tags; up to 20"),null);
+                    tags.setContentDescription(tr("批量标签","Batch tags"));
+                    new AlertDialog.Builder(this).setTitle(which==4?tr("收藏并追加标签","Favorite & append tags"):tr("收藏并替换标签","Favorite & replace tags"))
+                        .setView(tags).setNegativeButton(tr("取消","Cancel"),null).setPositiveButton(tr("应用","Apply"),(d,n)->
+                            write(owner,()->XsArchiveLibraryOperations.tags(archive,owner,ids,tags.getText().toString(),which==4),tr("所选收藏标签已保存","Selected favorite tags saved"),this::resetSelection)).show();
+                } else if(which==6)new AlertDialog.Builder(this).setMessage(tr("取消所选 Xs 收藏？历史、分类和已下载资源保留。","Remove selected Xs favorites? History, folders and downloaded files remain."))
+                    .setNegativeButton(tr("取消","Cancel"),null).setPositiveButton(tr("取消收藏","Unfavorite"),(d,n)->
+                        write(owner,()->XsArchiveLibraryOperations.unfavorite(archive,owner,ids),tr("所选收藏已取消","Selected favorites removed"),this::resetSelection)).show();
+            }).show();
+    }
+    private void showSnapshots(String postId) { new SnapshotBrowser(library,postId).show(); }
+
+    /** One bounded page is retained. Text bodies are fetched only after a row is selected. */
+    private final class SnapshotBrowser {
+        private final String owner,postId;
+        private final List<String> keys=new ArrayList<>(),labels=new ArrayList<>();
+        private final EditText keyword=entry(tr("搜索各版本正文","Search version text"),null);
+        private final TextView pageStatus=text("");
+        private final ListView versions=new ListView(XsHistoryActivity.this);
+        private final ArrayAdapter<String> versionsAdapter=new ArrayAdapter<>(XsHistoryActivity.this,android.R.layout.simple_list_item_1,labels);
+        private final Button previous=button(tr("上一页","Previous")),next=button(tr("下一页","Next"));
+        private AlertDialog dialog;private boolean active=true;private int offset,generation;
+        private final Runnable changed=()->{offset=0;load();};
+        SnapshotBrowser(String owner,String postId){this.owner=owner;this.postId=postId;}
+        boolean current(){return active&&!destroyed&&owner.equals(library)&&!XsLibraryWrites.isDeleted(owner);}
+        void show(){
+            LinearLayout fields=paddedColumn();
+            fields.addView(text(tr("仅浏览本机版本，不替换当前正文。每页50条，可翻页或搜索旧版本。","Read local versions without replacing current text. Pages hold 50 versions; browse or search older text.")));
+            keyword.setSingleLine(true);keyword.setContentDescription(tr("版本正文关键词","Snapshot text keyword"));fields.addView(keyword);
+            pageStatus.setContentDescription(tr("版本页状态","Snapshot page status"));fields.addView(pageStatus);
+            versions.setContentDescription(tr("快照版本列表","Snapshot version list"));versions.setAdapter(versionsAdapter);
+            int height=Math.max(px(120),Math.min(px(280),getResources().getDisplayMetrics().heightPixels/3));
+            fields.addView(versions,new LinearLayout.LayoutParams(-1,height));
+            LinearLayout navigation=horizontal();previous.setContentDescription(tr("上一页版本","Previous snapshot page"));next.setContentDescription(tr("下一页版本","Next snapshot page"));
+            navigation.addView(previous,weighted());navigation.addView(next,weighted());fields.addView(navigation);
+            previous.setOnClickListener(v->{if(offset>0){offset=Math.max(0,offset-SNAPSHOT_PAGE_SIZE);load();}});
+            next.setOnClickListener(v->{if(offset<=Integer.MAX_VALUE-SNAPSHOT_PAGE_SIZE){offset+=SNAPSHOT_PAGE_SIZE;load();}});
+            versions.setOnItemClickListener((parent,view,position,id)->{if(position<keys.size())open(keys.get(position),labels.get(position));});
+            keyword.addTextChangedListener(new TextWatcher(){public void beforeTextChanged(CharSequence value,int start,int count,int after){}public void afterTextChanged(Editable value){}public void onTextChanged(CharSequence value,int start,int before,int count){main.removeCallbacks(changed);main.postDelayed(changed,250);}});
+            dialog=new AlertDialog.Builder(XsHistoryActivity.this).setTitle(tr("本机快照版本","Local snapshot versions")).setView(fields)
+                .setNeutralButton(tr("重新查询","Reload"),null).setNegativeButton(tr("关闭","Close"),null).create();
+            dialog.setOnDismissListener(d->{active=false;generation++;main.removeCallbacks(changed);});dialog.show();
+            dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener(v->load());load();
+        }
+        void load(){
+            if(!current()){if(dialog!=null)dialog.dismiss();return;}
+            final int request=++generation,pageOffset=offset;final String query=keyword.getText().toString().trim();
+            keys.clear();labels.clear();versionsAdapter.notifyDataSetChanged();versions.setEnabled(false);previous.setEnabled(false);next.setEnabled(false);
+            pageStatus.setText(tr("正在查询版本…","Loading versions…"));
+            read(()->{
+                List<String> foundKeys=new ArrayList<>(),foundLabels=new ArrayList<>();boolean more=false;
+                try(Cursor rows=archive.searchSnapshots(owner,postId,query,SNAPSHOT_PAGE_SIZE+1,pageOffset)){
+                    while(rows.moveToNext()){
+                        if(foundKeys.size()==SNAPSHOT_PAGE_SIZE){more=true;break;}
+                        foundKeys.add(rows.getString(0));String body=rows.isNull(2)?tr("仅链接","Link only"):rows.getString(2).replace('\n',' ');
+                        String preview=body.length()>90?body.substring(0,90)+"…":body;
+                        foundLabels.add((rows.getInt(8)!=0?tr("当前 · ","Current · "):"")+(rows.isNull(4)?tr("时间未知","Time unknown"):date(rows.getLong(4)))+" · "+rows.getString(6)+"\n"+preview);
+                    }
+                }catch(RuntimeException failure){main.post(()->{if(current()&&request==generation){pageStatus.setText(tr("版本查询失败，请重新查询","Version query failed; reload"));previous.setEnabled(pageOffset>0);}});return;}
+                final boolean hasNext=more;
+                main.post(()->{
+                    if(!current()){if(dialog!=null)dialog.dismiss();return;}if(request!=generation)return;
+                    keys.addAll(foundKeys);labels.addAll(foundLabels);versionsAdapter.notifyDataSetChanged();versions.setEnabled(true);
+                    previous.setEnabled(pageOffset>0);next.setEnabled(hasNext&&pageOffset<=Integer.MAX_VALUE-SNAPSHOT_PAGE_SIZE);
+                    pageStatus.setText(tr("第 ","Page ")+(pageOffset/SNAPSHOT_PAGE_SIZE+1)+tr(" 页 · "," · ")+foundKeys.size()+tr(" 条（每页50条）"," shown (50 per page)"));
+                });
+            });
+        }
+        void open(String key,String title){
+            read(()->{
+                String detail=null;try(Cursor row=archive.getSnapshot(owner,postId,key)){
+                    if(row.moveToFirst())detail=(row.isNull(1)?"":"@"+row.getString(1)+"\n")+tr("来源：","Source: ")+row.getString(5)+"\n\n"+(row.isNull(2)?tr("仅链接","Link only"):row.getString(2));
+                }catch(RuntimeException unavailable){/* Missing/deleted versions are not restored by browsing. */}
+                final String body=detail;main.post(()->{
+                    if(!current())return;if(body==null){toast(tr("此版本已不可用，请重新查询","Version unavailable; reload"));return;}
+                    TextView text=text(body);text.setTextIsSelectable(true);ScrollView scroll=new ScrollView(XsHistoryActivity.this);scroll.addView(text);
+                    new AlertDialog.Builder(XsHistoryActivity.this).setTitle(title).setView(scroll).setPositiveButton(tr("关闭","Close"),null).show();
+                });
+            });
+        }
     }
 
     private void showOwnActionTrail(String postId) {
@@ -564,15 +707,15 @@ public final class XsHistoryActivity extends Activity {
         read(() -> {
             String found=null,label=null;
             try(Cursor libraries=archive.libraries()) {
-                while(libraries.moveToNext()) if(wanted.equals(libraries.getString(3))) {
+                while(libraries.moveToNext()) if(wanted.equals(libraries.getString(3)) && !XsDeletedLibraries.isDeleted(this,wanted)) {
                     found=libraries.getString(3); label=libraries.getString(1); break;
                 }
             }
             final String selected=found, selectedLabel=label;
             main.post(() -> {
                 if(destroyed || !defaultLibrary.equals(library)) return;
-                if(selected == null) { toast(tr("指定资料空间不存在", "Requested library does not exist")); return; }
-                requested.incrementAndGet(); library=selected;
+                if(selected == null || XsLibraryWrites.isDeleted(selected)) { toast(tr("指定资料空间不存在", "Requested library does not exist")); return; }
+                requested.incrementAndGet(); library=selected; resetSelection();
                 libraryButton.setText(library.equals(defaultLibrary) ? tr("Xs 本机资料库", "Xs local library") :
                     tr("独立资料空间：", "Separate library: ") + selectedLabel);
                 refresh();
@@ -587,16 +730,19 @@ public final class XsHistoryActivity extends Activity {
             try (Cursor c = archive.libraries()) {
                 while (c.moveToNext()) {
                     String id = c.getString(3); // physical scope is intentionally retained
+                    if(XsDeletedLibraries.isDeleted(this,id))continue;
                     ids.add(id);
                     names.add((id.equals(defaultLibrary) ? tr("Xs 本机资料库", "Xs local library") :
                         tr("独立资料空间：", "Separate library: ") + c.getString(1)));
                 }
             }
+            for(String pending:XsDeletedLibraries.pending(this)){ids.add(pending);names.add(tr("待清理资料空间：", "Pending cleanup: ")+pending);}
             main.post(() -> {
                 if (destroyed) return;
                 new AlertDialog.Builder(this).setTitle(tr("选择独立资料空间（不会合并）", "Choose a separate library"))
                     .setItems(names.toArray(new String[0]), (d, n) -> {
-                        requested.incrementAndGet(); library = ids.get(n);
+                        if(XsDeletedLibraries.isDeleted(this,ids.get(n))){startActivity(XsLibraryManagementActivity.intent(this,ids.get(n)));return;}
+                        requested.incrementAndGet(); library = ids.get(n); resetSelection();
                         selectedFolder = null; folderFilter.setText(tr("全部分类", "All folders"));
                         libraryButton.setText(names.get(n)); refresh();
                     }).setNeutralButton(tr("合并资料空间", "Combine libraries"),(d,n) ->
@@ -820,7 +966,9 @@ public final class XsHistoryActivity extends Activity {
 
     private void write(String owner, Runnable work, String success) { write(owner, work, success, null); }
     private void write(String owner, Runnable work, String success, Runnable after) {
-        write(owner, XsLibraryWrites.ticket(owner), work, success, after);
+        if(clearing||destroyed)return;
+        try{write(owner, XsLibraryWrites.ticket(owner), work, success, after);}
+        catch(IllegalStateException expired){toast(tr("资料空间已失效或任务繁忙，请重试","Library expired or tasks busy; retry"));}
     }
     private void write(String owner, XsLibraryWrites.Ticket ticket, Runnable work, String success, Runnable after) {
         if (clearing || destroyed) return;

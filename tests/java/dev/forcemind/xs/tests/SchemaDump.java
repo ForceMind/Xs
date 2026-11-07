@@ -23,6 +23,9 @@ public final class SchemaDump {
         for (String migration : ArchiveSchema.MIGRATE_3_TO_4) {
             System.out.println("V4:" + Base64.getEncoder().encodeToString(migration.getBytes(StandardCharsets.UTF_8)));
         }
+        for (String migration : ArchiveSchema.MIGRATE_4_TO_5) {
+            System.out.println("V5:" + Base64.getEncoder().encodeToString(migration.getBytes(StandardCharsets.UTF_8)));
+        }
         for (String migration : ArchiveSchema.MIGRATE_1_TO_2) {
             System.out.println("MIGRATE:" + Base64.getEncoder().encodeToString(
                 migration.getBytes(StandardCharsets.UTF_8)));
@@ -58,6 +61,11 @@ public final class SchemaDump {
         f.actorId="fixture:me"; f.actionState="REVERSED"; f.actionSource="native_fixture";
         f.dateField=ArchiveSearch.DateField.ACTION; f.fromMs=100L; f.toMs=200L;
         dumpQuery("OWN",ArchiveSearch.build("local:own",f));
+        f=new ArchiveSearch.Filter();f.keyword="superseded";
+        dumpQuery("SNAPSHOT_CURRENT",ArchiveSearch.build("local:snapshots",f));
+        f.includeSnapshotVersions=true;
+        dumpQuery("SNAPSHOT_HISTORY",ArchiveSearch.build("local:snapshots",f));
+        dumpQuery("SNAPSHOT_VERSIONS",ArchiveSearch.buildSnapshots("local:snapshots","901","superseded",50,0));
     }    private static void dumpQuery(String name,ArchiveSearch.Query query) {
         System.out.println(name+"_QUERY:"+Base64.getEncoder().encodeToString(query.sql.getBytes(StandardCharsets.UTF_8)));
         for(String arg:query.args) System.out.println(name+"_ARG:"+Base64.getEncoder().encodeToString(arg.getBytes(StandardCharsets.UTF_8)));

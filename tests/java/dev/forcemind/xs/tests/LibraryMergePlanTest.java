@@ -33,6 +33,13 @@ public final class LibraryMergePlanTest {
         data.get("own_action_events").add(row("action_key","same-action","event_key","same-event","event_type","REVERSED"));
         return data;
     }
+    private static void version(Map<String,List<Map<String,Object>>> data,String key,long time,String quality) {
+        Map<String,Object> post=data.get("posts").get(0);post.put("current_snapshot_key",key);
+        data.get("snapshot_versions").add(row("post_id",post.get("post_id"),"snapshot_key",key,
+            "author_handle",post.get("author_handle"),"body",post.get("body"),"published_at_ms",post.get("published_at_ms"),
+            "captured_at_ms",time,"source","native_post_detail","quality",quality,
+            "content_hash",dev.forcemind.xs.core.SnapshotPolicy.hash((String)post.get("body"))));
+    }
     private static LibraryMergePlan.Input input(String scope,Map<String,List<Map<String,Object>>> data) {
         return new LibraryMergePlan.Input(scope,scope,data);
     }
@@ -75,6 +82,25 @@ public final class LibraryMergePlanTest {
         differentSource.get("user_actions").get(0).put("source","different");
         try {LibraryMergePlan.merge(Arrays.asList(input("one",a),input("two",differentSource)));check(false);}
         catch(IllegalArgumentException expected){check(expected.getMessage().contains("sources conflict"));}
+        Map<String,List<Map<String,Object>>> oldFull=source(5,"older complete long body","note");
+        Map<String,List<Map<String,Object>>> newFull=source(7,"edit","note");
+        version(oldFull,"collision",10L,"COMPLETE");version(newFull,"collision",20L,"COMPLETE");
+        LibraryMergePlan.Result changed=LibraryMergePlan.merge(Arrays.asList(input("old",oldFull),input("new",newFull)));
+        check(changed.tables.get("snapshot_versions").size()==2);
+        check(changed.tables.get("posts").get(0).get("body").equals("edit"));
+        Object pointer=changed.tables.get("posts").get(0).get("current_snapshot_key");
+        check(pointer.equals(changed.tables.get("snapshot_versions").get(1).get("snapshot_key")));
+        check(!pointer.equals(changed.tables.get("snapshot_versions").get(0).get("snapshot_key")));
+        check(oldFull.get("posts").get(0).get("current_snapshot_key").equals("collision"));
+        newFull.get("snapshot_versions").get(0).put("quality","PARTIAL");
+        LibraryMergePlan.Result partial=LibraryMergePlan.merge(Arrays.asList(input("old",oldFull),input("new",newFull)));
+        check(partial.tables.get("posts").get(0).get("body").equals("older complete long body"));
+        newFull.get("snapshot_versions").get(0).put("quality","COMPLETE");newFull.get("snapshot_versions").get(0).put("captured_at_ms",1L);
+        LibraryMergePlan.Result late=LibraryMergePlan.merge(Arrays.asList(input("old",oldFull),input("new",newFull)));
+        check(late.tables.get("posts").get(0).get("body").equals("older complete long body"));
+        Map<String,List<Map<String,Object>>> missing=source(5,"text","note");missing.get("posts").get(0).put("current_snapshot_key","missing");
+        try{LibraryMergePlan.merge(Arrays.asList(input("one",missing),input("two",newFull)));check(false);}
+        catch(IllegalArgumentException expected){check(expected.getMessage().contains("snapshot reference"));}
         System.out.println("PASS "+assertions+" explicit library merge invariants");
     }
 }

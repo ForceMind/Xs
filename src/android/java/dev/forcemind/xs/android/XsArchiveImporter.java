@@ -35,14 +35,16 @@ public final class XsArchiveImporter {
         public final String relatedPostId;
         public final Long publishedAtMs;
         public final Long actionAtMs;
+        public final boolean snapshotComplete;
 
-        Record(String id, String body, String type, String relatedPostId, Long published, Long action) {
+        Record(String id, String body, String type, String relatedPostId, Long published, Long action,boolean snapshotComplete) {
             postId = id;
             this.body = body;
             actionType = type;
             this.relatedPostId = relatedPostId;
             publishedAtMs = published;
             actionAtMs = action;
+            this.snapshotComplete=snapshotComplete;
         }
     }
 
@@ -108,7 +110,8 @@ public final class XsArchiveImporter {
             if (!ID.matcher(id).matches()) id = item.optString("id", "");
             if (!ID.matcher(id).matches()) { skipped++; continue; }
             String body = item.optString("full_text", item.optString("text", ""));
-            if (body.length() > 16000) body = body.substring(0, 16000);
+            boolean complete=item.has("full_text")&&body.length()<=16000;
+            if (body.length() > 16000) { int end=16000;if(Character.isHighSurrogate(body.charAt(end-1)))end--;body=body.substring(0,end); }
             Long createdAt = parseDate(item.optString("created_at", ""));
 
             JSONObject reposted=item.optJSONObject("retweeted_status");
@@ -130,7 +133,7 @@ public final class XsArchiveImporter {
             // Retweet metadata cannot safely establish original publication
             // time or exact repost action time: both remain unknown.
             rows.add(new Record(id, body, type,related,
-                repost || ambiguous ? null : createdAt, repost || ambiguous ? null : createdAt));
+                repost || ambiguous ? null : createdAt, repost || ambiguous ? null : createdAt,complete));
         }
         int stored = db.importArchivedOwnPosts(accountId, rows, importedAtMs);
         return new Result(rows.size(), stored, skipped);

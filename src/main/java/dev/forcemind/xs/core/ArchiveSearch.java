@@ -17,6 +17,7 @@ public final class ArchiveSearch {
         public String keyword;
         public String categoryId;
         public String actionType;
+        public boolean includeSnapshotVersions = false;
         public boolean ownOnly = false;
         public String actionState;
         public String actorId;
@@ -177,7 +178,11 @@ public final class ArchiveSearch {
             "f.post_id=p.post_id) AS note, " +
             "(SELECT GROUP_CONCAT(t.tag, ', ') FROM post_tags t WHERE t.account_id=p.account_id " +
             "AND t.post_id=p.post_id) AS tags, " +
-            "matched_feed.dwell_quality AS dwell_quality, matched_action.action_summary AS own_action_summary " +
+            "matched_feed.dwell_quality AS dwell_quality, matched_action.action_summary AS own_action_summary, " +
+            "p.current_snapshot_key AS current_snapshot_key, " +
+            "(SELECT v.quality FROM snapshot_versions v WHERE v.account_id=p.account_id AND v.post_id=p.post_id AND v.snapshot_key=p.current_snapshot_key) AS snapshot_quality, " +
+            "(SELECT v.captured_at_ms FROM snapshot_versions v WHERE v.account_id=p.account_id AND v.post_id=p.post_id AND v.snapshot_key=p.current_snapshot_key) AS snapshot_captured_at_ms, " +
+            "(SELECT COUNT(*) FROM snapshot_versions v WHERE v.account_id=p.account_id AND v.post_id=p.post_id) AS snapshot_count " +
             "FROM posts p LEFT JOIN (" + matchedFeed + ") matched_feed ON " +
             "matched_feed.account_id=p.account_id AND matched_feed.post_id=p.post_id " +
             "LEFT JOIN (" + matchedAction + ") matched_action ON matched_action.account_id=p.account_id " +
@@ -237,9 +242,10 @@ public final class ArchiveSearch {
                 String[] tokens = keyword.toLowerCase(Locale.ROOT).split("[ \\t]+");
                 List<String> safe = new ArrayList<>();
                 for (String token : tokens) safe.add(token + "*");
-                sql.append(" AND (EXISTS (SELECT 1 FROM posts_fts WHERE " +
-                           "posts_fts.account_id=p.account_id AND " +
-                           "posts_fts.post_id=p.post_id AND posts_fts MATCH ?)");
+                // FTS rowids are bound to posts by our insert/update/delete triggers.
+                // Materialize MATCH once; correlated MATCH reran the full hit list for every post.
+                // The outer p.account_id predicate still owns all library isolation.
+                sql.append(" AND (p.rowid IN (SELECT rowid FROM posts_fts WHERE posts_fts MATCH ?)");
                 args.add(String.join(" AND ", safe));
             } else {
                 String needle = "%" + keyword.replace("!", "!!")
@@ -248,6 +254,17 @@ public final class ArchiveSearch {
                            "p.author_handle LIKE ? ESCAPE '!')");
                 args.add(needle);
                 args.add(needle);
+            }
+            if(filter.includeSnapshotVersions) {
+                if(LATIN_WORDS.matcher(keyword).matches()) {
+                    sql.append(" OR p.post_id IN (SELECT post_id FROM snapshot_versions_fts WHERE account_id=? " +
+                        "AND snapshot_versions_fts MATCH ?)");
+                    args.add(accountId);args.add(ftsTerm(keyword));
+                } else {
+                    sql.append(" OR EXISTS (SELECT 1 FROM snapshot_versions v WHERE v.account_id=p.account_id " +
+                        "AND v.post_id=p.post_id AND (v.body LIKE ? ESCAPE '!' OR v.author_handle LIKE ? ESCAPE '!'))");
+                    args.add(likeTerm(keyword));args.add(likeTerm(keyword));
+                }
             }
             String extraNeedle = "%" + keyword.replace("!", "!!")
                 .replace("%", "!%").replace("_", "!_") + "%";
@@ -265,4 +282,30 @@ public final class ArchiveSearch {
         args.add(Integer.toString(filter.offset));
         return new Query(sql.toString(), args);
     }
+    /** The same nine columns power version lists, individual details and version-text search. */
+    public static final String SNAPSHOT_COLUMNS="SELECT v.snapshot_key,v.author_handle,v.body,v.published_at_ms," +
+        "v.captured_at_ms,v.source,v.quality,v.content_hash,CASE WHEN p.current_snapshot_key=v.snapshot_key THEN 1 ELSE 0 END AS is_current " +
+        "FROM snapshot_versions v JOIN posts p ON p.account_id=v.account_id AND p.post_id=v.post_id";
+    public static Query buildSnapshots(String libraryId,String postId,String keyword,int limit,int offset) {
+        if(libraryId==null||libraryId.trim().isEmpty()||postId==null||!postId.matches("[0-9]{1,20}")||offset<0)throw new IllegalArgumentException("Snapshot context required");
+        String value=keyword==null?"":keyword.trim();if(value.length()>MAX_QUERY_CHARS)throw new IllegalArgumentException("Query too long");
+        List<String> args=new ArrayList<>();args.add(libraryId);args.add(postId);
+        StringBuilder sql=new StringBuilder(SNAPSHOT_COLUMNS+" WHERE v.account_id=? AND v.post_id=?");
+        if(!value.isEmpty()) {
+            if(LATIN_WORDS.matcher(value).matches()) {
+                sql.append(" AND v.rowid IN (SELECT rowid FROM snapshot_versions_fts WHERE snapshot_versions_fts MATCH ?)");
+                args.add(ftsTerm(value));
+            } else {
+                sql.append(" AND (v.body LIKE ? ESCAPE '!' OR v.author_handle LIKE ? ESCAPE '!')");
+                args.add(likeTerm(value));args.add(likeTerm(value));
+            }
+        }
+        sql.append(" ORDER BY v.captured_at_ms DESC,v.rowid DESC LIMIT ? OFFSET ?");
+        args.add(Integer.toString(Math.max(1,Math.min(200,limit))));args.add(Integer.toString(offset));return new Query(sql.toString(),args);
+    }
+    private static String ftsTerm(String value) {
+        List<String> words=new ArrayList<>();for(String word:value.toLowerCase(Locale.ROOT).split("[ \\t]+"))words.add(word+"*");return String.join(" AND ",words);
+    }
+    private static String likeTerm(String value){return "%"+value.replace("!","!!").replace("%","!%").replace("_","!_")+"%";}
+
 }

@@ -44,5 +44,18 @@ cards=[card('126',{left:0,top:0,right:400,bottom:400,width:400,height:400},'"\n�
   card('127',{left:0,top:400,right:400,bottom:800,width:400,height:400},'"\n文'.repeat(16000))];
 const bounded=read();assert.equal(bounded.cards.length,2);
 assert.ok(Buffer.byteLength(JSON.stringify(JSON.stringify(bounded)),'utf8')<65536,'Escaped CJK/quote/newline transport stays bounded');
+// Evidence contains dimensions/structure, never a webpage-supplied quality enum.
+const textNode={innerText:'完整短正文',clientHeight:20,scrollHeight:20,
+  getBoundingClientRect:()=>({left:0,top:40,right:200,bottom:60,width:200,height:20})};
+const completeCard=card('128',{left:0,top:0,right:400,bottom:400,width:400,height:400});
+completeCard.querySelector=s=>s==='time'?{getAttribute:()=> '2026-11-01T00:00:00Z'}:
+  s==='[data-testid="tweetText"]'?textNode:null;
+sandbox.getComputedStyle=()=>({display:'block',visibility:'visible',opacity:'1',webkitLineClamp:'none',overflowY:'visible'});
+cards=[completeCard];let evidence=read().cards[0].textEvidence;
+assert.equal(evidence.rawLength,textNode.innerText.length);assert.equal(evidence.textVisible,true);
+assert.equal(evidence.hasMore,false);assert.equal(evidence.lineClamp,0);
+textNode.innerText='x'.repeat(2047)+'😀';
+const split=read().cards[0];assert.equal(split.body.length,2047,'UTF16 budget never splits an emoji');
+assert.equal(split.textEvidence.textVisible,false,'truncation cannot be complete evidence');
 sandbox.__xsObserver.stop();assert.equal(read().cards.length,0);
 console.log('PASS packaged DOM observer: long-card geometry, 59/60%, overlays, sensitive routes, rebind/reentry, bounded escaped payload');

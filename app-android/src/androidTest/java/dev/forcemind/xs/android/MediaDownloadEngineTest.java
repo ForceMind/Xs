@@ -78,7 +78,7 @@ public final class MediaDownloadEngineTest {
         XsMediaRepository.Asset actual=engine.find(library,id);
         fail("Expected "+state+", actual "+(actual==null?"missing":actual.state));return null;
     }
-    private File part(String id){return new File(context.getFilesDir(),"xs-saved-media/"+id+".part");}
+    private File part(String id){File folder=new File(context.getFilesDir(),"xs-saved-media");File[] candidates=folder.listFiles();if(candidates!=null)for(File file:candidates)if(file.getName().startsWith(id+".")&&file.getName().endsWith(".part"))return file;return new File(folder,id+".part");}
     private static String sha256(byte[] bytes)throws Exception {
         StringBuilder hash=new StringBuilder();for(byte value:MessageDigest.getInstance("SHA-256").digest(bytes))hash.append(String.format(java.util.Locale.ROOT,"%02x",value&255));return hash.toString();
     }

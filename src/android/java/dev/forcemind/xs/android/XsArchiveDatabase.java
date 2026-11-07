@@ -10,6 +10,8 @@ import dev.forcemind.xs.core.ArchiveSchema;
 import dev.forcemind.xs.core.ArchiveSearch;
 import dev.forcemind.xs.core.PostUrls;
 import dev.forcemind.xs.core.OwnActionSession;
+import dev.forcemind.xs.core.SnapshotPolicy;
+import java.util.UUID;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -51,6 +53,10 @@ public final class XsArchiveDatabase extends SQLiteOpenHelper {
             for (String sql : ArchiveSchema.MIGRATE_3_TO_4) db.execSQL(sql);
             version = 4;
         }
+        if (version == 4 && newVersion >= 5) {
+            for (String sql : ArchiveSchema.MIGRATE_4_TO_5) db.execSQL(sql);
+            version = 5;
+        }
         if (version == newVersion) return;
         // Fail safely rather than deleting existing history for an unsupported version.
         throw new IllegalStateException("Xs migration required: " +
@@ -66,6 +72,7 @@ public final class XsArchiveDatabase extends SQLiteOpenHelper {
         SQLiteDatabase db = getWritableDatabase();
         db.beginTransaction();
         try {
+            if(XsLibraryWrites.isDeleted(accountId))return false;
             insertPostIfMissing(db, accountId, id, author, text, publishedAtMs, openedAtMs);
             db.execSQL(
                 "UPDATE posts SET opened_count=MIN(opened_count+1,2147483647), " +
@@ -73,7 +80,7 @@ public final class XsArchiveDatabase extends SQLiteOpenHelper {
                 "last_opened_at_ms=MAX(COALESCE(last_opened_at_ms, 0), ?) " +
                 "WHERE account_id=? AND post_id=?",
                 new Object[]{openedAtMs, openedAtMs, accountId, id});
-            updateKnownMetadata(db, accountId, id, author, text, publishedAtMs);
+            updateKnownMetadata(db, accountId, id, author, text, publishedAtMs, openedAtMs, SnapshotPolicy.Source.LEGACY_API, SnapshotPolicy.Quality.PARTIAL);
             ContentValues event = new ContentValues();
             event.put("account_id", accountId);
             event.put("post_id", id);
@@ -99,13 +106,14 @@ public final class XsArchiveDatabase extends SQLiteOpenHelper {
         SQLiteDatabase db = getWritableDatabase();
         db.beginTransaction();
         try {
+            if(XsLibraryWrites.isDeleted(libraryId))return false;
             try (Cursor existing = db.rawQuery("SELECT post_id FROM history_events WHERE " +
                     "account_id=? AND event_type='OPEN_POST' AND event_key=?",
                     new String[]{libraryId,navigationId})) {
                 if (existing.moveToFirst() && !id.equals(existing.getString(0))) return false;
             }
             insertPostIfMissing(db, libraryId, id, author, text, publishedAtMs, openedAtMs);
-            updateKnownMetadata(db, libraryId, id, author, text, publishedAtMs);
+            updateKnownMetadata(db, libraryId, id, author, text, publishedAtMs, openedAtMs, SnapshotPolicy.Source.POST_DETAIL, SnapshotPolicy.Quality.PARTIAL);
             ContentValues event = new ContentValues();
             event.put("account_id", libraryId);
             event.put("post_id", id);
@@ -132,14 +140,10 @@ public final class XsArchiveDatabase extends SQLiteOpenHelper {
                                   String text, Long publishedAtMs) {
         String id = PostUrls.extractPostId(postUrl);
         if (!valid(libraryId) || id == null) return false;
-        SQLiteDatabase db = getWritableDatabase();
-        try (Cursor c = db.rawQuery("SELECT 1 FROM posts WHERE account_id=? AND post_id=?",
-                new String[]{libraryId,id})) {
-            if (!c.moveToFirst()) return false;
-        }
-        updateKnownMetadata(db, libraryId, id, author, text, publishedAtMs);
-        return true;
+        return recordSnapshot(libraryId,postUrl,author,text,publishedAtMs,System.currentTimeMillis(),
+            SnapshotPolicy.Source.LEGACY_API,SnapshotPolicy.Quality.PARTIAL);
     }
+
 
     /** One measured continuous exposure; subsequent samples only extend its duration. */
     public boolean recordMeasuredFeed(String libraryId, String postUrl, String source,
@@ -154,6 +158,7 @@ public final class XsArchiveDatabase extends SQLiteOpenHelper {
         SQLiteDatabase db = getWritableDatabase();
         db.beginTransaction();
         try {
+            if(XsLibraryWrites.isDeleted(libraryId))return false;
             // Reject collision/replay before touching another post or its metadata.
             try (Cursor c = db.rawQuery("SELECT post_id,source,threshold_ms FROM history_events " +
                     "WHERE account_id=? AND event_type='FEED_VISIBLE' AND event_key=?",
@@ -162,7 +167,7 @@ public final class XsArchiveDatabase extends SQLiteOpenHelper {
                         !source.equals(c.getString(1)) || c.getLong(2) != thresholdMs)) return false;
             }
             insertPostIfMissing(db, libraryId, id, author, text, publishedAtMs, eventAtMs);
-            updateKnownMetadata(db, libraryId, id, author, text, publishedAtMs);
+            updateKnownMetadata(db, libraryId, id, author, text, publishedAtMs, eventAtMs, SnapshotPolicy.Source.FEED_VISIBLE, SnapshotPolicy.Quality.PARTIAL);
             ContentValues event = new ContentValues();
             event.put("account_id", libraryId);
             event.put("post_id", id);
@@ -197,8 +202,9 @@ public final class XsArchiveDatabase extends SQLiteOpenHelper {
         SQLiteDatabase db = getWritableDatabase();
         db.beginTransaction();
         try {
+            if(XsLibraryWrites.isDeleted(libraryId))return false;
             insertPostIfMissing(db,libraryId,id,author,text,publishedAtMs,savedAtMs);
-            updateKnownMetadata(db,libraryId,id,author,text,publishedAtMs);
+            updateKnownMetadata(db,libraryId,id,author,text,publishedAtMs,savedAtMs,SnapshotPolicy.Source.FAVORITE,SnapshotPolicy.Quality.PARTIAL);
             ContentValues favorite = new ContentValues();
             favorite.put("account_id", libraryId);
             favorite.put("post_id", id);
@@ -212,8 +218,9 @@ public final class XsArchiveDatabase extends SQLiteOpenHelper {
 
     public boolean removeFavorite(String libraryId, String postId) {
         requireAccount(libraryId);
-        return getWritableDatabase().delete("favorites", "account_id=? AND post_id=?",
-            new String[]{libraryId,postId}) > 0;
+        SQLiteDatabase db=getWritableDatabase();db.beginTransaction();
+        try{if(XsLibraryWrites.isDeleted(libraryId))return false;boolean removed=db.delete("favorites","account_id=? AND post_id=?",new String[]{libraryId,postId})>0;db.setTransactionSuccessful();return removed;}
+        finally{db.endTransaction();}
     }
 
     /** Comma-delimited UI input becomes exact, bounded tags in a separate table. */
@@ -235,6 +242,7 @@ public final class XsArchiveDatabase extends SQLiteOpenHelper {
         SQLiteDatabase db = getWritableDatabase();
         db.beginTransaction();
         try {
+            if(XsLibraryWrites.isDeleted(libraryId))throw new IllegalStateException("Library deleted");
             ContentValues values = new ContentValues();
             values.put("note", memo);
             if (db.update("favorites",values,"account_id=? AND post_id=?",
@@ -259,6 +267,7 @@ public final class XsArchiveDatabase extends SQLiteOpenHelper {
         SQLiteDatabase db = getWritableDatabase();
         db.beginTransaction();
         try {
+            if(XsLibraryWrites.isDeleted(libraryId))throw new IllegalStateException("Library deleted");
             db.delete("history_events","account_id=?",new String[]{libraryId});
             db.execSQL("UPDATE posts SET opened_count=0,last_opened_at_ms=NULL," +
                 "last_feed_seen_at_ms=NULL WHERE account_id=?",new Object[]{libraryId});
@@ -280,7 +289,9 @@ public final class XsArchiveDatabase extends SQLiteOpenHelper {
         values.put("label",valid(label) ? label.trim() : "Xs");
         values.put("origin","APP");
         values.put("created_at_ms",System.currentTimeMillis());
-        getWritableDatabase().insertWithOnConflict("libraries",null,values,SQLiteDatabase.CONFLICT_IGNORE);
+        SQLiteDatabase db=getWritableDatabase();db.beginTransaction();
+        try{if(XsLibraryWrites.isDeleted(libraryId))throw new IllegalStateException("Library deleted");db.insertWithOnConflict("libraries",null,values,SQLiteDatabase.CONFLICT_IGNORE);db.setTransactionSuccessful();}
+        finally{db.endTransaction();}
     }
 
     private static boolean validEventKey(String key) {
@@ -308,6 +319,7 @@ public final class XsArchiveDatabase extends SQLiteOpenHelper {
         SQLiteDatabase db=getWritableDatabase();
         db.beginTransaction();
         try {
+            if(XsLibraryWrites.isDeleted(admitted.libraryId))return false;
             if (!admitted.isCurrent()) return false;
             try (Cursor existing=db.rawQuery("SELECT 1 FROM own_action_events WHERE account_id=? AND event_key=?",
                     new String[]{admitted.libraryId,admitted.eventKey})) {
@@ -337,7 +349,7 @@ public final class XsArchiveDatabase extends SQLiteOpenHelper {
                     if (prior.moveToFirst()) return false;
                 }
                 insertPostIfMissing(db,admitted.libraryId,admitted.postId,author,text,publishedAtMs,admitted.observedAtMs);
-                updateKnownMetadata(db,admitted.libraryId,admitted.postId,author,text,publishedAtMs);
+                updateKnownMetadata(db,admitted.libraryId,admitted.postId,author,text,publishedAtMs,admitted.observedAtMs,SnapshotPolicy.Source.OWN_ACTION,SnapshotPolicy.Quality.PARTIAL);
                 ContentValues action=new ContentValues();
                 action.put("account_id",admitted.libraryId); action.put("action_key",admitted.actionKey);
                 action.put("post_id",admitted.postId); action.put("related_post_id",admitted.relatedPostId); action.put("action_type",admitted.type.name());
@@ -384,13 +396,14 @@ public final class XsArchiveDatabase extends SQLiteOpenHelper {
         SQLiteDatabase db = getWritableDatabase();
         db.beginTransaction();
         try {
+            if(XsLibraryWrites.isDeleted(accountId))return false;
             insertPostIfMissing(db, accountId, id, author, text, publishedAtMs, eventAtMs);
             db.execSQL(
                 "UPDATE posts SET last_seen_at_ms=MAX(last_seen_at_ms, ?), " +
                 "last_feed_seen_at_ms=MAX(COALESCE(last_feed_seen_at_ms, 0), ?) " +
                 "WHERE account_id=? AND post_id=?",
                 new Object[]{eventAtMs, eventAtMs, accountId, id});
-            updateKnownMetadata(db, accountId, id, author, text, publishedAtMs);
+            updateKnownMetadata(db, accountId, id, author, text, publishedAtMs, eventAtMs, SnapshotPolicy.Source.LEGACY_API, SnapshotPolicy.Quality.PARTIAL);
             ContentValues event = new ContentValues();
             event.put("account_id", accountId);
             event.put("post_id", id);
@@ -421,13 +434,15 @@ public final class XsArchiveDatabase extends SQLiteOpenHelper {
         int inserted = 0;
         db.beginTransaction();
         try {
+            if(XsLibraryWrites.isDeleted(accountId))return 0;
             for (XsArchiveImporter.Record row : rows) {
                 if (row == null || row.postId == null ||
                     !row.postId.matches("[0-9]{1,20}")) continue;
                 insertPostIfMissing(db, accountId, row.postId, null,
                                     row.body, row.publishedAtMs, importedAtMs);
                 updateKnownMetadata(db, accountId, row.postId, null,
-                                    row.body, row.publishedAtMs);
+                                    row.body, row.publishedAtMs, importedAtMs, SnapshotPolicy.Source.ARCHIVE,
+                                    row.snapshotComplete ? SnapshotPolicy.Quality.COMPLETE : SnapshotPolicy.Quality.PARTIAL);
                 db.execSQL("UPDATE posts SET last_seen_at_ms=MAX(last_seen_at_ms, ?) " +
                            "WHERE account_id=? AND post_id=?",
                            new Object[]{importedAtMs, accountId, row.postId});
@@ -487,6 +502,7 @@ public final class XsArchiveDatabase extends SQLiteOpenHelper {
         SQLiteDatabase db = getWritableDatabase();
         db.beginTransaction();
         try {
+            if(XsLibraryWrites.isDeleted(localScope))return false;
             insertPostIfMissing(db, localScope, id, null, null, null, savedAtMs);
             try (Cursor found = db.rawQuery(
                     "SELECT 1 FROM user_actions WHERE account_id=? AND post_id=? " +
@@ -526,31 +542,110 @@ public final class XsArchiveDatabase extends SQLiteOpenHelper {
         post.put("account_id", accountId);
         post.put("post_id", id);
         if (author != null) post.put("author_handle", author);
-        if (text != null) post.put("body", text);
-        post.put("snapshot_state", text == null || text.isEmpty() ? "LINK_ONLY" : "VISIBLE_TEXT");
+        post.put("snapshot_state", "LINK_ONLY");
         if (publishedAtMs != null) post.put("published_at_ms", publishedAtMs);
         post.put("first_seen_at_ms", observedAtMs);
         post.put("last_seen_at_ms", observedAtMs);
         db.insertWithOnConflict("posts", null, post, SQLiteDatabase.CONFLICT_IGNORE);
     }
 
-    private static void updateKnownMetadata(SQLiteDatabase db, String accountId, String id,
-                                            String author, String text, Long publishedAtMs) {
-        ContentValues values = new ContentValues();
-        if (author != null && !author.isEmpty()) values.put("author_handle", author);
-        if (publishedAtMs != null) values.put("published_at_ms", publishedAtMs);
-        if (values.size() != 0) {
-            db.update("posts", values, "account_id=? AND post_id=?",
-                      new String[]{accountId, id});
+    private static void updateKnownMetadata(SQLiteDatabase db, String libraryId, String id,
+            String author,String text,Long publishedAtMs,long capturedAtMs,
+            SnapshotPolicy.Source source,SnapshotPolicy.Quality quality) {
+        if(text==null||text.isEmpty())return;
+        try {
+            persistSnapshot(db,libraryId,id,new SnapshotPolicy.Version(text,author,publishedAtMs,capturedAtMs,source,quality));
+        }catch(IllegalArgumentException invalid){/* Keep the link/event even when visible text is invalid. */}
+    }
+
+    /** Native accepted visible text only; missing posts are never resurrected by enrichment. */
+    public boolean recordSnapshot(String libraryId,String postUrl,String author,String text,
+            Long publishedAtMs,long capturedAtMs,SnapshotPolicy.Source source,SnapshotPolicy.Quality quality) {
+        String id=PostUrls.extractPostId(postUrl);
+        if(!valid(libraryId)||id==null||capturedAtMs<=0||quality==SnapshotPolicy.Quality.LEGACY_UNKNOWN||
+                source==SnapshotPolicy.Source.MIGRATION)return false;
+        final SnapshotPolicy.Version candidate;
+        try { candidate=new SnapshotPolicy.Version(text,author,publishedAtMs,capturedAtMs,source,quality); }
+        catch(IllegalArgumentException invalid){return false;}
+        SQLiteDatabase db=getWritableDatabase();db.beginTransaction();
+        try {if(XsLibraryWrites.isDeleted(libraryId))return false;boolean result=persistSnapshot(db,libraryId,id,candidate);db.setTransactionSuccessful();return result;}
+        finally{db.endTransaction();}
+    }
+    private static boolean persistSnapshot(SQLiteDatabase db,String libraryId,String id,SnapshotPolicy.Version candidate) {
+        String currentKey;
+        try(Cursor post=db.rawQuery("SELECT current_snapshot_key FROM posts WHERE account_id=? AND post_id=?",new String[]{libraryId,id})) {
+            if(!post.moveToFirst())return false;currentKey=post.getString(0);
         }
-        // A later card/partial render must not truncate a longer stored snapshot.
-        // Both lengths are measured by SQLite (Unicode code points, not UTF-16 units).
-        // This is a conservative retention rule, not proof of snapshot completeness.
-        if (text != null && !text.isEmpty()) {
-            db.execSQL("UPDATE posts SET body=?,snapshot_state='VISIBLE_TEXT' WHERE account_id=? AND post_id=? " +
-                       "AND (body IS NULL OR length(?) >= length(body))",
-                       new Object[]{text, accountId, id, text});
+        SnapshotPolicy.Version current=null,last=null;
+        if(currentKey!=null)try(Cursor version=db.rawQuery("SELECT body,author_handle,published_at_ms,captured_at_ms,source,quality " +
+                "FROM snapshot_versions WHERE account_id=? AND post_id=? AND snapshot_key=?",new String[]{libraryId,id,currentKey})) {
+            if(version.moveToFirst())current=readVersion(version);
         }
+        try(Cursor version=db.rawQuery("SELECT body,author_handle,published_at_ms,captured_at_ms,source,quality " +
+                "FROM snapshot_versions WHERE account_id=? AND post_id=? ORDER BY rowid DESC LIMIT 1",new String[]{libraryId,id})) {
+            if(version.moveToFirst())last=readVersion(version);
+        }
+        SnapshotPolicy.Decision decision=SnapshotPolicy.decide(current,last,candidate);
+        if(!decision.record) {
+            if(current!=null&&current.body.equals(candidate.body)&&
+                    (current.capturedAtMs==null||(candidate.capturedAtMs!=null&&candidate.capturedAtMs>=current.capturedAtMs)))
+                return enrichMissingSnapshotMetadata(db,libraryId,id,currentKey,candidate);
+            return false;
+        }
+        String key=UUID.randomUUID().toString();ContentValues values=new ContentValues();
+        values.put("account_id",libraryId);values.put("post_id",id);values.put("snapshot_key",key);
+        values.put("author_handle",candidate.author);values.put("body",candidate.body);
+        if(candidate.publishedAtMs==null)values.putNull("published_at_ms");else values.put("published_at_ms",candidate.publishedAtMs);
+        if(candidate.capturedAtMs==null)values.putNull("captured_at_ms");else values.put("captured_at_ms",candidate.capturedAtMs);
+        values.put("source",candidate.source.value);values.put("quality",candidate.quality.name());
+        values.put("content_hash",SnapshotPolicy.hash(candidate.body));db.insertOrThrow("snapshot_versions",null,values);
+        if(decision.selectCurrent) {
+            ContentValues selected=new ContentValues();selected.put("body",candidate.body);selected.put("current_snapshot_key",key);
+            selected.put("snapshot_state","VISIBLE_TEXT");
+            if(candidate.author!=null&&!candidate.author.isEmpty())selected.put("author_handle",candidate.author);
+            if(candidate.publishedAtMs!=null)selected.put("published_at_ms",candidate.publishedAtMs);
+            db.update("posts",selected,"account_id=? AND post_id=?",new String[]{libraryId,id});
+        }
+        return true;
+    }
+    /** Supplement stable missing metadata without manufacturing another text change/capture time. */
+    private static boolean enrichMissingSnapshotMetadata(SQLiteDatabase db,String libraryId,String id,String key,SnapshotPolicy.Version candidate) {
+        int changed=0;
+        for(String table:new String[]{"posts","snapshot_versions"}) {
+            String where="account_id=? AND post_id=?"+(table.equals("snapshot_versions")?" AND snapshot_key=?":"");
+            String[] args=table.equals("snapshot_versions")?new String[]{libraryId,id,key}:new String[]{libraryId,id};
+            if(candidate.author!=null&&!candidate.author.isEmpty()) {
+                ContentValues author=new ContentValues();author.put("author_handle",candidate.author);
+                changed+=db.update(table,author,where+" AND (author_handle IS NULL OR length(author_handle)=0)",args);
+            }
+            if(candidate.publishedAtMs!=null) {
+                ContentValues time=new ContentValues();time.put("published_at_ms",candidate.publishedAtMs);
+                changed+=db.update(table,time,where+" AND published_at_ms IS NULL",args);
+            }
+        }
+        return changed>0;
+    }
+    private static SnapshotPolicy.Version readVersion(Cursor version) {
+        return new SnapshotPolicy.Version(version.getString(0),version.getString(1),version.isNull(2)?null:version.getLong(2),
+            version.isNull(3)?null:version.getLong(3),SnapshotPolicy.Source.parse(version.getString(4)),
+            SnapshotPolicy.Quality.valueOf(version.getString(5)));
+    }
+    public Cursor listSnapshots(String libraryId,String postId){return searchSnapshots(libraryId,postId,null,200,0);}
+    public Cursor listSnapshots(String libraryId,String postId,int limit,int offset){return searchSnapshots(libraryId,postId,null,limit,offset);}
+    public Cursor searchSnapshots(String libraryId,String postId,String keyword,int limit,int offset) {
+        ArchiveSearch.Query query=ArchiveSearch.buildSnapshots(libraryId,postId,keyword,limit,offset);
+        return getReadableDatabase().rawQuery(query.sql,query.args);
+    }
+    public Cursor getSnapshot(String libraryId,String postId,String snapshotKey) {
+        requireAccount(libraryId);
+        return getReadableDatabase().rawQuery(ArchiveSearch.SNAPSHOT_COLUMNS + " WHERE v.account_id=? AND v.post_id=? AND v.snapshot_key=?",
+            new String[]{libraryId,postId,snapshotKey});
+    }
+    /** Caller must first invalidate this scope and purge its independent media through native controls. */
+    public void deleteLibraryScope(String libraryId) {
+        requireAccount(libraryId);SQLiteDatabase db=getWritableDatabase();db.beginTransaction();
+        try{clearAccount(libraryId);db.delete("libraries","storage_scope=?",new String[]{libraryId});db.setTransactionSuccessful();}
+        finally{db.endTransaction();}
     }
 
     public Cursor search(String accountId, ArchiveSearch.Filter filter) {
@@ -615,6 +710,9 @@ public final class XsArchiveDatabase extends SQLiteOpenHelper {
         String name = label.trim();
         if (name.length() > 120) throw new IllegalArgumentException("Folder name too long");
         SQLiteDatabase db = getWritableDatabase();
+        db.beginTransaction();
+        try {
+        if(XsLibraryWrites.isDeleted(accountId))throw new IllegalStateException("Library deleted");
         ContentValues values = new ContentValues();
         values.put("account_id", accountId);
         values.put("category_id", categoryId);
@@ -626,6 +724,8 @@ public final class XsArchiveDatabase extends SQLiteOpenHelper {
         rename.put("label", name);
         db.update("categories", rename, "account_id=? AND category_id=?",
                   new String[]{accountId, categoryId});
+        db.setTransactionSuccessful();
+        }finally{db.endTransaction();}
     }
 
     public boolean assignCategory(String accountId, String postId, String categoryId) {
@@ -637,15 +737,17 @@ public final class XsArchiveDatabase extends SQLiteOpenHelper {
         values.put("account_id", accountId);
         values.put("post_id", postId);
         values.put("category_id", categoryId);
-        return getWritableDatabase().insertWithOnConflict(
-            "post_categories", null, values, SQLiteDatabase.CONFLICT_IGNORE) != -1;
+        SQLiteDatabase db=getWritableDatabase();db.beginTransaction();
+        try{if(XsLibraryWrites.isDeleted(accountId))return false;boolean inserted=db.insertWithOnConflict("post_categories",null,values,SQLiteDatabase.CONFLICT_IGNORE)!=-1;db.setTransactionSuccessful();return inserted;}
+        finally{db.endTransaction();}
     }
 
     public void deleteCategory(String accountId, String categoryId) {
         requireAccount(accountId);
         if (!valid(categoryId)) throw new IllegalArgumentException("Folder ID is required");
-        getWritableDatabase().delete("categories", "account_id=? AND category_id=?",
-                                     new String[]{accountId, categoryId});
+        SQLiteDatabase db=getWritableDatabase();db.beginTransaction();
+        try{if(XsLibraryWrites.isDeleted(accountId))throw new IllegalStateException("Library deleted");db.delete("categories","account_id=? AND category_id=?",new String[]{accountId,categoryId});db.setTransactionSuccessful();}
+        finally{db.endTransaction();}
     }
 
     /** Erases only the specified account's *local* Xs data. */

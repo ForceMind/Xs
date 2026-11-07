@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.RUN_USER_INITIATED_JOBS" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <application>
         <activity
             android:name="dev.forcemind.xs.android.XsHistoryActivity"
@@ -8,6 +12,11 @@
         <activity android:name="dev.forcemind.xs.android.XsAssetsActivity" android:exported="false" android:label="Xs Assets" />
         <activity android:name="dev.forcemind.xs.android.XsBackupActivity" android:exported="false" android:label="Xs Metadata Backup" />
         <activity android:name="dev.forcemind.xs.android.XsLibrariesActivity" android:exported="false" android:label="Xs Libraries" />
+        <activity android:name="dev.forcemind.xs.android.XsLibraryManagementActivity" android:exported="false" android:label="Xs Library Management" />
+        <service android:name="dev.forcemind.xs.android.XsDownloadJobService" android:exported="false" android:permission="android.permission.BIND_JOB_SERVICE" />
+        <provider android:name="dev.forcemind.xs.android.XsRuntimeInitializer"
+            android:authorities="${applicationId}.xs.runtime" android:exported="false"
+            android:initOrder="100" />
         <provider android:name="dev.forcemind.xs.android.XsAssetProvider"
             android:authorities="${applicationId}.xs.assets" android:exported="false"
             android:grantUriPermissions="true" />

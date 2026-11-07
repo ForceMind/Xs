@@ -2,15 +2,18 @@ package dev.forcemind.xs.android;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.ContextWrapper;
 import android.database.Cursor;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 import dev.forcemind.xs.core.ArchiveSearch;
 import java.util.Arrays;
+import java.io.File;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -78,7 +81,11 @@ public final class LibraryConsolidationIntegrationTest {
         int libraries=libraryCount();XsLibraryConsolidation.Prepared preview=XsLibraryConsolidation.prepare(app,Arrays.asList(first,second),"可撤销结果");
         try{XsLibraryConsolidation.rollback(app,preview);fail("uncommitted preview had a result");}catch(IllegalStateException expected){}
         String merged=XsLibraryConsolidation.commit(app,preview);assertEquals(libraries+1,libraryCount());
+        XsLibraryWrites.Ticket deletedTicket=XsLibraryWrites.ticket(merged);
         XsLibraryConsolidation.rollback(app,preview);
+        assertTrue(XsDeletedLibraries.isDeleted(app,merged));assertFalse(XsLibraryWrites.isCurrent(deletedTicket));
+        try{XsLibraryWrites.ticket(merged);fail("undone namespace reopened");}catch(IllegalStateException expected){}
+        assertFalse("Direct API cannot reopen undone result",db.favorite(merged,"https://x.com/demo/status/8801",null,"resurrection",null,9000L));
         assertEquals(libraries,libraryCount());assertEquals(1,count("posts",first));assertEquals(1,count("posts",second));assertEquals(defaultLibrary,XsLocalSpaces.defaultLibrary(app));
         for(String table:XsLibraryBackup.allowedColumns().keySet())assertEquals(table,0,count(table,merged));
         try(Cursor c=db.search(merged,new ArchiveSearch.Filter())){assertEquals(0,c.getCount());}
@@ -120,6 +127,40 @@ public final class LibraryConsolidationIntegrationTest {
             assertEquals(merged,XsLocalSpaces.defaultLibrary(app));assertEquals(libraries,libraryCount());assertEquals(1,count("posts",merged));
             assertEquals(1,count("posts",first));assertEquals(1,count("posts",second));
         }finally{assertTrue(app.getSharedPreferences("xs_manual_archive",Context.MODE_PRIVATE).edit().putString("local_space",defaultLibrary).commit());}
+    }
+    @Test public void olderMandatoryClearDuringUndoPreflightRejectsWithoutDurableDeletion()throws Exception {
+        XsLibraryConsolidation.Prepared preview=XsLibraryConsolidation.prepare(app,Arrays.asList(first,second),"undo interleaving");
+        String merged=XsLibraryConsolidation.commit(app,preview);int libraries=libraryCount();
+        CountDownLatch preflight=new CountDownLatch(1),release=new CountDownLatch(1),cleared=new CountDownLatch(1);
+        AtomicBoolean firstMediaLookup=new AtomicBoolean();AtomicReference<Throwable> undoFailure=new AtomicReference<>(),clearFailure=new AtomicReference<>();
+        // Pause only the normal preflight's private-media existence query. This delegates real
+        // databases and never substitutes rows, an undo result, or a production test seam.
+        Context observed=new ContextWrapper(app) {
+            @Override public Context getApplicationContext(){return this;}
+            @Override public File getDatabasePath(String name) {
+                File path=super.getDatabasePath(name);
+                if("xs-media.db".equals(name)&&firstMediaLookup.compareAndSet(false,true)) {
+                    preflight.countDown();
+                    try{if(!release.await(10,TimeUnit.SECONDS))throw new IllegalStateException("Fixture did not release undo preflight");}
+                    catch(InterruptedException interrupted){Thread.currentThread().interrupt();throw new IllegalStateException(interrupted);}
+                }
+                return path;
+            }
+        };
+        Thread undo=new Thread(()->{try{XsLibraryConsolidation.rollback(observed,preview);}catch(Throwable failure){undoFailure.set(failure);}},"xs-undo-interleaving-fixture");
+        try {
+            undo.start();assertTrue("Reached ordinary undo preflight",preflight.await(10,TimeUnit.SECONDS));
+            // The older mandatory erasure must keep its promise; undo must not turn its ensuing
+            // metadata difference into a durable whole-library deletion on the next startup.
+            assertTrue(XsLibraryWrites.invalidateAndSubmit(merged,()->{try{db.clearHistory(merged);}catch(Throwable failure){clearFailure.set(failure);}finally{cleared.countDown();}}));
+        }finally{release.countDown();undo.join(15000);}
+        assertFalse("Undo caller completed",undo.isAlive());assertTrue(undoFailure.get() instanceof IllegalStateException);
+        assertTrue("Older clear-history request completed",cleared.await(10,TimeUnit.SECONDS));assertNull(clearFailure.get());
+        assertFalse(XsLibraryWrites.isDeleted(merged));assertFalse(XsDeletedLibraries.isDeleted(app,merged));
+        assertFalse(XsDeletedLibraries.pending(app).contains(merged));assertFalse(preview.undoPending());
+        XsDeletedLibraries.initialize(app);assertTrue(XsLibraryWrites.isCurrent(XsLibraryWrites.ticket(merged)));
+        assertEquals(libraries,libraryCount());assertEquals(1,count("posts",merged));assertEquals(1,count("favorites",merged));assertEquals(0,count("history_events",merged));
+        assertEquals(1,count("posts",first));assertEquals(1,count("posts",second));assertEquals(defaultLibrary,XsLocalSpaces.defaultLibrary(app));
     }
     private void seed(String scope,String label,long at,String body,String note,String tags)throws Exception {
         queued(scope,()->{db.ensureLibrary(scope,label);assertTrue(db.recordObservedOpen(scope,"https://x.com/demo/status/8801","demo",body,null,at,"same-navigation"));

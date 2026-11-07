@@ -15,8 +15,12 @@ java -ea -cp "$OUT" dev.forcemind.xs.tests.Mp4StructureTest
 java -ea -cp "$OUT" dev.forcemind.xs.tests.LibraryBackupCodecTest
 java -ea -cp "$OUT" dev.forcemind.xs.tests.LibraryMergePlanTest
 java -ea -cp "$OUT" dev.forcemind.xs.tests.LibraryWritesTest
+java -ea -cp "$OUT" dev.forcemind.xs.tests.SnapshotPolicyTest
+java -ea -cp "$OUT" dev.forcemind.xs.tests.EncryptedLibraryBackupTest
 java -cp "$OUT" dev.forcemind.xs.tests.SchemaDump | python3 "$ROOT/tests/sqlite_schema_test.py"
 
 node "$ROOT/tests/observer_test.js"
 
 node "$ROOT/tests/cleanup_test.js"
+
+node "$ROOT/tests/observer_stress_test.js"

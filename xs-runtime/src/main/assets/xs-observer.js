@@ -3,7 +3,7 @@
   'use strict';
   if (window.__xsObserver) { window.__xsObserver.stop(); }
   var MAX_CARDS = 24, MAX_BODY = 2048, runs = new Map(), serial = 0, stopped = false;
-  var dirty = true, pending = false;
+  var pending = null, timer = null, suspended = false;
   function allowed() {
     if (location.origin !== 'https://x.com' && location.origin !== 'https://www.x.com') return false;
     var path = location.pathname;
@@ -17,10 +17,20 @@
       return u.origin + u.pathname.replace(/\/$/, '');
     } catch (_) { return null; }
   }
+  function shown(el) {
+    // Computed opacity is not inherited: an invisible parent can still be hit-tested.
+    // Check a bounded ancestor chain before reading any rendered text.
+    var ancestor = el, depth = 0;
+    while (ancestor && depth++ < 32) {
+      var style = getComputedStyle(ancestor);
+      if (style.display === 'none' || style.visibility !== 'visible' || Number(style.opacity) < 0.9 ||
+          (ancestor.getAttribute && (ancestor.getAttribute('aria-hidden') === 'true' || ancestor.hasAttribute('inert')))) return false;
+      ancestor = ancestor.parentElement;
+    }
+    return !ancestor;
+  }
   function visible(el) {
-    if (!el.isConnected) return 0;
-    var style = getComputedStyle(el);
-    if (style.display === 'none' || style.visibility !== 'visible' || Number(style.opacity) < 0.9) return 0;
+    if (!el.isConnected || !shown(el)) return 0;
     var r = el.getBoundingClientRect(), v = window.visualViewport;
     var left = v ? v.offsetLeft : 0, top = v ? v.offsetTop : 0;
     var width = v ? v.width : innerWidth, height = v ? v.height : innerHeight;
@@ -39,11 +49,34 @@
     }
     return Math.min(1, fraction);
   }
-  function scan() {
-    dirty = false;
+  // Structural evidence only. Native code decides completeness for a matching detail route.
+  // It does not claim server-side全文, an edit timestamp or reading completion.
+  function textEvidence(el, body, raw, text) {
+    if (!body || typeof body.getBoundingClientRect !== 'function') return null;
+    var style = getComputedStyle(body), rect = body.getBoundingClientRect(), v = window.visualViewport;
+    var clamp = style.webkitLineClamp;
+    var lines = clamp === 'none' || clamp === '0' ? 0 : /^[1-9][0-9]*$/.test(clamp) ? Number(clamp) : -1;
+    var left = v ? v.offsetLeft : 0, top = v ? v.offsetTop : 0;
+    var width = v ? v.width : innerWidth, height = v ? v.height : innerHeight;
+    var ancestor = body, depth = 0, clipped = false;
+    while (ancestor && depth++ < 32) {
+      var parentStyle = getComputedStyle(ancestor);
+      if (parentStyle.textOverflow === 'ellipsis' || /^(hidden|clip)$/.test(parentStyle.overflowX) ||
+          /^(hidden|clip)$/.test(parentStyle.overflowY) || /^[1-9][0-9]*$/.test(parentStyle.webkitLineClamp)) clipped = true;
+      ancestor = ancestor.parentElement;
+    }
+    if (ancestor) clipped = true;
+    return {rawLength:raw.length,clientHeight:body.clientHeight,scrollHeight:body.scrollHeight,
+      lineClamp:lines,overflow:style.overflowY || 'unknown',clipped:clipped,
+      hasMore:!!el.querySelector('[data-testid="tweet-text-show-more-link"], [data-testid="tweetTextShowMore"], [data-testid="showMore"]'),
+      textVisible:style.display !== 'none' && style.visibility === 'visible' && Number(style.opacity) >= 0.9 &&
+        rect.width > 0 && rect.height > 0 && rect.left >= left && rect.top >= top &&
+        rect.right <= left + width && rect.bottom <= top + height && raw.length === text.length};
+  }
+  function scan(withText) {
     var cards = [], seen = new Set(), bodyBudget = 6000;
-    if (stopped || !allowed() || document.visibilityState !== 'visible' ||
-        document.querySelector('[role="dialog"], [aria-modal="true"], [data-testid="tweetTextarea_0"]')) {
+    if (stopped || suspended || !allowed() || document.visibilityState !== 'visible' ||
+        document.querySelector('[role="dialog"], [aria-modal="true"], [data-testid="tweetTextarea_0"], iframe, input[type="password"], input[autocomplete="one-time-code"], [data-testid="dmComposerTextInput"]')) {
       runs.clear(); return cards;
     }
     var nodes = document.querySelectorAll('article[data-testid="tweet"]');
@@ -63,38 +96,70 @@
       if (!fraction) continue;
       seen.add(id);
       if (!runs.has(id)) runs.set(id, String(++serial));
-      var body = el.querySelector('[data-testid="tweetText"]');
-      var time = el.querySelector('time'), published = time ? Date.parse(time.getAttribute('datetime')) : NaN;
-      // innerText returns rendered text, not HTML, form values, script state or hidden textContent.
-      var text = body ? body.innerText.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, '').slice(0, Math.min(MAX_BODY, bodyBudget)) : '';
-      bodyBudget -= text.length;
-      cards.push({url:url,author:url.split('/')[3],body:text,
-        publishedAtMs:Number.isFinite(published) && published > 0 ? published : null,
-        readableFraction:fraction,run:runs.get(id)});
+      if (withText) {
+        var body = el.querySelector('[data-testid="tweetText"]');
+        if (body && (!shown(body) || (body.closest && body.closest('article') !== el))) body = null;
+        var time = el.querySelector('time'), published = time ? Date.parse(time.getAttribute('datetime')) : NaN;
+        // Only a native read requests text. Background geometry checks never copy body strings.
+        // innerText returns rendered text, not HTML, form values or hidden textContent.
+        var raw = body && bodyBudget > 0 ? body.innerText : '';
+        var text = raw.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, '').slice(0, Math.min(MAX_BODY, bodyBudget));
+        // A UTF-16 budget must never split a rendered astral character into invalid Unicode.
+        var tail = text.charCodeAt(text.length - 1);
+        if (tail >= 0xd800 && tail <= 0xdbff) text = text.slice(0, -1);
+        bodyBudget -= text.length;
+        cards.push({url:url,author:url.split('/')[3],body:text,
+          publishedAtMs:Number.isFinite(published) && published > 0 ? published : null,
+          readableFraction:fraction,run:runs.get(id),textEvidence:textEvidence(el,body,raw,text)});
+      } else cards.push(null);
     }
     runs.forEach(function (_, id) { if (!seen.has(id)) runs.delete(id); });
     return cards;
   }
   function changed() {
-    if (stopped) return;
-    dirty = true;
-    if (pending) return;
-    pending = true;
-    requestAnimationFrame(function () { pending = false; if (dirty) scan(); });
+    if (stopped || suspended || document.visibilityState !== 'visible' || pending !== null) return;
+    pending = requestAnimationFrame(function () { pending = null; scan(false); });
   }
   var observer = new MutationObserver(changed);
-  observer.observe(document.documentElement, {childList:true,subtree:true,attributes:true,
-    attributeFilter:['style','class','hidden','aria-hidden']});
+  function monitor() {
+    if (stopped || suspended || document.visibilityState !== 'visible' || timer !== null) return;
+    observer.observe(document.documentElement, {childList:true,subtree:true,attributes:true,characterData:true,
+      attributeFilter:['style','class','hidden','aria-hidden','href','data-testid','inert']});
+    timer = setInterval(function () { if (!stopped) scan(false); },200);
+    changed();
+  }
+  function unmonitor() {
+    observer.disconnect();
+    if (timer !== null) clearInterval(timer);
+    timer = null;
+    if (pending !== null && typeof cancelAnimationFrame === 'function') cancelAnimationFrame(pending);
+    pending = null; runs.clear();
+  }
+  function visibility() {
+    if (document.visibilityState !== 'visible') unmonitor();
+    else monitor();
+  }
+  function suspend() { suspended = true; unmonitor(); }
+  function resume() { if (stopped) return; suspended = false; monitor(); }
   addEventListener('scroll',changed,true);
   addEventListener('resize',changed,true);
-  document.addEventListener('visibilitychange',changed,true);
-  var timer = setInterval(function () { if (!stopped) scan(); },100);
+  addEventListener('popstate',changed,true);
+  addEventListener('hashchange',changed,true);
+  addEventListener('pagehide',suspend,true);
+  addEventListener('pageshow',resume,true);
+  document.addEventListener('visibilitychange',visibility,true);
+  document.addEventListener('freeze',suspend,true);
+  document.addEventListener('resume',resume,true);
+  monitor();
   window.__xsObserver = {
-    read:function () { return {v:1,url:location.href,cards:scan()}; },
+    read:function () { return {v:1,url:location.href,cards:scan(true)}; },
     stop:function () {
-      stopped = true; runs.clear(); observer.disconnect(); clearInterval(timer);
+      stopped = true; unmonitor();
       removeEventListener('scroll',changed,true); removeEventListener('resize',changed,true);
-      document.removeEventListener('visibilitychange',changed,true);
+      removeEventListener('popstate',changed,true); removeEventListener('hashchange',changed,true);
+      removeEventListener('pagehide',suspend,true); removeEventListener('pageshow',resume,true);
+      document.removeEventListener('visibilitychange',visibility,true);
+      document.removeEventListener('freeze',suspend,true); document.removeEventListener('resume',resume,true);
     }
   };
 })();

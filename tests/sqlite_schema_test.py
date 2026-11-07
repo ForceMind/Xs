@@ -2,6 +2,7 @@
 """Validate the exact Java ArchiveSchema DDL against real SQLite + FTS4."""
 import base64
 import sqlite3
+import hashlib
 import sys
 
 
@@ -21,6 +22,8 @@ def main() -> None:
           for line in lines if line.startswith("V3:")]
     v4 = [base64.b64decode(line.partition(":")[2], validate=True).decode("utf-8")
           for line in lines if line.startswith("V4:")]
+    v5 = [base64.b64decode(line.partition(":")[2], validate=True).decode("utf-8")
+          for line in lines if line.startswith("V5:")]
     actual_query = next(base64.b64decode(line.partition(":")[2], validate=True).decode("utf-8")
                         for line in lines if line.startswith("QUERY:"))
     actual_args = [base64.b64decode(line.partition(":")[2], validate=True).decode("utf-8")
@@ -178,6 +181,17 @@ def main() -> None:
     assert old.execute("SELECT * FROM post_categories").fetchall() == before_categories
     assert old.execute("SELECT account_id,post_id FROM posts_fts WHERE posts_fts MATCH 'historical*'").fetchall() == [('account-A','88')]
     assert old.execute("PRAGMA foreign_key_check").fetchall() == []
+    # v4 -> v5 materializes the existing current body without inventing its capture/edit time.
+    for statement in v5:
+        old.executescript(statement + ";")
+    assert old.execute("SELECT body,current_snapshot_key FROM posts WHERE account_id='account-A'").fetchall() == [('historical post','migration:v4')]
+    assert old.execute("SELECT captured_at_ms,source,quality,content_hash FROM snapshot_versions WHERE account_id='account-A'").fetchall() == [(None,'legacy_migration','LEGACY_UNKNOWN',None)]
+    assert old.execute("SELECT account_id,post_id FROM snapshot_versions_fts WHERE snapshot_versions_fts MATCH 'historical*'").fetchall() == [('account-A','88')]
+    assert old.execute("SELECT rowid,account_id,post_id,body,first_seen_at_ms,last_seen_at_ms FROM posts ORDER BY rowid").fetchall() == before_posts
+    assert old.execute("SELECT * FROM post_categories").fetchall() == before_categories
+    assert old.execute("SELECT count(*) FROM own_action_events").fetchone()[0] == 2
+    assert old.execute("PRAGMA foreign_key_check").fetchall() == []
+
     # Native own-action type/state/actor/date/source filters must match the same action.
     con.execute("INSERT INTO posts(account_id,post_id,body,first_seen_at_ms,last_seen_at_ms) VALUES ('local:own','901','own fixture',100,200)")
     for key,actor,state,at in [('a','fixture:me','REVERSED',150),('b','fixture:other','REVERSED',160),('c','fixture:me','ACTIVE',170)]:
@@ -250,7 +264,17 @@ def main() -> None:
     assert [(row[1],row[8],row[9]) for row in query_named('SOURCE_DATE')] == [('205',160,4000),('206',160,3500)]
     # Choosing published date explicitly continues filtering publication, not exposure time.
     assert [(row[1],row[9]) for row in query_named('PUBLISHED')] == [('203',10000),('202',9000),('201',5000)]
-    print("PASS SQLite v4 DDL, v1/v2/v3 preserving migrations, honest own-action provenance/reversal and same-action filtering, scope mappings, FTS, exposure dedup, dwell/never-opened and same-exposure date/source queries, independent favorites")
+    # Default search indexes current text; explicit history search also finds superseded versions.
+    con.execute("INSERT INTO posts(account_id,post_id,body,first_seen_at_ms,last_seen_at_ms,current_snapshot_key) VALUES ('local:snapshots','901','active newer text',1,2,'current')")
+    for key,body,at,quality in [('old','superseded needle',10,'PARTIAL'),('current','active newer text',20,'COMPLETE')]:
+        con.execute("INSERT INTO snapshot_versions(account_id,post_id,snapshot_key,body,captured_at_ms,source,quality,content_hash) VALUES ('local:snapshots','901',?,?,?,'native_post_detail',?,?)",(key,body,at,quality,hashlib.sha256(body.encode()).hexdigest()))
+    assert query_named('SNAPSHOT_CURRENT') == []
+    historical=query_named('SNAPSHOT_HISTORY');assert len(historical)==1 and historical[0][1]=='901' and historical[0][18]==2
+    versions=query_named('SNAPSHOT_VERSIONS');assert len(versions)==1 and versions[0][0]=='old' and versions[0][8]==0
+    con.execute("DELETE FROM posts WHERE account_id='local:snapshots'")
+    assert con.execute("SELECT count(*) FROM snapshot_versions WHERE account_id='local:snapshots'").fetchone()[0] == 0
+    assert con.execute("SELECT count(*) FROM snapshot_versions_fts WHERE snapshot_versions_fts MATCH 'superseded*'").fetchone()[0] == 0
+    print("PASS SQLite v5 DDL, v1/v2/v3/v4 preserving migrations, snapshot history/current FTS, honest own-action provenance/reversal and same-action filtering, scope mappings, FTS, exposure dedup, dwell/never-opened and same-exposure date/source queries, independent favorites")
 
 
 if __name__ == "__main__":

@@ -91,12 +91,13 @@ public final class LibraryBackupIntegrationTest {
     }
 
     @Test public void schemaThreeRestoreProjectsUnknownOwnActionsWithoutInventedTimesOrActor()throws Exception {
-        seed();Map<String,List<Map<String,Object>>> rows=mutable(inspect());rows.remove("own_actions");rows.remove("own_action_events");
+        seed();Map<String,List<Map<String,Object>>> rows=mutable(inspect());rows.remove("own_actions");rows.remove("own_action_events");rows.remove("snapshot_versions");
+        for(Map<String,Object> post:rows.get("posts"))post.remove("current_snapshot_key");
         rows.get("user_actions").add(row("post_id","7101","action_type","ORIGINAL","action_at_ms",1500L,"source","local_x_archive"));
         rows.get("user_actions").add(row("post_id","7102","action_type","REPOST","action_at_ms",null,"source","legacy_fixture"));
         ByteArrayOutputStream out=new ByteArrayOutputStream();XsLibraryBackup.writeCandidate(rows,3,"v3 中文",out);
         XsLibraryBackup.ValidatedBackup old=XsLibraryBackup.inspect(new ByteArrayInputStream(out.toByteArray()));
-        assertEquals(3,old.sourceSchemaVersion());assertEquals(4,old.schemaVersion());assertEquals(2,old.rows("own_actions").size());
+        assertEquals(3,old.sourceSchemaVersion());assertEquals(ArchiveSchema.VERSION,old.schemaVersion());assertEquals(2,old.rows("own_actions").size());
         String restored=queued(()->XsLibraryBackup.restoreNewLibrary(app,old,null));
         for(String type:new String[]{"ORIGINAL","REPOST"}){ArchiveSearch.Filter q=new ArchiveSearch.Filter();q.actionType=type;q.actionState="UNKNOWN";try(Cursor c=db.search(restored,q)){assertEquals(1,c.getCount());}}
         try(Cursor c=db.getReadableDatabase().rawQuery("SELECT action_type,actor_id,actor_provenance,source,action_at_ms,observed_at_ms,state,state_at_ms FROM own_actions WHERE account_id=? ORDER BY action_type",new String[]{restored})) {
@@ -148,7 +149,7 @@ public final class LibraryBackupIntegrationTest {
     @Test public void generatedLongLabelIsUnicodeSafeAndRepeatedRestoreIsAlwaysSeparate()throws Exception {
         seed();Map<String,List<Map<String,Object>>> rows=mutable(inspect());
         String label=repeat("字",108)+"🚀"+repeat("字",10);assertEquals(120,label.length());
-        ByteArrayOutputStream out=new ByteArrayOutputStream();XsLibraryBackup.writeCandidate(rows,4,label,out);
+        ByteArrayOutputStream out=new ByteArrayOutputStream();XsLibraryBackup.writeCandidate(rows,ArchiveSchema.VERSION,label,out);
         XsLibraryBackup.ValidatedBackup backup=XsLibraryBackup.inspect(new ByteArrayInputStream(out.toByteArray()));
         String first=queued(()->XsLibraryBackup.restoreNewLibrary(app,backup,null));String second=queued(()->XsLibraryBackup.restoreNewLibrary(app,backup,null));
         assertNotEquals(first,second);assertNotEquals(source,first);assertEquals(defaultLibrary,XsLocalSpaces.defaultLibrary(app));
@@ -161,7 +162,7 @@ public final class LibraryBackupIntegrationTest {
     @Test public void restoredMaximumOpenCountSaturatesAcrossBothOpenEntryPoints()throws Exception {
         seed();Map<String,List<Map<String,Object>>> rows=mutable(inspect());
         for(Map<String,Object> post:rows.get("posts"))if("7101".equals(post.get("post_id")))post.put("opened_count",(long)Integer.MAX_VALUE);
-        ByteArrayOutputStream out=new ByteArrayOutputStream();XsLibraryBackup.writeCandidate(rows,4,"maximum count",out);
+        ByteArrayOutputStream out=new ByteArrayOutputStream();XsLibraryBackup.writeCandidate(rows,ArchiveSchema.VERSION,"maximum count",out);
         XsLibraryBackup.ValidatedBackup backup=XsLibraryBackup.inspect(new ByteArrayInputStream(out.toByteArray()));
         String restored=queued(()->XsLibraryBackup.restoreNewLibrary(app,backup,null));
         assertTrue(db.recordOpened(restored,"https://x.com/demo/status/7101",null,null,null,8000L));
@@ -194,7 +195,7 @@ public final class LibraryBackupIntegrationTest {
     private void rejectRows(Map<String,List<Map<String,Object>>> rows)throws Exception {
         // The generic transport can encode unknown identifiers; inspect must enforce the native schema.
         List<LibraryBackupCodec.Record> records=new ArrayList<>();for(Map.Entry<String,List<Map<String,Object>>> table:rows.entrySet())for(Map<String,Object> row:table.getValue())records.add(new LibraryBackupCodec.Record(table.getKey(),row));
-        ByteArrayOutputStream out=new ByteArrayOutputStream();LibraryBackupCodec.write(out,new LibraryBackupCodec.Header(4,1L,"untrusted"),records);rejectBytes(out.toByteArray());
+        ByteArrayOutputStream out=new ByteArrayOutputStream();LibraryBackupCodec.write(out,new LibraryBackupCodec.Header(ArchiveSchema.VERSION,1L,"untrusted"),records);rejectBytes(out.toByteArray());
     }
     private static Map<String,List<Map<String,Object>>> mutable(XsLibraryBackup.ValidatedBackup backup){Map<String,List<Map<String,Object>>> result=new LinkedHashMap<>();for(String table:XsLibraryBackup.allowedColumns().keySet()){List<Map<String,Object>> rows=new ArrayList<>();for(Map<String,Object> row:backup.rows(table))rows.add(new LinkedHashMap<>(row));result.put(table,rows);}return result;}
     private static Map<String,Object> row(Object...values){Map<String,Object> row=new LinkedHashMap<>();for(int i=0;i<values.length;i+=2)row.put((String)values[i],values[i+1]);return row;}

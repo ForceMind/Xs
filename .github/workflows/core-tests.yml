@@ -25,6 +25,18 @@ jobs:
         run: bash scripts/check-project.sh
       - name: Compile JVM code and check real SQLite
         run: bash scripts/test-core.sh
+      - name: Check 10k and 100k preserving migrations and search capacity
+        run: |
+          mkdir -p build/core-provenance
+          git rev-parse HEAD > build/core-provenance/source-commit.txt
+          git rev-parse HEAD^{tree} > build/core-provenance/source-tree.txt
+          python3 tests/sqlite_capacity_benchmark.py --sizes 10000 100000 --output build/core-provenance/capacity.json
+          python3 scripts/record-source-inventory.py --output build/core-provenance/source-and-notice-inventory.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: xs-core-capacity-and-source
+          path: build/core-provenance/
+          if-no-files-found: error
   android-library:
     runs-on: ubuntu-latest
     steps:
@@ -63,6 +75,7 @@ jobs:
           sha256sum app-android/build/outputs/apk/debug/*.apk > app-android/build/provenance/SHA256SUMS
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --print-certs app-android/build/outputs/apk/debug/app-android-debug.apk > app-android/build/provenance/signing-certificate.txt
           gradle --no-daemon :app-android:dependencies --configuration debugRuntimeClasspath > app-android/build/provenance/dependencies.txt
+          python3 scripts/record-source-inventory.py --output app-android/build/provenance/source-and-notice-inventory.json
       - name: Upload non-instrumented browser feasibility APK (NOT Alpha)
         uses: actions/upload-artifact@v4
         with:
@@ -77,7 +90,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        api-level: [30, 36]
+        api-level: [26, 30, 36]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
