@@ -14,6 +14,7 @@ public final class LibraryBackupCodecTest {
         LibraryBackupCodec.Header header=new LibraryBackupCodec.Header(4,100,"私有笔记");
         List<LibraryBackupCodec.Record> records=new ArrayList<>();for(int i=0;i<30;i++)records.add(row);
         ByteArrayOutputStream bytes=new ByteArrayOutputStream();LibraryBackupCodec.write(bytes,header,records);
+        assetDescriptorRoundTrip();
         byte[] backup=bytes.toByteArray();LibraryBackupCodec.Data read=LibraryBackupCodec.read(new ByteArrayInputStream(backup));
         yes(read.header().schemaVersion==4&&read.header().createdAtMs==100);eq("私有笔记",read.header().label);yes(read.records().size()==30);
         eq("中文 😀 \"quote\"\nnext",read.records().get(0).values.get("body"));
@@ -46,6 +47,24 @@ public final class LibraryBackupCodecTest {
         LibraryBackupCodec.write(output,header,records);yes(!closed[0]);
         LibraryBackupCodec.write(new Discard(),new LibraryBackupCodec.Header(3,1,"v3"),Collections.emptyList());checks++;
         System.out.println("PASS "+checks+" bounded backup codec assertions");
+    }
+    /** Exercise the exact completed-resource descriptor shape used by the native full-backup path. */
+    private static void assetDescriptorRoundTrip()throws Exception {
+        LinkedHashMap<String,Object> descriptor=new LinkedHashMap<>();
+        descriptor.put("source_id","12345678-1234-1234-1234-123456789abc");
+        descriptor.put("post_url","https://x.com/i/web/status/123");descriptor.put("media_kind","IMAGE");
+        descriptor.put("mime","image/png");descriptor.put("bytes",3L);
+        descriptor.put("sha256",String.join("",Collections.nCopies(64,"0")));
+        descriptor.put("category","图片 📷");descriptor.put("created_ms",1000L);
+        for(String field:Arrays.asList("duration_ms","width","height","video_tracks","audio_tracks","rotation_degrees"))descriptor.put(field,null);
+        ByteArrayOutputStream out=new ByteArrayOutputStream();
+        LibraryBackupCodec.write(out,new LibraryBackupCodec.Header(3,1,"asset"),Collections.singletonList(new LibraryBackupCodec.Record("assets",descriptor)));
+        LibraryBackupCodec.Data decoded=LibraryBackupCodec.read(new ByteArrayInputStream(out.toByteArray()));
+        yes(decoded.records().size()==1);eq("assets",decoded.records().get(0).table);eq(descriptor,decoded.records().get(0).values);
+        for(String key:new String[]{"1sha256","sha-256","sha/256","sha.256","sha256;DROP","SHA256","",String.join("",Collections.nCopies(41,"a"))}) {
+            LinkedHashMap<String,Object> invalid=new LinkedHashMap<>();invalid.put(key,"value");
+            try{new LibraryBackupCodec.Record("assets",invalid);throw new AssertionError("Unsafe field name accepted");}catch(IllegalArgumentException expected){checks++;}
+        }
     }
     private static final class Discard extends OutputStream {public void write(int value){}public void write(byte[] b,int o,int n){}}
     private static void reject(byte[] bytes)throws Exception{try{LibraryBackupCodec.read(new ByteArrayInputStream(bytes));throw new AssertionError("Invalid backup accepted");}catch(IllegalArgumentException|IOException expected){yes(!expected.getMessage().contains("中文"));}}

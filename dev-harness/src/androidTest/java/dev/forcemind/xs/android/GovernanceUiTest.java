@@ -8,7 +8,6 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.util.Base64;
@@ -19,7 +18,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.security.MessageDigest;
@@ -36,8 +34,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
 import java.util.function.Predicate;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import org.junit.After;
@@ -59,12 +55,13 @@ public final class GovernanceUiTest {
     private Activity screen;
     private String first,second,defaultLibrary;
     private final Set<String> owned=new LinkedHashSet<>();
+    private boolean providerReady,testBodyCompleted;
 
     @Before public void setUp()throws Exception {
         instrumentation=InstrumentationRegistry.getInstrumentation();app=instrumentation.getTargetContext();
         AccessibilityServiceInfo info=instrumentation.getUiAutomation().getServiceInfo();
         info.flags|=AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS;instrumentation.getUiAutomation().setServiceInfo(info);
-        assertTrue(admin("xs_fixture_reset",null).getBoolean("ok"));
+        assertTrue(admin("xs_fixture_reset",null).getBoolean("ok"));providerReady=true;
         archive=new XsArchiveDatabase(app);defaultLibrary=XsLocalSpaces.defaultLibrary(app);
         queued(defaultLibrary,()->archive.ensureLibrary(defaultLibrary,"Xs local fixture library"));
         first="local:"+UUID.randomUUID();second="local:"+UUID.randomUUID();owned.add(first);owned.add(second);
@@ -72,16 +69,22 @@ public final class GovernanceUiTest {
         seed(second,"Governance fixture B","governanceneedle beta extended","Fixture source note B");
     }
     @After public void tearDown()throws Exception {
-        if(screen!=null){instrumentation.runOnMainSync(screen::finish);instrumentation.waitForIdleSync();}
+        Throwable cleanupFailure=null;
         try {
+            if(screen!=null){instrumentation.runOnMainSync(screen::finish);instrumentation.waitForIdleSync();}
             for(String library:owned) {
                 if(XsLibraryWrites.isDeleted(library))continue;
                 queued(library,()->{XsMediaRepository.get(app).eraseLibrary(library);archive.clearAccount(library);
                     archive.getWritableDatabase().delete("libraries","storage_scope=?",new String[]{library});});
             }
-        }finally {
-            if(archive!=null)archive.close();assertTrue(admin("xs_fixture_reset",null).getBoolean("ok"));
+        }catch(Throwable failure){cleanupFailure=failure;}
+        finally {
+            try{if(archive!=null)archive.close();}catch(Throwable failure){if(cleanupFailure==null)cleanupFailure=failure;}
+            try{if(providerReady)assertTrue(admin("xs_fixture_reset",null).getBoolean("ok"));}catch(Throwable failure){if(cleanupFailure==null)cleanupFailure=failure;}
         }
+        if(cleanupFailure!=null&&testBodyCompleted)throw new AssertionError("Synthetic fixture cleanup failed",cleanupFailure);
+        // A failed setup/test already has the useful original exception; do not replace it with
+        // an after-method reset failure. Every later setup retries cleanup before using the root.
     }
 
     @Test public void metadataSafExportPreviewCancelAndConfirmUseActualDocumentBytes()throws Exception {
@@ -99,6 +102,7 @@ public final class GovernanceUiTest {
         String restored=awaitNewLibrary(before);assertEquals(defaultLibrary,XsLocalSpaces.current(app));
         assertSearchable(restored,"alpha");assertSearchable(first,"alpha");assertSearchable(second,"beta");
         assertEquals(0,XsMediaRepository.get(app).list(restored).size());
+        testBodyCompleted=true;
     }
 
     @Test public void encryptedFullSafRoundTripValidatesPasswordAndRestoresActualImage()throws Exception {
@@ -117,6 +121,7 @@ public final class GovernanceUiTest {
         List<XsMediaRepository.CompletedAsset> files=XsMediaRepository.get(app).snapshotCompleted(restored);
         assertEquals(1,files.size());assertEquals("image/png",files.get(0).asset.mime);assertEquals("fixture-image",files.get(0).asset.category);
         assertArrayEquals(image,Files.readAllBytes(files.get(0).file.toPath()));assertEquals(1,XsMediaRepository.get(app).snapshotCompleted(first).size());
+        testBodyCompleted=true;
     }
 
     @Test public void consolidationNativePreviewCancelConfirmAndUndoPreserveSourcesAndDefault()throws Exception {
@@ -134,6 +139,7 @@ public final class GovernanceUiTest {
         await(()->libraries().equals(before),"Only the newly created library is removed");
         assertEquals(defaultLibrary,XsLocalSpaces.current(app));assertSearchable(first,"alpha");assertSearchable(second,"beta");
         try(Cursor c=archive.search(result,new ArchiveSearch.Filter())){assertEquals(0,c.getCount());}
+        testBodyCompleted=true;
     }
 
     @Test public void assetsMultiSelectSafZipContainsEverySelectedOriginalFile()throws Exception {
@@ -161,6 +167,7 @@ public final class GovernanceUiTest {
         }
         assertEquals(expected.keySet(),actual);assertEquals(2,XsMediaRepository.get(app).snapshotCompleted(first).size());
         assertEquals(defaultLibrary,XsLocalSpaces.current(app));
+        testBodyCompleted=true;
     }
 
     private void seed(String library,String label,String body,String note)throws Exception {
@@ -197,17 +204,9 @@ public final class GovernanceUiTest {
         AtomicReference<byte[]> bytes=new AtomicReference<>();await(()->{try{Bundle result=admin("xs_fixture_read",name);String encoded=result.getString("data","");if(encoded.isEmpty())return false;bytes.set(Base64.decode(encoded,Base64.NO_WRAP));return true;}catch(Exception failure){throw new AssertionError(failure);}},"The selected document contains actual exported bytes");return bytes.get();
     }
     private Bundle admin(String method,String arg)throws Exception {
-        Uri uri=Uri.parse("content://"+GovernanceDocumentsProvider.AUTHORITY);
-        try {Bundle result=app.getContentResolver().call(uri,method,arg,null);if(result!=null)return result;}
-        catch(SecurityException denied){/* The API-26 picker provider permission may require the shell fixture caller. */}
-        String command="content call --uri "+quote(uri.toString())+" --method "+quote(method)+(arg==null?"":" --arg "+quote(arg));
-        String output;try(ParcelFileDescriptor fd=instrumentation.getUiAutomation().executeShellCommand(command);InputStream input=new ParcelFileDescriptor.AutoCloseInputStream(fd);ByteArrayOutputStream out=new ByteArrayOutputStream()) {
-            byte[] bytes=new byte[4096];int n;while((n=input.read(bytes))!=-1){if(out.size()+n>3*1024*1024)throw new AssertionError("Fixture admin output exceeded its bound");out.write(bytes,0,n);}output=new String(out.toByteArray(),StandardCharsets.UTF_8);
-        }
-        Bundle result=new Bundle();if(method.equals("xs_fixture_reset")){assertTrue("Fixture provider reset: "+output,output.contains("ok=true"));result.putBoolean("ok",true);}
-        else {Matcher match=Pattern.compile("(?:^|[ {,])data=([A-Za-z0-9+/=]*)").matcher(output);assertTrue("Fixture provider read did not return data",match.find());result.putString("data",match.group(1));}return result;
+        Bundle result=app.getContentResolver().call(Uri.parse("content://"+GovernanceFixtureAdminProvider.AUTHORITY),method,arg,null);
+        assertNotNull("Signature-gated synthetic fixture provider is visible",result);return result;
     }
-    private static String quote(String value){return "'"+value.replace("'","'\\''")+"'";}
 
     private void fixtureRoot() {
         await(()->find(n->n.getPackageName()!=null&&n.getPackageName().toString().contains("documentsui"))!=null,"System DocumentsUI is active");

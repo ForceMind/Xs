@@ -143,10 +143,10 @@ public final class XsFullBackup {
                         check(guard);space(prepared.directory,prepared.assetBytes());marker=createMarker(app,target);
                         media.restoreCompleted(target,prepared.assets);check(guard);
                         XsLibraryBackup.restoreIntoNewLibrary(app,prepared.metadata,label,target,guard);
-                        published=true;if(marker.delete())syncDirectory(marker.getParentFile());return target;
+                        published=true;finishPublishedMarker(app,target,marker);return target;
                     }catch(Exception failure) {
                         // A crash or provider-close error after the archive commit must preserve its files.
-                        if(registered(app,target)){published=true;return target;}
+                        if(registered(app,target)){published=true;finishPublishedMarker(app,target,marker);return target;}
                         try{media.eraseLibrary(target);if(marker!=null&&marker.delete())syncDirectory(marker.getParentFile());}
                         catch(Exception cleanup){failure.addSuppressed(cleanup);}
                         if(failure instanceof IOException)throw (IOException)failure;throw new IOException("Encrypted restore did not complete",failure);
@@ -160,9 +160,10 @@ public final class XsFullBackup {
         if(context==null)throw invalid();Context app=context.getApplicationContext();
         synchronized(OPERATIONS) {
             File markers=markerDirectory(app);File[] pending=markers.listFiles();if(pending==null)throw invalid();
-            if(pending.length>128)throw new IOException("Too many interrupted restore markers");
+            int reviewed=0; // A retained registered marker is retryable housekeeping, not app failure.
             for(File marker:pending) {
                 if(!marker.getName().matches(UUID_PATTERN+"\\.pending")||!marker.isFile())continue;
+                if(reviewed++>=128)break; // Preserve excess markers for the next recovery pass.
                 String target="local:"+marker.getName().substring(0,36);
                 if(target.equals(XsLocalSpaces.current(app)))continue;
                 if(!registered(app,target)) {
@@ -172,8 +173,8 @@ public final class XsFullBackup {
                     try(XsArchiveDatabase archive=new XsArchiveDatabase(app)) {
                         if(!registered(archive.getReadableDatabase(),target))archive.clearAccount(target);
                     }
-                }
-                if(!marker.delete())throw new IOException("Interrupted restore cleanup incomplete");syncDirectory(markers);
+                    if(!marker.delete())throw new IOException("Interrupted restore cleanup incomplete");syncDirectory(markers);
+                }else finishPublishedMarker(app,target,marker); // Busy/uncertain durability is retried on a later start.
             }
             File root=workRoot(app);File[] stale=root.listFiles();if(stale!=null)for(File work:stale)
                 if(work.getName().matches(UUID_PATTERN)&&!ACTIVE.contains(work.getAbsolutePath()))removeTree(work,work);
@@ -232,7 +233,11 @@ public final class XsFullBackup {
     private static void space(File directory,long bytes)throws IOException {if(directory.getUsableSpace()<bytes+1048576L)throw new IOException("Insufficient private backup staging space");}
     private static File workRoot(Context app)throws IOException {File root=new File(app.getCacheDir(),"xs-full-backup");if(!root.isDirectory()&&!root.mkdirs())throw invalid();return root;}
     private static File newWork(Context app)throws IOException {File work=new File(workRoot(app),UUID.randomUUID().toString());if(!work.mkdir())throw invalid();ACTIVE.add(work.getAbsolutePath());return work;}
-    private static File markerDirectory(Context app)throws IOException {File dir=new File(app.getFilesDir(),"xs-restore-pending");if(!dir.isDirectory()&&!dir.mkdirs())throw invalid();return dir;}
+    private static File markerDirectory(Context app)throws IOException {
+        File dir=new File(app.getFilesDir(),"xs-restore-pending");
+        if(!dir.isDirectory()){if(!dir.mkdirs())throw invalid();syncDirectory(dir.getParentFile());}
+        return dir;
+    }
     private static File createMarker(Context app,String target)throws IOException {File marker=new File(markerDirectory(app),target.substring(6)+".pending");if(!marker.createNewFile())throw invalid();try(FileOutputStream out=new FileOutputStream(marker)){out.getFD().sync();}syncDirectory(marker.getParentFile());return marker;}
     private static void syncDirectory(File directory)throws IOException {
         java.io.FileDescriptor fd=null;try{if(!directory.isDirectory())throw new IOException("Restore marker directory unavailable");fd=android.system.Os.open(directory.getAbsolutePath(),android.system.OsConstants.O_RDONLY,0);android.system.Os.fsync(fd);}
@@ -240,6 +245,54 @@ public final class XsFullBackup {
     }
     private static boolean registered(Context app,String target) {try(XsArchiveDatabase archive=new XsArchiveDatabase(app)){return registered(archive.getReadableDatabase(),target);}}
     private static boolean registered(SQLiteDatabase db,String target) {try(Cursor rows=db.rawQuery("SELECT 1 FROM libraries WHERE storage_scope=?",new String[]{target})){return rows.moveToFirst();}}
+    private static void finishPublishedMarker(Context app,String target,File marker) {
+        if(marker==null)return;
+        try(XsArchiveDatabase archive=new XsArchiveDatabase(app)) {
+            SQLiteDatabase db=archive.getWritableDatabase();if(registered(db,target))checkpointAndClearMarker(db,marker);
+        }catch(RuntimeException ignored){/* Registration already committed. Keep its marker for a later retry. */}
+    }
+    /** Engineering sync barrier, not a physical power-cut test. Never changes synchronous mode.
+     * SQLite FULL checkpoint syncs all transferred frames; a busy or incomplete checkpoint does
+     * not qualify. See sqlite.org/pragma.html#pragma_wal_checkpoint and #pragma_synchronous.
+     * Package visibility supplies real SQLite/marker regression without a fake success switch.
+     */
+    static boolean checkpointAndClearMarker(SQLiteDatabase db,File marker) {
+        if(db==null||marker==null||!marker.isFile()||android.os.Looper.myLooper()==android.os.Looper.getMainLooper())return false;
+        Long previousTimeout=null;
+        try {
+            if(!db.isOpen()||db.inTransaction())return false;
+            String mode;try(Cursor rows=db.rawQuery("PRAGMA main.journal_mode",null)){if(!rows.moveToFirst()||rows.isNull(0))return false;mode=rows.getString(0).toLowerCase(java.util.Locale.ROOT);}
+            long synchronous=pragmaLong(db,"PRAGMA main.synchronous");
+            if("wal".equals(mode)) {
+                if(synchronous<1||synchronous>3)return false;
+                // Android 30+ can configure every pooled connection uniformly. Older devices
+                // retain their platform timeout; this entire operation is background-only.
+                if(android.os.Build.VERSION.SDK_INT>=30) {
+                    long timeout=pragmaLong(db,"PRAGMA busy_timeout");
+                    if(timeout<0||timeout>Integer.MAX_VALUE)return false;previousTimeout=timeout;
+                    db.execPerConnectionSQL("PRAGMA busy_timeout=100",null);
+                }
+                try(Cursor result=db.rawQuery("PRAGMA main.wal_checkpoint(FULL)",null)) {
+                    if(result.getColumnCount()!=3||!result.moveToFirst()||result.isNull(0)||result.isNull(1)||result.isNull(2))return false;
+                    long busy=result.getLong(0),frames=result.getLong(1),copied=result.getLong(2);
+                    if(busy!=0||frames<0||copied!=frames||result.moveToNext())return false;
+                }
+            }else {
+                // FULL rollback mode alone may lose the final journal unlink on power loss.
+                // EXTRA includes its directory sync; retain the marker for weaker modes.
+                if(!Arrays.asList("delete","truncate","persist").contains(mode)||synchronous!=3)return false;
+            }
+            File database=new File(db.getPath());if(!database.isFile()||database.getParentFile()==null)return false;
+            syncDirectory(database.getParentFile());
+            if(!marker.delete())return false;syncDirectory(marker.getParentFile());return true;
+        }catch(IOException|RuntimeException uncertain){return false;}
+        finally {
+            if(previousTimeout!=null&&android.os.Build.VERSION.SDK_INT>=30)try{db.execPerConnectionSQL("PRAGMA busy_timeout="+previousTimeout,null);}catch(RuntimeException ignored){/* Dedicated production helper closes its pool next. */}
+        }
+    }
+    private static long pragmaLong(SQLiteDatabase db,String sql) {
+        try(Cursor value=db.rawQuery(sql,null)){if(value.getColumnCount()!=1||!value.moveToFirst()||value.isNull(0))throw new IllegalStateException("Sync configuration unavailable");long result=value.getLong(0);if(value.moveToNext())throw new IllegalStateException("Ambiguous sync configuration");return result;}
+    }
     private static void removeTree(File root,File current)throws IOException {
         if(!current.exists())return;String base=root.getCanonicalPath(),path=current.getCanonicalPath();
         boolean link=java.nio.file.Files.isSymbolicLink(current.toPath());

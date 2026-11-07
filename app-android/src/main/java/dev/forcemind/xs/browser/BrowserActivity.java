@@ -50,7 +50,7 @@ import java.util.List;
 public final class BrowserActivity extends Activity {
     private static final String HOME = "https://x.com/home";
     private String initialPost;
-    private static final int PICK_MEDIA = 4101;
+    private int uploadRequest=-1;
     private FrameLayout root;
     private LinearLayout shell;
     private WebView web;
@@ -72,10 +72,17 @@ public final class BrowserActivity extends Activity {
     private WebView popupTransport;
     private final android.os.Handler popupHandler=new android.os.Handler(android.os.Looper.getMainLooper());
     private Runnable popupCleanup;
+    private AlertDialog popupDialog,externalDialog,privacyDialog,incomingDialog;
+    private String pendingIncomingPost;
+    private boolean privacyClearing;
+    private boolean safeBrowsingAvailable;
+    private long webSessionEpoch;
+    private long privacyDeadline;
+    private final Runnable privacyPoll=()->finishSessionClearWhenReady();
     private static final class Page {
-        final WebView web; final long epoch; final String retryUrl; final boolean failed;
-        Page(WebView web, long epoch, String retryUrl, boolean failed) {
-            this.web=web; this.epoch=epoch; this.retryUrl=retryUrl; this.failed=failed;
+        final WebView web; final long epoch,sessionEpoch; final String retryUrl; final boolean failed;
+        Page(WebView web, long epoch, long sessionEpoch, String retryUrl, boolean failed) {
+            this.web=web; this.epoch=epoch; this.sessionEpoch=sessionEpoch; this.retryUrl=retryUrl; this.failed=failed;
         }
     }
 
@@ -118,6 +125,7 @@ public final class BrowserActivity extends Activity {
         retry.setText(R.string.retry);
         retry.setVisibility(View.GONE);
         retry.setOnClickListener(v -> {
+            if(BrowserPrivacy.pending(this)){continueSessionClear();return;}
             if (web == null && !createWebView()) return;
             if (started) navigate(retryUrl);
             else {
@@ -126,18 +134,35 @@ public final class BrowserActivity extends Activity {
             }
         });
         shell.addView(retry);
+        webSessionEpoch=BrowserPrivacy.sessionEpoch(this);
+        started = getPreferences(MODE_PRIVATE).getBoolean("browser_notice_accepted", false);
+        final boolean explicitLanding=BrowserPrivacy.needsExplicitNavigation(this);
+        if(explicitLanding) {
+            String restored=state==null?null:state.getString("pending_incoming_post");
+            if(state!=null && state.getLong("web_session_epoch",0)==webSessionEpoch &&
+                    BrowserNavigation.classify(restored)==BrowserNavigation.Target.INTERNAL && PostUrls.extractPostId(restored)!=null)
+                pendingIncomingPost=PostUrls.canonicalLink(restored);
+            else if(state==null && initialPost!=null)pendingIncomingPost=PostUrls.canonicalLink(initialPost);
+            initialPost=null;
+        }
         Object previous = getLastNonConfigurationInstance();
-        if (previous instanceof Page) {
+        if(BrowserPrivacy.pending(this)) {
+            if(previous instanceof Page)destroyBrowserView(((Page)previous).web);
+            privacyClearing=true;continueSessionClear();
+        } else if (previous instanceof Page && ((Page)previous).sessionEpoch==webSessionEpoch &&
+                (!explicitLanding || ((Page)previous).web.getUrl()==null)) {
             Page page=(Page) previous;
             web=page.web; pageEpoch=page.epoch; retryUrl=page.retryUrl; failed=page.failed;
             if (web.getContext() instanceof MutableContextWrapper)
                 ((MutableContextWrapper) web.getContext()).setBaseContext(this);
             attachWebView();
-            status.setText(failed ? R.string.failed : R.string.ready);
-            retry.setVisibility(failed ? View.VISIBLE : View.GONE);
+            status.setText(!safeBrowsingAvailable?R.string.safe_browsing_unavailable:explicitLanding?R.string.browser_session_cleared:failed ? R.string.failed : R.string.ready);
+            retry.setVisibility(failed && safeBrowsingAvailable ? View.VISIBLE : View.GONE);
             retained=true;
-        } else if (!createWebView()) return;
-        started = getPreferences(MODE_PRIVATE).getBoolean("browser_notice_accepted", false);
+        } else {
+            if(previous instanceof Page)destroyBrowserView(((Page)previous).web);
+            if(!createWebView())return;
+        }
         if (!started) {
             TextView notice = new TextView(this);
             notice.setText(R.string.intro);
@@ -154,19 +179,26 @@ public final class BrowserActivity extends Activity {
                 shell.removeView(open);
                 navigate(initialPost == null ? HOME : initialPost);
             });
-        } else if (!retained) {
-            Bundle browsing = state == null ? null : state.getBundle("web_navigation");
-            if (browsing == null || web.restoreState(browsing) == null)
-                navigate(initialPost == null ? HOME : initialPost);
-            else if (BrowserNavigation.classify(web.getUrl()) != BrowserNavigation.Target.INTERNAL) {
-                web.clearHistory();
-                navigate(HOME);
+        } else if (!retained && !privacyClearing) {
+            if(explicitLanding) {
+                status.setText(safeBrowsingAvailable?R.string.browser_session_cleared:R.string.safe_browsing_unavailable);
+                retry.setVisibility(View.GONE);
+            } else {
+                Bundle browsing = state == null || state.getLong("web_session_epoch",0)!=webSessionEpoch ? null : state.getBundle("web_navigation");
+                if (browsing == null || web.restoreState(browsing) == null)
+                    navigate(initialPost == null ? HOME : initialPost,false);
+                else if (BrowserNavigation.classify(web.getUrl()) != BrowserNavigation.Target.INTERNAL) {
+                    web.clearHistory();
+                    navigate(HOME,false);
+                }
             }
         }
+        offerPendingIncomingPost();
     }
 
     @SuppressWarnings("deprecation")
     private boolean createWebView() {
+        if(privacyClearing || BrowserPrivacy.pending(this))return false;
         try {
             web = new WebView(new MutableContextWrapper(this));
         } catch (RuntimeException unavailable) {
@@ -185,7 +217,7 @@ public final class BrowserActivity extends Activity {
         settings.setAllowFileAccessFromFileURLs(false);
         settings.setAllowUniversalAccessFromFileURLs(false);
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
-        settings.setSafeBrowsingEnabled(true);
+        try{settings.setSafeBrowsingEnabled(true);}catch(RuntimeException unsupported){/* Report the actual provider capability below. */}
         settings.setMediaPlaybackRequiresUserGesture(true);
         settings.setJavaScriptCanOpenWindowsAutomatically(false);
         settings.setSupportMultipleWindows(true);
@@ -195,15 +227,21 @@ public final class BrowserActivity extends Activity {
     }
 
     private void attachWebView() {
+        try{safeBrowsingAvailable=web.getSettings().getSafeBrowsingEnabled();}catch(RuntimeException unsupported){safeBrowsingAvailable=false;}
+        if(!safeBrowsingAvailable)status.setText(R.string.safe_browsing_unavailable);
         web.setWebViewClient(new Client());
         web.setWebChromeClient(new Chrome());
         web.setDownloadListener((url, agent, disposition, type, length) -> offerExternal(url));
         shell.addView(web, new LinearLayout.LayoutParams(-1, 0, 1));
     }
 
-    private void navigate(String url) {
-        if (!started || BrowserNavigation.classify(url) != BrowserNavigation.Target.INTERNAL) return;
+    private void navigate(String url) {navigate(url,true);}
+    private void navigate(String url,boolean explicit) {
+        if(!explicit && BrowserPrivacy.needsExplicitNavigation(this))return;
+        if (privacyClearing || BrowserPrivacy.pending(this) || !started || BrowserNavigation.classify(url) != BrowserNavigation.Target.INTERNAL) return;
         if (web == null && !createWebView()) return;
+        if(!safeBrowsingAvailable){showFailure(R.string.safe_browsing_unavailable);retry.setVisibility(View.GONE);return;}
+        if(explicit && !BrowserPrivacy.confirmExplicitNavigation(this)){showFailure(R.string.browser_privacy_failed);return;}
         failed = false;
         retryUrl = url;
         web.loadUrl(url);
@@ -215,12 +253,37 @@ public final class BrowserActivity extends Activity {
         String requested=intent==null?null:intent.getDataString();
         if (BrowserNavigation.classify(requested)!=BrowserNavigation.Target.INTERNAL ||
                 PostUrls.extractPostId(requested)==null) return;
-        initialPost=requested;
-        if (started) navigate(requested);
+        setIntent(intent);
+        if(BrowserPrivacy.needsExplicitNavigation(this) || privacyClearing) {
+            if(incomingDialog!=null){incomingDialog.dismiss();incomingDialog=null;}
+            pendingIncomingPost=PostUrls.canonicalLink(requested);offerPendingIncomingPost();
+        } else {
+            initialPost=requested;
+            if (started) navigate(requested);
+        }
+    }
+
+    private void offerPendingIncomingPost() {
+        if(pendingIncomingPost==null || privacyClearing || isFinishing() || isDestroyed() ||
+                (incomingDialog!=null && incomingDialog.isShowing()))return;
+        final String requested=pendingIncomingPost;final long epoch=pageEpoch;
+        final long browserEpoch=webSessionEpoch;
+        incomingDialog=new AlertDialog.Builder(this).setTitle(R.string.incoming_post_title)
+            .setMessage(getString(R.string.incoming_post_after_clear,requested))
+            .setNegativeButton(R.string.cancel,(d,w)->{if(requested.equals(pendingIncomingPost))pendingIncomingPost=null;})
+            .setOnCancelListener(d->{if(requested.equals(pendingIncomingPost))pendingIncomingPost=null;})
+            .setPositiveButton(R.string.open,(d,w)->{
+                if(privacyClearing || pageEpoch!=epoch || webSessionEpoch!=browserEpoch || !requested.equals(pendingIncomingPost))return;
+                pendingIncomingPost=null;
+                initialPost=requested;
+                if(started)navigate(requested);
+            }).show();
     }
 
     class Client extends WebViewClient {
         @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+            if(view!=web || privacyClearing)return true;
+            if(started && !safeBrowsingAvailable){showFailure(R.string.safe_browsing_unavailable);retry.setVisibility(View.GONE);return true;}
             BrowserNavigation.Target target = BrowserNavigation.classify(request.getUrl().toString());
             if (target == BrowserNavigation.Target.INTERNAL) return false;
             // An iframe or automatic redirect may never launch an external Activity.
@@ -230,6 +293,8 @@ public final class BrowserActivity extends Activity {
             return true;
         }
         @Override public void onPageStarted(WebView view, String url, Bitmap icon) {
+            if(view!=web || privacyClearing){view.stopLoading();return;}
+            if(started && !safeBrowsingAvailable){view.stopLoading();showFailure(R.string.safe_browsing_unavailable);retry.setVisibility(View.GONE);return;}
             cancelUpload();
             pageEpoch++;
             if (BrowserNavigation.classify(url) != BrowserNavigation.Target.INTERNAL) {
@@ -244,23 +309,25 @@ public final class BrowserActivity extends Activity {
             progress.setVisibility(View.VISIBLE);
         }
         @Override public void onPageFinished(WebView view, String url) {
+            if(view!=web || privacyClearing)return;
             progress.setVisibility(View.GONE);
-            if (!failed) status.setText(R.string.ready);
+            if (!failed) status.setText(safeBrowsingAvailable?R.string.ready:R.string.safe_browsing_unavailable);
         }
         @Override public void onReceivedError(WebView view, WebResourceRequest request,
                 WebResourceError error) {
-            if (request.isForMainFrame()) showFailure(R.string.failed);
+            if (view==web && !privacyClearing && request.isForMainFrame()) showFailure(R.string.failed);
         }
         @Override public void onReceivedHttpError(WebView view, WebResourceRequest request,
                 WebResourceResponse response) {
-            if (request.isForMainFrame()) showFailure(R.string.failed);
+            if (view==web && !privacyClearing && request.isForMainFrame()) showFailure(R.string.failed);
         }
         @Override public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
             handler.cancel();
-            showFailure(R.string.tls_failed);
+            if(view==web && !privacyClearing)showFailure(R.string.tls_failed);
         }
         @Override public boolean onRenderProcessGone(WebView view, RenderProcessGoneDetail detail) {
-            cancelUpload();
+            if(view!=web){destroyBrowserView(view);return true;}
+            cancelUpload();closePopup();
             hideFullScreen();
             shell.removeView(view);
             view.destroy();
@@ -272,7 +339,9 @@ public final class BrowserActivity extends Activity {
     }
 
     private final class Chrome extends WebChromeClient {
+        private final WebView owner=web;
         @Override public void onProgressChanged(WebView view, int value) {
+            if(view!=web || privacyClearing)return;
             progress.setProgress(value);
             if (value == 100) progress.setVisibility(View.GONE);
         }
@@ -280,8 +349,9 @@ public final class BrowserActivity extends Activity {
                 Message result) {
             // One short-lived transport window. Never give it native privileges or let
             // an unsolicited redirect silently replace the main page.
-            if (!foreground || !gesture || popupTransport!=null || result == null ||
+            if (owner!=web || (started && !safeBrowsingAvailable) || view!=web || privacyClearing || !foreground || !gesture || popupTransport!=null || result == null ||
                     !(result.obj instanceof WebView.WebViewTransport)) return false;
+            final WebView popupOwner=view;final long popupEpoch=pageEpoch;
             WebView child=new WebView(new MutableContextWrapper(BrowserActivity.this));
             popupTransport=child;
             child.getSettings().setJavaScriptEnabled(false);
@@ -299,17 +369,18 @@ public final class BrowserActivity extends Activity {
                 private boolean consumed;
                 private void route(String url) {
                     if (consumed || "about:blank".equals(url)) return;
+                    if(popupTransport!=child || web!=popupOwner || pageEpoch!=popupEpoch || privacyClearing){consumed=true;return;}
                     consumed=true;
                     popupHandler.removeCallbacks(close);
-                    if (foreground && !isFinishing()) {
+                    if (foreground && !privacyClearing && web==popupOwner && pageEpoch==popupEpoch && !isFinishing()) {
                         if (BrowserNavigation.classify(url)==BrowserNavigation.Target.INTERNAL) {
-                            new AlertDialog.Builder(BrowserActivity.this)
+                            popupDialog=new AlertDialog.Builder(BrowserActivity.this)
                                 .setTitle(R.string.popup_title).setMessage(R.string.popup_internal)
                                 .setNegativeButton(R.string.cancel,null)
-                                .setPositiveButton(R.string.open,(d,w)->navigate(url)).show();
+                                .setPositiveButton(R.string.open,(d,w)->{if(!privacyClearing && web==popupOwner && pageEpoch==popupEpoch)navigate(url);}).show();
                         } else offerExternal(url);
                     }
-                    child.stopLoading(); closePopup();
+                    child.stopLoading();if(popupTransport==child)closePopup();
                 }
                 @Override public boolean shouldOverrideUrlLoading(WebView v, WebResourceRequest request) {
                     if (request.isForMainFrame()) route(request.getUrl().toString());
@@ -336,12 +407,14 @@ public final class BrowserActivity extends Activity {
         }
         @Override public boolean onShowFileChooser(WebView view, ValueCallback<Uri[]> callback,
                 FileChooserParams params) {
+            if(owner!=web || view!=web || privacyClearing){callback.onReceiveValue(null);return true;}
             cancelUpload();
-            if (!foreground || BrowserNavigation.classify(view.getUrl()) != BrowserNavigation.Target.INTERNAL ||
+            if (view!=web || privacyClearing || !foreground || BrowserNavigation.classify(view.getUrl()) != BrowserNavigation.Target.INTERNAL ||
                     params.getMode() == FileChooserParams.MODE_SAVE) {
                 callback.onReceiveValue(null);
                 return true;
             }
+            final WebView uploadOwner=view;
             upload = callback;
             uploadPage = view.getUrl();
             uploadEpoch = pageEpoch;
@@ -351,32 +424,34 @@ public final class BrowserActivity extends Activity {
                 .setNegativeButton(R.string.cancel, (d, w) -> cancelUpload())
                 .setOnCancelListener(d -> cancelUpload())
                 .setPositiveButton(R.string.open, (d, w) -> {
+                    if(privacyClearing || web!=uploadOwner || upload!=callback || uploadEpoch!=pageEpoch)return;
                     Intent pick = new Intent(Intent.ACTION_OPEN_DOCUMENT)
                         .addCategory(Intent.CATEGORY_OPENABLE).setType("*/*")
                         .putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"image/*", "video/*"})
                         .putExtra(Intent.EXTRA_ALLOW_MULTIPLE, multiple);
-                    try { startActivityForResult(pick, PICK_MEDIA); }
-                    catch (ActivityNotFoundException missing) { cancelUpload(); toast(R.string.upload_failed); }
+                    try {uploadRequest=BrowserPrivacy.nextUploadRequest(BrowserActivity.this);startActivityForResult(pick,uploadRequest);}
+                    catch (RuntimeException missing) { cancelUpload(); toast(R.string.upload_failed); }
                 }).show();
             return true;
         }
         @Override public void onShowCustomView(View view, CustomViewCallback callback) {
-            if (fullScreen != null || !foreground) { callback.onCustomViewHidden(); return; }
+            if (owner!=web || privacyClearing || fullScreen != null || !foreground) { callback.onCustomViewHidden(); return; }
             fullScreen = view;
             fullScreenCallback = callback;
             shell.setVisibility(View.GONE);
             root.addView(view, new FrameLayout.LayoutParams(-1, -1));
         }
-        @Override public void onHideCustomView() { hideFullScreen(); }
+        @Override public void onHideCustomView() {if(owner==web)hideFullScreen();}
     }
 
     @Override protected void onActivityResult(int request, int result, Intent data) {
         super.onActivityResult(request, result, data);
-        if (request != PICK_MEDIA || upload == null) return;
+        if (request != uploadRequest || upload == null) return;
+        uploadRequest=-1;
         ValueCallback<Uri[]> callback = upload;
         upload = null;
         List<Uri> media = new ArrayList<>();
-        if (result == RESULT_OK && data != null && web != null && pageEpoch == uploadEpoch &&
+        if (!privacyClearing && result == RESULT_OK && data != null && web != null && pageEpoch == uploadEpoch &&
                 uploadPage != null && uploadPage.equals(web.getUrl()) &&
                 BrowserNavigation.classify(web.getUrl()) == BrowserNavigation.Target.INTERNAL) {
             if (data.getClipData() != null) {
@@ -403,8 +478,8 @@ public final class BrowserActivity extends Activity {
 
     private void cancelUpload() {
         if (uploadDialog != null) { uploadDialog.dismiss(); uploadDialog = null; }
-        if (upload != null) { upload.onReceiveValue(null); upload = null; }
-        uploadPage = null;
+        ValueCallback<Uri[]> cancelled=upload;upload=null;uploadPage=null;uploadRequest=-1;
+        if(cancelled!=null)cancelled.onReceiveValue(null);
     }
     private void closePopup() {
         if (popupCleanup!=null) {
@@ -429,12 +504,14 @@ public final class BrowserActivity extends Activity {
         retry.setVisibility(View.VISIBLE);
     }
     private void offerExternal(String value) {
-        if (!foreground || BrowserNavigation.classify(value) == BrowserNavigation.Target.BLOCKED) return;
+        if (privacyClearing || !foreground || BrowserNavigation.classify(value) == BrowserNavigation.Target.BLOCKED) return;
         Uri uri = Uri.parse(value);
-        new AlertDialog.Builder(this).setTitle(R.string.external)
+        final long externalEpoch=pageEpoch;final WebView externalOwner=web;
+        externalDialog=new AlertDialog.Builder(this).setTitle(R.string.external)
             .setMessage(getString(R.string.external_body, uri.getHost()))
             .setNegativeButton(R.string.cancel, null)
             .setPositiveButton(R.string.open, (d, w) -> {
+                if(privacyClearing || pageEpoch!=externalEpoch || web!=externalOwner)return;
                 try {
                     // Never forward headers, cookies, page titles or arbitrary intent:// extras.
                     startActivity(new Intent(Intent.ACTION_VIEW, uri).addCategory(Intent.CATEGORY_BROWSABLE));
@@ -584,10 +661,11 @@ public final class BrowserActivity extends Activity {
 
     private void showMenu(View anchor) {
         PopupMenu menu = new PopupMenu(this, anchor);
-        if (started) {
+        if (started && !privacyClearing) {
             menu.getMenu().add(R.string.home).setOnMenuItemClickListener(item -> { navigate(HOME); return true; });
             menu.getMenu().add(R.string.reload).setOnMenuItemClickListener(item -> {
-                if (web != null) web.reload(); return true;
+                if(!safeBrowsingAvailable){showFailure(R.string.safe_browsing_unavailable);retry.setVisibility(View.GONE);}
+                else if (web != null)web.reload(); return true;
             });
         }
         menu.getMenu().add(R.string.local_archive).setOnMenuItemClickListener(item -> {
@@ -612,21 +690,88 @@ public final class BrowserActivity extends Activity {
         if (started) menu.getMenu().add(R.string.local_save).setOnMenuItemClickListener(item -> {
             saveCurrentPostManually(); return true;
         });
+        menu.getMenu().add(R.string.clear_browser_cache).setEnabled(!privacyClearing).setOnMenuItemClickListener(item->{confirmClearBrowserCache();return true;});
+        menu.getMenu().add(R.string.clear_web_session).setEnabled(!privacyClearing).setOnMenuItemClickListener(item->{confirmClearWebSession();return true;});
         menu.getMenu().add(R.string.about).setOnMenuItemClickListener(item -> {
             PackageInfo provider = WebView.getCurrentWebViewPackage();
             String version = provider == null ? "unavailable" : provider.packageName + " " + provider.versionName;
             new AlertDialog.Builder(this).setTitle(R.string.about)
                 .setMessage(getString(R.string.about_body, BuildConfig.VERSION_NAME,
-                    Build.VERSION.RELEASE, Build.VERSION.SDK_INT, version))
+                    Build.VERSION.RELEASE, Build.VERSION.SDK_INT, version)+"\n\n"+
+                    getString(safeBrowsingAvailable?R.string.safe_browsing_enabled:R.string.safe_browsing_unavailable))
                 .setPositiveButton(android.R.string.ok, null).show();
             return true;
         });
         menu.show();
     }
+    void confirmClearBrowserCache() {
+        if(privacyClearing)return;
+        privacyDialog=new AlertDialog.Builder(this).setTitle(R.string.clear_browser_cache)
+            .setMessage(R.string.clear_browser_cache_notice).setNegativeButton(R.string.cancel,null)
+            .setPositiveButton(R.string.clear_confirm,(d,w)->{
+                if(privacyClearing)return;
+                if(web==null){toast(R.string.browser_privacy_failed);return;}
+                try{BrowserPrivacy.clearCache(web);toast(R.string.browser_cache_cleared);}
+                catch(RuntimeException failure){toast(R.string.browser_privacy_failed);}
+            }).show();
+    }
+    void confirmClearWebSession() {
+        if(privacyClearing)return;
+        privacyDialog=new AlertDialog.Builder(this).setTitle(R.string.clear_web_session)
+            .setMessage(R.string.clear_web_session_notice).setNegativeButton(R.string.cancel,null)
+            .setPositiveButton(R.string.clear_confirm,(d,w)->clearConfirmedWebSession()).show();
+    }
+    private void clearConfirmedWebSession() {
+        if(privacyClearing)return;
+        try{BrowserPrivacy.beginSessionClear(this);}catch(RuntimeException unavailable){toast(R.string.browser_privacy_failed);return;}
+        privacyClearing=true;webSessionEpoch=BrowserPrivacy.sessionEpoch(this);pageEpoch++;
+        initialPost=null;pendingIncomingPost=null;retryUrl=HOME;failed=false;
+        cancelUpload();closePopup();hideFullScreen();dismissNavigationDialogs();
+        if(web!=null){web.clearHistory();destroyBrowserView(web);}
+        continueSessionClear();
+    }
+    private void continueSessionClear() {
+        privacyClearing=true;status.setText(R.string.browser_session_clearing);
+        progress.setVisibility(View.GONE);retry.setVisibility(View.GONE);
+        try{BrowserPrivacy.resumePendingClear(this);}catch(RuntimeException failure){showFailure(R.string.browser_privacy_failed);return;}
+        privacyDeadline=android.os.SystemClock.elapsedRealtime()+15000;
+        popupHandler.removeCallbacks(privacyPoll);popupHandler.post(privacyPoll);
+    }
+    private void finishSessionClearWhenReady() {
+        if(isFinishing() || isDestroyed())return;
+        if(BrowserPrivacy.pending(this)) {
+            if(android.os.SystemClock.elapsedRealtime()>=privacyDeadline){showFailure(R.string.browser_privacy_failed);return;}
+            popupHandler.postDelayed(privacyPoll,50);return;
+        }
+        privacyClearing=false;webSessionEpoch=BrowserPrivacy.sessionEpoch(this);
+        if(web==null && !createWebView())return;
+        // Leave a clean, empty renderer. Only the user's next navigation opens a website.
+        status.setText(R.string.browser_session_cleared);retry.setVisibility(View.GONE);progress.setVisibility(View.GONE);
+        if(!foreground)web.onPause();
+        offerPendingIncomingPost();
+    }
+    private void destroyBrowserView(WebView owner) {
+        if(owner==null)return;
+        if(owner.getParent() instanceof ViewGroup)((ViewGroup)owner.getParent()).removeView(owner);
+        owner.stopLoading();owner.setDownloadListener(null);owner.setWebChromeClient(null);
+        owner.setWebViewClient(new WebViewClient(){
+            @Override public boolean shouldOverrideUrlLoading(WebView v,WebResourceRequest r){return true;}
+            @Override public void onReceivedSslError(WebView v,SslErrorHandler h,SslError e){h.cancel();}
+        });
+        owner.destroy();if(web==owner)web=null;
+    }
+    private void dismissNavigationDialogs() {
+        if(incomingDialog!=null){incomingDialog.dismiss();incomingDialog=null;}
+        if(popupDialog!=null){popupDialog.dismiss();popupDialog=null;}
+        if(externalDialog!=null){externalDialog.dismiss();externalDialog=null;}
+    }
     private void toast(int message) { Toast.makeText(this, message, Toast.LENGTH_SHORT).show(); }
     @Override public void onBackPressed() {
         if (fullScreen != null) hideFullScreen();
-        else if (web != null && web.canGoBack()) { cancelUpload(); web.goBack(); }
+        else if (web != null && web.canGoBack()) {
+            if(started && !safeBrowsingAvailable){showFailure(R.string.safe_browsing_unavailable);retry.setVisibility(View.GONE);return;}
+            cancelUpload();web.goBack();
+        }
         else super.onBackPressed();
     }
     @Override protected void onResume() {
@@ -641,7 +786,10 @@ public final class BrowserActivity extends Activity {
         super.onPause();
     }
     @Override protected void onSaveInstanceState(Bundle state) {
-        if (started && web != null) {
+        state.putLong("web_session_epoch",BrowserPrivacy.sessionEpoch(this));
+        state.remove("web_navigation");
+        if(pendingIncomingPost!=null)state.putString("pending_incoming_post",pendingIncomingPost);
+        if (!privacyClearing && started && web != null) {
             Bundle browsing = new Bundle();
             web.saveState(browsing);
             state.putBundle("web_navigation", browsing);
@@ -649,7 +797,9 @@ public final class BrowserActivity extends Activity {
         super.onSaveInstanceState(state);
     }
     @Override protected void onDestroy() {
-        closePopup();
+        popupHandler.removeCallbacks(privacyPoll);
+        if(privacyDialog!=null){privacyDialog.dismiss();privacyDialog=null;}
+        dismissNavigationDialogs();closePopup();
         cancelUpload(); hideFullScreen();
         if (web != null && !isChangingConfigurations()) {
             shell.removeView(web);
@@ -676,6 +826,6 @@ public final class BrowserActivity extends Activity {
         });
         if (web.getContext() instanceof MutableContextWrapper)
             ((MutableContextWrapper)web.getContext()).setBaseContext(getApplicationContext());
-        return new Page(web,pageEpoch,retryUrl,failed);
+        return new Page(web,pageEpoch,webSessionEpoch,retryUrl,failed);
     }
 }

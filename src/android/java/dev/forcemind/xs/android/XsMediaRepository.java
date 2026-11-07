@@ -92,8 +92,8 @@ public final class XsMediaRepository extends SQLiteOpenHelper {
         privateRoot=context.getDataDir();
         savedDir = new File(context.getFilesDir(), "xs-saved-media"+storageSuffix);
         shareDir = new File(context.getFilesDir(), "xs-share-leases"+storageSuffix);
-        if (!savedDir.isDirectory() && !savedDir.mkdirs()) throw new IllegalStateException("Media storage unavailable");
-        if (!shareDir.isDirectory() && !shareDir.mkdirs()) throw new IllegalStateException("Share storage unavailable");
+        ensureStorageDirectory(savedDir);
+        ensureStorageDirectory(shareDir);
         // A fresh process never calls stale work completed or appends an unverifiable partial file.
         getWritableDatabase().execSQL("UPDATE assets SET state=CASE WHEN url_cipher IS NULL THEN 'FAILED' ELSE 'PAUSED' END, error='Interrupted; next permitted run restarts at byte zero', run_token=NULL, bytes=0, media_url=NULL WHERE state IN ('QUEUED','DOWNLOADING')");
         for (File file : files(savedDir)) if (file.getName().endsWith(".part")) file.delete();
@@ -520,6 +520,12 @@ public final class XsMediaRepository extends SQLiteOpenHelper {
     }
     private void deleteParts(String id) {
         for(File file:files(savedDir))if(file.getName().equals(id+".part")||(file.getName().startsWith(id+".")&&file.getName().endsWith(".part")))deleteFile(file);
+    }
+    /** Persist the files/ directory entry as well as contents before any metadata can reference it. */
+    private static void ensureStorageDirectory(File directory) {
+        if(!directory.isDirectory()&&!directory.mkdir()&&!directory.isDirectory())throw new IllegalStateException("Private media storage unavailable");
+        try{syncDirectory(directory);syncDirectory(directory.getParentFile());}
+        catch(IOException unavailable){throw new IllegalStateException("Private media storage initialization failed");}
     }
     private static void syncDirectory(File directory)throws IOException {
         java.io.FileDescriptor descriptor=null;

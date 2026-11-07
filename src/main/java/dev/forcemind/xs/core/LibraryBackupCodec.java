@@ -37,7 +37,7 @@ public final class LibraryBackupCodec {
                 throw invalid();
             LinkedHashMap<String,Object> copy=new LinkedHashMap<>();
             for(Map.Entry<String,Object> field:values.entrySet()) {
-                if(field.getKey()==null||!field.getKey().matches("[a-z_]{1,40}"))throw invalid();
+                if(field.getKey()==null||!field.getKey().matches("[a-z_][a-z0-9_]{0,39}"))throw invalid();
                 Object value=field.getValue();
                 if(value!=null&&!(value instanceof Long)&&!(value instanceof String))throw invalid();
                 if(value instanceof String){if(((String)value).length()>16000)throw invalid();unicode((String)value);}

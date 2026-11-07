@@ -32,7 +32,7 @@ final class VideoFileValidator {
             java.util.Map<java.util.UUID,byte[]> pssh=extractor.getPsshInfo();
             if(pssh!=null&&!pssh.isEmpty())throw invalid();
             int tracks=extractor.getTrackCount(),videos=0,audios=0,width=0,height=0;
-            long durationUs=0;int sampleBudget=MAX_SAMPLES;
+            long durationUs=0,lastVideoTimeUs=-1;int sampleBudget=MAX_SAMPLES;
             long deadline=android.os.SystemClock.elapsedRealtime()+30_000;
             if(tracks<1||tracks>2)throw invalid();
             ByteBuffer buffer=ByteBuffer.allocate(MAX_SAMPLE_BYTES);
@@ -66,6 +66,7 @@ final class VideoFileValidator {
                 extractor.unselectTrack(i);
                 // A movie declaring a much longer track than its samples is incomplete.
                 if(samples==0||maxTime<0||trackDuration-maxTime>1_000_000)throw invalid();
+                if("video/avc".equals(mime))lastVideoTimeUs=maxTime;
             }
             if(videos!=1||audios>1)throw invalid();
             retriever.setDataSource(file.getPath());
@@ -73,8 +74,10 @@ final class VideoFileValidator {
             int rotation=Integer.parseInt(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION));
             if(metadataDuration<=0||metadataDuration>MAX_DURATION_MS||Math.abs(metadataDuration-durationUs/1000)>1000||
                 !(rotation==0||rotation==90||rotation==180||rotation==270))throw invalid();
-            decodeFrame(retriever,0);
-            decodeFrame(retriever,Math.max(0,metadataDuration-100)*1000);
+            if(!decodeFrame(retriever,0))throw invalid();
+            // Older retrievers can stop at input EOS before draining a delayed tail frame.
+            // Verify the actual final presentation timestamp through the codec, never an earlier sync frame.
+            if(!decodeFrame(retriever,Math.max(0,metadataDuration-100)*1000))decodeVideoTail(file,lastVideoTimeUs);
             if(audios>0){decodeAudio(file,0);decodeAudio(file,Math.max(0,durationUs-250_000));}
             return new Info(Math.max(metadataDuration,durationUs/1000),width,height,videos,audios,rotation);
         } catch(IOException failure) {throw failure;}
@@ -117,6 +120,50 @@ final class VideoFileValidator {
             throw invalid();
         } finally {input.release();if(codec!=null){try{codec.stop();}catch(RuntimeException ignored){}codec.release();}}
     }
+    /** Local-file fallback for retrievers that fail to drain at EOS; same-package seam tests real decoding. */
+    static void decodeVideoTail(File file,long lastPresentationUs)throws IOException {
+        if(lastPresentationUs<0)throw invalid();
+        MediaExtractor input=new MediaExtractor();MediaCodec codec=null;
+        try {
+            input.setDataSource(file.getPath());MediaFormat video=null;
+            for(int i=0;i<input.getTrackCount();i++) {
+                MediaFormat candidate=input.getTrackFormat(i);
+                if("video/avc".equals(candidate.getString(MediaFormat.KEY_MIME))){video=candidate;input.selectTrack(i);break;}
+            }
+            if(video==null)throw invalid();
+            input.seekTo(lastPresentationUs,MediaExtractor.SEEK_TO_PREVIOUS_SYNC);
+            codec=MediaCodec.createDecoderByType("video/avc");codec.configure(video,null,null,0);codec.start();
+            long deadline=android.os.SystemClock.elapsedRealtime()+5000;boolean ended=false;int samples=0;
+            MediaCodec.BufferInfo info=new MediaCodec.BufferInfo();
+            while(android.os.SystemClock.elapsedRealtime()<deadline&&!Thread.currentThread().isInterrupted()) {
+                if(!ended) {
+                    int slot=codec.dequeueInputBuffer(10000);
+                    if(slot>=0) {
+                        ByteBuffer buffer=codec.getInputBuffer(slot);if(buffer==null)throw invalid();
+                        if(input.getSampleTrackIndex()<0){codec.queueInputBuffer(slot,0,0,0,MediaCodec.BUFFER_FLAG_END_OF_STREAM);ended=true;}
+                        else {
+                            long time=input.getSampleTime();if(time<0||++samples>MAX_SAMPLES)throw invalid();
+                            int count=readBoundedSample(input,buffer);codec.queueInputBuffer(slot,0,count,time,0);input.advance();
+                        }
+                    }
+                }
+                int slot=codec.dequeueOutputBuffer(info,10000);
+                if(slot>=0) {
+                    boolean decoded=info.size>0&&(info.flags&MediaCodec.BUFFER_FLAG_CODEC_CONFIG)==0;
+                    boolean reached=decoded&&info.presentationTimeUs>=lastPresentationUs;
+                    boolean eos=(info.flags&MediaCodec.BUFFER_FLAG_END_OF_STREAM)!=0;
+                    codec.releaseOutputBuffer(slot,false);
+                    if(reached) {
+                        MediaFormat output=codec.getOutputFormat();int width=output.getInteger(MediaFormat.KEY_WIDTH),height=output.getInteger(MediaFormat.KEY_HEIGHT);
+                        if(width<=0||height<=0||width>3840||height>2160||(long)width*height>8_294_400)throw invalid();
+                        return;
+                    }
+                    if(eos)break;
+                }
+            }
+            throw invalid();
+        } finally {input.release();if(codec!=null){try{codec.stop();}catch(RuntimeException ignored){}codec.release();}}
+    }
     /** A present sample must fit the bounded buffer; uses the same API-16 read path on every OS. */
     private static int readBoundedSample(MediaExtractor input,ByteBuffer buffer)throws IOException {
         int maximum=Math.min(MAX_SAMPLE_BYTES,buffer.capacity());
@@ -127,10 +174,10 @@ final class VideoFileValidator {
         if(bytes<=0||bytes>maximum)throw invalid();
         return bytes;
     }
-    private static void decodeFrame(MediaMetadataRetriever retriever,long us)throws IOException {
+    private static boolean decodeFrame(MediaMetadataRetriever retriever,long us)throws IOException {
         Bitmap frame=retriever.getFrameAtTime(us,MediaMetadataRetriever.OPTION_CLOSEST);
-        if(frame==null)throw invalid();
-        try {if(frame.getWidth()<=0||frame.getHeight()<=0||(long)frame.getWidth()*frame.getHeight()>8_294_400)throw invalid();}
+        if(frame==null)return false;
+        try {if(frame.getWidth()<=0||frame.getHeight()<=0||(long)frame.getWidth()*frame.getHeight()>8_294_400)throw invalid();return true;}
         finally {frame.recycle();}
     }
     private static IOException invalid(){return new IOException("Unsupported or incomplete standard video");}

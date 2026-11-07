@@ -33,6 +33,7 @@ public class BrowserContainerTest {
         app.getSharedPreferences("browser.BrowserActivity", Context.MODE_PRIVATE).edit().clear().commit();
     }
     @Test public void initialHostHasNoNavigationAndRestrictedSettings() {
+        final boolean[] safeBrowsing={false};
         try (ActivityScenario<BrowserActivity> scenario = ActivityScenario.launch(BrowserActivity.class)) {
             scenario.onActivity(activity -> {
                 WebView web = activity.findViewById(R.id.browser_view);
@@ -45,7 +46,15 @@ public class BrowserContainerTest {
                 assertFalse(s.getAllowFileAccess());
                 assertFalse(s.getAllowContentAccess());
                 assertEquals(WebSettings.MIXED_CONTENT_NEVER_ALLOW, s.getMixedContentMode());
-                assertTrue(s.getSafeBrowsingEnabled());
+                safeBrowsing[0]=s.getSafeBrowsingEnabled();
+                if(safeBrowsing[0])assertTrue(s.getSafeBrowsingEnabled());
+                else {
+                    assertEquals(activity.getString(R.string.safe_browsing_unavailable),((TextView)activity.findViewById(R.id.browser_status)).getText().toString());
+                    activity.findViewById(R.id.open_x).performClick();
+                    assertNull("Unsupported provider must not navigate after notice acceptance",web.getUrl());
+                    assertFalse(web.canGoBack());
+                    assertEquals(activity.getString(R.string.safe_browsing_unavailable),((TextView)activity.findViewById(R.id.browser_status)).getText().toString());
+                }
                 assertTrue(s.getMediaPlaybackRequiresUserGesture());
                 assertFalse(s.getJavaScriptCanOpenWindowsAutomatically());
                 assertTrue((activity.getWindow().getAttributes().flags &
@@ -54,7 +63,12 @@ public class BrowserContainerTest {
             scenario.recreate();
             scenario.onActivity(activity -> {
                 assertNotNull(activity.findViewById(R.id.browser_view));
-                assertNotNull(activity.findViewById(R.id.open_x));
+                if(safeBrowsing[0])assertNotNull(activity.findViewById(R.id.open_x));
+                else {
+                    assertNull(activity.findViewById(R.id.open_x));
+                    assertNull(((WebView)activity.findViewById(R.id.browser_view)).getUrl());
+                    assertEquals(activity.getString(R.string.safe_browsing_unavailable),((TextView)activity.findViewById(R.id.browser_status)).getText().toString());
+                }
             });
         }
     }

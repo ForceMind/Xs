@@ -4,6 +4,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.util.Base64;
@@ -93,6 +94,7 @@ public final class FullBackupIntegrationTest {
         byte[] metadata=metadata();int libraries=libraries(),assets=allAssets(),staging=stagingCount();
         Map<String,Object> descriptor=descriptor(png);descriptor.put("filename","../../outside.db");reject(candidate(metadata,descriptor,png,1),PASSWORD);
         descriptor=descriptor(png);descriptor.put("post_url","file:///data/data/private");reject(candidate(metadata,descriptor,png,1),PASSWORD);
+        descriptor=descriptor(png);descriptor.put("sha257",descriptor.remove("sha256"));reject(candidate(metadata,descriptor,png,1),PASSWORD); // Legal identifier, outside the native allowlist.
         descriptor=descriptor(png);reject(candidate(metadata,descriptor,png,2),PASSWORD); // Duplicate opaque source identity.
         File invalid=File.createTempFile("full-backup-invalid-",".png",app.getCacheDir());
         try {try(FileOutputStream out=new FileOutputStream(invalid)){out.write("not a real image, even with a valid checksum".getBytes(StandardCharsets.UTF_8));}
@@ -105,7 +107,8 @@ public final class FullBackupIntegrationTest {
         archive.getWritableDatabase().execSQL("CREATE TRIGGER fixture_full_restore_reject BEFORE INSERT ON libraries WHEN new.label='reject-full-fixture' BEGIN SELECT RAISE(ABORT,'fixture'); END");
         try {
             XsFullBackup.Prepared prepared=XsFullBackup.inspectEncrypted(app,source,new ByteArrayInputStream(encrypted),PASSWORD);
-            try{XsFullBackup.restoreNewLibrary(app,prepared,"reject-full-fixture");fail("SQLite fixture must abort after media staging");}catch(IOException expected){}
+            try{XsFullBackup.restoreNewLibrary(app,prepared,"reject-full-fixture");fail("SQLite fixture must abort after media staging");}
+            catch(IOException expected){boolean fixture=false;for(Throwable cause=expected;cause!=null;cause=cause.getCause())if(cause.getMessage()!=null&&cause.getMessage().contains("fixture"))fixture=true;assertTrue("Reached the explicit SQLite abort after staging",fixture);}
         }finally{archive.getWritableDatabase().execSQL("DROP TRIGGER fixture_full_restore_reject");}
         assertEquals(libraries,libraries());assertEquals(assets,allAssets());assertEquals(staging,stagingCount());assertEquals(0,markerCount());
         assertEquals(2,media.list(source).size());assertEquals(defaultLibrary,XsLocalSpaces.defaultLibrary(app));
@@ -117,9 +120,11 @@ public final class FullBackupIntegrationTest {
         assertEquals(libraries,libraries());assertEquals(0,media.list(source).size());assertEquals(0,markerCount());assertEquals(defaultLibrary,XsLocalSpaces.defaultLibrary(app));
     }
     @Test public void sourceEpochChangeStopsExportBeforeAuthenticatedCompletion()throws Exception {
-        addResources();int libraries=libraries(),staging=stagingCount();ByteArrayOutputStream bytes=new ByteArrayOutputStream();
-        java.io.OutputStream changed=new java.io.OutputStream(){boolean first=true;@Override public void write(int value){bytes.write(value);}@Override public void write(byte[] b,int off,int count){bytes.write(b,off,count);if(first){first=false;XsLibraryWrites.invalidate(source);}}};
+        addResources();int libraries=libraries(),staging=stagingCount();ByteArrayOutputStream bytes=new ByteArrayOutputStream();boolean[] revoked={false};
+        XsLibraryWrites.Ticket original=XsLibraryWrites.ticket(source);
+        java.io.OutputStream changed=new java.io.OutputStream(){boolean first=true;@Override public void write(int value){bytes.write(value);}@Override public void write(byte[] b,int off,int count){bytes.write(b,off,count);if(first){first=false;revoked[0]=true;XsLibraryWrites.invalidate(source);}}};
         try{XsFullBackup.exportEncrypted(app,source,changed,PASSWORD);fail("expired export completed");}catch(IOException expected){}
+        assertTrue("Reached encrypted output before invalidation",revoked[0]);assertTrue(bytes.size()>=EncryptedLibraryBackup.HEADER_BYTES);assertFalse(XsLibraryWrites.isCurrent(original));
         reject(bytes.toByteArray(),PASSWORD);assertEquals(libraries,libraries());assertEquals(2,media.list(source).size());assertEquals(staging,stagingCount());assertEquals(0,markerCount());
     }
     @Test public void startupRecoveryDeletesUnpublishedResourcesButPreservesACommittedResult()throws Exception {
@@ -132,6 +137,37 @@ public final class FullBackupIntegrationTest {
         XsFullBackup.recoverInterrupted(app);assertFalse(committedMarker.exists());assertEquals(2,media.list(committed).size());
         for(XsMediaRepository.Asset asset:media.list(committed))assertTrue(media.completedFile(committed,asset.id).isFile());assertEquals(2,media.list(source).size());assertEquals(defaultLibrary,XsLocalSpaces.defaultLibrary(app));
     }
+    @Test public void publishedMarkerWaitsForACompleteRealWalCheckpointAndRetriesAfterBusyWriter()throws Exception {
+        XsLibraryBackup.ValidatedBackup metadata=XsLibraryBackup.inspect(new ByteArrayInputStream(metadata()));AtomicReference<String> created=new AtomicReference<>();
+        write(source,()->created.set(XsLibraryBackup.restoreNewLibrary(app,metadata,"checkpoint fixture")));String target=created.get();owned.add(target);
+        File pending=marker(target);SQLiteDatabase db=archive.getWritableDatabase();long synchronous=pragma(db,"PRAGMA main.synchronous"),timeout=pragma(db,"PRAGMA busy_timeout");
+        try {
+            try(Cursor mode=db.rawQuery("PRAGMA main.journal_mode",null)){assertTrue(mode.moveToFirst());assertEquals("wal",mode.getString(0));}
+            try(SQLiteDatabase writer=SQLiteDatabase.openDatabase(db.getPath(),null,SQLiteDatabase.OPEN_READWRITE|SQLiteDatabase.ENABLE_WRITE_AHEAD_LOGGING)) {
+                writer.beginTransactionNonExclusive(); // Concrete held writer lock, no timing sleeps.
+                try {XsFullBackup.recoverInterrupted(app);assertTrue("Busy published registration keeps its recovery marker",pending.exists());}
+                finally{writer.endTransaction();}
+            }
+            XsFullBackup.recoverInterrupted(app);assertFalse("A later complete checkpoint retires the marker",pending.exists());
+            assertEquals(synchronous,pragma(db,"PRAGMA main.synchronous"));assertEquals(timeout,pragma(db,"PRAGMA busy_timeout"));
+            try(Cursor found=archive.search(target,new ArchiveSearch.Filter())){assertEquals(1,found.getCount());}
+            try(Cursor found=archive.search(source,new ArchiveSearch.Filter())){assertEquals(1,found.getCount());}
+            assertEquals(defaultLibrary,XsLocalSpaces.defaultLibrary(app));
+        }finally{pending.delete();}
+    }
+    @Test public void rollbackJournalFullSyncRetainsMarkerAndExtraSyncCanRetireIt()throws Exception {
+        File database=File.createTempFile("full-backup-checkpoint-",".db",app.getCacheDir());File pending=marker("local:"+UUID.randomUUID());
+        try(SQLiteDatabase db=SQLiteDatabase.openOrCreateDatabase(database,null)) {
+            db.disableWriteAheadLogging();db.execSQL("PRAGMA synchronous=FULL");db.execSQL("CREATE TABLE checkpoint_fixture(value INTEGER)");db.execSQL("INSERT INTO checkpoint_fixture VALUES(1)");
+            try(Cursor mode=db.rawQuery("PRAGMA main.journal_mode",null)){assertTrue(mode.moveToFirst());assertTrue(Arrays.asList("delete","truncate","persist").contains(mode.getString(0)));}
+            assertEquals(2,pragma(db,"PRAGMA main.synchronous"));assertFalse(XsFullBackup.checkpointAndClearMarker(db,pending));assertTrue(pending.exists());
+            db.execSQL("PRAGMA synchronous=EXTRA");db.execSQL("INSERT INTO checkpoint_fixture VALUES(2)");
+            assertEquals(3,pragma(db,"PRAGMA main.synchronous"));assertTrue(XsFullBackup.checkpointAndClearMarker(db,pending));assertFalse(pending.exists());
+            try(Cursor rows=db.rawQuery("SELECT COUNT(*) FROM checkpoint_fixture",null)){assertTrue(rows.moveToFirst());assertEquals(2,rows.getInt(0));}
+            assertEquals(defaultLibrary,XsLocalSpaces.defaultLibrary(app));
+        }finally{pending.delete();SQLiteDatabase.deleteDatabase(database);}
+    }
+    private static long pragma(SQLiteDatabase db,String sql){try(Cursor c=db.rawQuery(sql,null)){assertTrue(c.moveToFirst());return c.getLong(0);}}
     private void addResources()throws Exception {
         VideoFileValidator.Info video=VideoFileValidator.validate(movie);
         write(source,()->media.restoreCompleted(source,Arrays.asList(image(png),new XsMediaRepository.RestoredAsset(POST,"VIDEO","video/mp4",movie.length(),hash(movie),"视频",2500L,video.durationMs,video.width,video.height,video.videoTracks,video.audioTracks,video.rotationDegrees,movie))));

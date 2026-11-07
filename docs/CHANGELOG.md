@@ -2,13 +2,13 @@
 
 本文件记录决策变化，不把文档提交计作功能完成。代码执行与测试结果保留在各执行记录和 CI 中。
 
-## 2026-11-07 — v5快照、系统下载、加密资源备份与资料管理增量（当前CI待执行）
+## 2026-11-07 — v5快照、系统下载、加密资源备份与资料管理增量（首轮CI失败，修正后回归待执行）
 
-接续既有仓库实际修改SQLite/Java/Android/JS和CI，不重建项目。当前源码和精确执行状态统一记录在 [本轮可靠性与资料管理证据](ROUND_D_EVIDENCE.zh-CN.md)。本轮API26/30/36和新增SAF/原生UI为**PENDING**；旧933条JVM/146项API30/36结果只属于下节旧提交，不能沿用。新增测试编码/编译不代表真实执行通过。
+接续既有仓库实际修改SQLite/Java/Android/JS和CI，不重建项目。当前源码和精确执行状态统一记录在 [本轮可靠性与资料管理证据](ROUND_D_EVIDENCE.zh-CN.md)。源码50c91ec的 [首轮CI66](https://github.com/ForceMind/Xs/actions/runs/42369802915) core/构建通过，API26/30/36共342项仪器实际执行304通过/38失败/0跳过；问题包含备份sha256字段名校验、fixture provider初始化及观察/最低版本兼容，正在修复。LibraryUiTest和AssetLibraryUiTest三个API共39项全部通过（含206版本分页、批量和整库删除），只作为该源码的局部证据。修正后完整回归仍**PENDING**，不将66整体改写为PASS；旧933条JVM/146项API30/36结果仅属下节历史提交。
 
 - SQLite v5新增快照版本、current pointer、质量/来源/收录时间和历史正文全文搜索；原生detail证据支持COMPLETE仅表示接受的可见DOM正文完整，不保证服务器全文。更新但较短的COMPLETE可成为current，PARTIAL不降级；全部版本保留、版本面板每页50条/前后翻页/关键词查询且浏览只读、合并沿用SnapshotPolicy且源/default不覆盖。
 - 原生帖子批量收藏/分类/标签追加替换/取消，资源分页文字/类型/状态查询、多选分类/删除/实际文件分享与单项/多项ZIP导出（每批≤200MiB）；历史/收藏/资源与整库的删除范围分开。
-- 下载用JobScheduler持久任务；API34+主动请求先尝试UIDT并可fallback普通任务，API26～33普通任务。AndroidKeystore AES-GCM密封URL且绑定task/library/post/kind，job不带URL；最多3次总网络尝试（首次+2次暂时错误重试），均从头下载。进程恢复为PAUSED，已有任务尊重OS调度、缺任务不盲目重排绕过stop；取消/完成清候选，不宣称断点续传或及时后台。
+- 下载用JobScheduler持久任务；API34+主动请求先尝试UIDT并可fallback普通任务，API26～33普通任务。AndroidKeystore AES-GCM密封URL且绑定task/library/post/kind，job不带URL；每轮最多3次总网络尝试（首次+2次暂时错误重试），均从头下载。进程恢复为PAUSED，已有任务尊重OS调度、缺任务不盲目重排绕过stop；取消/完成清候选，不宣称断点续传或及时后台。
 - 新增口令分块AES-256-GCM完整资源备份：PBKDF2-HMAC-SHA256/600k、64KiB认证块/最终空块/EOF、明文负载≤512MiB/500完成资源，内部元数据仍≤16MiB/20,000条，图片/视频各≤20/100MiB。口令8～1024字符不持久保存、遗失不可恢复；完整认证/元数据FK/哈希/媒体验证后预览，新UUID恢复，media-first/archive-last与崩溃markers，源/default保留。明文元数据选项保留；均不导出会话/密钥/任务/候选URL/lease，不代表SQLite加密。
 - 完整删库先持久tombstone再shared barrier，阻止旧/未来普通任务复活，事务拿写锁后再检查revocation；仅删除default才轮换UUID；媒体/元数据失败保留pending可手动/启动重试，另库和24小时接收副本租约保留。提供明确的typed确认管理UI。
 - 合格停留时长按1秒合并更新、10分钟测量cap后不再反复写，暂停观察器停止JS计时；新增压力与生命周期回归，尚不能据此宣称真实耗电/多日稳定性。

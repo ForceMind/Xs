@@ -10,6 +10,8 @@ import android.graphics.ImageFormat;
 import android.media.Image;
 import android.media.ImageReader;
 import android.media.MediaPlayer;
+import android.media.MediaExtractor;
+import android.media.MediaFormat;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
@@ -97,6 +99,22 @@ public final class VideoDownloadEngineTest {
         try(ParcelFileDescriptor.AutoCloseInputStream input=new ParcelFileDescriptor.AutoCloseInputStream(context.getContentResolver().openFileDescriptor(uri,"r"));ByteArrayOutputStream out=new ByteArrayOutputStream()){
             byte[] buffer=new byte[1024];int n;while((n=input.read(buffer))!=-1)out.write(buffer,0,n);assertArrayEquals(movie,out.toByteArray());
         }
+    }
+    @Test public void codecTailFallbackReachesFinalPresentationBeyondPreviousSync()throws Exception {
+        File movie=File.createTempFile("video-tail-fixture-",".mp4",context.getCacheDir());
+        try {
+            try(FileOutputStream output=new FileOutputStream(movie)){output.write(fixture("standard"));}
+            MediaExtractor extractor=new MediaExtractor();long last=-1,lastSync=-1;
+            try {
+                extractor.setDataSource(movie.getPath());
+                for(int i=0;i<extractor.getTrackCount();i++)if("video/avc".equals(extractor.getTrackFormat(i).getString(MediaFormat.KEY_MIME))){extractor.selectTrack(i);break;}
+                do{if(extractor.getSampleTrackIndex()<0)break;long time=extractor.getSampleTime();last=Math.max(last,time);if((extractor.getSampleFlags()&MediaExtractor.SAMPLE_FLAG_SYNC)!=0)lastSync=Math.max(lastSync,time);}while(extractor.advance());
+            }finally{extractor.release();}
+            assertTrue("Fixture tail is after its final sync sample",last>=900_000&&last>lastSync);
+            VideoFileValidator.decodeVideoTail(movie,last);
+            try{VideoFileValidator.decodeVideoTail(movie,last+1_000_000);fail("Earlier keyframe cannot satisfy a missing tail");}catch(java.io.IOException expected){}
+            assertEquals(1,VideoFileValidator.validate(movie).videoTracks);
+        }finally{assertTrue(movie.delete());}
     }
     private void playToCompletion(File file)throws Exception {
         CountDownLatch completed=new CountDownLatch(1);AtomicReference<String> error=new AtomicReference<>();AtomicInteger frames=new AtomicInteger();

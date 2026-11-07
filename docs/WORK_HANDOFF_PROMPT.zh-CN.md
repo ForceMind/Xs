@@ -30,7 +30,7 @@
 
 - SQLite v5保留v1～v4数据/旧命名空间，新增snapshot_versions/current pointer、来源/收录时间/质量、历史正文全文搜索和只读版本浏览。COMPLETE仅表示原生证据支持的接受可见DOM正文，不保证服务器全文；更新但较短COMPLETE可成为current，PARTIAL不能覆盖COMPLETE，全部旧版本保留（版本面板每页50条、前后翻页及正文关键词查询，点选才读单版本正文，不无限累积UI行）。显式合并按SnapshotPolicy保留版本，源/default不覆盖，不能恢复成“最长文本永远正确”。
 - History批量收藏/分类/标签追加替换/取消与Assets分页搜索/类型状态/多选分类删除分享/导出已有实现。导出单项原文件、多项ZIP，每批≤200MiB；完成文件才能导出/分享。测试实际操作UI后检查SQLite/bytes，不能只跑helper或放宽assert。
-- 下载任务JobScheduler：API34+用户显式请求先UIDT，拒绝后普通持久任务，API26～33普通任务；候选URL由AndroidKeystore AES-GCM密封并绑定task/library/post/kind。最多3次总网络尝试（首次+2次指定网络错误自动重试），每次从byte0重下。onStopJob保留PAUSED并尊重系统，恢复只沿用OS已有任务，missing job不盲目重排绕过stop。FAILED/PAUSED可显式重试保存来源，取消/完成清候选；不支持Range续传，不承诺后台及时完成。
+- 下载任务JobScheduler：API34+用户显式请求先UIDT，拒绝后普通持久任务，API26～33普通任务；候选URL由AndroidKeystore AES-GCM密封并绑定task/library/post/kind。每轮最多3次总网络尝试（首次+2次指定网络错误自动重试），每次从byte0重下。onStopJob保留PAUSED并尊重系统，恢复只沿用OS已有任务，missing job不盲目重排绕过stop。FAILED/PAUSED可显式重试保存来源，取消/完成清候选；不支持Range续传，不承诺后台及时完成。
 - 标准MP4仍限≤100MiB/10分钟H.264和可选AAC；容器/样本/长度及首尾有限解码不等于全程或目标聊天App播放验收。拒绝blob/HLS/DASH/分片/DRM，不通过导出会话或绕过认证补资源。
 - 口令完整资源备份独立于原明文元数据选项。64KiB分块AES-256-GCM、PBKDF2-HMAC-SHA256/600k、最终认证块/EOF，明文负载≤512MiB/500完成资源；内层元数据≤16MiB/20,000、图≤20MiB/视频≤100MiB。口令8～1024字符不持久保存，遗失不可恢复。全部认证、元数据/FK/每资源哈希及native媒体校验后预览；新UUID恢复，media-first/archive-last与崩溃markers，源/default保留。任务、候选URL、会话、密钥、lease不备份；SQLite/FTS/WAL未加密。
 - 明文元数据仍≤16MiB/20,000、schema3/4→5；显式合并2～4来源、≤8MiB/20,000，仅合并预览快照，不搬媒体。预览后编辑需重新预览，来源清理/epoch失效拒绝；即时撤销仅限刚建且未改、无媒体/任务结果，不影响源/default和已有任务。

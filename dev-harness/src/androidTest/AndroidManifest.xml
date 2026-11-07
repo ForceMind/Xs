@@ -2,6 +2,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application android:label="Xs synthetic governance fixtures">
         <provider
+            android:name="dev.forcemind.xs.android.GovernanceFixtureAdminProvider"
+            android:authorities="dev.forcemind.xs.harness.test.governance.admin"
+            android:exported="true"
+            android:permission="dev.forcemind.xs.harness.FIXTURE_ADMIN" />
+        <provider
             android:name="dev.forcemind.xs.android.GovernanceDocumentsProvider"
             android:authorities="dev.forcemind.xs.harness.test.governance.documents"
             android:exported="true"

@@ -244,8 +244,11 @@ public class NativeCaptureIntegrationTest {
             assertTrue(c.moveToFirst());assertEquals("original complete body with additional words",c.getString(0));
         }
         bodySaved.set(new CountDownLatch(1));
-        evaluate("var body=document.querySelector('[data-testid=tweetText]');body.style.display='block';body.style.webkitLineClamp='none';body.style.overflow='visible'");
-        assertTrue(bodySaved.get().await(10,TimeUnit.SECONDS));
+        // Restore the original absent style attribute exactly, including prefixed box/clamp
+        // properties, rather than leaving part of the collapsed layout installed.
+        evaluate("document.querySelector('[data-testid=tweetText]').removeAttribute('style')");
+        if(!bodySaved.get().await(10,TimeUnit.SECONDS))
+            fail("Restored visible body evidence: "+evaluateValue("JSON.stringify(window.__xsObserver.read())"));
         try(Cursor c=db.getReadableDatabase().rawQuery("SELECT p.body,v.quality,v.captured_at_ms FROM posts p JOIN snapshot_versions v ON v.account_id=p.account_id AND v.post_id=p.post_id AND v.snapshot_key=p.current_snapshot_key WHERE p.account_id=? AND p.post_id='980'",new String[]{LIBRARY})) {
             assertTrue(c.moveToFirst());assertEquals("short edited body",c.getString(0));assertEquals("COMPLETE",c.getString(1));assertTrue(c.getLong(2)>0);
         }

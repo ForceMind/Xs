@@ -115,6 +115,8 @@ public final class MediaDurabilityTest {
         ServiceInfo service=context.getPackageManager().getServiceInfo(new ComponentName(context,XsDownloadJobService.class),0);assertFalse(service.exported);assertEquals("android.permission.BIND_JOB_SERVICE",service.permission);
     }
     @Test public void versionOneAndTwoMigrationPreservesAssetsAndLeaseRows()throws Exception {
+        File saved=new File(context.getFilesDir(),"xs-saved-media"+suffix),shares=new File(context.getFilesDir(),"xs-share-leases"+suffix);
+        assertFalse(saved.exists());assertFalse(shares.exists());
         for(int version:new int[]{1,2}) {
             SQLiteDatabase legacy=context.openOrCreateDatabase(dbName,0,null);
             legacy.execSQL("CREATE TABLE assets(id TEXT PRIMARY KEY,library_id TEXT NOT NULL,post_url TEXT NOT NULL,media_url TEXT,state TEXT NOT NULL,bytes INTEGER NOT NULL DEFAULT 0,total INTEGER NOT NULL DEFAULT -1,mime TEXT,filename TEXT,sha256 TEXT,created_ms INTEGER NOT NULL,error TEXT,category TEXT NOT NULL DEFAULT '')");
@@ -122,7 +124,7 @@ public final class MediaDurabilityTest {
             if(version==2)for(String declaration:new String[]{"media_kind TEXT NOT NULL DEFAULT 'IMAGE'","duration_ms INTEGER","width INTEGER","height INTEGER","video_tracks INTEGER","audio_tracks INTEGER","rotation_degrees INTEGER"})legacy.execSQL("ALTER TABLE assets ADD COLUMN "+declaration);
             legacy.execSQL("INSERT INTO assets(id,library_id,post_url,state,created_ms) VALUES ('legacy',?,'https://x.com/i/web/status/123','COMPLETED',123)",new Object[]{library});
             legacy.execSQL("INSERT INTO leases VALUES ('old-copy','old.png','image/png',4,9999999999999)");legacy.setVersion(version);legacy.close();
-            repository=open(png());assertEquals(3,repository.getReadableDatabase().getVersion());assertEquals(123,repository.find(library,"legacy").createdMs);
+            repository=open(png());assertTrue(saved.isDirectory());assertTrue(shares.isDirectory());assertEquals(3,repository.getReadableDatabase().getVersion());assertEquals(123,repository.find(library,"legacy").createdMs);
             try(Cursor c=repository.getReadableDatabase().rawQuery("SELECT COUNT(*) FROM leases",null)){c.moveToFirst();assertEquals(1,c.getInt(0));}
             repository.stopWorkerForTests();repository.close();repository=null;context.deleteDatabase(dbName);
         }

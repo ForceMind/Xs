@@ -40,3 +40,17 @@ API26/30/36的真实WebView、SQLite、Job/Keystore、完整资源、SAF和新�
 真实X登录/2FA/会话、站点DOM/短编辑/停留/本人动作/精简、真实CDN、微信/QQ/飞书/Telegram会话接收、多日真机/存储满/强制停止/重启仍需物理设备。自动live capture/action/cleanup仍关闭。候选签名需要权利方配置固定私钥和环境保护；自定义许可还缺最终条款及权利范围确认，根GPL和历史授权不动。以上客观缺口不能以合成PASS替代，也不发布未经验收正式版本。
 
 手机步骤：使用空白/隔离测试实例，记录APK/public signer/系统/WebView；正常登录与切号；选择有权保存的图片/direct MP4并测试后台/切网/重启/取消；SAF导出加密完整备份再恢复到新库，核对正文版本与实际文件；分别手选聊天App会话确认接收；验证整库删不影响其他scope/活动分享租约。调试证书可能逐job变化，不为安装新包直接卸载已有资料的Xs；先完成迁出/固定签名流程。
+
+## 首轮三版本实际失败记录
+
+[CI66 42369802915](https://github.com/ForceMind/Xs/actions/runs/42369802915) 的core/构建通过；API26/30/36均实际启动并运行，每套52项harness＋62项app，共342项，304通过/38失败/0错误/0跳过。head `50c91ecfa5eff5df306a6adfe9c63c17750ea3cb`，实际merge `8be3b3c254c956d89a448d622488724e3de90058`，tree `768cf90d7d9fab28bff9123578fd69dc723d1fd3`。原始case与栈、每job四APK/public cert、ZIP摘要见 [失败轮完整诊断](evidence/round-d-ci66-failures.json)。不能将其改记为环境阻断或PASS。
+
+确认根因：完整资源描述符含sha256但通用字段名拒数字，导致共同导出失败；SAF测试管理入口的MANAGE_DOCUMENTS/跨UID权限与错误shell fallback使4个Governance用例尚未进入UI；两consent关闭时测试错误期待observer仍安装；旧WebView去clamp时样式未完全恢复；API26 retriever尾帧EOS空返回及真实Safe Browsing开关未生效。修复保持完整视频/尾PTS、COMPLETENESS/版本数、真实SAF和能力边界的业务断言，没有跳过设备或缩短验证路径。
+
+三套LibraryUiTest9项与AssetLibraryUiTest4项均PASS（合计39），包括206版本分页、batch与删库/lease/失败commit检查；这只证明对应源码的局部场景，不覆盖失败功能。Source-epoch导出和SQLite abort断言也已加强，防止前置codec错误被误当作预期失败。
+
+本轮继续补上独立清缓存/清网页登录会话：仅清WebView数据，清会话销毁旧DOM、清Cookie/WebStorage/HTTPauth/formdata，保留native库/资源/lease；持久epoch/pending与上传身份阻止旧callback和恢复状态跨清理。API26旧provider（Chrome69.0.3497.100）确实不支持启用所需Safe Browsing，显示实际不足并拒真实浏览导航，资料库/离线夹具仍可用；不伪造provider支持。正常更新后的API26 provider须另验，不能泛称整个OS版本不支持。
+
+恢复marker补完整checkpoint确认才清理，忙/不完整保留；非WAL仅EXTRA同步可清，已发布result不被清理异常改报失败。新增真实SQLite busy/解除后重试回归，不宣称物理断电已经验证。
+
+修复后的本地统一复测：[1152项JVM、SQLite/DOM/20k压力和完整Android构建/双Lint证据](evidence/round-d-fixes-local.json) 均PASS（165 tasks，27s）。新增3项隐私用例含真实Activity关闭后携旧Intent重启，持久显式导航屏障阻止自动restore/HOME/deep link；只有用户新的原生导航通过安全检查后解除。marker父目录和资源目录链接均增加fsync，但不宣称物理断电验证。模拟器执行仍须下一轮CI实际结果。
