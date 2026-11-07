@@ -5,5 +5,9 @@
             android:name="dev.forcemind.xs.android.XsHistoryActivity"
             android:exported="false"
             android:label="Xs Local Archive" />
+        <activity android:name="dev.forcemind.xs.android.XsAssetsActivity" android:exported="false" android:label="Xs Assets" />
+        <provider android:name="dev.forcemind.xs.android.XsAssetProvider"
+            android:authorities="${applicationId}.xs.assets" android:exported="false"
+            android:grantUriPermissions="true" />
     </application>
 </manifest>

@@ -4,7 +4,15 @@
 
 **Xs is an independent, local-first enhancement for using X.** Official X web supplies browsing and social features; an app-owned on-device library provides open history, local favorites, organization, own-activity indexing, image/video downloads and sharing selected resources to other apps. No official APK patching, new social backend or account proxy.
 
-> **Still a W0 feasibility build, not a complete client.** The browser host, native archive, manual link saves and incoming “Save to Xs” have code. Automatic web history, complete favorite snapshots, media downloads and outbound file sharing remain implementation/acceptance work. Plans are not delivered features; live login/media and physical-device validation remain required.
+> **Internal development PoC, not a production client.** Schema v3 preserves old namespaces and adds app-owned favorites, notes/tags and dwell queries. Packaged native-pull observation is wired only in synthetic WebViews; live X automatic capture stays disabled. Narrow image tasks, saved-image UI and grant-only actual-file sharing are implemented. Live login, X selectors and recipient applications remain unverified. See the [implementation evidence](docs/IMPLEMENTATION_EVIDENCE.zh-CN.md).
+
+## Current implementation boundary
+
+- Offline: immediate native-confirmed opens, late text enrichment, navigation/exposure deduplication, 1.2/3/5-second continuous dwell, never-opened and duration filters.
+- Local library: v1/v2→v3 preserving migrations, separate legacy namespaces, independent favorites/categories/notes/tags and history erasure. Explicit legacy consolidation is still pending.
+- Images: explicit current-post candidate selection, bounded downloads and file validation, offline preview/category/export, single/multiple read-only content-URI sharing with 24-hour copies. Interrupted downloads restart after reselecting the source; reliable background scheduling is pending.
+- Pending: live X activation, confirmed own-action/reversal capture, complete video, reversible filtering, backup/recovery, stable release signing and device/recipient compatibility. Synthetic success does not complete these gates.
+
 
 ## Continue development here
 
@@ -35,13 +43,15 @@
 | Capability | Current state |
 | --- | --- |
 | Android System WebView host | Implemented; live login, media and sustained physical-device acceptance pending |
-| SQLite/FTS, pagination, categories and archive UI | Foundation exists; preserving migration from legacy account scopes to app library pending |
+| SQLite/FTS, pagination, categories and archive UI | v3 preserves old namespaces and maps them to separate libraries; explicit consolidation pending |
 | Manual post-link saving and incoming share-to-Xs | Implemented; link-only is not a body snapshot or automatic history |
 | tweets.js/tweet.js import | One selected file/part up to 16 MiB; ownership confirmation required |
-| Observation gate and Android JSON parser | Inactive foundations, not a working webpage observer |
-| Automatic opens, dwell and own-activity observation | Event foundations exist; **dwell selector, measured duration and never-opened search are unimplemented**, along with live site integration |
-| App-native favorite button, snapshots and richer organization | Accepted scope, not equivalent to legacy LOCAL_SAVE |
-| Image/video download, asset management, outbound file sharing | Accepted scope; implementation and receiver-app testing pending |
+| Native-pull observer and strict JSON validation | Packaged implementation and synthetic integration tests; live X activation disabled |
+| Opens and dwell | Immediate opens, enrichment, deduplication, threshold selection and offline filters implemented for fixtures; live X pending |
+| Own activity | Existing confirmed-ownership archive import retained; real-time success/reversal pending |
+| App-native favorites, notes/tags and categories | Implemented; native browser favorites are link-only until live snapshots are validated |
+| Images, assets, outbound file sharing | Implemented narrow image pipeline and actual-file grants; actual X downloads and receiver apps unverified |
+| Complete video | Not implemented; manifests, blob URLs and fragments rejected |
 | Ad/subscription/recommendation cleanup | Reversible rules pending; no entitlement bypass or hiding security prompts |
 
 ## Implementation direction
@@ -65,11 +75,11 @@ Unfavorite, clear history, delete asset, clear cache, X logout and delete librar
 ## Layout and checks
 
 ```text
-app-android/          W0 host, native manual link saves and incoming share
+app-android/          Browser, native favorites/image selection/sharing, fixture integration
 xs-runtime/           Android on-device archive library
 dev-harness/          Offline synthetic host, NOT X
-src/main/java/        URL/query/schema/policies and inactive observation gate
-src/android/java/     SQLite/import/archive UI and observation-parser foundations
+src/main/java/        URL/v3 schema/query, capture state, bounded writes, strict JSON, media policy
+src/android/java/     SQLite/import/library UI, native pull, images and grant-only sharing
 tests/                JVM/SQLite/regression tests
 scripts/              Engineering checks
 docs/                 Current plans, decisions and acceptance

@@ -20,6 +20,11 @@ public final class XsLocalSpaces {
             PREFS, Context.MODE_PRIVATE).getString(KEY, null);
     }
 
+    /** Native app library identity is independent of every browser/X account. */
+    public static String defaultLibrary(Context context) {
+        return createOnExplicitUserAction(context);
+    }
+
     public static synchronized String createOnExplicitUserAction(Context context) {
         if (context == null) throw new IllegalArgumentException("Context required");
         SharedPreferences prefs = context.getApplicationContext().getSharedPreferences(

@@ -10,14 +10,17 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.Editable;
+import android.text.InputType;
 import android.text.TextWatcher;
 import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.ScrollView;
 import android.widget.SimpleAdapter;
 import android.widget.Switch;
 import android.widget.TextView;
@@ -25,9 +28,9 @@ import android.widget.Toast;
 
 import dev.forcemind.xs.core.ArchiveSearch;
 
-import java.text.DateFormat;
 import java.io.InputStream;
 import java.io.IOException;
+import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -35,170 +38,131 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- * Native local archive screen, intended for *internal* activity launch from a
- * verified client integration. No X APIs, account tokens or network requests.
- */
+/** Native, offline app-owned library. Browsing identities never select its scope. */
 public final class XsHistoryActivity extends Activity {
-    private enum Mode { HISTORY, FEED, SEARCH, FOLDERS }
+    private enum Mode { HISTORY, FEED, FAVORITES, SEARCH, FOLDERS }
     private static final int PAGE_SIZE = 80;
     public static final String EXTRA_LOCAL_SPACE = "dev.forcemind.xs.LOCAL_SPACE";
     private static final int REQUEST_POSTS_JS = 7167;
+    // Stable native IDs allow instrumentation to exercise the actual UI.
+    public static final int ID_QUERY = 0x8101;
+    public static final int ID_RESULTS = 0x8102;
+    public static final int ID_FILTERS = 0x8103;
+    public static final int ID_MIN_DWELL = 0x8104;
+    public static final int ID_NEVER_OPENED = 0x8105;
+    public static final int ID_FAVORITES = 0x8106;
+    public static final int ID_SORT_DWELL = 0x8107;
+    public static final int ID_SEARCH = 0x8108;
+    public static final int ID_CLEAR_HISTORY = 0x8109;
 
     private static final class Row {
-        final String id;
-        final String headline;
-        final String detail;
-        final boolean folder;
-
+        final String id, headline, detail, author, body, note, tags;
+        final Long publishedAt;
+        final boolean folder, favorite;
         Row(String id, String headline, String detail, boolean folder) {
-            this.id = id;
-            this.headline = headline;
-            this.detail = detail;
-            this.folder = folder;
+            this(id, headline, detail, folder, null, null, null, false, null, null);
+        }
+        Row(String id, String headline, String detail, boolean folder,
+                String author, String body, Long publishedAt, boolean favorite,
+                String note, String tags) {
+            this.id = id; this.headline = headline; this.detail = detail;
+            this.folder = folder; this.author = author; this.body = body;
+            this.publishedAt = publishedAt; this.favorite = favorite;
+            this.note = note; this.tags = tags;
         }
     }
 
-    private final ExecutorService worker = Executors.newSingleThreadExecutor();
+    private final ThreadPoolExecutor reader = new ThreadPoolExecutor(1,1,0,TimeUnit.MILLISECONDS,
+        new ArrayBlockingQueue<Runnable>(8), r -> new Thread(r,"xs-library-reader"),
+        new ThreadPoolExecutor.AbortPolicy());
     private final AtomicInteger requested = new AtomicInteger();
+    private final AtomicInteger databaseUsers = new AtomicInteger(1);
     private final List<Row> visible = new ArrayList<>();
     private final List<Map<String,String>> displayedData = new ArrayList<>();
-    private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private final Handler main = new Handler(Looper.getMainLooper());
     private final Runnable delayedSearch = this::refresh;
-    private SimpleAdapter listAdapter;
-    private Button loadMoreButton;
-    private int nextOffset;
-    private boolean clearing;
     private XsArchiveDatabase archive;
-    private Mode mode = Mode.HISTORY;
-    private String account;
-    private String selectedFolder;
-    private String actionType;
-    private Long minTime;
-    private int dateChoice;
-    private ArchiveSearch.DateField dateBasis = ArchiveSearch.DateField.LAST_SEEN;
-    private boolean zh;
-    private boolean localSpaceMode;
-
+    private SimpleAdapter adapter;
+    private Button more, dateFilter, folderFilter, typeFilter, extraFilter, libraryButton;
     private TextView status;
     private EditText query;
-    private ListView results;
-    private Switch recorder;
-    private Switch feedRecorder;
-    private Button basisFilter;
-    private Button folderFilter;
-    private Button dateFilter;
-    private Button typeFilter;
+    private Mode mode = Mode.HISTORY;
+    private String library, defaultLibrary, selectedFolder, actionType;
+    private String pendingImportLibrary;
+    private XsLibraryWrites.Ticket pendingImportTicket;
+    private String authorFilter, sourceFilter, tagFilter;
+    private Long minTime, minDwellMs;
+    private boolean neverOpened, favoriteOnly, sortByDwell, clearing, destroyed;
+    private int nextOffset, dateChoice;
+    private ArchiveSearch.DateField dateBasis = ArchiveSearch.DateField.LAST_SEEN;
+    private boolean zh;
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    @Override protected void onCreate(Bundle saved) {
+        super.onCreate(saved);
         zh = Locale.getDefault().getLanguage().equalsIgnoreCase("zh");
-        localSpaceMode = getIntent().getBooleanExtra(EXTRA_LOCAL_SPACE, false);
         archive = new XsArchiveDatabase(this);
+        defaultLibrary = XsLocalSpaces.createOnExplicitUserAction(this);
+        library = defaultLibrary;
+        // Existing namespaces remain separate and selectable; no automatic consolidation.
+        write(defaultLibrary, () -> archive.ensureLibrary(defaultLibrary, tr("Xs 本机资料库", "Xs local library")), null);
         buildScreen();
     }
 
-    @Override
-    protected void onResume() {
+    @Override protected void onResume() {
         super.onResume();
-        String active = localSpaceMode ? XsLocalSpaces.current(this) :
-            XsCaptureBridge.getActiveAccountId();
-        if (account == null ? active != null : !account.equals(active)) {
-            account = active;
-            selectedFolder = null;
-            actionType = null;
-        }
-        refreshRecordingState();
         refresh();
     }
 
     private void buildScreen() {
-        LinearLayout root = new LinearLayout(this);
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(px(14), px(12), px(14), px(10));
+        LinearLayout root = column();
+        root.setPadding(px(12), px(8), px(12), px(6));
         setContentView(root);
-
-        LinearLayout heading = new LinearLayout(this);
-        heading.setOrientation(LinearLayout.HORIZONTAL);
-        TextView name = new TextView(this);
-        name.setText("Xs");
-        name.setTextSize(TypedValue.COMPLEX_UNIT_SP, 23);
-        name.setTypeface(null, android.graphics.Typeface.BOLD);
-        heading.addView(name, new LinearLayout.LayoutParams(
-            0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
+        LinearLayout heading = horizontal();
+        TextView title = text("Xs " + tr("资料库", "Library"));
+        title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 22);
+        title.setTypeface(null, android.graphics.Typeface.BOLD);
+        heading.addView(title, weighted());
+        Button settings = button(tr("设置", "Settings"));
+        settings.setOnClickListener(v -> showSettings());
+        heading.addView(settings);
         Button close = button(tr("关闭", "Close"));
         close.setOnClickListener(v -> finish());
         heading.addView(close);
         root.addView(heading);
-
-        TextView intro = text(tr("本地历史 · 搜索 · 分类",
-                                 "Local history · search · folders"));
-        root.addView(intro);
-
-        status = text("");
+        libraryButton = button(tr("Xs 本机资料库 · 切换旧空间", "Xs local library · legacy spaces"));
+        libraryButton.setOnClickListener(v -> chooseLibrary());
+        root.addView(libraryButton);
+        status = text(tr("资料属于 Xs；退出或切换 X 账号不会删除。",
+            "Your Xs library remains when you switch or sign out of X."));
         root.addView(status);
 
-        recorder = new Switch(this);
-        recorder.setText(tr("记录主动打开的帖子（仅本机）",
-                            "Save deliberate post opens (on-device only)"));
-        recorder.setChecked(false);
-        recorder.setOnCheckedChangeListener((view, enabled) -> {
-            if (!XsCaptureBridge.setRecordingEnabled(this, enabled)) {
-                refreshRecordingState();
-                return;
-            }
-            status.setText(enabled ?
-                tr("已为当前账号开启本地记录", "Local recording enabled") :
-                tr("已关闭记录；原有历史仍保留", "Recording off; existing history kept"));
-        });
-        root.addView(recorder);
-
-        feedRecorder = new Switch(this);
-        feedRecorder.setText(tr("记录实际浏览的信息流（需停留 ≥1.2 秒）",
-                                "Save visible feed posts (≥1.2s dwell)"));
-        feedRecorder.setChecked(false);
-        feedRecorder.setOnCheckedChangeListener((view, enabled) -> {
-            if (!XsCaptureBridge.setFeedRecordingEnabled(this, enabled)) {
-                refreshRecordingState();
-            }
-        });
-        root.addView(feedRecorder);
-
         LinearLayout tabs = horizontal();
-        Button history = button(tr("打开历史", "Opens"));
-        Button feed = button(tr("刷过的", "Feed"));
-        Button search = button(tr("搜索", "Search"));
-        Button folders = button(tr("分类", "Folders"));
-        tabs.addView(history, weighted());
-        tabs.addView(feed, weighted());
-        tabs.addView(search, weighted());
-        tabs.addView(folders, weighted());
+        addTab(tabs, tr("打开", "Opens"), Mode.HISTORY, 0);
+        addTab(tabs, tr("停留", "Dwell"), Mode.FEED, 0);
+        addTab(tabs, tr("收藏", "Saved"), Mode.FAVORITES, ID_FAVORITES);
+        addTab(tabs, tr("搜索", "Search"), Mode.SEARCH, ID_SEARCH);
+        addTab(tabs, tr("分类", "Folders"), Mode.FOLDERS, 0);
         root.addView(tabs);
-        history.setOnClickListener(v -> setMode(Mode.HISTORY));
-        feed.setOnClickListener(v -> setMode(Mode.FEED));
-        search.setOnClickListener(v -> setMode(Mode.SEARCH));
-        folders.setOnClickListener(v -> setMode(Mode.FOLDERS));
-
         query = new EditText(this);
+        query.setId(ID_QUERY);
         query.setSingleLine(true);
-        query.setHint(tr("搜索本地正文或作者", "Search local text or author"));
+        query.setHint(tr("离线搜索正文或作者", "Search local text or author offline"));
         query.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void afterTextChanged(Editable e) {}
             @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
-                if (mode == Mode.SEARCH) {
-                    mainHandler.removeCallbacks(delayedSearch);
-                    mainHandler.postDelayed(delayedSearch, 250);
+                if (mode == Mode.SEARCH || mode == Mode.FAVORITES) {
+                    main.removeCallbacks(delayedSearch);
+                    main.postDelayed(delayedSearch, 250);
                 }
             }
-            @Override public void afterTextChanged(Editable s) {}
         });
         root.addView(query);
-
         LinearLayout filters = horizontal();
         dateFilter = button(tr("全部时间", "All time"));
         folderFilter = button(tr("全部分类", "All folders"));
@@ -207,607 +171,620 @@ public final class XsHistoryActivity extends Activity {
         filters.addView(folderFilter, weighted());
         filters.addView(typeFilter, weighted());
         root.addView(filters);
-        basisFilter = button(tr("排序：收录时间", "Sort: saved"));
-        root.addView(basisFilter);
-        basisFilter.setOnClickListener(v -> chooseDateBasis());
         dateFilter.setOnClickListener(v -> chooseDate());
         folderFilter.setOnClickListener(v -> chooseFolder());
         typeFilter.setOnClickListener(v -> chooseActionType());
+        extraFilter = button(tr("时长、从未打开、来源与排序", "Dwell, never opened, source & sort"));
+        extraFilter.setId(ID_FILTERS);
+        extraFilter.setOnClickListener(v -> showSearchFilters());
+        root.addView(extraFilter);
 
-        results = new ListView(this);
-        listAdapter = new SimpleAdapter(this, displayedData,
-            android.R.layout.simple_list_item_2,
-            new String[]{"title", "detail"},
-            new int[]{android.R.id.text1, android.R.id.text2});
-        results.setAdapter(listAdapter);
-        root.addView(results, new LinearLayout.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
-        results.setOnItemClickListener((parent, view, position, id) -> {
-            if (position < 0 || position >= visible.size()) return;
-            Row entry = visible.get(position);
-            if (entry.folder) {
-                selectedFolder = entry.id;
-                setMode(Mode.SEARCH);
-            } else {
-                openPost(entry.id);
-            }
-        });
-        results.setOnItemLongClickListener((parent, view, position, id) -> {
-            if (position < 0 || position >= visible.size()) return false;
+        ListView results = new ListView(this);
+        results.setId(ID_RESULTS);
+        adapter = new SimpleAdapter(this, displayedData, android.R.layout.simple_list_item_2,
+            new String[]{"title", "detail"}, new int[]{android.R.id.text1, android.R.id.text2});
+        results.setAdapter(adapter);
+        root.addView(results, new LinearLayout.LayoutParams(-1, 0, 1));
+        results.setOnItemClickListener((p, v, position, id) -> {
+            if (position >= visible.size()) return;
             Row row = visible.get(position);
-            if (row.folder) editFolder(row);
-            else organizePost(row.id);
+            if (row.folder) {
+                selectedFolder = row.id;
+                folderFilter.setText(row.headline);
+                setMode(Mode.SEARCH);
+            } else showPost(row);
+        });
+        results.setOnItemLongClickListener((p, v, position, id) -> {
+            if (position >= visible.size()) return false;
+            Row row = visible.get(position);
+            if (row.folder) editFolder(row); else showPostActions(row);
             return true;
         });
-
-        loadMoreButton = button(tr("加载更多", "Load more"));
-        loadMoreButton.setVisibility(View.GONE);
-        loadMoreButton.setOnClickListener(v -> loadPage(true));
-        root.addView(loadMoreButton);
-        Button importPosts = button(tr("导入本人历史帖子（tweets.js）",
-                                       "Import my old posts (tweets.js)"));
-        root.addView(importPosts);
-        importPosts.setOnClickListener(v -> chooseImportFile());
-
+        more = button(tr("加载更多", "Load more"));
+        more.setOnClickListener(v -> loadPage(true));
+        root.addView(more);
         LinearLayout controls = horizontal();
         Button addFolder = button(tr("新建分类", "New folder"));
-        Button erase = button(tr("清空本地记录", "Clear local history"));
+        Button importPosts = button(tr("导入", "Import"));
+        Button erase = button(tr("清历史", "Clear history"));
+        erase.setId(ID_CLEAR_HISTORY);
         controls.addView(addFolder, weighted());
+        controls.addView(importPosts, weighted());
         controls.addView(erase, weighted());
         root.addView(controls);
         addFolder.setOnClickListener(v -> showFolderEditor(null, null));
+        importPosts.setOnClickListener(v -> chooseImportFile());
         erase.setOnClickListener(v -> confirmErase());
-        if (localSpaceMode) {
-            actionType = "LOCAL_SAVE";
-            typeFilter.setText(tr("本地保存", "Local save"));
-            setMode(Mode.SEARCH);
-        } else {
-            setMode(Mode.HISTORY);
-        }
+        setMode(Mode.HISTORY);
     }
 
-    private void refreshRecordingState() {
-        boolean hasAccount = account != null;
-        recorder.setOnCheckedChangeListener(null);
-        recorder.setEnabled(hasAccount && !localSpaceMode);
-        recorder.setChecked(hasAccount && !localSpaceMode && XsCaptureBridge.isRecordingEnabled());
-        feedRecorder.setOnCheckedChangeListener(null);
-        feedRecorder.setEnabled(hasAccount && !localSpaceMode);
-        feedRecorder.setChecked(hasAccount && !localSpaceMode && XsCaptureBridge.isFeedRecordingEnabled());
-        feedRecorder.setOnCheckedChangeListener((view, enabled) -> {
-            if (!XsCaptureBridge.setFeedRecordingEnabled(this, enabled)) {
-                refreshRecordingState();
-            }
-        });
-        recorder.setOnCheckedChangeListener((view, enabled) -> {
-            if (!XsCaptureBridge.setRecordingEnabled(this, enabled)) {
-                refreshRecordingState();
-                return;
-            }
-            status.setText(enabled ?
-                tr("已为当前账号开启本地记录", "Local recording enabled") :
-                tr("已关闭记录；原有历史仍保留", "Recording off; existing history kept"));
-        });
-        status.setText(localSpaceMode ?
-            (hasAccount ?
-                tr("手动保存资料空间 · 仅本机，非 X 登录身份",
-                   "Manual local space · not an X login identity") :
-                tr("尚未创建手动资料空间", "Create a local space first")) :
-            (hasAccount ?
-                tr("当前账号已连接 · 数据仅在本机",
-                   "Active account linked · on-device only") :
-                tr("尚未连接 X 账号（等待客户端适配器）",
-                   "X account not linked (client adapter pending)")));
+    private void addTab(LinearLayout tabs, String label, Mode tab, int id) {
+        Button button = button(label);
+        if (id != 0) button.setId(id);
+        button.setPadding(px(2), 0, px(2), 0);
+        button.setMinWidth(0);
+        tabs.addView(button, weighted());
+        button.setOnClickListener(v -> setMode(tab));
     }
 
-    private void setMode(Mode next) {
-        mode = next;
-        query.setVisibility(next == Mode.SEARCH ? View.VISIBLE : View.GONE);
-        folderFilter.setVisibility(next == Mode.SEARCH ? View.VISIBLE : View.GONE);
-        typeFilter.setVisibility(next == Mode.SEARCH ? View.VISIBLE : View.GONE);
-        dateFilter.setVisibility(next == Mode.FOLDERS ? View.GONE : View.VISIBLE);
-        basisFilter.setVisibility(next == Mode.SEARCH ? View.VISIBLE : View.GONE);
+    private void setMode(Mode value) {
+        mode = value;
+        boolean search = value == Mode.SEARCH || value == Mode.FAVORITES;
+        query.setVisibility(search ? View.VISIBLE : View.GONE);
+        folderFilter.setVisibility(search ? View.VISIBLE : View.GONE);
+        typeFilter.setVisibility(search ? View.VISIBLE : View.GONE);
+        dateFilter.setVisibility(value == Mode.FOLDERS ? View.GONE : View.VISIBLE);
+        extraFilter.setVisibility(value == Mode.FOLDERS || value == Mode.HISTORY ? View.GONE : View.VISIBLE);
         refresh();
     }
 
-    /** Never run database queries on the UI thread. */
-    private void refresh() {
-        loadPage(false);
-    }
+    private void refresh() { loadPage(false); }
 
     private void loadPage(boolean append) {
-        int request = requested.incrementAndGet();
-        int offset = append ? nextOffset : 0;
-        if (loadMoreButton != null) {
-            loadMoreButton.setEnabled(false);
-            if (!append) loadMoreButton.setVisibility(View.GONE);
-        }
-        final String owner = account;
+        if (destroyed) return;
+        final int request = requested.incrementAndGet();
+        final int offset = append ? nextOffset : 0;
+        more.setEnabled(false);
+        if (!append) more.setVisibility(View.GONE);
+        final String owner = library;
         final Mode selectedMode = mode;
-        final String searchText = query.getText().toString();
-        final Long after = minTime;
-        final String folder = selectedFolder;
-        final String type = actionType;
-        final ArchiveSearch.DateField basis = dateBasis;
-        if (owner == null) {
-            showRows(new ArrayList<>(), false);
-            return;
-        }
-        worker.execute(() -> {
+        final ArchiveSearch.Filter filter = snapshotFilter(offset);
+        read(() -> {
+            if (requested.get() != request) return;
             List<Row> rows = new ArrayList<>();
             try {
                 if (selectedMode == Mode.FOLDERS) {
-                    try (Cursor cursor = archive.categories(owner)) {
-                        while (cursor.moveToNext()) {
-                            rows.add(new Row(cursor.getString(0), cursor.getString(1),
-                                tr("长按重命名或删除", "Long press to rename or delete"), true));
-                        }
+                    try (Cursor c = archive.categories(owner)) {
+                        while (c.moveToNext()) rows.add(new Row(c.getString(0), c.getString(1),
+                            tr("长按重命名或删除", "Long press to rename or delete"), true));
                     }
                 } else if (selectedMode == Mode.HISTORY || selectedMode == Mode.FEED) {
-                    boolean reading = selectedMode == Mode.HISTORY;
-                    try (Cursor cursor = archive.timeline(owner, after, PAGE_SIZE,
-                            reading ? "OPEN_POST" : "FEED_VISIBLE", offset)) {
-                        while (cursor.moveToNext()) {
-                            String postId = cursor.getString(1);
-                            long openedAt = cursor.getLong(2);
-                            rows.add(new Row(postId,
-                                headline(cursor.getString(4), cursor.getString(5), postId),
-                                date(openedAt) + (reading ? tr(" · 已打开", " · Opened") :
-                                    " · " + cursor.getString(7)) + "  ·  #" + postId, false));
+                    boolean open = selectedMode == Mode.HISTORY;
+                    try (Cursor c = archive.timeline(owner, filter.fromMs, PAGE_SIZE,
+                            open ? "OPEN_POST" : "FEED_VISIBLE", offset)) {
+                        while (c.moveToNext()) {
+                            String id = c.getString(1);
+                            String detail = date(c.getLong(2)) + (open ? tr(" · 主动打开", " · Deliberate open") :
+                                tr(" · 可见停留 ", " · Visible dwell ") + duration(c.isNull(8) ? null : c.getLong(8), quality(c, "duration_quality")) +
+                                " · " + sourceLabel(c.getString(7)));
+                            rows.add(new Row(id, headline(c.getString(4), c.getString(5), id),
+                                detail, false, c.getString(4), c.getString(5),
+                                c.isNull(6) ? null : c.getLong(6), false, null, null));
                         }
                     }
                 } else {
-                    ArchiveSearch.Filter filter = new ArchiveSearch.Filter();
-                    filter.keyword = searchText;
-                    filter.categoryId = folder;
-                    filter.actionType = type;
-                    filter.fromMs = after;
-                    filter.dateField = basis;
-                    filter.limit = PAGE_SIZE;
-                    filter.offset = offset;
-                    try (Cursor cursor = archive.search(owner, filter)) {
-                        while (cursor.moveToNext()) {
-                            String postId = cursor.getString(1);
-                            int opens = cursor.getInt(7);
-                            String at = cursor.isNull(8) ?
-                                tr("时间未知", "Unknown time") : date(cursor.getLong(8));
-                            rows.add(new Row(postId,
-                                headline(cursor.getString(2), cursor.getString(3), postId),
-                                at + "  ·  " + (opens == 0 ?
-                                    tr("已收录，未打开", "Indexed, not opened") :
-                                    tr("打开次数", "Opens") + ": " + opens), false));
+                    try (Cursor c = archive.search(owner, filter)) {
+                        while (c.moveToNext()) {
+                            String id = c.getString(1);
+                            String at = c.isNull(8) ? tr("时间未知", "Unknown time") : date(c.getLong(8));
+                            int opens = c.getInt(7);
+                            Long dwell = c.isNull(9) ? null : c.getLong(9);
+                            boolean favorite = !c.isNull(10);
+                            String detail = at + " · " + (opens == 0 ? tr("从未打开", "Never opened") :
+                                tr("打开 ", "Opens ") + opens) +
+                                (dwell == null ? "" : tr(" · 最长停留 ", " · Max dwell ") + duration(dwell, quality(c, "dwell_quality"))) +
+                                (favorite ? tr(" · Xs 收藏", " · Xs favorite") : "");
+                            rows.add(new Row(id, headline(c.getString(2), c.getString(3), id), detail,
+                                false, c.getString(2), c.getString(3), c.isNull(4) ? null : c.getLong(4),
+                                favorite, c.getString(11), c.getString(12)));
                         }
                     }
                 }
-            } catch (RuntimeException error) {
-                runOnUiThread(() -> {
-                    if (requested.get() == request) {
-                        Toast.makeText(this, tr("本地查询失败", "Local search failed"),
-                            Toast.LENGTH_SHORT).show();
+            } catch (RuntimeException failure) {
+                main.post(() -> {
+                    if (requested.get() == request && !destroyed) {
+                        more.setEnabled(true);
+                        toast(tr("本地查询失败", "Local search failed"));
                     }
                 });
                 return;
             }
-            runOnUiThread(() -> {
-                if (requested.get() == request && selectedMode == mode && !isFinishing()) {
-                    showRows(rows, append);
-                    nextOffset = offset + rows.size();
-                    loadMoreButton.setVisibility(
-                        selectedMode != Mode.FOLDERS && rows.size() == PAGE_SIZE
-                            ? View.VISIBLE : View.GONE);
-                    loadMoreButton.setEnabled(true);
-                }
+            main.post(() -> {
+                if (destroyed || requested.get() != request || !owner.equals(library) || selectedMode != mode) return;
+                showRows(rows, append);
+                nextOffset = offset + rows.size();
+                more.setVisibility(selectedMode != Mode.FOLDERS && rows.size() == PAGE_SIZE ? View.VISIBLE : View.GONE);
+                more.setEnabled(true);
             });
         });
     }
 
-    private void showRows(List<Row> rows, boolean append) {
-        if (!append) {
-            visible.clear();
-            displayedData.clear();
-        }
-        for (Row row : rows) {
-            visible.add(row);
-            Map<String, String> values = new HashMap<>();
-            values.put("title", row.headline);
-            values.put("detail", row.detail);
-            displayedData.add(values);
-        }
-        listAdapter.notifyDataSetChanged();
-        if (visible.isEmpty()) {
-            status.setText(account == null ?
-                tr("等待接入当前 X 账号", "Waiting for X account integration") :
-                tr("本地暂时没有匹配的记录", "No matching local records"));
-        } else if (account != null) {
-            status.setText(tr("当前账号 · 仅本机 · ", "Active account · on-device · ") +
-                visible.size() + tr(" 条结果", " results"));
-        }
+    private ArchiveSearch.Filter snapshotFilter(int offset) {
+        ArchiveSearch.Filter filter = new ArchiveSearch.Filter();
+        filter.keyword = query.getText().toString();
+        filter.categoryId = selectedFolder;
+        filter.actionType = actionType;
+        filter.fromMs = minTime;
+        filter.dateField = dateBasis;
+        filter.minDwellMs = minDwellMs;
+        filter.neverOpened = neverOpened;
+        filter.favoriteOnly = mode == Mode.FAVORITES || favoriteOnly;
+        filter.sortByDwell = sortByDwell;
+        filter.author = authorFilter;
+        filter.source = sourceFilter;
+        filter.tag = tagFilter;
+        filter.limit = PAGE_SIZE;
+        filter.offset = offset;
+        return filter;
     }
 
-    /**
-     * Local-only import from the data/tweets.js or tweets-partN.js within an
-     * official X account archive, after user confirmation of account ownership.
-     */
-    private void chooseImportFile() {
-        if (clearing) return;
-        if (account == null) {
-            Toast.makeText(this, tr("请先接入当前账号", "Account not bound"),
-                Toast.LENGTH_SHORT).show();
-            return;
+    private void showRows(List<Row> rows, boolean append) {
+        if (!append) { visible.clear(); displayedData.clear(); }
+        for (Row row : rows) {
+            visible.add(row);
+            Map<String,String> data = new HashMap<>();
+            data.put("title", row.headline); data.put("detail", row.detail);
+            displayedData.add(data);
         }
-        new AlertDialog.Builder(this)
-            .setTitle(tr("导入本人历史帖子", "Import my X posts"))
-            .setMessage(tr(
-                "请先解压 X 官方账号档案，选择 data/tweets.js、tweet.js 或分段文件。" +
-                "请确认这些帖子属于当前账号；只读取你选择的帖子文件，不会上传。",
-                "Extract your official X data archive and select data/tweets.js, " +
-                "tweet.js or a split part. Confirm it belongs to the active account. " +
-                "Only the selected post file is read locally; nothing is uploaded."))
+        adapter.notifyDataSetChanged();
+        status.setText((library.equals(defaultLibrary) ? tr("Xs 本机资料库", "Xs local library") :
+            tr("独立旧资料空间", "Separate legacy space")) + " · " + visible.size() + tr(" 条结果", " results"));
+    }
+
+    private void showSearchFilters() {
+        LinearLayout fields = paddedColumn();
+        fields.addView(text(tr("单次连续停留达到指定秒数；不会累加不同曝光。",
+            "Minimum duration of one continuous exposure; separate visits are not added together.")));
+        EditText dwell = entry(tr("最低停留秒数（空白为不限）", "Minimum dwell seconds (blank: any)"),
+            minDwellMs == null ? "" : Double.toString(minDwellMs / 1000.0));
+        dwell.setId(ID_MIN_DWELL); dwell.setContentDescription(tr("最低停留秒数", "Minimum dwell seconds"));
+        dwell.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
+        fields.addView(dwell);
+        CheckBox never = check(tr("从未主动打开", "Never deliberately opened"), neverOpened);
+        never.setId(ID_NEVER_OPENED); never.setContentDescription(tr("从未主动打开", "Never deliberately opened")); fields.addView(never);
+        CheckBox favorites = check(tr("仅 Xs 收藏", "Xs favorites only"), favoriteOnly || mode == Mode.FAVORITES);
+        fields.addView(favorites);
+        CheckBox durationSort = check(tr("按最长单次停留排序", "Sort by longest single dwell"), sortByDwell);
+        durationSort.setId(ID_SORT_DWELL); fields.addView(durationSort);
+        EditText author = entry(tr("作者（不含 @）", "Author (without @)"), authorFilter);
+        EditText source = entry(tr("来源：home_for_you / home_following / profile / search_results", "Source: home_for_you / home_following / profile / search_results"), sourceFilter);
+        EditText tag = entry(tr("标签", "Tag"), tagFilter);
+        fields.addView(author); fields.addView(source); fields.addView(tag);
+        Button basis = button(tr("时间依据：", "Date basis: ") + basisName(dateBasis));
+        fields.addView(basis);
+        final ArchiveSearch.DateField[] selectedBasis = {dateBasis};
+        basis.setOnClickListener(v -> new AlertDialog.Builder(this)
+            .setTitle(tr("时间依据", "Date basis"))
+            .setItems(basisNames(), (d, n) -> {
+                selectedBasis[0] = ArchiveSearch.DateField.values()[n];
+                basis.setText(tr("时间依据：", "Date basis: ") + basisName(selectedBasis[0]));
+            }).show());
+        ScrollView scroll = new ScrollView(this); scroll.addView(fields);
+        AlertDialog dialog = new AlertDialog.Builder(this)
+            .setTitle(tr("离线筛选与排序", "Offline filters & sort"))
+            .setView(scroll)
             .setNegativeButton(tr("取消", "Cancel"), null)
-            .setPositiveButton(tr("选择文件", "Choose file"), (dialog, which) -> {
-                Intent pick = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-                pick.addCategory(Intent.CATEGORY_OPENABLE);
-                pick.setType("*/*");
+            .setNeutralButton(tr("重置", "Reset"), (d, n) -> {
+                minDwellMs = null; neverOpened = false; favoriteOnly = false; sortByDwell = false;
+                authorFilter = null; sourceFilter = null; tagFilter = null;
+                dateBasis = ArchiveSearch.DateField.LAST_SEEN;
+                extraFilter.setText(tr("时长、从未打开、来源与排序", "Dwell, never opened, source & sort"));
+                if (mode == Mode.FEED) setMode(Mode.SEARCH); else refresh();
+            })
+            .setPositiveButton(tr("应用", "Apply"), null).create();
+        dialog.setOnShowListener(d -> dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            Long threshold = null;
+            String value = dwell.getText().toString().trim();
+            if (!value.isEmpty()) {
                 try {
-                    startActivityForResult(pick, REQUEST_POSTS_JS);
-                } catch (ActivityNotFoundException noPicker) {
-                    Toast.makeText(this,
-                        tr("设备没有可用的文件选择器", "No document picker available"),
-                        Toast.LENGTH_LONG).show();
+                    double seconds = Double.parseDouble(value);
+                    if (Double.isNaN(seconds) || Double.isInfinite(seconds) || seconds < 0 || seconds > 86400) {
+                        throw new NumberFormatException();
+                    }
+                    threshold = (long) Math.ceil(seconds * 1000.0);
+                } catch (NumberFormatException bad) {
+                    dwell.setError(tr("请输入 0～86400 秒", "Enter 0–86400 seconds")); return;
+                }
+            }
+            minDwellMs = threshold; neverOpened = never.isChecked();
+            favoriteOnly = favorites.isChecked(); sortByDwell = durationSort.isChecked();
+            authorFilter = emptyToNull(author.getText().toString().trim().replaceFirst("^@", ""));
+            sourceFilter = emptyToNull(source.getText().toString().trim());
+            tagFilter = emptyToNull(tag.getText().toString().trim());
+            dateBasis = selectedBasis[0];
+            extraFilter.setText(tr("已应用筛选 · 修改", "Filters applied · Edit"));
+            dialog.dismiss();
+            if (mode == Mode.FEED) setMode(Mode.SEARCH); else refresh();
+        }));
+        dialog.show();
+    }
+
+    private void showPost(Row row) {
+        String snapshot = row.body == null || row.body.trim().isEmpty() ?
+            tr("仅链接；尚无正文快照。", "Link only; no text snapshot yet.") : row.body;
+        TextView body = text(row.detail + "\n\n" + snapshot);
+        body.setTextIsSelectable(true); body.setPadding(px(16), px(8), px(16), px(8));
+        ScrollView scroll = new ScrollView(this); scroll.addView(body);
+        new AlertDialog.Builder(this).setTitle("#" + row.id).setView(scroll)
+            .setNegativeButton(tr("关闭", "Close"), null)
+            .setNeutralButton(tr("整理", "Organize"), (d, n) -> showPostActions(row))
+            .setPositiveButton(tr("打开原帖", "Open original"), (d, n) -> openPost(row.id)).show();
+    }
+
+    private void showPostActions(Row row) {
+        if (clearing) return;
+        new AlertDialog.Builder(this).setTitle(tr("本地资料操作", "Local library actions"))
+            .setItems(new String[]{tr("收藏到 Xs", "Favorite in Xs"), tr("分类", "Folders"),
+                tr("编辑收藏备注与标签", "Edit favorite note & tags"),
+                tr("取消 Xs 收藏", "Remove Xs favorite"), tr("分享链接", "Share link")}, (d, n) -> {
+                if (n == 0) saveFavorite(row, false);
+                else if (n == 1) organizePost(row.id);
+                else if (n == 2) saveFavorite(row, true);
+                else if (n == 3) {
+                    final String owner = library;
+                    write(owner, () -> archive.removeFavorite(owner, row.id),
+                        tr("已取消收藏；历史和资源保留", "Favorite removed; history and assets kept"));
+                }
+                else {
+                    Intent share = new Intent(Intent.ACTION_SEND).setType("text/plain")
+                        .putExtra(Intent.EXTRA_TEXT, postUrl(row.id));
+                    try { startActivity(Intent.createChooser(share, tr("分享原帖链接", "Share original link"))); }
+                    catch (ActivityNotFoundException ignored) { toast(tr("没有兼容的分享应用", "No compatible share app")); }
                 }
             }).show();
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode != REQUEST_POSTS_JS || resultCode != RESULT_OK ||
-            data == null || data.getData() == null || account == null || clearing) return;
-        final String owner = account;
-        final Uri selectedFile = data.getData();
-        worker.execute(() -> {
-            try (InputStream input = getContentResolver().openInputStream(selectedFile)) {
-                if (input == null) throw new IOException("Cannot open archive posts document");
-                XsArchiveImporter.Result result =
-                    XsArchiveImporter.importJs(input, owner, archive, System.currentTimeMillis());
-                runOnUiThread(() -> {
-                    if (!isFinishing() && owner.equals(account)) {
-                        setMode(Mode.SEARCH);
-                    }
-                    Toast.makeText(this, tr("本地导入完成：", "Local import complete: ") +
-                        result.inserted + tr(" 条新记录", " new records"),
-                        Toast.LENGTH_LONG).show();
-                });
-            } catch (IOException | RuntimeException failure) {
-                runOnUiThread(() -> Toast.makeText(this,
-                    tr("无法导入：请检查是否为有效的 tweets.js 且小于 16MB",
-                       "Import failed: choose a valid tweets.js part under 16 MiB"),
-                    Toast.LENGTH_LONG).show());
-            }
+    private void saveFavorite(Row row, boolean editAfter) {
+        final String owner = library;
+        write(owner, () -> archive.favorite(owner, postUrl(row.id), row.author, row.body,
+            row.publishedAt, System.currentTimeMillis()), null, () -> {
+                toast(tr("已收藏到 Xs", "Saved in Xs"));
+                if (editAfter) editFavorite(row); else organizePost(row.id);
+            });
+    }
+
+    private void editFavorite(Row row) {
+        final String owner = library;
+        // Fetch details freshly: a timeline row need not include favorite metadata.
+        read(() -> {
+            String note = "", tags = "";
+            try (Cursor c = archive.getReadableDatabase().rawQuery(
+                "SELECT f.note,(SELECT GROUP_CONCAT(t.tag, ', ') FROM post_tags t " +
+                "WHERE t.account_id=f.account_id AND t.post_id=f.post_id) AS tags " +
+                "FROM favorites f WHERE f.account_id=? AND f.post_id=?", new String[]{owner, row.id})) {
+                if (c.moveToFirst()) { note = c.getString(0); tags = c.getString(1); }
+            } catch (RuntimeException failure) { main.post(() -> toast(tr("无法读取收藏", "Unable to read favorite"))); return; }
+            final String initialNote = note, initialTags = tags;
+            main.post(() -> {
+                if (destroyed || !owner.equals(library)) return;
+                LinearLayout fields = paddedColumn();
+                EditText noteField = entry(tr("私人备注（默认不分享）", "Private note (excluded from sharing)"), initialNote);
+                noteField.setSingleLine(false); noteField.setMinLines(3);
+                noteField.setContentDescription(tr("收藏备注", "Favorite note"));
+                EditText tagsField = entry(tr("标签，以逗号分隔", "Tags, separated by commas"), initialTags);
+                tagsField.setContentDescription(tr("收藏标签", "Favorite tags"));
+                fields.addView(noteField); fields.addView(tagsField);
+                new AlertDialog.Builder(this).setTitle(tr("Xs 收藏备注与标签", "Xs favorite note & tags"))
+                    .setView(fields).setNegativeButton(tr("取消", "Cancel"), null)
+                    .setPositiveButton(tr("保存", "Save"), (d, n) -> {
+                        String value = noteField.getText().toString();
+                        String labels = tagsField.getText().toString();
+                        write(owner, () -> archive.putFavoriteDetails(owner, row.id, value, labels),
+                            tr("备注与标签已保存", "Note & tags saved"));
+                    }).show();
+            });
         });
     }
 
-    private void chooseDate() {
-        String[] names = zh ?
-            new String[]{"全部时间", "最近 24 小时", "最近 7 天", "最近 30 天"} :
-            new String[]{"All time", "Last 24 hours", "Last 7 days", "Last 30 days"};
-        new AlertDialog.Builder(this)
-            .setTitle(tr("筛选时间", "Date range"))
-            .setSingleChoiceItems(names, dateChoice, (dialog, which) -> {
-                dateChoice = which;
-                long now = System.currentTimeMillis();
-                long day = 86400000L;
-                minTime = which == 0 ? null :
-                    now - (which == 1 ? day : which == 2 ? day * 7 : day * 30);
-                dateFilter.setText(names[which]);
-                dialog.dismiss();
-                refresh();
-            })
-            .setNegativeButton(tr("取消", "Cancel"), null)
-            .show();
+    private void chooseLibrary() {
+        if (clearing) return;
+        read(() -> {
+            List<String> ids = new ArrayList<>(), names = new ArrayList<>();
+            try (Cursor c = archive.libraries()) {
+                while (c.moveToNext()) {
+                    String id = c.getString(3); // physical scope is intentionally retained
+                    ids.add(id);
+                    names.add((id.equals(defaultLibrary) ? tr("Xs 本机资料库", "Xs local library") :
+                        tr("旧空间：", "Legacy: ") + c.getString(1)));
+                }
+            }
+            main.post(() -> {
+                if (destroyed) return;
+                new AlertDialog.Builder(this).setTitle(tr("选择独立资料空间（不会合并）", "Choose a separate library"))
+                    .setItems(names.toArray(new String[0]), (d, n) -> {
+                        requested.incrementAndGet(); library = ids.get(n);
+                        selectedFolder = null; folderFilter.setText(tr("全部分类", "All folders"));
+                        libraryButton.setText(names.get(n)); refresh();
+                    }).setNegativeButton(tr("取消", "Cancel"), null).show();
+            });
+        });
     }
 
-    private void chooseDateBasis() {
-        String[] names = zh ?
-            new String[]{"最近收录时间", "主动打开时间", "刷到时间", "帖子发布时间", "个人操作时间"} :
-            new String[]{"Last saved", "Last opened", "Feed seen", "Published", "My action"};
-        ArchiveSearch.DateField[] choices = {
-            ArchiveSearch.DateField.LAST_SEEN,
-            ArchiveSearch.DateField.LAST_OPENED,
-            ArchiveSearch.DateField.FEED_SEEN,
-            ArchiveSearch.DateField.PUBLISHED,
-            ArchiveSearch.DateField.ACTION
-        };
-        new AlertDialog.Builder(this)
-            .setTitle(tr("查询时间依据", "Search date basis"))
-            .setItems(names, (dialog, selected) -> {
-                dateBasis = choices[selected];
-                basisFilter.setText(names[selected]);
-                refresh();
+    private void showSettings() {
+        LinearLayout fields = paddedColumn();
+        fields.addView(text(tr("偏好仅在经验证的观察页面生效。当前真实 X 自动采集尚未验收，只有合成测试页面可启用。",
+            "Preferences apply only to validated observer pages. Live X capture is unverified and disabled; synthetic test pages only.")));
+        Switch opens = new Switch(this); opens.setText(tr("记录主动打开的帖子", "Record deliberate post opens"));
+        opens.setChecked(XsLibrarySettings.isOpenEnabled(this)); fields.addView(opens);
+        Switch feed = new Switch(this); feed.setText(tr("记录时间线停留（独立开关）", "Record feed dwell (independent)"));
+        feed.setChecked(XsLibrarySettings.isFeedEnabled(this)); fields.addView(feed);
+        long initial = XsLibrarySettings.getDwellThresholdMs(this);
+        final long[] threshold = {initial};
+        Button duration = button(tr("停留阈值：", "Dwell threshold: ") + duration(initial));
+        fields.addView(duration);
+        duration.setOnClickListener(v -> new AlertDialog.Builder(this).setTitle(tr("仅影响后续曝光", "Applies to future exposures"))
+            .setItems(new String[]{tr("1.2 秒 · 灵敏", "1.2 s · Sensitive"),
+                tr("3 秒 · 推荐默认", "3 s · Recommended"), tr("5 秒 · 精选", "5 s · Selective")}, (d, n) -> {
+                    threshold[0] = new long[]{1200,3000,5000}[n];
+                    duration.setText(tr("停留阈值：", "Dwell threshold: ") + duration(threshold[0]));
+                }).show());
+        fields.addView(text(tr("停留表示可见曝光，不是已读证明。关闭记录会保留已有资料。",
+            "Dwell measures visible exposure, not completed reading. Turning recording off preserves saved data.")));
+        new AlertDialog.Builder(this).setTitle(tr("记录设置", "Recording preferences"))
+            .setView(fields).setNegativeButton(tr("取消", "Cancel"), null)
+            .setPositiveButton(tr("保存", "Save"), (d, n) -> {
+                XsLibrarySettings.setOpenEnabled(this, opens.isChecked());
+                XsLibrarySettings.setFeedEnabled(this, feed.isChecked());
+                XsLibrarySettings.setDwellThresholdMs(this, threshold[0]);
+                XsLibraryWrites.invalidate(defaultLibrary);
+                toast(tr("偏好已保存；真实 X 采集仍待验收", "Preferences saved; live X capture remains gated"));
             }).show();
     }
+
+    private void confirmErase() {
+        if (clearing) return;
+        final String owner = library;
+        new AlertDialog.Builder(this).setTitle(tr("清空此空间的浏览历史？", "Clear this library's browsing history?"))
+            .setMessage(tr("仅删除主动打开和停留事件，重置浏览计数。收藏、备注、分类、已下载资源与网页会话均保留。记录开关会关闭。",
+                "Deletes open and dwell events and resets visit counts. Favorites, notes, folders, downloaded assets and web sessions remain. Recording is turned off."))
+            .setNegativeButton(tr("取消", "Cancel"), null)
+            .setPositiveButton(tr("清历史", "Clear history"), (d, n) -> {
+                clearing = true;
+                XsLibrarySettings.setOpenEnabled(this, false); XsLibrarySettings.setFeedEnabled(this, false);
+                databaseUsers.incrementAndGet();
+                boolean accepted = XsLibraryWrites.invalidateAndSubmit(owner, () -> {
+                    boolean ok = true;
+                    try { archive.clearHistory(owner); } catch (RuntimeException failure) { ok = false; }
+                    finally { releaseDatabase(); }
+                    final boolean result = ok;
+                    main.post(() -> {
+                        clearing = false;
+                        if (!destroyed && owner.equals(library)) refresh();
+                        toast(result ? tr("历史已清空；收藏和资源保留", "History cleared; favorites and assets kept") :
+                            tr("清理失败", "Unable to clear history"));
+                    });
+                });
+                if (!accepted) { releaseDatabase(); clearing = false; toast(tr("本地任务繁忙，请重试", "Local queue busy; retry")); }
+            }).show();
+    }
+
+    private void chooseDate() {
+        String[] labels = zh ? new String[]{"全部时间","最近 24 小时","最近 7 天","最近 30 天"} :
+            new String[]{"All time","Last 24 hours","Last 7 days","Last 30 days"};
+        new AlertDialog.Builder(this).setTitle(tr("时间筛选", "Date range"))
+            .setSingleChoiceItems(labels, dateChoice, (d, n) -> {
+                dateChoice = n; minTime = n == 0 ? null : System.currentTimeMillis() -
+                    86400000L * (n == 1 ? 1 : n == 2 ? 7 : 30);
+                dateFilter.setText(labels[n]); d.dismiss(); refresh();
+            }).setNegativeButton(tr("取消", "Cancel"), null).show();
+    }
+
+    private String[] basisNames() {
+        return zh ? new String[]{"最近收录时间","主动打开时间","停留时间","帖子发布时间","本人操作时间"} :
+            new String[]{"Last saved","Last opened","Dwell time","Published","Own action"};
+    }
+    private String basisName(ArchiveSearch.DateField field) { return basisNames()[field.ordinal()]; }
 
     private void chooseActionType() {
-        String[] types = {null, "ORIGINAL", "REPLY", "QUOTE", "REPOST", "BOOKMARK", "LOCAL_SAVE"};
-        String[] labels = zh ?
-            new String[]{"全部类型", "原创", "回复", "引用", "转帖", "收藏", "本地保存"} :
-            new String[]{"All types", "Original", "Reply", "Quote", "Repost", "Bookmark", "Local save"};
-        new AlertDialog.Builder(this)
-            .setTitle(tr("内容类型", "Content type"))
-            .setItems(labels, (dialog, selected) -> {
-                actionType = types[selected];
-                typeFilter.setText(labels[selected]);
-                refresh();
-            }).show();
+        String[] types = {null,"ORIGINAL","REPLY","QUOTE","REPOST","BOOKMARK","LOCAL_SAVE"};
+        String[] names = zh ? new String[]{"全部类型","原创","回复","引用","转帖","X 书签记录","手动链接"} :
+            new String[]{"All types","Original","Reply","Quote","Repost","X bookmark record","Manual link"};
+        new AlertDialog.Builder(this).setTitle(tr("已确认的本人行为", "Confirmed own activity"))
+            .setItems(names, (d, n) -> { actionType = types[n]; typeFilter.setText(names[n]); refresh(); }).show();
     }
 
     private void chooseFolder() {
-        if (account == null) return;
-        final String owner = account;
-        worker.execute(() -> {
-            List<String> ids = new ArrayList<>();
-            List<String> labels = new ArrayList<>();
-            ids.add(null);
-            labels.add(tr("全部分类", "All folders"));
-            try (Cursor cursor = archive.categories(owner)) {
-                while (cursor.moveToNext()) {
-                    ids.add(cursor.getString(0));
-                    labels.add(cursor.getString(1));
-                }
+        final String owner = library;
+        read(() -> {
+            List<String> ids = new ArrayList<>(), labels = new ArrayList<>();
+            ids.add(null); labels.add(tr("全部分类", "All folders"));
+            try (Cursor c = archive.categories(owner)) {
+                while (c.moveToNext()) { ids.add(c.getString(0)); labels.add(c.getString(1)); }
             }
-            runOnUiThread(() -> {
-                if (!owner.equals(account) || isFinishing()) return;
-                new AlertDialog.Builder(this)
-                    .setTitle(tr("筛选分类", "Filter folder"))
-                    .setItems(labels.toArray(new String[0]), (dialog, choice) -> {
-                        selectedFolder = ids.get(choice);
-                        folderFilter.setText(labels.get(choice));
-                        refresh();
+            main.post(() -> {
+                if (destroyed || !owner.equals(library)) return;
+                new AlertDialog.Builder(this).setTitle(tr("筛选分类", "Filter folder"))
+                    .setItems(labels.toArray(new String[0]), (d, n) -> {
+                        selectedFolder = ids.get(n); folderFilter.setText(labels.get(n)); refresh();
                     }).show();
             });
         });
     }
 
     private void organizePost(String postId) {
-        if (account == null || clearing) return;
-        final String owner = account;
-        worker.execute(() -> {
-            List<String> ids = new ArrayList<>();
-            List<String> labels = new ArrayList<>();
+        final String owner = library;
+        read(() -> {
+            List<String> ids = new ArrayList<>(), labels = new ArrayList<>();
             try (Cursor c = archive.categories(owner)) {
-                while (c.moveToNext()) {
-                    ids.add(c.getString(0));
-                    labels.add(c.getString(1));
-                }
+                while (c.moveToNext()) { ids.add(c.getString(0)); labels.add(c.getString(1)); }
             }
-            runOnUiThread(() -> {
-                if (!owner.equals(account) || isFinishing()) return;
-                if (ids.isEmpty()) {
-                    Toast.makeText(this,
-                        tr("请先创建分类", "Create a folder first"),
-                        Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                new AlertDialog.Builder(this)
-                    .setTitle(tr("加入本地分类", "Add to local folder"))
-                    .setItems(labels.toArray(new String[0]), (dialog, choice) -> {
-                        worker.execute(() -> {
-                            try {
-                                archive.assignCategory(owner, postId, ids.get(choice));
-                                runOnUiThread(() -> Toast.makeText(this,
-                                    tr("已加入分类", "Added to folder"), Toast.LENGTH_SHORT).show());
-                            } catch (RuntimeException ignored) {
-                                runOnUiThread(() -> Toast.makeText(this,
-                                    tr("添加分类失败", "Unable to assign folder"),
-                                    Toast.LENGTH_SHORT).show());
-                            }
-                        });
-                    }).show();
+            main.post(() -> {
+                if (destroyed || !owner.equals(library)) return;
+                if (ids.isEmpty()) { toast(tr("已保存；可从“新建分类”整理", "Saved; create a folder to organize")); return; }
+                new AlertDialog.Builder(this).setTitle(tr("加入本地分类", "Add to local folder"))
+                    .setItems(labels.toArray(new String[0]), (d, n) ->
+                        write(owner, () -> archive.assignCategory(owner, postId, ids.get(n)),
+                            tr("已加入分类", "Added to folder"))).show();
             });
         });
     }
 
     private void editFolder(Row row) {
-        if (account == null) return;
-        new AlertDialog.Builder(this)
-            .setTitle(row.headline)
-            .setItems(new String[]{
-                tr("重命名", "Rename"), tr("删除分类", "Delete folder")
-            }, (dialog, index) -> {
-                if (index == 0) showFolderEditor(row.id, row.headline);
-                else new AlertDialog.Builder(this)
-                    .setMessage(tr("仅删除本地分类，不删除帖子。", 
-                        "Only the local folder is deleted, not its posts."))
+        final String owner = library;
+        new AlertDialog.Builder(this).setTitle(row.headline)
+            .setItems(new String[]{tr("重命名", "Rename"),tr("删除分类", "Delete folder")}, (d, n) -> {
+                if (n == 0) showFolderEditor(row.id, row.headline);
+                else new AlertDialog.Builder(this).setMessage(tr("只删除分类，帖子和收藏保留。", "Deletes only the folder; posts and favorites remain."))
                     .setNegativeButton(tr("取消", "Cancel"), null)
-                    .setPositiveButton(tr("删除", "Delete"), (d, which) -> {
-                        String owner = account;
-                        worker.execute(() -> {
-                            archive.deleteCategory(owner, row.id);
-                            runOnUiThread(() -> {
-                                if (row.id.equals(selectedFolder)) selectedFolder = null;
-                                refresh();
-                            });
-                        });
-                    }).show();
+                    .setPositiveButton(tr("删除", "Delete"), (dialog, choice) ->
+                        write(owner, () -> archive.deleteCategory(owner, row.id), null, () -> {
+                            if (row.id.equals(selectedFolder)) { selectedFolder = null; folderFilter.setText(tr("全部分类", "All folders")); }
+                        })).show();
             }).show();
     }
 
-    private void showFolderEditor(String existingId, String initialName) {
+    private void showFolderEditor(String existingId, String initial) {
         if (clearing) return;
-        if (account == null) {
-            Toast.makeText(this, tr("等待接入账号", "Account not bound"),
-                Toast.LENGTH_SHORT).show();
+        final String owner = library;
+        EditText field = entry(tr("分类名称", "Folder name"), initial);
+        new AlertDialog.Builder(this).setTitle(tr("本地分类", "Local folder")).setView(field)
+            .setNegativeButton(tr("取消", "Cancel"), null)
+            .setPositiveButton(tr("保存", "Save"), (d, n) -> {
+                String value = field.getText().toString().trim();
+                if (value.isEmpty() || value.length() > 120) { toast(tr("名称需为 1～120 字", "Name must be 1–120 characters")); return; }
+                String id = existingId == null ? UUID.randomUUID().toString() : existingId;
+                write(owner, () -> archive.putCategory(owner, id, value), tr("分类已保存", "Folder saved"));
+            }).show();
+    }
+
+    private void chooseImportFile() {
+        if (clearing) return;
+        new AlertDialog.Builder(this).setTitle(tr("导入本人帖子档案", "Import my posts archive"))
+            .setMessage(tr("选择 X 官方档案中的 tweets.js 单个分段。请确认文件中的帖子属于你本人；它将保存到当前 Xs 空间，不表示网页已登录此账号。仅本机读取，不上传。",
+                "Select one tweets.js part from your official X archive. Confirm the posts are yours. They are saved to this Xs space; this does not verify a web login. The selected file is read locally."))
+            .setNegativeButton(tr("取消", "Cancel"), null)
+            .setPositiveButton(tr("确认本人归属并选文件", "Confirm ownership & choose"), (d, n) -> {
+                Intent pick = new Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("*/*");
+                pendingImportLibrary = library;
+                pendingImportTicket = XsLibraryWrites.ticket(library);
+                try { startActivityForResult(pick, REQUEST_POSTS_JS); }
+                catch (ActivityNotFoundException failure) { toast(tr("没有可用文件选择器", "No document picker available")); }
+            }).show();
+    }
+
+    @Override protected void onActivityResult(int code, int result, Intent data) {
+        super.onActivityResult(code, result, data);
+        if (code != REQUEST_POSTS_JS || result != RESULT_OK || data == null || data.getData() == null || clearing) return;
+        final String owner = pendingImportLibrary;
+        final XsLibraryWrites.Ticket ticket = pendingImportTicket;
+        pendingImportLibrary = null; pendingImportTicket = null;
+        if (owner == null || !XsLibraryWrites.isCurrent(ticket)) {
+            toast(tr("资料空间已变化，请重新选择文件", "Library context changed; select the file again"));
             return;
         }
-        EditText entry = new EditText(this);
-        entry.setSingleLine(true);
-        entry.setHint(tr("输入分类名称", "Folder name"));
-        if (initialName != null) entry.setText(initialName);
-        String owner = account;
-        new AlertDialog.Builder(this)
-            .setTitle(existingId == null ?
-                tr("新建本地分类", "Create local folder") :
-                tr("重命名分类", "Rename folder"))
-            .setView(entry)
-            .setNegativeButton(tr("取消", "Cancel"), null)
-            .setPositiveButton(tr("保存", "Save"), (dialog, choice) -> {
-                String name = entry.getText().toString().trim();
-                if (name.isEmpty() || name.length() > 120) {
-                    Toast.makeText(this,
-                        tr("分类名不能为空，最多 120 字", "Folder name must be 1–120 chars"),
-                        Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                String folderId = existingId == null ? UUID.randomUUID().toString() : existingId;
-                worker.execute(() -> {
-                    try {
-                        archive.putCategory(owner, folderId, name);
-                        runOnUiThread(this::refresh);
-                    } catch (RuntimeException ignored) {
-                        runOnUiThread(() -> Toast.makeText(this,
-                            tr("保存失败", "Unable to save"), Toast.LENGTH_SHORT).show());
-                    }
-                });
-            }).show();
+        final Uri uri = data.getData();
+        write(owner, ticket, () -> {
+            try (InputStream input = getContentResolver().openInputStream(uri)) {
+                if (input == null) throw new IOException("No document");
+                XsArchiveImporter.importJs(input, owner, archive, System.currentTimeMillis());
+            } catch (IOException failure) { throw new IllegalStateException("Cannot read selected post archive"); }
+        }, tr("档案已导入本机；未创建打开或停留事件", "Imported locally without open or dwell events"), () -> setMode(Mode.SEARCH));
     }
 
-    private void confirmErase() {
-        if (account == null || clearing) return;
-        if (localSpaceMode) {
-            confirmLocalSpaceErase();
-            return;
-        }
-        String owner = account;
-        new AlertDialog.Builder(this)
-            .setTitle(tr("清空本地归档？", "Erase local archive?"))
-            .setMessage(tr("仅删除当前账号在本机的历史、分类和搜索索引，不影响 X 服务器数据。",
-                "Deletes only this account's on-device Xs history, folders and indexes. X data is untouched."))
-            .setNegativeButton(tr("取消", "Cancel"), null)
-            .setPositiveButton(tr("清空", "Erase"), (d, n) -> {
-                clearing = true;
-                recorder.setEnabled(false);
-                feedRecorder.setEnabled(false);
-                // UI worker queues this AFTER any pending local import/category edit.
-                // Bridge IO then queues deletion AFTER prior capture events.
-                worker.execute(() -> {
-                    boolean started = XsCaptureBridge.clearAccountIfActive(
-                        this, owner, success -> {
-                            clearing = false;
-                            if (owner.equals(account) && !isFinishing()) {
-                                selectedFolder = null;
-                                refreshRecordingState();
-                                refresh();
-                            }
-                            Toast.makeText(this, success ?
-                                tr("已清空当前账号的本地归档", "Local archive erased") :
-                                tr("清空失败", "Unable to erase"), Toast.LENGTH_SHORT).show();
-                        });
-                    if (!started) {
-                        runOnUiThread(() -> {
-                            clearing = false;
-                            if (!isFinishing()) refreshRecordingState();
-                            Toast.makeText(this,
-                                tr("账号已变化，未清理任何数据",
-                                   "Account changed; nothing erased"),
-                                Toast.LENGTH_SHORT).show();
-                        });
-                    }
-                });
-            }).show();
-    }
-
-    private void confirmLocalSpaceErase() {
-        final String scope = account;
-        new AlertDialog.Builder(this)
-            .setTitle(tr("清空本机手动资料空间？", "Clear manual local space?"))
-            .setMessage(tr("仅删除此本机空间内的帖子、分类和历史，网页会话不受影响。",
-                "Deletes the local space only; the X web session is unaffected."))
-            .setNegativeButton(tr("取消", "Cancel"), null)
-            .setPositiveButton(tr("清空", "Clear"), (d, n) -> {
-                clearing = true;
-                worker.execute(() -> {
-                    boolean ok = false;
-                    try { archive.clearAccount(scope); ok = true; }
-                    catch (RuntimeException ignored) { }
-                    final boolean result = ok;
-                    runOnUiThread(() -> {
-                        clearing = false;
-                        if (!isFinishing() && scope.equals(account)) {
-                            selectedFolder = null;
-                            refresh();
-                        }
-                        Toast.makeText(this, result ?
-                            tr("本机资料已清空", "Local archive cleared") :
-                            tr("清理失败", "Clear failed"), Toast.LENGTH_SHORT).show();
-                    });
-                });
-            }).show();
-    }
-
-    private void openPost(String postId) {
-        Uri uri = Uri.parse("https://x.com/i/web/status/" + postId);
-        Intent local = new Intent(Intent.ACTION_VIEW, uri);
-        local.setPackage(getPackageName());
+    private void read(Runnable operation) {
+        if (destroyed) return;
+        databaseUsers.incrementAndGet();
         try {
-            startActivity(local);
-        } catch (ActivityNotFoundException notAvailable) {
-            Toast.makeText(this, tr("当前客户端无法打开此帖子", 
-                "This client cannot open the post"), Toast.LENGTH_SHORT).show();
+            reader.execute(() -> { try { operation.run(); } finally { releaseDatabase(); } });
+        } catch (java.util.concurrent.RejectedExecutionException stopped) {
+            releaseDatabase();
+            if (!destroyed) { more.setEnabled(true); toast(tr("本地查询繁忙，请重试", "Local search busy; retry")); }
         }
     }
 
+    private void releaseDatabase() {
+        if (databaseUsers.decrementAndGet() == 0) archive.close();
+    }
+
+    private void write(String owner, Runnable work, String success) { write(owner, work, success, null); }
+    private void write(String owner, Runnable work, String success, Runnable after) {
+        write(owner, XsLibraryWrites.ticket(owner), work, success, after);
+    }
+    private void write(String owner, XsLibraryWrites.Ticket ticket, Runnable work, String success, Runnable after) {
+        if (clearing || destroyed) return;
+        databaseUsers.incrementAndGet();
+        boolean queued = XsLibraryWrites.submit(ticket, () -> {
+            boolean ok = true;
+            try { work.run(); } catch (RuntimeException failure) { ok = false; }
+            finally { releaseDatabase(); }
+            final boolean result = ok;
+            main.post(() -> {
+                if (destroyed || !owner.equals(library)) return;
+                if (result) {
+                    if (success != null) toast(success);
+                    if (after != null) after.run();
+                    refresh();
+                } else toast(tr("保存失败，请检查输入或存储空间", "Save failed; check input or available storage"));
+            });
+        }, this::releaseDatabase);
+        if (!queued) { releaseDatabase(); toast(tr("本地任务已失效或队列繁忙，请重试", "Local task expired or queue busy; retry")); }
+    }
+
+    private void openPost(String id) {
+        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(postUrl(id))).setPackage(getPackageName());
+        try { startActivity(intent); }
+        catch (ActivityNotFoundException missing) { toast(tr("当前客户端无法打开原帖", "This client cannot open the post")); }
+    }
+    private static String postUrl(String id) { return "https://x.com/i/web/status/" + id; }
     private String headline(String author, String body, String id) {
-        String prefix = author == null || author.isEmpty() ? "" : "@" + author + "  ";
-        String content = body == null || body.trim().isEmpty() ?
-            tr("帖子 #", "Post #") + id : body.replace('\n', ' ').trim();
-        String result = prefix + content;
-        return result.length() > 110 ? result.substring(0, 110) + "…" : result;
+        String value = (author == null || author.isEmpty() ? "" : "@" + author + "  ") +
+            (body == null || body.trim().isEmpty() ? tr("仅链接 #", "Link only #") + id : body.replace('\n',' ').trim());
+        return value.length() > 110 ? value.substring(0,110) + "…" : value;
     }
-
-    private String date(long when) {
-        return DateFormat.getDateTimeInstance(
-            DateFormat.MEDIUM, DateFormat.SHORT, Locale.getDefault())
-            .format(new Date(when));
+    private String duration(Long ms) {
+        return ms == null ? tr("时长未知", "duration unknown") : String.format(Locale.getDefault(), "%.1f s", ms / 1000.0);
     }
-
-    private Button button(String value) {
-        Button b = new Button(this);
-        b.setText(value);
-        b.setAllCaps(false);
-        return b;
+    private String duration(Long ms, String quality) {
+        if (ms == null) return duration(ms);
+        boolean lowerBound = "SAMPLED_LOWER_BOUND".equals(quality) || "CAPPED_LOWER_BOUND".equals(quality);
+        return (lowerBound ? "≥" : "") + duration(ms) + ("CAPPED_LOWER_BOUND".equals(quality) ?
+            tr("（已达测量上限）", " (measurement cap)") : "");
     }
-
-    private TextView text(String value) {
-        TextView tv = new TextView(this);
-        tv.setText(value);
-        tv.setPadding(0, px(3), 0, px(3));
-        return tv;
+    private static String quality(Cursor cursor, String name) {
+        int index = cursor.getColumnIndex(name);
+        return index < 0 || cursor.isNull(index) ? null : cursor.getString(index);
     }
-
-    private LinearLayout horizontal() {
-        LinearLayout layout = new LinearLayout(this);
-        layout.setOrientation(LinearLayout.HORIZONTAL);
-        return layout;
+    private String sourceLabel(String value) {
+        if ("home_for_you".equals(value)) return tr("为你推荐", "For you");
+        if ("home_following".equals(value)) return tr("正在关注", "Following");
+        if ("profile".equals(value)) return tr("个人主页", "Profile");
+        if ("search_results".equals(value)) return tr("搜索", "Search");
+        return value == null ? tr("来源未知", "Unknown source") : value;
     }
-
-    private LinearLayout.LayoutParams weighted() {
-        return new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1);
+    private String date(long value) {
+        return DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT, Locale.getDefault()).format(new Date(value));
     }
-
-    private int px(int dp) {
-        return (int) (dp * getResources().getDisplayMetrics().density + 0.5f);
+    private Button button(String label) { Button v = new Button(this); v.setAllCaps(false); v.setText(label); return v; }
+    private TextView text(String value) { TextView v = new TextView(this); v.setText(value); v.setPadding(0,px(3),0,px(3)); return v; }
+    private EditText entry(String hint, String initial) {
+        EditText v = new EditText(this); v.setHint(hint); v.setSingleLine(true);
+        if (initial != null) v.setText(initial); return v;
     }
+    private CheckBox check(String label, boolean enabled) { CheckBox v = new CheckBox(this); v.setText(label); v.setChecked(enabled); return v; }
+    private LinearLayout column() { LinearLayout v = new LinearLayout(this); v.setOrientation(LinearLayout.VERTICAL); return v; }
+    private LinearLayout paddedColumn() { LinearLayout v = column(); v.setPadding(px(16),px(8),px(16),px(8)); return v; }
+    private LinearLayout horizontal() { LinearLayout v = new LinearLayout(this); v.setOrientation(LinearLayout.HORIZONTAL); return v; }
+    private LinearLayout.LayoutParams weighted() { return new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT,1); }
+    private int px(int value) { return (int)(value * getResources().getDisplayMetrics().density + .5f); }
+    private String tr(String chinese, String english) { return zh ? chinese : english; }
+    private static String emptyToNull(String value) { return value.isEmpty() ? null : value; }
+    private void toast(String value) { if (!destroyed) Toast.makeText(this,value,Toast.LENGTH_SHORT).show(); }
 
-    private String tr(String chinese, String english) {
-        return zh ? chinese : english;
-    }
-
-    @Override
-    protected void onDestroy() {
-        requested.incrementAndGet();
-        mainHandler.removeCallbacks(delayedSearch);
-        worker.execute(() -> archive.close());
-        worker.shutdown();
+    @Override protected void onDestroy() {
+        destroyed = true; requested.incrementAndGet(); main.removeCallbacks(delayedSearch);
+        // Keep the helper alive until both queued reads and shared writes release it.
+        reader.shutdown();
+        releaseDatabase();
         super.onDestroy();
     }
 }

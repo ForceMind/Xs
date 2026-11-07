@@ -23,7 +23,7 @@
     <string name="renderer_gone">网页渲染进程已停止，重试可新建浏览视图。</string>
     <string name="webview_missing">系统 WebView 不可用，请安装或启用受支持的系统 WebView 后重启 Xs。</string>
     <string name="about">构建与兼容性</string>
-    <string name="about_body">Xs %1$s\nAndroid %2$s（API %3$d）\nWebView %4$s\n\n内部 W0 验证版，自动采集关闭，支持手动保存帖子链接。直接登录、两步验证、Google、Apple、Passkey 均需分别验证。下载交外部浏览器；弹窗、相机、麦克风暂不支持。</string>
+    <string name="about_body">Xs %1$s\nAndroid %2$s（API %3$d）\nWebView %4$s\n\n内部 W0 验证版，自动采集关闭，支持手动保存帖子链接。直接登录、两步验证、Google、Apple、Passkey 均需分别验证。支持本机收藏、所选图片任务与文件分享。真实自动采集仍关闭，认证窗口需单独验证；相机、麦克风暂不支持。</string>
     <string name="local_archive">我的本机资料库</string>
     <string name="local_save">保存当前帖子链接</string>
     <string name="local_scope_title">创建本机资料空间？</string>
@@ -40,4 +40,14 @@
     <string name="share_save">保存到本机</string>
     <string name="share_invalid">目前仅支持分享单条 X 帖子的 HTTPS 链接。</string>
     <string name="tls_failed">证书验证失败，已阻止加载。</string>
+    <string name="popup_title">打开窗口链接？</string>
+    <string name="popup_internal">在当前浏览页打开这条 X 链接？</string>
+    <string name="assets">本地资源库</string>
+    <string name="favorite">收藏到 Xs</string>
+    <string name="favorite_saved">已收藏到 Xs。真实快照采集验收前仅保存链接。</string>
+    <string name="share_post">分享帖子链接</string>
+    <string name="download_images">下载所选帖子图片</string>
+    <string name="download">下载</string>
+    <string name="image_item">图片 %1$d</string>
+    <string name="images_unavailable">此帖未找到支持的图片。真实 X 布局仍需验证；当前不支持视频。</string>
 </resources>

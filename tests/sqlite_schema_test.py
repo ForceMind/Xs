@@ -9,12 +9,20 @@ def main() -> None:
     lines = [line.strip() for line in sys.stdin if line.strip()]
     ddl = [
         base64.b64decode(line, validate=True).decode("utf-8")
-        for line in lines if not line.startswith("MIGRATE:")
+        for line in lines if ":" not in line
     ]
     migration = [
         base64.b64decode(line.partition(":")[2], validate=True).decode("utf-8")
         for line in lines if line.startswith("MIGRATE:")
     ]
+    v2 = [base64.b64decode(line.partition(":")[2], validate=True).decode("utf-8")
+          for line in lines if line.startswith("V2:")]
+    v3 = [base64.b64decode(line.partition(":")[2], validate=True).decode("utf-8")
+          for line in lines if line.startswith("V3:")]
+    actual_query = next(base64.b64decode(line.partition(":")[2], validate=True).decode("utf-8")
+                        for line in lines if line.startswith("QUERY:"))
+    actual_args = [base64.b64decode(line.partition(":")[2], validate=True).decode("utf-8")
+                   for line in lines if line.startswith("ARG:")]
     assert len(ddl) >= 10 and len(migration) >= 5
     con = sqlite3.connect(":memory:")
     con.execute("PRAGMA foreign_keys = ON")
@@ -89,7 +97,7 @@ def main() -> None:
     # verify that migrations preserve every account's posts and event history.
     old = sqlite3.connect(":memory:")
     old.execute("PRAGMA foreign_keys = ON")
-    for statement in ddl:
+    for statement in v2:
         if any(token in statement for token in (
             "idx_posts_open_time", "idx_posts_feed_time",
             "idx_actions_by_post", "uniq_actions_known", "uniq_actions_unknown"
@@ -130,7 +138,61 @@ def main() -> None:
         "SELECT body FROM posts WHERE account_id='account-A' "
         "AND post_id='88'"
     ).fetchone()[0] == 'historical post'
-    print("PASS SQLite v2 DDL, deduped actions, v1 migration, FTS and account isolation")
+    # v1 -> v2 -> v3 keeps exact namespace keys, timestamps, FTS rowids and category links.
+    old.execute("INSERT INTO categories VALUES ('account-A','old-folder','Retained')")
+    old.execute("INSERT INTO post_categories VALUES ('account-A','88','old-folder')")
+    old.execute("INSERT INTO categories VALUES ('empty-legacy','empty','No posts yet')")
+    old.execute("INSERT INTO posts(account_id,post_id,body,first_seen_at_ms,last_seen_at_ms) "
+                "VALUES ('account-B','88','a separate scope',10,20)")
+    old.execute("INSERT INTO history_events(account_id,post_id,event_type,event_at_ms,source) "
+                "VALUES ('account-B','88','FEED_VISIBLE',20,'home_for_you')")
+    old.execute("INSERT INTO posts(account_id,post_id,first_seen_at_ms,last_seen_at_ms) "
+                "VALUES ('local:old','42',3,4)")
+    before_posts = old.execute("SELECT rowid,account_id,post_id,body,first_seen_at_ms,last_seen_at_ms FROM posts ORDER BY rowid").fetchall()
+    before_events = old.execute("SELECT * FROM history_events ORDER BY id").fetchall()
+    before_categories = old.execute("SELECT * FROM post_categories").fetchall()
+    for statement in v3:
+        old.executescript(statement + ";")
+    assert old.execute("SELECT rowid,account_id,post_id,body,first_seen_at_ms,last_seen_at_ms FROM posts ORDER BY rowid").fetchall() == before_posts
+    assert [row[:6] for row in old.execute("SELECT * FROM history_events ORDER BY id").fetchall()] == before_events
+    assert old.execute("SELECT * FROM post_categories").fetchall() == before_categories
+    assert old.execute("SELECT legacy_scope,library_id FROM legacy_scope_mapping ORDER BY legacy_scope").fetchall() == [(key,key) for key in ['account-A','account-B','empty-legacy','local:old']]
+    assert old.execute("SELECT account_id,post_id FROM posts_fts WHERE posts_fts MATCH 'historical*'").fetchall() == [('account-A','88')]
+    assert old.execute("SELECT duration_ms FROM history_events WHERE event_type='FEED_VISIBLE'").fetchone()[0] is None
+    assert old.execute("SELECT snapshot_state FROM posts WHERE account_id='local:old'").fetchone()[0] == 'LINK_ONLY'
+    assert old.execute("PRAGMA foreign_key_check").fetchall() == []
+
+    # Duration is nullable for legacy events, measured for new exposures, scoped and deduped.
+    for ident in ['101','102','103']:
+        con.execute("INSERT INTO posts(account_id,post_id,body,author_handle,first_seen_at_ms,last_seen_at_ms) VALUES ('local:test',?,'robot notes','alice',100,100)",(ident,))
+    for ident, duration in [('101',3500),('102',1000),('103',5000)]:
+        con.execute("INSERT INTO history_events(account_id,post_id,event_type,event_at_ms,source,event_key,duration_ms,threshold_ms) VALUES ('local:test',?,'FEED_VISIBLE',100,'home_for_you',?,?,3000)",(ident,'exposure:'+ident,duration))
+    con.execute("INSERT INTO history_events(account_id,post_id,event_type,event_at_ms,source,event_key) VALUES ('local:test','103','OPEN_POST',100,'post_detail','nav:103')")
+    # Also exclude legacy open events if the old counter was inconsistent.
+    assert [row[1] for row in con.execute(actual_query,actual_args)] == ['101']
+    try:
+        con.execute("INSERT INTO history_events(account_id,post_id,event_type,event_at_ms,source,event_key,duration_ms) VALUES ('local:test','101','FEED_VISIBLE',200,'home_for_you','exposure:101',8000)")
+        raise AssertionError("Duplicate exposure accepted")
+    except sqlite3.IntegrityError:
+        pass
+    con.execute("UPDATE history_events SET duration_ms=MAX(duration_ms,4000) WHERE event_key='exposure:101'")
+    assert con.execute("SELECT count(*),max(duration_ms) FROM history_events WHERE event_key='exposure:101'").fetchone() == (1,4000)
+    con.execute("INSERT INTO favorites(account_id,post_id,favorited_at_ms,note) VALUES ('local:test','101',200,'Personal annotation')")
+    con.execute("INSERT INTO post_tags VALUES ('local:test','101','AI')")
+    con.execute("INSERT INTO post_tags VALUES ('local:test','101','research')")
+    meta_query = next(base64.b64decode(line.partition(":")[2],validate=True).decode("utf-8")
+                      for line in lines if line.startswith("META_QUERY:"))
+    meta_args = [base64.b64decode(line.partition(":")[2],validate=True).decode("utf-8")
+                 for line in lines if line.startswith("META_ARG:")]
+    assert [row[1] for row in con.execute(meta_query,meta_args)] == ['101']
+    con.execute("INSERT OR IGNORE INTO favorites(account_id,post_id,favorited_at_ms) VALUES ('local:test','101',999)")
+    assert con.execute("SELECT favorited_at_ms,note FROM favorites").fetchone() == (200,'Personal annotation')
+    con.execute("DELETE FROM history_events WHERE account_id='local:test'")
+    assert con.execute("SELECT count(*) FROM favorites").fetchone()[0] == 1
+    con.execute("DELETE FROM favorites WHERE account_id='local:test' AND post_id='101'")
+    assert con.execute("SELECT count(*) FROM post_tags").fetchone()[0] == 0
+    assert con.execute("SELECT count(*) FROM posts WHERE account_id='local:test'").fetchone()[0] == 3
+    print("PASS SQLite v3 DDL, v1/v2 preserving migrations, scope mappings, FTS, exposure dedup, dwell/never-opened query, independent favorites")
 
 
 if __name__ == "__main__":

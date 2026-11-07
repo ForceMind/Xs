@@ -1,6 +1,7 @@
 package dev.forcemind.xs.tests;
 
 import dev.forcemind.xs.core.ArchiveSchema;
+import dev.forcemind.xs.core.ArchiveSearch;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
@@ -11,9 +12,31 @@ public final class SchemaDump {
             System.out.println(Base64.getEncoder().encodeToString(
                 ddl.getBytes(StandardCharsets.UTF_8)));
         }
+        for (String ddl : ArchiveSchema.CREATE_V2) {
+            System.out.println("V2:" + Base64.getEncoder().encodeToString(
+                ddl.getBytes(StandardCharsets.UTF_8)));
+        }
+        for (String migration : ArchiveSchema.MIGRATE_2_TO_3) {
+            System.out.println("V3:" + Base64.getEncoder().encodeToString(
+                migration.getBytes(StandardCharsets.UTF_8)));
+        }
         for (String migration : ArchiveSchema.MIGRATE_1_TO_2) {
             System.out.println("MIGRATE:" + Base64.getEncoder().encodeToString(
                 migration.getBytes(StandardCharsets.UTF_8)));
         }
+        ArchiveSearch.Filter f = new ArchiveSearch.Filter();
+        f.keyword = "robot";
+        f.minDwellMs = 3000L;
+        f.neverOpened = true;
+        f.sortByDwell = true;
+        ArchiveSearch.Query q = ArchiveSearch.build("local:test", f);
+        System.out.println("QUERY:" + Base64.getEncoder().encodeToString(q.sql.getBytes(StandardCharsets.UTF_8)));
+        for (String arg : q.args) System.out.println("ARG:" + Base64.getEncoder().encodeToString(arg.getBytes(StandardCharsets.UTF_8)));
+        f = new ArchiveSearch.Filter();
+        f.keyword="annotation"; f.favoriteOnly=true; f.tag="research"; f.author="@alice";
+        f.fromMs=0L; f.toMs=1000L; f.dateField=ArchiveSearch.DateField.FAVORITED;
+        q=ArchiveSearch.build("local:test",f);
+        System.out.println("META_QUERY:" + Base64.getEncoder().encodeToString(q.sql.getBytes(StandardCharsets.UTF_8)));
+        for (String arg:q.args) System.out.println("META_ARG:" + Base64.getEncoder().encodeToString(arg.getBytes(StandardCharsets.UTF_8)));
     }
 }

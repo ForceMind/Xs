@@ -1,5 +1,7 @@
 # Xs delivery roadmap — current A–D plan
 
+当前代码进度以 [本轮实施与验收记录](IMPLEMENTATION_EVIDENCE.zh-CN.md) 为准；下文保留需求基线，待验收项不因源码存在而自动通过。
+
 Updated 2026-11-06. Start at [documentation index](README.md). Product authority: [ADR-0002](adr/0002-local-library-media.md); implementation: [ADR-0003](adr/0003-native-pull-delivery.md). The older Web-first plan remains historical/non-conflicting guidance, not a reason to revert app-owned libraries or block offline work.
 
 ## Present baseline

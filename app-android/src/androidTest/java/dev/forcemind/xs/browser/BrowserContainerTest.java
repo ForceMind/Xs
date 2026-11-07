@@ -59,6 +59,8 @@ public class BrowserContainerTest {
         }
     }
     @Test public void actualWebViewExecutesSyntheticPageWithoutNativeArchive() throws Exception {
+        Context app = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        app.deleteDatabase("xs-local-history.db");
         try (ActivityScenario<BrowserActivity> scenario = ActivityScenario.launch(BrowserActivity.class)) {
             CountDownLatch loaded = new CountDownLatch(1);
             scenario.onActivity(activity -> {
@@ -84,8 +86,36 @@ public class BrowserContainerTest {
             assertTrue(evaluated.await(10, TimeUnit.SECONDS));
             assertTrue(result.get(), result.get().contains("Synthetic Xs test"));
             assertTrue(result.get(), result.get().contains("undefined"));
-            Context app = InstrumentationRegistry.getInstrumentation().getTargetContext();
             assertFalse(java.util.Arrays.asList(app.databaseList()).contains("xs-local-history.db"));
+        }
+    }
+    @Test public void configurationRecreationRetainsActualPageAndJavascriptState() throws Exception {
+        try (ActivityScenario<BrowserActivity> scenario=ActivityScenario.launch(BrowserActivity.class)) {
+            CountDownLatch loaded=new CountDownLatch(1);
+            AtomicReference<WebView> original=new AtomicReference<>();
+            scenario.onActivity(activity-> {
+                WebView view=activity.findViewById(R.id.browser_view);
+                original.set(view);
+                view.setWebViewClient(activity.new Client() {
+                    @Override public void onPageFinished(WebView web,String url) {
+                        super.onPageFinished(web,url); loaded.countDown();
+                    }
+                });
+                view.loadDataWithBaseURL("https://x.com/fixture/retained",
+                    "<html><body><div id='state'>kept</div><script>window.fixtureState=37;</script></body></html>",
+                    "text/html","UTF-8",null);
+            });
+            assertTrue(loaded.await(20,TimeUnit.SECONDS));
+            scenario.recreate();
+            CountDownLatch evaluated=new CountDownLatch(1);
+            AtomicReference<String> value=new AtomicReference<>();
+            scenario.onActivity(activity-> {
+                WebView view=activity.findViewById(R.id.browser_view);
+                assertSame(original.get(),view);
+                view.evaluateJavascript("window.fixtureState",result->{value.set(result);evaluated.countDown();});
+            });
+            assertTrue(evaluated.await(10,TimeUnit.SECONDS));
+            assertEquals("37",value.get());
         }
     }
     @Test public void subframeErrorsDoNotReplacePageAndRendererLossIsRecoverable() {

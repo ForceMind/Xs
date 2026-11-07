@@ -11,7 +11,7 @@ public final class ArchiveSearch {
         Pattern.compile("[A-Za-z0-9]+(?:[ \\t]+[A-Za-z0-9]+)*");
     private static final int MAX_QUERY_CHARS = 256;
 
-    public enum DateField { LAST_SEEN, LAST_OPENED, FEED_SEEN, PUBLISHED, ACTION }
+    public enum DateField { LAST_SEEN, LAST_OPENED, FEED_SEEN, PUBLISHED, ACTION, FAVORITED }
 
     public static final class Filter {
         public String keyword;
@@ -21,6 +21,13 @@ public final class ArchiveSearch {
         public Long toMs;
         public DateField dateField = DateField.LAST_SEEN;
         public boolean openedOnly = false;
+        public boolean neverOpened = false;
+        public boolean favoriteOnly = false;
+        public boolean sortByDwell = false;
+        public Long minDwellMs;
+        public String source;
+        public String author;
+        public String tag;
         public int limit = 50;
         public int offset = 0;
     }
@@ -59,11 +66,31 @@ public final class ArchiveSearch {
             throw new IllegalArgumentException("Unsupported personal action type");
         }
 
+        if (filter.minDwellMs != null && filter.minDwellMs < 0) {
+            throw new IllegalArgumentException("Negative dwell duration");
+        }
+        if (filter.openedOnly && filter.neverOpened) {
+            throw new IllegalArgumentException("Conflicting open filters");
+        }
+        if (filter.source != null && !filter.source.isEmpty() &&
+                !FeedCapturePolicy.supportedSource(filter.source) &&
+                !"post_detail".equals(filter.source)) {
+            throw new IllegalArgumentException("Unsupported observation source");
+        }
+        if ((filter.author != null && filter.author.length() > 128) ||
+                (filter.tag != null && filter.tag.length() > 64)) {
+            throw new IllegalArgumentException("Filter too long");
+        }
+        String dwellColumn = "(SELECT MAX(e.duration_ms) FROM history_events e WHERE " +
+            "e.account_id=p.account_id AND e.post_id=p.post_id AND e.event_type='FEED_VISIBLE')";
+        String favoriteTime = "(SELECT f.favorited_at_ms FROM favorites f WHERE " +
+            "f.account_id=p.account_id AND f.post_id=p.post_id)";
         String dateColumn;
         switch (filter.dateField) {
             case LAST_OPENED: dateColumn = "p.last_opened_at_ms"; break;
             case FEED_SEEN: dateColumn = "p.last_feed_seen_at_ms"; break;
             case PUBLISHED: dateColumn = "p.published_at_ms"; break;
+            case FAVORITED: dateColumn = favoriteTime; break;
             case ACTION:
                 // A strict allowlist ensures an action type cannot inject SQL.
                 String onlyAction = filter.actionType == null ||
@@ -78,18 +105,49 @@ public final class ArchiveSearch {
         StringBuilder sql = new StringBuilder(
             "SELECT p.account_id, p.post_id, p.author_handle, p.body, " +
             "p.published_at_ms, p.first_seen_at_ms, p.last_seen_at_ms, " +
-            "p.opened_count, " + dateColumn + " AS date_sort_ms " +
+            "p.opened_count, " + dateColumn + " AS date_sort_ms, " +
+            dwellColumn + " AS max_dwell_ms, " + favoriteTime + " AS favorited_at_ms, " +
+            "(SELECT f.note FROM favorites f WHERE f.account_id=p.account_id AND " +
+            "f.post_id=p.post_id) AS note, " +
+            "(SELECT GROUP_CONCAT(t.tag, ', ') FROM post_tags t WHERE t.account_id=p.account_id " +
+            "AND t.post_id=p.post_id) AS tags, " +
+            "(SELECT e.duration_quality FROM history_events e WHERE e.account_id=p.account_id " +
+            "AND e.post_id=p.post_id AND e.event_type='FEED_VISIBLE' AND e.duration_ms IS NOT NULL " +
+            "ORDER BY e.duration_ms DESC,e.id DESC LIMIT 1) AS dwell_quality " +
             "FROM posts p WHERE p.account_id = ?");
         List<String> args = new ArrayList<>();
         args.add(accountId);
 
         if (filter.openedOnly) sql.append(" AND p.opened_count > 0");
+        if (filter.neverOpened) sql.append(" AND p.opened_count = 0 AND NOT EXISTS " +
+            "(SELECT 1 FROM history_events o WHERE o.account_id=p.account_id " +
+            "AND o.post_id=p.post_id AND o.event_type='OPEN_POST')");
+        if (filter.favoriteOnly) sql.append(" AND EXISTS (SELECT 1 FROM favorites f WHERE " +
+            "f.account_id=p.account_id AND f.post_id=p.post_id)");
+        if (filter.minDwellMs != null) {
+            sql.append(" AND ").append(dwellColumn).append(" >= CAST(? AS INTEGER)");
+            args.add(Long.toString(filter.minDwellMs));
+        }
+        if (filter.source != null && !filter.source.isEmpty()) {
+            sql.append(" AND EXISTS (SELECT 1 FROM history_events e WHERE " +
+                "e.account_id=p.account_id AND e.post_id=p.post_id AND e.source=?)");
+            args.add(filter.source);
+        }
+        if (filter.author != null && !filter.author.trim().isEmpty()) {
+            sql.append(" AND p.author_handle=? COLLATE NOCASE");
+            args.add(filter.author.trim().replaceFirst("^@", ""));
+        }
+        if (filter.tag != null && !filter.tag.trim().isEmpty()) {
+            sql.append(" AND EXISTS (SELECT 1 FROM post_tags t WHERE " +
+                "t.account_id=p.account_id AND t.post_id=p.post_id AND t.tag=?)");
+            args.add(filter.tag.trim());
+        }
         if (filter.fromMs != null) {
-            sql.append(" AND ").append(dateColumn).append(" >= ?");
+            sql.append(" AND ").append(dateColumn).append(" >= CAST(? AS INTEGER)");
             args.add(Long.toString(filter.fromMs));
         }
         if (filter.toMs != null) {
-            sql.append(" AND ").append(dateColumn).append(" <= ?");
+            sql.append(" AND ").append(dateColumn).append(" <= CAST(? AS INTEGER)");
             args.add(Long.toString(filter.toMs));
         }
         if (filter.categoryId != null && !filter.categoryId.isEmpty()) {
@@ -112,21 +170,29 @@ public final class ArchiveSearch {
                 String[] tokens = keyword.toLowerCase(Locale.ROOT).split("[ \\t]+");
                 List<String> safe = new ArrayList<>();
                 for (String token : tokens) safe.add(token + "*");
-                sql.append(" AND EXISTS (SELECT 1 FROM posts_fts WHERE " +
+                sql.append(" AND (EXISTS (SELECT 1 FROM posts_fts WHERE " +
                            "posts_fts.account_id=p.account_id AND " +
                            "posts_fts.post_id=p.post_id AND posts_fts MATCH ?)");
                 args.add(String.join(" AND ", safe));
             } else {
                 String needle = "%" + keyword.replace("!", "!!")
                     .replace("%", "!%").replace("_", "!_") + "%";
-                sql.append(" AND (p.body LIKE ? ESCAPE '!' OR " +
+                sql.append(" AND ((p.body LIKE ? ESCAPE '!' OR " +
                            "p.author_handle LIKE ? ESCAPE '!')");
                 args.add(needle);
                 args.add(needle);
             }
+            String extraNeedle = "%" + keyword.replace("!", "!!")
+                .replace("%", "!%").replace("_", "!_") + "%";
+            sql.append(" OR EXISTS (SELECT 1 FROM favorites f WHERE f.account_id=p.account_id " +
+                "AND f.post_id=p.post_id AND f.note LIKE ? ESCAPE '!') " +
+                "OR EXISTS (SELECT 1 FROM post_tags t WHERE t.account_id=p.account_id " +
+                "AND t.post_id=p.post_id AND t.tag LIKE ? ESCAPE '!'))");
+            args.add(extraNeedle);
+            args.add(extraNeedle);
         }
         int limit = Math.max(1, Math.min(200, filter.limit));
-        sql.append(" ORDER BY ").append(dateColumn)
+        sql.append(" ORDER BY ").append(filter.sortByDwell ? dwellColumn : dateColumn)
            .append(" DESC, p.post_id DESC LIMIT ? OFFSET ?");
         args.add(Integer.toString(limit));
         args.add(Integer.toString(filter.offset));

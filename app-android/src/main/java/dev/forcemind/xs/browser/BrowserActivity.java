@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
+import android.content.MutableContextWrapper;
 import android.content.pm.PackageInfo;
 import android.graphics.Bitmap;
 import android.net.Uri;
@@ -38,15 +39,16 @@ import dev.forcemind.xs.core.PostUrls;
 import dev.forcemind.xs.android.XsArchiveDatabase;
 import dev.forcemind.xs.android.XsLocalSpaces;
 import dev.forcemind.xs.android.XsHistoryActivity;
+import dev.forcemind.xs.android.XsLibraryWrites;
+import dev.forcemind.xs.android.XsAssetsActivity;
+import dev.forcemind.xs.android.XsShareCoordinator;
+import dev.forcemind.xs.android.XsMediaRepository;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
-/** W0 only: no observer, JavascriptInterface, native capture or account binding. */
+/** Live automatic observation is gated off; local user actions need no X identity. */
 public final class BrowserActivity extends Activity {
     private static final String HOME = "https://x.com/home";
-    private final ExecutorService localIo = Executors.newSingleThreadExecutor();
     private String initialPost;
     private static final int PICK_MEDIA = 4101;
     private FrameLayout root;
@@ -66,6 +68,16 @@ public final class BrowserActivity extends Activity {
     private boolean started;
     private boolean foreground;
     private String retryUrl = HOME;
+    private boolean retained;
+    private WebView popupTransport;
+    private final android.os.Handler popupHandler=new android.os.Handler(android.os.Looper.getMainLooper());
+    private Runnable popupCleanup;
+    private static final class Page {
+        final WebView web; final long epoch; final String retryUrl; final boolean failed;
+        Page(WebView web, long epoch, String retryUrl, boolean failed) {
+            this.web=web; this.epoch=epoch; this.retryUrl=retryUrl; this.failed=failed;
+        }
+    }
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
@@ -114,7 +126,17 @@ public final class BrowserActivity extends Activity {
             }
         });
         shell.addView(retry);
-        if (!createWebView()) return;
+        Object previous = getLastNonConfigurationInstance();
+        if (previous instanceof Page) {
+            Page page=(Page) previous;
+            web=page.web; pageEpoch=page.epoch; retryUrl=page.retryUrl; failed=page.failed;
+            if (web.getContext() instanceof MutableContextWrapper)
+                ((MutableContextWrapper) web.getContext()).setBaseContext(this);
+            attachWebView();
+            status.setText(failed ? R.string.failed : R.string.ready);
+            retry.setVisibility(failed ? View.VISIBLE : View.GONE);
+            retained=true;
+        } else if (!createWebView()) return;
         started = getPreferences(MODE_PRIVATE).getBoolean("browser_notice_accepted", false);
         if (!started) {
             TextView notice = new TextView(this);
@@ -132,7 +154,7 @@ public final class BrowserActivity extends Activity {
                 shell.removeView(open);
                 navigate(initialPost == null ? HOME : initialPost);
             });
-        } else {
+        } else if (!retained) {
             Bundle browsing = state == null ? null : state.getBundle("web_navigation");
             if (browsing == null || web.restoreState(browsing) == null)
                 navigate(initialPost == null ? HOME : initialPost);
@@ -146,7 +168,7 @@ public final class BrowserActivity extends Activity {
     @SuppressWarnings("deprecation")
     private boolean createWebView() {
         try {
-            web = new WebView(this);
+            web = new WebView(new MutableContextWrapper(this));
         } catch (RuntimeException unavailable) {
             web = null;
             showFailure(R.string.webview_missing);
@@ -156,7 +178,7 @@ public final class BrowserActivity extends Activity {
         web.setId(R.id.browser_view);
         WebView.setWebContentsDebuggingEnabled(false);
         WebSettings settings = web.getSettings();
-        settings.setJavaScriptEnabled(true); // Required by the official website, no injected scripts.
+        settings.setJavaScriptEnabled(true); // Automatic observation remains disabled for live X.
         settings.setDomStorageEnabled(true);
         settings.setAllowFileAccess(false);
         settings.setAllowContentAccess(false);
@@ -166,13 +188,17 @@ public final class BrowserActivity extends Activity {
         settings.setSafeBrowsingEnabled(true);
         settings.setMediaPlaybackRequiresUserGesture(true);
         settings.setJavaScriptCanOpenWindowsAutomatically(false);
-        settings.setSupportMultipleWindows(true); // Routed to explicit refusal, never silently replace page.
+        settings.setSupportMultipleWindows(true);
         settings.setGeolocationEnabled(false);
+        attachWebView();
+        return true;
+    }
+
+    private void attachWebView() {
         web.setWebViewClient(new Client());
         web.setWebChromeClient(new Chrome());
         web.setDownloadListener((url, agent, disposition, type, length) -> offerExternal(url));
         shell.addView(web, new LinearLayout.LayoutParams(-1, 0, 1));
-        return true;
     }
 
     private void navigate(String url) {
@@ -242,8 +268,56 @@ public final class BrowserActivity extends Activity {
         }
         @Override public boolean onCreateWindow(WebView view, boolean dialog, boolean gesture,
                 Message result) {
-            toast(R.string.popup);
-            return false;
+            // One short-lived transport window. Never give it native privileges or let
+            // an unsolicited redirect silently replace the main page.
+            if (!foreground || !gesture || popupTransport!=null || result == null ||
+                    !(result.obj instanceof WebView.WebViewTransport)) return false;
+            WebView child=new WebView(new MutableContextWrapper(BrowserActivity.this));
+            popupTransport=child;
+            child.getSettings().setJavaScriptEnabled(false);
+            child.getSettings().setAllowFileAccess(false);
+            child.getSettings().setAllowContentAccess(false);
+            child.setWebChromeClient(new WebChromeClient() {
+                @Override public void onPermissionRequest(PermissionRequest request) { request.deny(); }
+            });
+            Runnable close=()-> {
+                if (popupTransport==child) { popupTransport=null; popupCleanup=null; }
+                child.destroy();
+            };
+            popupCleanup=close;
+            child.setWebViewClient(new WebViewClient() {
+                private boolean consumed;
+                private void route(String url) {
+                    if (consumed || "about:blank".equals(url)) return;
+                    consumed=true;
+                    popupHandler.removeCallbacks(close);
+                    if (foreground && !isFinishing()) {
+                        if (BrowserNavigation.classify(url)==BrowserNavigation.Target.INTERNAL) {
+                            new AlertDialog.Builder(BrowserActivity.this)
+                                .setTitle(R.string.popup_title).setMessage(R.string.popup_internal)
+                                .setNegativeButton(R.string.cancel,null)
+                                .setPositiveButton(R.string.open,(d,w)->navigate(url)).show();
+                        } else offerExternal(url);
+                    }
+                    child.stopLoading(); closePopup();
+                }
+                @Override public boolean shouldOverrideUrlLoading(WebView v, WebResourceRequest request) {
+                    if (request.isForMainFrame()) route(request.getUrl().toString());
+                    return true;
+                }
+                @Override public android.webkit.WebResourceResponse shouldInterceptRequest(
+                        WebView v, WebResourceRequest request) {
+                    // Intercept the initial URL too, before any child content/network runs.
+                    if (request.isForMainFrame()) runOnUiThread(()->route(request.getUrl().toString()));
+                    return new WebResourceResponse("text/plain","UTF-8",
+                        new java.io.ByteArrayInputStream(new byte[0]));
+                }
+                @Override public void onReceivedSslError(WebView v,SslErrorHandler h,SslError e) { h.cancel(); }
+            });
+            ((WebView.WebViewTransport)result.obj).setWebView(child);
+            result.sendToTarget();
+            popupHandler.postDelayed(close,10000);
+            return true;
         }
         @Override public void onPermissionRequest(PermissionRequest request) { request.deny(); }
         @Override public void onGeolocationPermissionsShowPrompt(String origin,
@@ -322,6 +396,13 @@ public final class BrowserActivity extends Activity {
         if (upload != null) { upload.onReceiveValue(null); upload = null; }
         uploadPage = null;
     }
+    private void closePopup() {
+        if (popupCleanup!=null) {
+            Runnable cleanup=popupCleanup;
+            popupHandler.removeCallbacks(cleanup);
+            cleanup.run();
+        }
+    }
     private void hideFullScreen() {
         if (fullScreen == null) return;
         root.removeView(fullScreen);
@@ -391,7 +472,7 @@ public final class BrowserActivity extends Activity {
         withLocalSpace(() -> {
             final String scope = XsLocalSpaces.current(this);
             if (scope == null) { toast(R.string.local_scope_error); return; }
-            localIo.execute(() -> {
+            boolean queued=XsLibraryWrites.submit(scope,() -> {
                 boolean fresh=false;
                 boolean valid=false;
                 try (XsArchiveDatabase db = new XsArchiveDatabase(getApplicationContext())) {
@@ -403,6 +484,64 @@ public final class BrowserActivity extends Activity {
                     if (!isFinishing()) toast(!success ? R.string.local_save_failed :
                         newEntry ? R.string.local_save_done : R.string.local_save_exists);
                 });
+            });
+            if (!queued) toast(R.string.local_save_failed);
+        });
+    }
+
+    private void favoriteCurrentPost() {
+        final String current=web==null ? null : web.getUrl();
+        if (!started || BrowserNavigation.classify(current)!=BrowserNavigation.Target.INTERNAL ||
+                PostUrls.extractPostId(current)==null) { toast(R.string.not_post_detail); return; }
+        withLocalSpace(()-> {
+            final String library=XsLocalSpaces.current(this);
+            XsLibraryWrites.submit(library,()-> {
+                try (XsArchiveDatabase db=new XsArchiveDatabase(getApplicationContext())) {
+                    db.favorite(library,current,null,null,null,System.currentTimeMillis());
+                    runOnUiThread(()-> { if (!isFinishing()) toast(R.string.favorite_saved); });
+                } catch (RuntimeException error) {
+                    runOnUiThread(()-> { if (!isFinishing()) toast(R.string.local_save_failed); });
+                }
+            });
+        });
+    }
+
+    private void shareCurrentPost() {
+        String current=web==null?null:PostUrls.canonicalLink(web.getUrl());
+        if (current==null) { toast(R.string.not_post_detail); return; }
+        XsShareCoordinator.shareText(this,current,null);
+    }
+
+    private void selectCurrentImages() {
+        final String current=web==null ? null : web.getUrl();
+        if (!foreground || !started || BrowserNavigation.classify(current)!=BrowserNavigation.Target.INTERNAL ||
+                PostUrls.extractPostId(current)==null) { toast(R.string.not_post_detail); return; }
+        final long epoch=pageEpoch;
+        final WebView owner=web;
+        withLocalSpace(()-> {
+            if (!foreground || web!=owner || epoch!=pageEpoch || !current.equals(web.getUrl())) return;
+            final String library=XsLocalSpaces.current(this);
+            owner.evaluateJavascript(PostImageSelection.script(current),raw-> {
+                if (!foreground || isFinishing() || web!=owner || epoch!=pageEpoch || !current.equals(web.getUrl())) return;
+                final List<String> candidates;
+                try { candidates=PostImageSelection.parse(current,raw); }
+                catch (IllegalArgumentException invalid) { toast(R.string.images_unavailable); return; }
+                if (candidates.isEmpty()) { toast(R.string.images_unavailable); return; }
+                String[] labels=new String[candidates.size()];
+                boolean[] selected=new boolean[candidates.size()];
+                for (int i=0;i<labels.length;i++) labels[i]=getString(R.string.image_item,i+1);
+                new AlertDialog.Builder(this).setTitle(R.string.download_images)
+                    .setMultiChoiceItems(labels,selected,(d,index,checked)->selected[index]=checked)
+                    .setNegativeButton(R.string.cancel,null)
+                    .setPositiveButton(R.string.download,(d,w)-> {
+                        if (!foreground || web!=owner || epoch!=pageEpoch || !current.equals(web.getUrl())) return;
+                        int queued=0;
+                        for (int i=0;i<selected.length;i++) if (selected[i]) {
+                            try { XsMediaRepository.get(this).enqueueImage(library,current,candidates.get(i)); queued++; }
+                            catch (RuntimeException unavailable) { toast(R.string.local_save_failed); }
+                        }
+                        if (queued>0) startActivity(XsAssetsActivity.intent(this,library));
+                    }).show();
             });
         });
     }
@@ -418,6 +557,21 @@ public final class BrowserActivity extends Activity {
         menu.getMenu().add(R.string.local_archive).setOnMenuItemClickListener(item -> {
             showManualArchive(); return true;
         });
+        menu.getMenu().add(R.string.assets).setOnMenuItemClickListener(item -> {
+            withLocalSpace(()->startActivity(XsAssetsActivity.intent(this,XsLocalSpaces.current(this))));
+            return true;
+        });
+        if (started) {
+            menu.getMenu().add(R.string.favorite).setOnMenuItemClickListener(item -> {
+                favoriteCurrentPost(); return true;
+            });
+            menu.getMenu().add(R.string.share_post).setOnMenuItemClickListener(item -> {
+                shareCurrentPost(); return true;
+            });
+            menu.getMenu().add(R.string.download_images).setOnMenuItemClickListener(item -> {
+                selectCurrentImages(); return true;
+            });
+        }
         if (started) menu.getMenu().add(R.string.local_save).setOnMenuItemClickListener(item -> {
             saveCurrentPostManually(); return true;
         });
@@ -444,6 +598,7 @@ public final class BrowserActivity extends Activity {
     }
     @Override protected void onPause() {
         foreground = false;
+        closePopup();
         hideFullScreen();
         if (web != null) web.onPause();
         super.onPause();
@@ -457,9 +612,9 @@ public final class BrowserActivity extends Activity {
         super.onSaveInstanceState(state);
     }
     @Override protected void onDestroy() {
-        localIo.shutdown();
+        closePopup();
         cancelUpload(); hideFullScreen();
-        if (web != null) {
+        if (web != null && !isChangingConfigurations()) {
             shell.removeView(web);
             web.stopLoading();
             web.setWebChromeClient(null);
@@ -467,5 +622,23 @@ public final class BrowserActivity extends Activity {
             web = null;
         }
         super.onDestroy();
+    }
+
+    @Override public Object onRetainNonConfigurationInstance() {
+        if (web==null) return null;
+        cancelUpload(); hideFullScreen();
+        web.onPause();
+        shell.removeView(web);
+        web.setDownloadListener(null);
+        web.setWebChromeClient(new WebChromeClient() {
+            @Override public void onPermissionRequest(PermissionRequest request) { request.deny(); }
+        });
+        web.setWebViewClient(new WebViewClient() {
+            @Override public boolean shouldOverrideUrlLoading(WebView v,WebResourceRequest r) { return true; }
+            @Override public void onReceivedSslError(WebView v,SslErrorHandler h,SslError e) { h.cancel(); }
+        });
+        if (web.getContext() instanceof MutableContextWrapper)
+            ((MutableContextWrapper)web.getContext()).setBaseContext(getApplicationContext());
+        return new Page(web,pageEpoch,retryUrl,failed);
     }
 }

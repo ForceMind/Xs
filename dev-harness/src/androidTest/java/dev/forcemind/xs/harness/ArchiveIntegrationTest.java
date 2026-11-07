@@ -117,7 +117,7 @@ public class ArchiveIntegrationTest {
         store = null;
         app.deleteDatabase(NAME);
         SQLiteDatabase old = app.openOrCreateDatabase(NAME, Context.MODE_PRIVATE, null);
-        for (String ddl : ArchiveSchema.CREATE) {
+        for (String ddl : ArchiveSchema.CREATE_V2) {
             if (ddl.contains("idx_posts_open_time") || ddl.contains("idx_posts_feed_time") ||
                 ddl.contains("idx_actions_by_post") || ddl.contains("uniq_actions_")) continue;
             old.execSQL(ddl.replace("last_opened_at_ms INTEGER, ", "")
@@ -249,6 +249,112 @@ public class ArchiveIntegrationTest {
         assertNotNull(screen);
         InstrumentationRegistry.getInstrumentation().runOnMainSync(screen::finish);
         InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+    }
+
+    @Test public void nativeNavigationAndExposureIdentitiesArePersistentAndIndependent() {
+        String library = XsLocalSpaces.defaultLibrary(app);
+        String url = "https://x.com/alice/status/7001";
+        assertTrue(store.recordObservedOpen(library,url,null,null,null,100,"epoch1:nav1"));
+        for (int i=0; i<5; i++) {
+            assertFalse(store.recordObservedOpen(library,url,"alice","Late searchable body",
+                50L,100+i,"epoch1:nav1"));
+        }
+        assertFalse(store.recordObservedOpen(library,"https://x.com/a/status/9009",null,
+            "collision",null,100,"epoch1:nav1"));
+        try (Cursor visits = store.timeline(library,null,20)) { assertEquals(1,visits.getCount()); }
+        assertTrue(store.enrichSnapshot(library,url,"alice","Late searchable body expanded",50L));
+        try (Cursor rows = store.search(library,new ArchiveSearch.Filter())) {
+            assertEquals(1,rows.getCount()); assertTrue(rows.moveToFirst());
+            assertEquals(1,rows.getInt(7));
+        }
+        String feed = "https://x.com/bob/status/7002";
+        assertFalse(store.recordMeasuredFeed(library,feed,"home_following","bob","Robot notes",null,
+            1000,"epoch1:exposure1",2999,3000));
+        assertTrue(store.recordMeasuredFeed(library,feed,"home_following","bob","Robot notes",null,
+            1000,"epoch1:exposure1",3500,3000));
+        assertFalse(store.recordMeasuredFeed(library,feed,"home_following","bob","Robot notes",null,
+            1000,"epoch1:exposure1",4500,3000));
+        assertFalse(store.recordMeasuredFeed(library,url,"home_following","alice","collision",null,
+            1000,"epoch1:exposure1",5000,3000));
+        assertTrue(store.recordMeasuredFeed(library,feed,"home_following","bob","Robot notes",null,
+            10000,"epoch1:exposure2",3500,3000));
+        ArchiveSearch.Filter filter = new ArchiveSearch.Filter();
+        filter.keyword="robot"; filter.minDwellMs=3000L; filter.neverOpened=true;
+        filter.sortByDwell=true; filter.author="@bob";
+        try (Cursor rows = store.search(library,filter)) {
+            assertEquals(1,rows.getCount()); assertTrue(rows.moveToFirst());
+            assertEquals("7002",rows.getString(1)); assertEquals(0,rows.getInt(7));
+            assertEquals(4500L,rows.getLong(9)); assertTrue(rows.isNull(10));
+        }
+        try (Cursor events = store.timeline(library,null,20,"FEED_VISIBLE")) {
+            assertEquals(2,events.getCount());
+        }
+        assertFalse(store.recordMeasuredFeed(library,feed,"home_following","bob",null,null,
+            1000,"epoch1:exposure1",600000,3000));
+        try (Cursor duration = store.getReadableDatabase().rawQuery(
+                "SELECT duration_ms,duration_quality FROM history_events WHERE event_key='epoch1:exposure1'",null)) {
+            assertTrue(duration.moveToFirst()); assertEquals(600000L,duration.getLong(0));
+            assertEquals("CAPPED_LOWER_BOUND",duration.getString(1));
+        }
+        store.close(); store=new XsArchiveDatabase(app);
+        assertFalse(store.recordObservedOpen(library,url,null,null,null,200,"epoch1:nav1"));
+        assertTrue(store.recordObservedOpen(library,feed,"bob",null,null,20000,"epoch1:nav2"));
+        try (Cursor rows = store.search(library,filter)) { assertEquals(0,rows.getCount()); }
+    }
+
+    @Test public void favoritesNotesTagsAndHistoryErasureHaveSeparateScopes() {
+        String library=XsLocalSpaces.defaultLibrary(app);
+        String url="https://x.com/alice/status/8001";
+        assertTrue(store.favorite(library,url,"alice","Local favorite snapshot",null,1000));
+        assertFalse(store.favorite(library,url,"alice",null,null,9000));
+        store.putFavoriteDetails(library,"8001","Personal annotation","AI, research, AI");
+        store.putCategory(library,"work","Work");
+        store.assignCategory(library,"8001","work");
+        assertTrue(store.recordObservedOpen(library,url,null,null,null,2000,"fav:nav1"));
+        store.clearHistory(library);
+        ArchiveSearch.Filter q=new ArchiveSearch.Filter();
+        q.favoriteOnly=true; q.tag="research"; q.categoryId="work";
+        try (Cursor rows=store.search(library,q)) {
+            assertTrue(rows.moveToFirst()); assertEquals(0,rows.getInt(7));
+            assertEquals(1000,rows.getLong(10));
+            assertEquals("Personal annotation",rows.getString(11));
+        }
+        assertEquals(library,XsLocalSpaces.defaultLibrary(app));
+        assertTrue(store.removeFavorite(library,"8001"));
+        try (Cursor rows=store.search(library,q)) { assertEquals(0,rows.getCount()); }
+        q.favoriteOnly=false; q.tag=null;
+        try (Cursor rows=store.search(library,q)) { assertEquals(1,rows.getCount()); }
+        assertFalse(store.enrichSnapshot(library,"https://x.com/a/status/999",null,"stale",null));
+    }
+
+    @Test public void databaseV2UpgradeKeepsScopesMappingsAndUnknownLegacyDurations() {
+        store.close(); store=null; app.deleteDatabase(NAME);
+        SQLiteDatabase old=app.openOrCreateDatabase(NAME,Context.MODE_PRIVATE,null);
+        for (String ddl:ArchiveSchema.CREATE_V2) old.execSQL(ddl);
+        for (String scope:new String[]{"legacy-A","legacy-B"}) {
+            old.execSQL("INSERT INTO posts(account_id,post_id,body,first_seen_at_ms,last_seen_at_ms) " +
+                "VALUES (?,'88','preserved snapshot',1,2)",new Object[]{scope});
+            old.execSQL("INSERT INTO categories VALUES (?,'work','Research')",new Object[]{scope});
+            old.execSQL("INSERT INTO post_categories VALUES (?,'88','work')",new Object[]{scope});
+            old.execSQL("INSERT INTO history_events(account_id,post_id,event_type,event_at_ms,source) " +
+                "VALUES (?,'88','FEED_VISIBLE',2,'home_following')",new Object[]{scope});
+        }
+        old.setVersion(2); old.close(); store=new XsArchiveDatabase(app);
+        try (Cursor mappings=store.getReadableDatabase().rawQuery("SELECT legacy_scope,library_id " +
+                "FROM legacy_scope_mapping ORDER BY legacy_scope",null)) {
+            assertEquals(2,mappings.getCount()); assertTrue(mappings.moveToFirst());
+            assertEquals("legacy-A",mappings.getString(0)); assertEquals("legacy-A",mappings.getString(1));
+        }
+        ArchiveSearch.Filter q=new ArchiveSearch.Filter(); q.keyword="preserved"; q.categoryId="work";
+        for (String scope:new String[]{"legacy-A","legacy-B"}) {
+            try (Cursor rows=store.search(scope,q)) { assertEquals(1,rows.getCount()); }
+            try (Cursor events=store.timeline(scope,null,20,"FEED_VISIBLE")) {
+                assertTrue(events.moveToFirst()); assertTrue(events.isNull(8)); assertTrue(events.isNull(11));
+            }
+        }
+        try (Cursor check=store.getReadableDatabase().rawQuery("PRAGMA foreign_key_check",null)) {
+            assertEquals(0,check.getCount());
+        }
     }
 
     @Test public void nativeArchiveActivityLoads() {

@@ -37,10 +37,16 @@ public final class XsArchiveDatabase extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        if (oldVersion == 1 && newVersion == 2) {
+        int version = oldVersion;
+        if (version == 1 && newVersion >= 2) {
             for (String sql : ArchiveSchema.MIGRATE_1_TO_2) db.execSQL(sql);
-            return;
+            version = 2;
         }
+        if (version == 2 && newVersion >= 3) {
+            for (String sql : ArchiveSchema.MIGRATE_2_TO_3) db.execSQL(sql);
+            version = 3;
+        }
+        if (version == newVersion) return;
         // Fail safely rather than deleting existing history for an unsupported version.
         throw new IllegalStateException("Xs migration required: " +
                                         oldVersion + " -> " + newVersion);
@@ -75,6 +81,205 @@ public final class XsArchiveDatabase extends SQLiteOpenHelper {
         } finally {
             db.endTransaction();
         }
+    }
+
+    /** Native navigation identity, scoped by a non-reusable coordinator epoch. */
+    public boolean recordObservedOpen(String libraryId, String postUrl, String author,
+                                      String text, Long publishedAtMs, long openedAtMs,
+                                      String navigationId) {
+        String id = PostUrls.extractPostId(postUrl);
+        if (!valid(libraryId) || id == null || openedAtMs <= 0 || !validEventKey(navigationId)) {
+            return false;
+        }
+        SQLiteDatabase db = getWritableDatabase();
+        db.beginTransaction();
+        try {
+            try (Cursor existing = db.rawQuery("SELECT post_id FROM history_events WHERE " +
+                    "account_id=? AND event_type='OPEN_POST' AND event_key=?",
+                    new String[]{libraryId,navigationId})) {
+                if (existing.moveToFirst() && !id.equals(existing.getString(0))) return false;
+            }
+            insertPostIfMissing(db, libraryId, id, author, text, publishedAtMs, openedAtMs);
+            updateKnownMetadata(db, libraryId, id, author, text, publishedAtMs);
+            ContentValues event = new ContentValues();
+            event.put("account_id", libraryId);
+            event.put("post_id", id);
+            event.put("event_type", "OPEN_POST");
+            event.put("event_at_ms", openedAtMs);
+            event.put("source", "post_detail");
+            event.put("event_key", navigationId);
+            boolean inserted = db.insertWithOnConflict("history_events", null, event,
+                SQLiteDatabase.CONFLICT_IGNORE) != -1;
+            if (inserted) {
+                db.execSQL("UPDATE posts SET opened_count=opened_count+1, " +
+                    "last_seen_at_ms=MAX(last_seen_at_ms,?), " +
+                    "last_opened_at_ms=MAX(COALESCE(last_opened_at_ms,0),?) " +
+                    "WHERE account_id=? AND post_id=?",
+                    new Object[]{openedAtMs, openedAtMs, libraryId, id});
+            }
+            db.setTransactionSuccessful();
+            return inserted;
+        } finally { db.endTransaction(); }
+    }
+
+    /** Enrich an already stored post. Late callbacks cannot create a missing record. */
+    public boolean enrichSnapshot(String libraryId, String postUrl, String author,
+                                  String text, Long publishedAtMs) {
+        String id = PostUrls.extractPostId(postUrl);
+        if (!valid(libraryId) || id == null) return false;
+        SQLiteDatabase db = getWritableDatabase();
+        try (Cursor c = db.rawQuery("SELECT 1 FROM posts WHERE account_id=? AND post_id=?",
+                new String[]{libraryId,id})) {
+            if (!c.moveToFirst()) return false;
+        }
+        updateKnownMetadata(db, libraryId, id, author, text, publishedAtMs);
+        return true;
+    }
+
+    /** One measured continuous exposure; subsequent samples only extend its duration. */
+    public boolean recordMeasuredFeed(String libraryId, String postUrl, String source,
+                                      String author, String text, Long publishedAtMs,
+                                      long eventAtMs, String exposureId,
+                                      long durationMs, long thresholdMs) {
+        String id = PostUrls.extractPostId(postUrl);
+        if (!valid(libraryId) || id == null || !validEventKey(exposureId) || eventAtMs <= 0 ||
+            !dev.forcemind.xs.core.FeedCapturePolicy.supportedSource(source) ||
+            (thresholdMs != 1200 && thresholdMs != 3000 && thresholdMs != 5000) ||
+            durationMs < thresholdMs || durationMs > 86_400_000L) return false;
+        SQLiteDatabase db = getWritableDatabase();
+        db.beginTransaction();
+        try {
+            // Reject collision/replay before touching another post or its metadata.
+            try (Cursor c = db.rawQuery("SELECT post_id,source,threshold_ms FROM history_events " +
+                    "WHERE account_id=? AND event_type='FEED_VISIBLE' AND event_key=?",
+                    new String[]{libraryId,exposureId})) {
+                if (c.moveToFirst() && (!id.equals(c.getString(0)) ||
+                        !source.equals(c.getString(1)) || c.getLong(2) != thresholdMs)) return false;
+            }
+            insertPostIfMissing(db, libraryId, id, author, text, publishedAtMs, eventAtMs);
+            updateKnownMetadata(db, libraryId, id, author, text, publishedAtMs);
+            ContentValues event = new ContentValues();
+            event.put("account_id", libraryId);
+            event.put("post_id", id);
+            event.put("event_type", "FEED_VISIBLE");
+            event.put("event_at_ms", eventAtMs);
+            event.put("source", source);
+            event.put("event_key", exposureId);
+            event.put("duration_ms", durationMs);
+            event.put("threshold_ms", thresholdMs);
+            event.put("duration_quality", durationMs >= 600_000L ?
+                "CAPPED_LOWER_BOUND" : "SAMPLED_LOWER_BOUND");
+            boolean inserted = db.insertWithOnConflict("history_events", null, event,
+                SQLiteDatabase.CONFLICT_IGNORE) != -1;
+            db.execSQL("UPDATE history_events SET duration_ms=MAX(duration_ms,?), " +
+                "duration_quality=CASE WHEN MAX(duration_ms,?)>=600000 THEN 'CAPPED_LOWER_BOUND' " +
+                "ELSE 'SAMPLED_LOWER_BOUND' END WHERE " +
+                "account_id=? AND event_type='FEED_VISIBLE' AND event_key=?",
+                new Object[]{durationMs,durationMs,libraryId,exposureId});
+            db.execSQL("UPDATE posts SET last_seen_at_ms=MAX(last_seen_at_ms,?), " +
+                "last_feed_seen_at_ms=MAX(COALESCE(last_feed_seen_at_ms,0),?) " +
+                "WHERE account_id=? AND post_id=?", new Object[]{eventAtMs,eventAtMs,libraryId,id});
+            db.setTransactionSuccessful();
+            return inserted;
+        } finally { db.endTransaction(); }
+    }
+
+    /** App-local favorite; no remote bookmark action and no synthetic history. */
+    public boolean favorite(String libraryId, String postUrl, String author, String text,
+                             Long publishedAtMs, long savedAtMs) {
+        String id = PostUrls.extractPostId(postUrl);
+        if (!valid(libraryId) || id == null || savedAtMs <= 0) return false;
+        SQLiteDatabase db = getWritableDatabase();
+        db.beginTransaction();
+        try {
+            insertPostIfMissing(db,libraryId,id,author,text,publishedAtMs,savedAtMs);
+            updateKnownMetadata(db,libraryId,id,author,text,publishedAtMs);
+            ContentValues favorite = new ContentValues();
+            favorite.put("account_id", libraryId);
+            favorite.put("post_id", id);
+            favorite.put("favorited_at_ms", savedAtMs);
+            boolean inserted = db.insertWithOnConflict("favorites", null, favorite,
+                SQLiteDatabase.CONFLICT_IGNORE) != -1;
+            db.setTransactionSuccessful();
+            return inserted;
+        } finally { db.endTransaction(); }
+    }
+
+    public boolean removeFavorite(String libraryId, String postId) {
+        requireAccount(libraryId);
+        return getWritableDatabase().delete("favorites", "account_id=? AND post_id=?",
+            new String[]{libraryId,postId}) > 0;
+    }
+
+    /** Comma-delimited UI input becomes exact, bounded tags in a separate table. */
+    public void putFavoriteDetails(String libraryId, String postId, String note, String tags) {
+        requireAccount(libraryId);
+        String memo = note == null ? "" : note;
+        if (!valid(postId) || memo.length() > 8000 || (tags != null && tags.length() > 1400)) {
+            throw new IllegalArgumentException("Favorite details too long");
+        }
+        java.util.LinkedHashSet<String> normalized = new java.util.LinkedHashSet<>();
+        if (tags != null && !tags.trim().isEmpty()) {
+            for (String tag : tags.split(",")) {
+                String value = tag.trim();
+                if (value.length() > 64) throw new IllegalArgumentException("Tag too long");
+                if (!value.isEmpty()) normalized.add(value);
+            }
+        }
+        if (normalized.size() > 20) throw new IllegalArgumentException("Too many tags");
+        SQLiteDatabase db = getWritableDatabase();
+        db.beginTransaction();
+        try {
+            ContentValues values = new ContentValues();
+            values.put("note", memo);
+            if (db.update("favorites",values,"account_id=? AND post_id=?",
+                    new String[]{libraryId,postId}) != 1) {
+                throw new IllegalArgumentException("Favorite required");
+            }
+            db.delete("post_tags","account_id=? AND post_id=?",new String[]{libraryId,postId});
+            for (String tag : normalized) {
+                ContentValues row = new ContentValues();
+                row.put("account_id",libraryId);
+                row.put("post_id",postId);
+                row.put("tag",tag);
+                db.insertOrThrow("post_tags",null,row);
+            }
+            db.setTransactionSuccessful();
+        } finally { db.endTransaction(); }
+    }
+
+    /** Clear visit evidence while retaining posts, favorites, notes and categories. */
+    public void clearHistory(String libraryId) {
+        requireAccount(libraryId);
+        SQLiteDatabase db = getWritableDatabase();
+        db.beginTransaction();
+        try {
+            db.delete("history_events","account_id=?",new String[]{libraryId});
+            db.execSQL("UPDATE posts SET opened_count=0,last_opened_at_ms=NULL," +
+                "last_feed_seen_at_ms=NULL WHERE account_id=?",new Object[]{libraryId});
+            db.setTransactionSuccessful();
+        } finally { db.endTransaction(); }
+    }
+
+    /** Preserved old libraries remain selectable; there is no automatic consolidation. */
+    public Cursor libraries() {
+        return getReadableDatabase().rawQuery("SELECT library_id,label,origin,storage_scope " +
+            "FROM libraries ORDER BY CASE WHEN origin='APP' THEN 0 ELSE 1 END,label",null);
+    }
+
+    public void ensureLibrary(String libraryId, String label) {
+        requireAccount(libraryId);
+        ContentValues values = new ContentValues();
+        values.put("library_id",libraryId);
+        values.put("storage_scope",libraryId);
+        values.put("label",valid(label) ? label.trim() : "Xs");
+        values.put("origin","APP");
+        values.put("created_at_ms",System.currentTimeMillis());
+        getWritableDatabase().insertWithOnConflict("libraries",null,values,SQLiteDatabase.CONFLICT_IGNORE);
+    }
+
+    private static boolean validEventKey(String key) {
+        return valid(key) && key.length() <= 256;
     }
 
     /**
@@ -235,11 +440,18 @@ public final class XsArchiveDatabase extends SQLiteOpenHelper {
     private static void insertPostIfMissing(SQLiteDatabase db, String accountId, String id,
                                             String author, String text, Long publishedAtMs,
                                             long observedAtMs) {
+        ContentValues library = new ContentValues();
+        library.put("library_id", accountId);
+        library.put("storage_scope", accountId);
+        library.put("label", accountId);
+        library.put("origin", accountId.startsWith("local:") ? "APP" : "LEGACY");
+        db.insertWithOnConflict("libraries", null, library, SQLiteDatabase.CONFLICT_IGNORE);
         ContentValues post = new ContentValues();
         post.put("account_id", accountId);
         post.put("post_id", id);
         if (author != null) post.put("author_handle", author);
         if (text != null) post.put("body", text);
+        post.put("snapshot_state", text == null || text.isEmpty() ? "LINK_ONLY" : "VISIBLE_TEXT");
         if (publishedAtMs != null) post.put("published_at_ms", publishedAtMs);
         post.put("first_seen_at_ms", observedAtMs);
         post.put("last_seen_at_ms", observedAtMs);
@@ -259,7 +471,7 @@ public final class XsArchiveDatabase extends SQLiteOpenHelper {
         // Both lengths are measured by SQLite (Unicode code points, not UTF-16 units).
         // This is a conservative retention rule, not proof of snapshot completeness.
         if (text != null && !text.isEmpty()) {
-            db.execSQL("UPDATE posts SET body=? WHERE account_id=? AND post_id=? " +
+            db.execSQL("UPDATE posts SET body=?,snapshot_state='VISIBLE_TEXT' WHERE account_id=? AND post_id=? " +
                        "AND (body IS NULL OR length(?) >= length(body))",
                        new Object[]{text, accountId, id, text});
         }
@@ -293,7 +505,8 @@ public final class XsArchiveDatabase extends SQLiteOpenHelper {
         requireAccount(accountId);
         StringBuilder sql = new StringBuilder(
             "SELECT e.id, e.post_id, e.event_at_ms, e.event_type, " +
-            "p.author_handle, p.body, p.published_at_ms, e.source " +
+            "p.author_handle, p.body, p.published_at_ms, e.source, " +
+            "e.duration_ms,e.threshold_ms,e.event_key,e.duration_quality " +
             "FROM history_events e JOIN posts p ON e.account_id=p.account_id " +
             "AND e.post_id=p.post_id WHERE e.account_id=? AND e.event_type=?");
         List<String> args = new ArrayList<>();

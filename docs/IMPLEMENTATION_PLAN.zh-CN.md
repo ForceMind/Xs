@@ -1,5 +1,7 @@
 # Xs 完整实施计划 v2.1
 
+当前代码进度以 [本轮实施与验收记录](IMPLEMENTATION_EVIDENCE.zh-CN.md) 为准；下文保留需求基线，待验收项不因源码存在而自动通过。
+
 日期：2026-11-06。基线：`eb5aa4dbbb0499fb632202a27aaf24e898718818`。范围依据：[产品要求](product.md)、[ADR-0002](adr/0002-local-library-media.md)、[ADR-0003](adr/0003-native-pull-delivery.md)。
 
 **这是可执行研发计划，不是功能完成报告。下面新增工作包均未因本次文档提交而完成。** 统一跟踪 [Issue #4](https://github.com/ForceMind/Xs/issues/4)。

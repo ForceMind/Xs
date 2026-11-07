@@ -1,5 +1,7 @@
 # Xs 时间线停留记录｜产品方案与实施规范
 
+当前代码进度以 [本轮实施与验收记录](IMPLEMENTATION_EVIDENCE.zh-CN.md) 为准；下文保留需求基线，待验收项不因源码存在而自动通过。
+
 更新：2026-11-06。状态：用户确认的目标与实现规范，**尚未完成真实 X 时间线自动记录**。对应 [ADR-0004](adr/0004-feed-dwell.md)、[XS-14](IMPLEMENTATION_PLAN.zh-CN.md) 和 [D01–D09](ACCEPTANCE_MATRIX.zh-CN.md)。
 
 ## 1. 目标与用户体验

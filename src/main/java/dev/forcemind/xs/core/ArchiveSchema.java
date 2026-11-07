@@ -1,13 +1,13 @@
 package dev.forcemind.xs.core;
 
 /**
- * App-private SQLite database v2. FTS4 is supported by the Android SQLite stack.
+ * App-private SQLite database v3. Legacy namespace keys remain unchanged. FTS4 is supported by the Android SQLite stack.
  * China-language substring fallback is provided by ArchiveSearch.
  */
 public final class ArchiveSchema {
-    public static final int VERSION = 2;
+    public static final int VERSION = 3;
 
-    public static final String[] CREATE = {
+    public static final String[] CREATE_V2 = {
         "CREATE TABLE IF NOT EXISTS posts (" +
             "account_id TEXT NOT NULL, post_id TEXT NOT NULL, author_handle TEXT, " +
             "body TEXT, published_at_ms INTEGER, first_seen_at_ms INTEGER NOT NULL, " +
@@ -84,6 +84,51 @@ public final class ArchiveSchema {
             "user_actions(account_id, post_id, action_type) " +
             "WHERE action_at_ms IS NULL"
     };
+
+    /** v2 -> v3 is additive. No old scope, row ID, category or FTS row is rewritten. */
+    public static final String[] MIGRATE_2_TO_3 = {
+        "CREATE TABLE IF NOT EXISTS libraries (library_id TEXT PRIMARY KEY NOT NULL, " +
+            "storage_scope TEXT UNIQUE NOT NULL, label TEXT NOT NULL, origin TEXT NOT NULL, " +
+            "created_at_ms INTEGER)",
+        "CREATE TABLE IF NOT EXISTS legacy_scope_mapping (legacy_scope TEXT PRIMARY KEY NOT NULL, " +
+            "library_id TEXT NOT NULL UNIQUE, FOREIGN KEY(library_id) " +
+            "REFERENCES libraries(library_id) ON DELETE CASCADE)",
+        "INSERT OR IGNORE INTO libraries(library_id, storage_scope, label, origin) " +
+            "SELECT account_id, account_id, account_id, 'LEGACY' FROM posts UNION " +
+            "SELECT account_id, account_id, account_id, 'LEGACY' FROM categories UNION " +
+            "SELECT account_id, account_id, account_id, 'LEGACY' FROM history_events UNION " +
+            "SELECT account_id, account_id, account_id, 'LEGACY' FROM user_actions",
+        "INSERT OR IGNORE INTO legacy_scope_mapping(legacy_scope, library_id) " +
+            "SELECT library_id, library_id FROM libraries WHERE origin='LEGACY'",
+        "ALTER TABLE posts ADD COLUMN snapshot_state TEXT NOT NULL DEFAULT 'LINK_ONLY'",
+        "UPDATE posts SET snapshot_state='VISIBLE_TEXT' WHERE body IS NOT NULL AND length(body)>0",
+        "ALTER TABLE history_events ADD COLUMN event_key TEXT",
+        "ALTER TABLE history_events ADD COLUMN duration_ms INTEGER CHECK(duration_ms IS NULL OR duration_ms>=0)",
+        "ALTER TABLE history_events ADD COLUMN threshold_ms INTEGER",
+        "ALTER TABLE history_events ADD COLUMN duration_quality TEXT",
+        "CREATE UNIQUE INDEX IF NOT EXISTS uniq_history_observation ON " +
+            "history_events(account_id,event_type,event_key) WHERE event_key IS NOT NULL",
+        "CREATE INDEX IF NOT EXISTS idx_history_dwell ON " +
+            "history_events(account_id,post_id,event_type,duration_ms)",
+        "CREATE TABLE IF NOT EXISTS favorites (account_id TEXT NOT NULL, post_id TEXT NOT NULL, " +
+            "favorited_at_ms INTEGER NOT NULL, note TEXT NOT NULL DEFAULT '', " +
+            "PRIMARY KEY(account_id,post_id), FOREIGN KEY(account_id,post_id) " +
+            "REFERENCES posts(account_id,post_id) ON DELETE CASCADE)",
+        "CREATE INDEX IF NOT EXISTS idx_favorites_time ON favorites(account_id,favorited_at_ms DESC)",
+        "CREATE TABLE IF NOT EXISTS post_tags (account_id TEXT NOT NULL, post_id TEXT NOT NULL, " +
+            "tag TEXT NOT NULL, PRIMARY KEY(account_id,post_id,tag), " +
+            "FOREIGN KEY(account_id,post_id) REFERENCES favorites(account_id,post_id) ON DELETE CASCADE)",
+        "CREATE INDEX IF NOT EXISTS idx_tags_filter ON post_tags(account_id,tag,post_id)"
+    };
+
+    public static final String[] CREATE = concatenate(CREATE_V2, MIGRATE_2_TO_3);
+
+    private static String[] concatenate(String[] first, String[] second) {
+        String[] joined = new String[first.length + second.length];
+        System.arraycopy(first, 0, joined, 0, first.length);
+        System.arraycopy(second, 0, joined, first.length, second.length);
+        return joined;
+    }
 
     private ArchiveSchema() {}
 }

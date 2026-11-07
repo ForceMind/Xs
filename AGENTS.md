@@ -11,7 +11,7 @@ Keep this public independent repository and synchronized Chinese/English READMEs
 ## Requirements that must not drift
 
 - After explicit opt-in, deliberate entry into a valid post detail creates OPEN_POST immediately: **no dwell threshold or extra save tap**. Save LINK_ONLY if body is pending and enrich later. One native navigation identity, not one render/message, means one open. Failed navigation/prefetch/reload/rotation/restoration are not new deliberate opens.
-- Optional timeline dwell is a first-class **no-click history** requirement (see docs/FEED_DWELL_PLAN.zh-CN.md / ADR-0004), separate from immediate OPEN_POST and FAVORITE. OFF by default; 1.2s/3s (recommended default)/5s user-selectable continuous dwell, with 60% normalized readable-area baseline and long-card, overlay, switch/background boundaries. Store duration/provenance, allow `dwell >= N AND never opened` local search. One continuous exposure = one event; updates/DOM rebind do not create duplicates, real re-entry may be another exposure. Exposing a post is NOT proof of reading. XS-14 baseline moves into **early batch B**; extensive optimization stays D. Current runtime does not yet implement the new selector/measurement/search.
+- Optional timeline dwell is a first-class **no-click history** requirement (see docs/FEED_DWELL_PLAN.zh-CN.md / ADR-0004), separate from immediate OPEN_POST and FAVORITE. OFF by default; 1.2s/3s (recommended default)/5s user-selectable continuous dwell, with 60% normalized readable-area baseline and long-card, overlay, switch/background boundaries. Store duration/provenance, allow `dwell >= N AND never opened` local search. One continuous exposure = one event; updates/DOM rebind do not create duplicates, real re-entry may be another exposure. Exposing a post is NOT proof of reading. XS-14 baseline moves into **early batch B**; extensive optimization stays D. Current fixture runtime and v3 search implement these; live X activation remains gated.
 - Confirmed own repost/quote/post/reply activity is separate from viewing a repost. Menu click, cancellation, failed submit or someone else's action is not success. Preserve unknown actor/time and reversal state.
 - “Favorite in Xs” and categories/tags/notes are app-local. Never implicitly call X bookmarks/likes/reposts. Repeated favorites are idempotent; category choice may follow successful save.
 - History, favorites and assets belong to the native library, not the current X login. X logout/account switch invalidates old observation context but must not delete or silently choose another library.
@@ -21,11 +21,11 @@ Keep this public independent repository and synchronized Chinese/English READMEs
 
 ## Existing versus planned
 
-- `src/main/java`: Java URL/query/schema/capture policy and inactive observation gate.
-- `src/android/java`: SQLite, native archive UI, one-part posts-JS importer, manual local space and dormant parser/bridge foundations.
+- `src/main/java`: URL/v3 schema/query, CaptureSession, StrictJson, bounded SerialWriteCoordinator, image policy and legacy inactive observation gate.
+- `src/android/java`: SQLite v3, app-owned library/favorites UI, importer, native-pull fixture controller, shared writes, image tasks/assets and grant-only sharing.
 - `xs-runtime`: AAR. `dev-harness`: synthetic offline host, never a real client.
-- `app-android`: W0 System WebView host, manual link save and incoming text-share target.
-- Automatic live capture, full FAVORITE snapshots/UI, app-library migration, downloads/assets/outbound provider and filtering remain implementation work unless a later commit includes verification.
+- `app-android`: retained System WebView, manual favorites/links, explicit image selection, outgoing sharing, incoming text target and synthetic instrumentation.
+- See docs/IMPLEMENTATION_EVIDENCE.zh-CN.md for the implemented offline slice and exact proof. Automatic live capture, own-action/reversal, complete video, filtering, consolidation, backup/recovery and release acceptance remain pending. Native browser favorites are link-only; existing local snapshots can be retained. Do not enable real X capture merely because fixture tests pass.
 
 Do not make current code appear implemented just by documenting new component names. Maintain the [change record](docs/CHANGELOG.md) and source/test evidence per XS work package.
 

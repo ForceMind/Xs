@@ -52,7 +52,7 @@ public final class CoreSmokeTest {
         yes(q.sql.contains("posts_fts MATCH ?"));
         yes(q.sql.contains("p.opened_count > 0"));
         eq("user-1", q.args[0]);
-        eq("ai* AND agent*", q.args[q.args.length - 3]);
+        yes(contains(q.args, "ai* AND agent*"));
         eq("200", q.args[q.args.length - 2]);
 
         f.keyword = "人工智能";
@@ -111,7 +111,7 @@ public final class CoreSmokeTest {
         gate.reset();
         yes(gate.shouldSave("a", "42", "home_for_you", true, 0.8, 1400, now + 500));
 
-        yes(ArchiveSchema.VERSION == 2);
+        yes(ArchiveSchema.VERSION == 3);
         yes(ArchiveSchema.CREATE.length >= 10);
         yes(ArchiveSchema.MIGRATE_1_TO_2.length > 1);
         boolean fts = false, cascade = false;

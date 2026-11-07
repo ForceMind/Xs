@@ -1,5 +1,7 @@
 # Xs architecture — app-owned library and native-pull plan
 
+当前代码进度以 [本轮实施与验收记录](IMPLEMENTATION_EVIDENCE.zh-CN.md) 为准；下文保留需求基线，待验收项不因源码存在而自动通过。
+
 Updated 2026-11-06. Read [product](product.md), [ADR-0002](adr/0002-local-library-media.md), [ADR-0003](adr/0003-native-pull-delivery.md), [implementation](IMPLEMENTATION_PLAN.zh-CN.md) and [acceptance](ACCEPTANCE_MATRIX.zh-CN.md). This describes the target and names existing foundations separately; it does not claim live integration.
 
 ## 1. Runtime and target boundaries

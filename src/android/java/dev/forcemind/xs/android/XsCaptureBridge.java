@@ -13,8 +13,6 @@ import dev.forcemind.xs.core.PostUrls;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * Version-neutral entry points for a future verified X app integration adapter.
@@ -25,7 +23,6 @@ import java.util.concurrent.Executors;
 public final class XsCaptureBridge {
     private static final String TAG = "XsArchive";
     private static final String PREFERENCES = "xs_local_archive";
-    private static final ExecutorService IO = Executors.newSingleThreadExecutor();
 
     private static final FeedCapturePolicy FEED_POLICY = new FeedCapturePolicy();
     private static volatile XsArchiveDatabase store;
@@ -126,7 +123,8 @@ public final class XsCaptureBridge {
                                     visibleFraction, dwellMs, seenAtMs)) return;
         final String body = trim(visibleText, 16000);
         final String author = trim(authorHandle, 100);
-        IO.execute(() -> {
+        XsLibraryWrites.submit(active.accountId,() -> {
+            if (session != active) return;
             try {
                 db.recordFeedVisible(active.accountId, postUrl, source, author, body,
                                      publishedAtMs, seenAtMs);
@@ -148,7 +146,8 @@ public final class XsCaptureBridge {
         if (active == null || !active.recordingEnabled || database == null) return;
         final String body = trim(visibleText, 16000);
         final String author = trim(authorHandle, 100);
-        IO.execute(() -> {
+        XsLibraryWrites.submit(active.accountId,() -> {
+            if (session != active) return;
             try {
                 database.recordOpened(active.accountId, postUrl, author, body,
                                       publishedAtMs, openedAtMs);
@@ -170,7 +169,8 @@ public final class XsCaptureBridge {
         final Session active = session;
         final XsArchiveDatabase database = store;
         if (active == null || !active.recordingEnabled || database == null) return;
-        IO.execute(() -> {
+        XsLibraryWrites.submit(active.accountId,() -> {
+            if (session != active) return;
             try {
                 database.recordPersonalAction(active.accountId, postUrl, actionType,
                     trim(authorHandle, 100), trim(visibleText, 16000),
@@ -197,7 +197,7 @@ public final class XsCaptureBridge {
         setRecordingEnabled(context, false);
         setFeedRecordingEnabled(context, false);
         FEED_POLICY.reset();
-        IO.execute(() -> {
+        boolean queued=XsLibraryWrites.invalidateAndSubmit(active.accountId,() -> {
             boolean result;
             try {
                 database.clearAccount(active.accountId);
@@ -211,7 +211,7 @@ public final class XsCaptureBridge {
                 new Handler(Looper.getMainLooper()).post(() -> callback.onComplete(ok));
             }
         });
-        return true;
+        return queued;
     }
 
     /**

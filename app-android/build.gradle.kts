@@ -6,8 +6,8 @@ android {
         applicationId = "dev.forcemind.xs"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1-w0-poc"
+        versionCode = 2
+        versionName = "0.2-local-poc"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     buildFeatures { buildConfig = true }
