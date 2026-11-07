@@ -22,13 +22,13 @@
 - `SerialWriteCoordinator` / `XsLibraryWrites`：按库有界队列，入队失效与擦除序列，IO 不占用提交锁；旧回调不能跨清理屏障复活资料。
 - `ArchiveSchema` / `XsArchiveDatabase` / `ArchiveSearch`：兼容 scope 物理键，不重写旧命名空间；独立收藏和 measured history。
 - `XsHistoryActivity`：离线正文、打开时间、停留/未打开筛选、旧空间、分类、收藏备注标签、清历史。
-- `MediaDownloadPolicy` / `XsMediaRepository` / `XsAssetsActivity`：图片任务与独立的用户保存文件；视频、blob、manifest 不伪装成成品。新增 `MediaDownloadEngineTest` 通过实例私有 fake HTTP 执行真实下载代码，覆盖 PNG 验型/解码/散列/原子完成/Provider 全字节、截断/HTML、取消/擦除、私网重定向；测试仅编译，尚未执行，不作为下载通过证据。
+- `MediaDownloadPolicy` / `XsMediaRepository` / `XsAssetsActivity`：图片任务与独立的用户保存文件；视频、blob、manifest 不伪装成成品。新增 `MediaDownloadEngineTest` 通过实例私有 fake HTTP 执行真实下载代码，覆盖 PNG 验型/解码/散列/原子完成/Provider 全字节、截断/HTML、取消/擦除、私网重定向；已在最终API30/36仪器测试执行通过；使用fake HTTP本地PNG，不作为实际X/CDN下载通过证据。
 - `PostImageSelection`：仅 native 点击触发，匹配当前详情的时间戳/图片锚点；引用和其他帖子图片不被选入。布局无法识别时返回空列表。
 - `XsAssetProvider` / `XsShareCoordinator`：只对已选完成文件创建临时只读副本和 content URI；ClipData、真实 MIME、单/多图；不读聊天凭证、不自动发送。
 
 ## 验证状态
 
-本地工具链：JDK 17.0.21、Gradle 8.9、Android SDK 35 / Build Tools 35.0.0。最终运行时代码 `9bd4ef3c15e1b506400615414f1f01f2951de730` 的全部 AAR/APK/AndroidTest 构建和 Lint 通过（162 tasks，25秒）；443 项 JVM 断言及真实 SQLite、DOM 回归通过。源 SHA 与各包 SHA256 见 [构建记录](evidence/build-9bd4ef3.json)。云主机不提供 KVM，API30两次成功启动但应用测试均未开始，见 [环境诊断](evidence/api30-environment.json)。[CI 42347473651](https://github.com/ForceMind/Xs/actions/runs/42347473651) 核对时仍在排队，不能用构建通过代替仪器测试。当前 PR 为 [#5](https://github.com/ForceMind/Xs/pull/5)，保留草稿；main 和真实自动采集开关未改。
+本地工具链：JDK 17.0.21、Gradle 8.9、Android SDK 35 / Build Tools 35.0.0。最终运行时代码 `9bd4ef3c15e1b506400615414f1f01f2951de730` 的全部 AAR/APK/AndroidTest 构建和 Lint 通过（162 tasks，25秒）；443 项 JVM 断言及真实 SQLite、DOM 回归通过。源 SHA 与各包 SHA256 见 [构建记录](evidence/build-9bd4ef3.json)。云主机不提供 KVM，API30两次成功启动但应用测试均未开始，见 [环境诊断](evidence/api30-environment.json)。最终功能回归 [CI 42348665957](https://github.com/ForceMind/Xs/actions/runs/42348665957) 四个任务全部通过：API30/36各15项资料库与26项客户端测试，共82项，零失败/跳过。head `d76bfb49`；实际PR测试merge SHA `4793ea92`，两者分别记录，见 [完整结果](evidence/ci-functional-pass.json)。当前 PR 为 [#5](https://github.com/ForceMind/Xs/pull/5)；main 和真实自动采集开关未改。
 
 | 验证 | 本地状态 | 证据/范围 |
 | --- | --- | --- |
@@ -36,7 +36,7 @@
 | `bash scripts/test-core.sh` | PASS，443 项 JVM 断言及 SQLite/DOM 回归 | JVM + 严格 JSON/连续区间/队列/媒体策略；真实 SQLite v1/v2 迁移、FTS、scope、事件去重/时长/收藏查询 |
 | AAR / harness APK / browser APK / Lint | PASS，最终代码复验通过 | `assembleDebug` / `lintDebug`，不代表设备登录或媒体兼容性 |
 | AndroidTest APK 编译 | PASS，新增回归编译通过 | 实际 WebView/SQLite/Provider/UI 合成测试，非伪造 PASS |
-| API 30 / 36 仪器测试 | 本地环境 BLOCKED（0 应用用例）；最终 SHA / API36 未执行；CI 排队 | `NativeCaptureIntegrationTest`、`PostImageSelectionTest`、`MediaSharingTest`、`ArchiveIntegrationTest` 和资料库 UI 回归 |
+| API 30 / 36 仪器测试 | CI PASS：API30/36各41项，0失败/跳过；本地TCG阻断单独保留 | `NativeCaptureIntegrationTest`、`PostImageSelectionTest`、`MediaSharingTest`、`ArchiveIntegrationTest` 和资料库 UI 回归 |
 | 真实 X / 真机 / 微信、QQ、飞书、Telegram | NOT RUN | 没有访问用户手机、真实账号或聊天会话 |
 
 测试映射：H01–H05、D01–D08、L01–L03、F01–F04、M01/M02 的策略部分、X01/X02/X04 的本地契约、Q01–Q03、S01 有离线源码和回归。上述编号包含多项实机条件，**只对具体测试的合成子场景声明结果，不将整行产品验收标为通过**。M03–M05 的实际网络中断/磁盘满/下载、X03/X05 的真实接收应用仍未验收。
@@ -64,3 +64,9 @@
 运行时代码 [CI 42347473651](https://github.com/ForceMind/Xs/actions/runs/42347473651) 的核心与 Android 构建通过；API30/36 各执行15项 harness 测试，13通过、2失败，app任务因前一task失败尚未执行。完整报告定位到原生UI测试第99行 Apply、第123行 Organize 标准按钮的文本定位，初始搜索/收藏列表断言已通过。
 
 测试改为标准 Android 按钮资源ID并校验原语义文案，兼容主题大写转换，不延长超时、不删除业务断言。CI增加顺序 --continue，让两个独立模块都运行并保留失败状态。修复后的仪器结果仍需新的CI报告，见 [首次执行明细](evidence/ci-first-fixture-run.json)。这次失败不是前述本地软件模拟器环境阻断。
+
+## 最终离线验收结果
+
+CI 42348665957 已完成：核心、构建/Lint、API30、API36全部成功。两套设备分别为 Android11 + WebView83.0.4103.106、Android16 + WebView133.0.6943.137；各41例全部通过（15资料库/UI + 26客户端/观察/下载/分享），合计82例。核心443项断言、真实SQLite、DOM回归一并通过。原生UI两处定位和一处标记子串冲突均已修正并回归，保留完整业务断言。
+
+本轮追加job-local provenance步骤，将各仪器任务实际重建的4个APK摘要/大小/公开签名证书与HEAD/tree保存到报告artifact；不能把独立build job的debug APK摘要当成另一个instrumentation job的APK。没有读取或上传私钥。真实X、手机、接收聊天App，以及视频/本人行为/精简/备份等未实现范围仍按表保留。

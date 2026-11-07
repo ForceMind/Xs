@@ -109,9 +109,13 @@ jobs:
             adb shell getprop ro.build.version.release > app-android/build/compatibility/android-release.txt
             adb shell getprop ro.build.version.sdk > app-android/build/compatibility/android-api.txt
             adb shell getprop persist.sys.locale > app-android/build/compatibility/locale.txt
+            adb shell am get-config > app-android/build/compatibility/device-configuration.txt
             adb shell dumpsys webviewupdate > app-android/build/compatibility/webview-provider.txt
             adb shell cmd uimode night > app-android/build/compatibility/night-mode.txt
             gradle --no-daemon --no-parallel --continue :dev-harness:connectedDebugAndroidTest :app-android:connectedDebugAndroidTest
+      - name: Record job-local fixture APK hashes and public signing certificates
+        if: always()
+        run: python3 scripts/record-fixture-provenance.py
       - name: Upload synthetic Android test reports
         if: always()
         uses: actions/upload-artifact@v4

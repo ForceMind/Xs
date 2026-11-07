@@ -4,7 +4,7 @@
 
 ## 本轮离线实现
 
-本轮新增源码和合成子场景证据见 [实施记录](IMPLEMENTATION_EVIDENCE.zh-CN.md)。下面各行同时包含真实设备条件，保留整体 NOT RUN，避免用部分离线 PASS 冒充完整验收；每个测试结果以本轮 CI source SHA 和报告为准。
+本轮新增源码和合成子场景证据见 [实施记录](IMPLEMENTATION_EVIDENCE.zh-CN.md)：CI 42348665957在API30/36各执行41项仪器测试，全通过；JVM443项断言及SQLite/DOM回归通过。下面各行同时包含真实设备条件，保留整体 NOT RUN，避免用部分离线 PASS 冒充完整验收；每个测试结果以本轮 CI source SHA 和报告为准。
 
 ## 记录规则
 
