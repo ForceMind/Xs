@@ -1,8 +1,8 @@
 # Xs 文档与执行入口
 
-本轮E（XS-02/15）正在接续已通过的D/CI75：BrowserUploadPolicy让picker与返回结果共用原请求的不可变accept MIME/扩展名、单选/多选（最多8项）策略，拒绝空/重复/超量/声明类型不符结果；SPA任何URL变化即取消旧上传，回调前先清旧状态。新增132条JVM已执行，总core1287及SQLite/DOM/20k、512MiB容器32MiB JVM与10项host检查通过；本轮Android构建、原生新增用例和新CI仍PENDING，D的通过不覆盖新改动。详见[本轮E证据](ROUND_E_EVIDENCE.zh-CN.md)。
+本轮E验证源码 `2c667517e5a812232a8b41e7a3f99166855963e6` / tested tree `e52dfdd3f5f7b51751154bf1cf2601554786ef33` 的[CI82](https://github.com/ForceMind/Xs/actions/runs/42419306946)已通过：1287项JVM、23项host检查、Android构建/双Lint，以及API26/27/30/36共624/624主用例（0失败/错误/跳过）。BrowserInteraction24/24、真实旧APK升级4/4通过；另有20/20独立driver、44次native phase通过，内部重复probe不计入主XML；均为本轮同源fresh attempt1。源码/merge/包摘要与CI76～81真实失败见[本轮E证据](ROUND_E_EVIDENCE.zh-CN.md)；D/CI75仅作历史基线。
 
-本轮待运行目标：真实SAF选择5783字节MP4并由WebView FileReader/用户手势播放、两份新PNG的实际SAF多选/逐文件字节核对、敏感SPA路由再返回HOME仍拒旧结果；另有固定旧main f88003c8ec1ee193b75de7267db6ae7654ee77c4 code1/schema2→当前code3/schema5的同job调试签名真实APK覆盖升级driver。默认LegacyUpgradeProbe用例只是current roundtrip；真正旧包升级单独记账。声明主用例624=4×(52+104)、外部driver20=既有16+跨source4，均非已通过数量。
+已实际验证5783字节合成MP4的真实SAF选择、FileReader完整字节/hash与用户手势播放至ended，两份新PNG的系统多选/逐文件集合核对，以及敏感SPA路由回HOME仍拒旧结果。固定旧main f88003c8ec1ee193b75de7267db6ae7654ee77c4的真实code1/schema2→current3/schema5升级保留UID/DB路径/默认UUID/旧行/分类/FTS/生成文件；默认LegacyUpgradeProbe只算current roundtrip，真正旧包升级另计driver。
 
 上传MIME来自provider声明，不证明文件内容真实、完整或已上传到X；不套用下载的20/100MiB上限，不增加权限、不由原生全读或转码。旧版本无独立收藏/媒体库，相应迁移为N/A；保留生成文件只证明文件保留。真实X/CDN/聊天App/物理设备/生产签名和live适配关闭边界不变。
 
@@ -54,7 +54,7 @@ D轮已验证源码 `0d193e4689d649970d9705818d33e8706b470d8f` / tested tree `c8
 
 已执行的云端检查：CI74已实际通过核心/SQLite/DOM压力与Android构建检查；已验证的云端合成范围包括真实原生SAF导出/恢复、Browser真实SAF PNG文件选择、只读URI/68字节FileReader读取与手势子窗口、独立UID文件授权/拒绝越权/删源后延迟读取、320dp/1.8字号/中英深浅配置、500个小资源和约481MiB/30文件的实际原生备份恢复，以及512MiB容器在32MiB JVM逐字节往返。不同规模、平台与driver分别记账，不合并成真实X/手机或聊天App验收。
 
-未完成：真实Browser尚未挂载自动打开/停留、本人动作和网页精简的live适配器；开关不能把fixture能力变为现场验收。真实X登录/DOM/媒体CDN、微信/QQ/飞书/Telegram接收、厂商后台与多日电量、物理断电、生产key/跨schema升级仍缺独立证据。如选择切换自定义许可，须另行确定权利范围与条款；当前GPL及历史授权/第三方义务继续有效。 API27 x86已实际执行；模拟器强停/进程恢复可云执行，不能归为只能真机验证。独立UID不等于聊天App，同job调试升级不等于生产key或跨schema升级。HLS/DASH仍不支持，下载每次重下而非断点续传；Android任务可能被系统延迟/停止。手动签名候选workflow只生成受main祖先/secret/证书pin约束的内部候选，不自动发布。
+未完成：真实Browser尚未挂载自动打开/停留、本人动作和网页精简的live适配器；开关不能把fixture能力变为现场验收。真实X登录/DOM/媒体CDN、微信/QQ/飞书/Telegram接收、厂商后台与多日电量、物理断电、生产签名升级/真实个人资料迁移仍缺独立证据。如选择切换自定义许可，须另行确定权利范围与条款；当前GPL及历史授权/第三方义务继续有效。 API27 x86已实际执行；模拟器强停/进程恢复可云执行，不能归为只能真机验证。独立UID不等于聊天App，同源debug3→4不等于生产key升级；固定f880跨source/schema2→5由E轮独立driver验证，不泛化为真实个人库升级。HLS/DASH仍不支持，下载每次重下而非断点续传；Android任务可能被系统延迟/停止。手动签名候选workflow只生成受main祖先/secret/证书pin约束的内部候选，不自动发布。
 历史自动化证据见 [W0 执行记录](W0-EXECUTION.md)；真实登录见 [设备矩阵](../compat/web/W0-MATRIX.md)。历史 CI 成功不证明本次新需求已通过。
 
 ## 跟踪入口

@@ -1,22 +1,22 @@
 # Xs 验收矩阵 v2.2
 
-本轮E（XS-02/15）正在接续已通过的D/CI75：BrowserUploadPolicy让picker与返回结果共用原请求的不可变accept MIME/扩展名、单选/多选（最多8项）策略，拒绝空/重复/超量/声明类型不符结果；SPA任何URL变化即取消旧上传，回调前先清旧状态。新增132条JVM已执行，总core1287及SQLite/DOM/20k、512MiB容器32MiB JVM与10项host检查通过；本轮Android构建、原生新增用例和新CI仍PENDING，D的通过不覆盖新改动。详见[本轮E证据](ROUND_E_EVIDENCE.zh-CN.md)。
+本轮E验证源码 `2c667517e5a812232a8b41e7a3f99166855963e6` / tested tree `e52dfdd3f5f7b51751154bf1cf2601554786ef33` 的[CI82](https://github.com/ForceMind/Xs/actions/runs/42419306946)已通过：1287项JVM、23项host检查、Android构建/双Lint，以及API26/27/30/36共624/624主用例（0失败/错误/跳过）。BrowserInteraction24/24、真实旧APK升级4/4通过；另有20/20独立driver、44次native phase通过，内部重复probe不计入主XML；均为本轮同源fresh attempt1。源码/merge/包摘要与CI76～81真实失败见[本轮E证据](ROUND_E_EVIDENCE.zh-CN.md)；D/CI75仅作历史基线。
 
-本轮待运行目标：真实SAF选择5783字节MP4并由WebView FileReader/用户手势播放、两份新PNG的实际SAF多选/逐文件字节核对、敏感SPA路由再返回HOME仍拒旧结果；另有固定旧main f88003c8ec1ee193b75de7267db6ae7654ee77c4 code1/schema2→当前code3/schema5的同job调试签名真实APK覆盖升级driver。默认LegacyUpgradeProbe用例只是current roundtrip；真正旧包升级单独记账。声明主用例624=4×(52+104)、外部driver20=既有16+跨source4，均非已通过数量。
+已实际验证5783字节合成MP4的真实SAF选择、FileReader完整字节/hash与用户手势播放至ended，两份新PNG的系统多选/逐文件集合核对，以及敏感SPA路由回HOME仍拒旧结果。固定旧main f88003c8ec1ee193b75de7267db6ae7654ee77c4的真实code1/schema2→current3/schema5升级保留UID/DB路径/默认UUID/旧行/分类/FTS/生成文件；默认LegacyUpgradeProbe只算current roundtrip，真正旧包升级另计driver。
 
 上传MIME来自provider声明，不证明文件内容真实、完整或已上传到X；不套用下载的20/100MiB上限，不增加权限、不由原生全读或转码。旧版本无独立收藏/媒体库，相应迁移为N/A；保留生成文件只证明文件保留。真实X/CDN/聊天App/物理设备/生产签名和live适配关闭边界不变。
 
 更新：2026-11-07。对应 [实施计划](IMPLEMENTATION_PLAN.zh-CN.md)。**云端子项按下列实际报告记账；后面的核心现场用例与接收应用总表仍NOT RUN。没有当前构建证据的范围不记PASS。** 既有基础测试记录继续保留，但不能自动覆盖新语义。
 
-## E轮新增子项（全部原生NOT RUN）
+## E轮已执行子项（云端合成范围）
 
 | 验收关联 | 本轮实际源码/验证目标 | 执行状态 |
 | --- | --- | --- |
-| B04/Q03/S01 | immutable accept MIME/扩展名与单/多选、picker/result一致、空/重复/超量/声明错型拒绝、SPA URL失效与回调先清状态 | 新132项JVM已跑、core1287通过；Android构建与原生新CI PENDING，provider MIME不是内容认证 |
-| B04/X02 | 5783字节MP4真实SAF/FileReader/用户手势播放、两NEW PNG真实多选/字节映射、敏感SPA回来HOME拒旧result | 新增原生测试待执行；不能用D轮PNG68B或其他MP4分享测试替代 |
-| L01/Q04/G02/G03 | 固定旧main code1/schema2→current3/schema5同job签名实际install-r升级、UID/default/DBpath/rowid/事件分类FTS与未知质量迁移 | 默认LegacyUpgradeProbe只有current roundtrip；真正外部升级4API待运行、内部probe重复不并主XML；旧独立收藏/媒体库N/A |
+| B04/Q03/S01 | immutable accept MIME/扩展名与单/多选、picker/result一致、空/重复/超量/声明错型拒绝、SPA URL失效与回调先清状态 | CI82 core1287/Android构建及原生验证PASS；provider MIME不是内容认证 |
+| B04/X02 | 5783字节MP4真实SAF/FileReader/用户手势播放、两NEW PNG真实多选/字节映射、敏感SPA回来HOME拒旧result | CI82 BrowserInteraction6例×4 API全PASS；不借D轮PNG68B或其他MP4分享测试代替 |
+| L01/Q04/G02/G03 | 固定旧main code1/schema2→current3/schema5同job签名实际install-r升级、UID/default/DBpath/rowid/事件分类FTS与未知质量迁移 | 默认LegacyUpgradeProbe只有current roundtrip；真正外部升级4/4 PASS，内部probe重复不并主XML；旧独立收藏/媒体库N/A |
 
-624项主用例与20项独立driver仅为源码声明，按本轮实际XML/driver再结算；D/CI75通过仍只覆盖其历史源码。
+CI82实际624/624主用例与20/20独立driver通过，两类计数分开；D/CI75仍是其历史源码证据。现场总表继续NOT RUN。
 
 ## D轮已验证的离线实现与仪器证据
 

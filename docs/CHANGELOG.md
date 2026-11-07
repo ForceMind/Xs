@@ -2,23 +2,27 @@
 
 本文件记录决策变化，不把文档提交计作功能完成。代码执行与测试结果保留在各执行记录和 CI 中。
 
-## 2026-11-07 — E轮浏览器上传策略与真实旧APK升级增量（原生CI待运行）
+## 2026-11-07 — E轮上传策略与真实旧APK升级通过CI82
 
-本轮E（XS-02/15）正在接续已通过的D/CI75：BrowserUploadPolicy让picker与返回结果共用原请求的不可变accept MIME/扩展名、单选/多选（最多8项）策略，拒绝空/重复/超量/声明类型不符结果；SPA任何URL变化即取消旧上传，回调前先清旧状态。新增132条JVM已执行，总core1287及SQLite/DOM/20k、512MiB容器32MiB JVM与10项host检查通过；本轮Android构建、原生新增用例和新CI仍PENDING，D的通过不覆盖新改动。详见[本轮E证据](ROUND_E_EVIDENCE.zh-CN.md)。
+本轮E验证源码 `2c667517e5a812232a8b41e7a3f99166855963e6` / tested tree `e52dfdd3f5f7b51751154bf1cf2601554786ef33` 的[CI82](https://github.com/ForceMind/Xs/actions/runs/42419306946)已通过：1287项JVM、23项host检查、Android构建/双Lint，以及API26/27/30/36共624/624主用例（0失败/错误/跳过）。BrowserInteraction24/24、真实旧APK升级4/4通过；另有20/20独立driver、44次native phase通过，内部重复probe不计入主XML；均为本轮同源fresh attempt1。源码/merge/包摘要与CI76～81真实失败见[本轮E证据](ROUND_E_EVIDENCE.zh-CN.md)；D/CI75仅作历史基线。
 
-本轮待运行目标：真实SAF选择5783字节MP4并由WebView FileReader/用户手势播放、两份新PNG的实际SAF多选/逐文件字节核对、敏感SPA路由再返回HOME仍拒旧结果；另有固定旧main f88003c8ec1ee193b75de7267db6ae7654ee77c4 code1/schema2→当前code3/schema5的同job调试签名真实APK覆盖升级driver。默认LegacyUpgradeProbe用例只是current roundtrip；真正旧包升级单独记账。声明主用例624=4×(52+104)、外部driver20=既有16+跨source4，均非已通过数量。
+已实际验证5783字节合成MP4的真实SAF选择、FileReader完整字节/hash与用户手势播放至ended，两份新PNG的系统多选/逐文件集合核对，以及敏感SPA路由回HOME仍拒旧结果。固定旧main f88003c8ec1ee193b75de7267db6ae7654ee77c4的真实code1/schema2→current3/schema5升级保留UID/DB路径/默认UUID/旧行/分类/FTS/生成文件；默认LegacyUpgradeProbe只算current roundtrip，真正旧包升级另计driver。
 
 上传MIME来自provider声明，不证明文件内容真实、完整或已上传到X；不套用下载的20/100MiB上限，不增加权限、不由原生全读或转码。旧版本无独立收藏/媒体库，相应迁移为N/A；保留生成文件只证明文件保留。真实X/CDN/聊天App/物理设备/生产签名和live适配关闭边界不变。
 
-D轮与文档checkpoint CI75已有实际通过记录，保留如下；本轮先提交源码/测试/文档与初始E证据，再执行CI并修复，最终仅做一次文档证据checkpoint，不用静态SHA更新循环代替研发。
+历史CI76因host状态行parser在真实old seed后失败，主XML0；CI77实际615/624通过、9失败，旧APK升级4/4与MP4原生读取/播放4/4已过；CI78实际623/624通过，Browser24/24与旧APK升级4/4通过，仅Gov26保存按钮被IME遮挡失败，26后四driver未运行。CI79仍为623/624，仅API30的SPA选择前复合JS条件失败，具体失败子条件未知；26真实SAF保存IME分支和16个Gov用例均通过。CI80的显式SPA激励四API均通过，主623/624唯一API27合并预览按钮被IME缩小视口遮挡；不是合并事务失败。CI81保留了API36首次SDK压缩包下载损坏（0 native）和另一次API26 guest reboot的ADB等待失败原始记录；同源重跑后按各API最新有效job汇总仍623/624，唯一API26元数据在实际网格触摸后未返回，具体激活失败原因未知。API36重跑成功不覆盖其他原始失败；API26重跑是新的UI失败，不能称为重启通过。Browser24/24和旧APK升级4/4持续通过，81仅16个已尝试driver/36次native phase通过，26后四driver未运行。
 
-## 2026-11-07 — 四版本608项与16个独立系统探针全部通过
+最终helper修复同时保留：确证IME时单次Back且同form/name/两来源或filename/可见Save断言；真实SAF pending后一次标准evaluateJavascript调用本地已武装function，实际执行敏感路由/HOME的pushState对；固定备份目录的真实List view与相反Grid view确认，以及匹配三官方版本ID的精确标题定位。SPA验收是同DOM路由边界，不是visibility事件时序；两个实际URL、marker、native callback顺序、旧结果拒绝和原navigation/visibility用例均保留。不增加业务时限、不伪造SAF结果，不把未明UI原因归因为重绘。SAF保存IME的已观测触发证据来自CI79；CI82该分支四API均未触发，不冒充本轮分支覆盖。合并IME在CI81已有实际触发，CI82又在API26触发一次；API27/36两类IME均为0。CI82/API26的元数据List规范实际两次、full backup一次；其余条件覆盖按各轮原始日志记账。Browser可选List alias支路未独立记录，不宣称所有分支覆盖。各轮失败不改记PASS，原始证据见E记录。
 
-当前验证源码 `0d193e4689d649970d9705818d33e8706b470d8f` / tested tree `c8551cd4a09e4466cd84e7973039aba06a5f87b2`：[CI74](https://github.com/ForceMind/Xs/actions/runs/42386764024) 六项任务全部成功。1155项JVM、构建/双Lint及API26/27/30/36主仪器608/608通过，0失败/错误/跳过；独立force-stop、同job同源debug3→4升级、guest reboot与真实低空间各4/4，共16/16通过，不并入608主XML。
+D轮与文档checkpoint CI75已有实际通过记录，保留如下；本轮已先提交源码/测试/文档执行CI并修复，最终仅做一次文档证据checkpoint，不用静态SHA更新循环代替研发。
+
+## 2026-11-07 — 四版本608项与16个独立系统探针全部通过（历史D/CI74）
+
+D轮当时的验证源码 `0d193e4689d649970d9705818d33e8706b470d8f` / tested tree `c8551cd4a09e4466cd84e7973039aba06a5f87b2`：[CI74](https://github.com/ForceMind/Xs/actions/runs/42386764024) 六项任务全部成功。1155项JVM、构建/双Lint及API26/27/30/36主仪器608/608通过，0失败/错误/跳过；独立force-stop、同job同源debug3→4升级、guest reboot与真实低空间各4/4，共16/16通过，不并入608主XML。
 
 低空间断言以普通应用原UID和实际可用空间为准，验证新任务拒绝、原文件/hash/离线搜索保留及压力文件清理；仅CI可丢弃旧userdebug模拟器的分配器在严格环境/当次quota/UID门后临时root，并已核实finally删除、unroot及shell UID恢复。10项host故障/安全门回归另行通过。完整case、身份/包摘要与CI66～73失败历史见本轮证据；这不是物理断电、用户手机提权或无限后台保证。
 
-真实X自动打开/停留、本人动作与精简live适配仍未挂载；PNG/68字节Browser读取不代表视频上传，MP4播放与跨UID分享另行计证。现场手机/聊天App/真实CDN/厂商后台多日电量/物理断电/生产key与跨schema升级仍NOT RUN。自定义许可切换可选，当前GPL及历史授权/第三方义务继续有效。
+真实X自动打开/停留、本人动作与精简live适配仍未挂载；PNG/68字节Browser读取不代表视频上传，MP4播放与跨UID分享另行计证。D轮当时现场手机/聊天App/真实CDN/厂商后台多日电量/物理断电/生产key与跨schema升级均NOT RUN；固定f880 schema2→5的同job debug夹具后由E/CI82验证，生产签名/真实个人资料仍未验收。自定义许可切换可选，当前GPL及历史授权/第三方义务继续有效。
 
 ## 2026-11-07 — 四版本主测试与跨进程验证（历史CI72/73）
 
@@ -28,7 +32,7 @@ D轮与文档checkpoint CI75已有实际通过记录，保留如下；本轮先�
 
 已验证的云端合成范围包括真实原生SAF导出/恢复、Browser真实SAF PNG文件选择、只读URI/68字节FileReader读取与手势子窗口、独立UID文件授权/拒绝越权/删源后延迟读取、320dp/1.8字号/中英深浅配置、500个小资源和约481MiB/30文件的实际原生备份恢复，以及512MiB容器在32MiB JVM逐字节往返。不同规模、平台与driver分别记账，不合并成真实X/手机或聊天App验收。
 
-真实Browser尚未挂载自动打开/停留、本人动作和网页精简的live适配器；开关不能把fixture能力变为现场验收。真实X登录/DOM/媒体CDN、微信/QQ/飞书/Telegram接收、厂商后台与多日电量、物理断电、生产key/跨schema升级仍缺独立证据。如选择切换自定义许可，须另行确定权利范围与条款；当前GPL及历史授权/第三方义务继续有效。
+真实Browser尚未挂载自动打开/停留、本人动作和网页精简的live适配器；开关不能把fixture能力变为现场验收。真实X登录/DOM/媒体CDN、微信/QQ/飞书/Telegram接收、厂商后台与多日电量、物理断电、生产签名升级/真实个人资料迁移仍缺独立证据。如选择切换自定义许可，须另行确定权利范围与条款；当前GPL及历史授权/第三方义务继续有效。
 
 ## 2026-11-07 — 补齐保留/配额/统计与云端端到端验证（历史CI68状态）
 

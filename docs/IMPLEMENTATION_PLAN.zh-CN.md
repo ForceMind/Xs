@@ -1,8 +1,8 @@
 # Xs 完整实施计划 v2.2
 
-本轮E（XS-02/15）正在接续已通过的D/CI75：BrowserUploadPolicy让picker与返回结果共用原请求的不可变accept MIME/扩展名、单选/多选（最多8项）策略，拒绝空/重复/超量/声明类型不符结果；SPA任何URL变化即取消旧上传，回调前先清旧状态。新增132条JVM已执行，总core1287及SQLite/DOM/20k、512MiB容器32MiB JVM与10项host检查通过；本轮Android构建、原生新增用例和新CI仍PENDING，D的通过不覆盖新改动。详见[本轮E证据](ROUND_E_EVIDENCE.zh-CN.md)。
+本轮E验证源码 `2c667517e5a812232a8b41e7a3f99166855963e6` / tested tree `e52dfdd3f5f7b51751154bf1cf2601554786ef33` 的[CI82](https://github.com/ForceMind/Xs/actions/runs/42419306946)已通过：1287项JVM、23项host检查、Android构建/双Lint，以及API26/27/30/36共624/624主用例（0失败/错误/跳过）。BrowserInteraction24/24、真实旧APK升级4/4通过；另有20/20独立driver、44次native phase通过，内部重复probe不计入主XML；均为本轮同源fresh attempt1。源码/merge/包摘要与CI76～81真实失败见[本轮E证据](ROUND_E_EVIDENCE.zh-CN.md)；D/CI75仅作历史基线。
 
-本轮待运行目标：真实SAF选择5783字节MP4并由WebView FileReader/用户手势播放、两份新PNG的实际SAF多选/逐文件字节核对、敏感SPA路由再返回HOME仍拒旧结果；另有固定旧main f88003c8ec1ee193b75de7267db6ae7654ee77c4 code1/schema2→当前code3/schema5的同job调试签名真实APK覆盖升级driver。默认LegacyUpgradeProbe用例只是current roundtrip；真正旧包升级单独记账。声明主用例624=4×(52+104)、外部driver20=既有16+跨source4，均非已通过数量。
+已实际验证5783字节合成MP4的真实SAF选择、FileReader完整字节/hash与用户手势播放至ended，两份新PNG的系统多选/逐文件集合核对，以及敏感SPA路由回HOME仍拒旧结果。固定旧main f88003c8ec1ee193b75de7267db6ae7654ee77c4的真实code1/schema2→current3/schema5升级保留UID/DB路径/默认UUID/旧行/分类/FTS/生成文件；默认LegacyUpgradeProbe只算current roundtrip，真正旧包升级另计driver。
 
 上传MIME来自provider声明，不证明文件内容真实、完整或已上传到X；不套用下载的20/100MiB上限，不增加权限、不由原生全读或转码。旧版本无独立收藏/媒体库，相应迁移为N/A；保留生成文件只证明文件保留。真实X/CDN/聊天App/物理设备/生产签名和live适配关闭边界不变。
 
@@ -22,8 +22,8 @@ A/早期B和C的离线代码继续保留，本轮实际补XS-06/07/09/14/15，�
 
 | 范围 | 当前已有源码与边界 | 本轮执行与剩余工作 |
 | --- | --- | --- |
-| XS-02 E轮上传 | 不可变accept/MIME与单选/多选策略；picker/result一致；最多8、重复/空/错型拒绝、SPA逐URL失效和回调重入安全 | 新132项JVM/core1287已通过；Android构建与MP4/双PNG/敏感SPA实际SAF原生用例待新CI |
-| XS-15 E轮跨source升级 | 固定f880 code1/schema2→当前code3/schema5的同job同签名真实APK覆盖；原default/UID/DBpath/事件/分类/FTS迁移验证 | 默认LegacyUpgradeProbe仅current roundtrip；4个真实旧包driver待跑，旧收藏/媒体库N/A，不代表生产签名升级 |
+| XS-02 E轮上传 | 不可变accept/MIME与单选/多选策略；picker/result一致；最多8、重复/空/错型拒绝、SPA逐URL失效和回调重入安全 | 新132项JVM/core1287已通过；CI82 Android构建、Browser6例×4 API及MP4/双PNG/敏感SPA原生结果PASS |
+| XS-15 E轮跨source升级 | 固定f880 code1/schema2→当前code3/schema5的同job同签名真实APK覆盖；原default/UID/DBpath/事件/分类/FTS迁移验证 | 默认LegacyUpgradeProbe仅current roundtrip；4个真实旧包driver实际PASS，旧收藏/媒体库N/A，不代表生产签名升级 |
 | XS-03/04 | v1～v4→v5保留迁移；32活动写入器及实例/epoch票据；整库删除持久tombstone、事务内revocation guard、默认UUID轮换、失败pending重试 | CI74并发/删除回归PASS；真实旧资料升级、容量/多日异常仍待验收 |
 | XS-06 | snapshot_versions/current pointer、来源/时间/质量与历史正文搜索/每页50条的只读版本翻页/关键词查询；更新的较短COMPLETE可成为current，PARTIAL不降级COMPLETE | CI74版本/合并/JVM/SQLite/UI回归PASS；COMPLETE不等于服务端全文 |
 | XS-07/09 | 批量收藏/分类/标签追加或替换/取消收藏，资源分页搜索/类型状态筛选/多选分类删除分享，单项或多项ZIP导出≤200MiB | CI74原生UI/SAF与320dp/大字号配置PASS；真机/接收应用另验 |
@@ -127,7 +127,7 @@ XS-14 的基础触发和本地查询在 B 验收，D 只做其**长期滚动性�
 
 ## 7. 执行纪律
 
-先核对最新 main、未合并 PR、CI 与上述已实现代码，再执行尚未满足的工作包和验收项；保留 XS-01 来源/工具链检查，不能重做已有 A/B 闭环来代替后续研发。保留CI74已通过的API26/27/30/36主用例与强停/升级/reboot/大资源恢复证据，四API低空间与清理恢复已实际通过，再推进现场适配、真机容量/多日可靠性；真实Browser尚未挂载自动打开/停留、本人动作和网页精简的live适配器；开关不能把fixture能力变为现场验收。真实X登录/DOM/媒体CDN、微信/QQ/飞书/Telegram接收、厂商后台与多日电量、物理断电、生产key/跨schema升级仍缺独立证据。如选择切换自定义许可，须另行确定权利范围与条款；当前GPL及历史授权/第三方义务继续有效。 真实启用按独立 W0/站点证据执行。不要继续堆叠手动收藏入口、重复计划或 APK 白名单来替代主路径。
+先核对最新 main、未合并 PR、CI 与上述已实现代码，再执行尚未满足的工作包和验收项；保留 XS-01 来源/工具链检查，不能重做已有 A/B 闭环来代替后续研发。保留CI74已通过的API26/27/30/36主用例与强停/升级/reboot/大资源恢复证据，四API低空间与清理恢复已实际通过，再推进现场适配、真机容量/多日可靠性；真实Browser尚未挂载自动打开/停留、本人动作和网页精简的live适配器；开关不能把fixture能力变为现场验收。真实X登录/DOM/媒体CDN、微信/QQ/飞书/Telegram接收、厂商后台与多日电量、物理断电、生产签名升级/真实个人资料迁移仍缺独立证据。如选择切换自定义许可，须另行确定权利范围与条款；当前GPL及历史授权/第三方义务继续有效。 真实启用按独立 W0/站点证据执行。不要继续堆叠手动收藏入口、重复计划或 APK 白名单来替代主路径。
 
 每个实现提交应关联 XS 编号和验收项；完成判定需真实代码、命令结果和对应环境证据。新功能先在开发构建测试，真机未验证项保持 NOT RUN。会话受限时提交可核验的阶段工作与阻塞点，不宣称后台自动继续。
 

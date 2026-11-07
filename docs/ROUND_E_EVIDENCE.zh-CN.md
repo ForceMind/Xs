@@ -2,6 +2,30 @@
 
 日期：2026-11-07。继续既有 PR #5，没有重建工程。
 
+## 当前结果：本轮源码与四版云端验收已通过
+
+验证源码 `2c667517e5a812232a8b41e7a3f99166855963e6` / tested tree `e52dfdd3f5f7b51751154bf1cf2601554786ef33` 的[CI82 42419306946](https://github.com/ForceMind/Xs/actions/runs/42419306946)六个job全部成功。本轮没有rerun，不借前轮结果；当前可执行的XS-02媒体请求/浏览器交互和XS-03/15旧包升级切片已闭环，整体产品与正式发布仍有真实站点/手机门槛。
+
+| 检查 | 本轮实际结果 |
+| --- | --- |
+| JVM / host driver / 构建 | 1287项JVM断言、23项驱动host检查、SQLite/FTS/DOM/容量检查、Android构建及app/runtime双Lint通过 |
+| API26 x86_64 | harness52＋client104＝156/156；五项独立driver全部通过 |
+| API27 x86 | harness52＋client104＝156/156；五项独立driver全部通过 |
+| API30 x86_64 | harness52＋client104＝156/156；五项独立driver全部通过 |
+| API36 x86_64 | harness52＋client104＝156/156；五项独立driver全部通过 |
+| 分开记账 | 624/624主执行，0失败/错误/跳过；20/20独立driver、44/44外部native phase，重复native probe不并入主XML |
+
+Browser24/24均通过：真实SAF文件选择、完整PNG/双图集合字节、5783字节MP4的FileReader/hash与真实手势播放至ended、真实pending选择器期间的敏感SPA→HOME及旧结果拒绝。SPA的刺激是本地合成函数执行真实pushState，不能当visibility事件必达或真实X上传成功。MIME是provider声明，不认证内容。
+
+四项独立legacy lane均实际构建固定旧main f880 code1/schema2、调用其旧原生API写数据，再正常覆盖安装本源code3/schema5并验证同UID/路径/默认UUID、不同PID、原行/分类/FTS/时间/私有canary保留及完整verify后清理。旧独立收藏/媒体库不存在，N/A；canary不是下载资源。这是同job debug签名合成升级，不是生产签名或用户个人库升级。
+
+本轮API26元数据选择真实List动作两次、fullbackup一次，原文档字节/预览取消/确认恢复均通过；合并IME关闭marker一次及完整case通过。API27/36两种IME分支未触发；本轮四版SAF-save IME分支均未触发。CI79的save分支、CI81的merge分支已有独立历史实测，不拼成CI82未发生的分支覆盖。Browser可选List分支没有自定义成功marker，若原日志不能独立证明具体别名使用，仅记六例结果，不从PASS推断每个别名都被执行。
+
+实际tested merge为 `36022c99ce37b631135ab7c2a393400ca09811d8`；40份APK角色副本＝28个独立字节摘要＋12份重复副本，其中20份主provenance＋8份debug＋12份legacy。20份下载APK已独立核对实际bytes/aapt/apksigner；四API ZIP及8份当前UTP设备pb已校验。源码/每case、各独立driver raw命令与进程/UID/路径/版本/DB/公开证书、实际设备/WebView及ZIP/APK摘要见[CI82完整原证据](evidence/round-e-ci82-results.json)。以下按发生顺序保留提交前声明、CI76～81全部失败和未运行项；不把历史失败改记通过。最终仅同步文档/证据的HEAD/CI与产物账记录到PR/Issue，避免为记录自己的测试结果递归创建下一提交。
+
+**真实X登录/DOM/服务器上传/CDN、微信/QQ/飞书/Telegram接收、实体手机/长期耗电/物理断电和生产签名仍NOT RUN。** live打开/停留、本人动作和精简适配仍未挂载/关闭；先按Issue #3完成W0，再在站点证据支持的限定构建验证。具体四场景与手机步骤见[D轮手机验收表](ROUND_D_EVIDENCE.zh-CN.md#手机现场验收的具体操作全部not-run)。未合并main、未发布正式版。
+
+
 ## 接续基线与本轮范围
 
 接续源码 `ee119c24aa5e4ba77b0872e4abdf2bd950d74851` / tree `9998e21331936e7dbefbc61f295430352185f977`。重新核对 main 仍为 `f88003c8ec1ee193b75de7267db6ae7654ee77c4`，只有 PR #5 开放；Issue #1/#3/#4 保持开放。历史 [CI75](https://github.com/ForceMind/Xs/actions/runs/42388170475) 的 608 次主执行、16 项系统 driver 和 1155 项 JVM 断言通过，完整记录见 [D 轮证据](ROUND_D_EVIDENCE.zh-CN.md)。这些结果不自动覆盖本轮修改。
@@ -26,7 +50,7 @@
 - 系统 picker 存活期间实际 pushState 至敏感页再回 HOME；最终 URL 相同也不能将旧结果交给页面。原有正常选择、取消、导航失效和未选文件拒绝断言保留。
 - 目录选择只激活精确 roots_list 的直接 item；具体文件选择继续使用真实 FINGER 手势，不手造 Activity 结果或 URI grant。
 
-以上是源码场景定义，当前仪器执行仍待新 CI，不提前记为通过。
+提交CI76时，以上只是源码场景定义，原生执行当时待新CI；最终实际结果见本文顶部和各轮报告。
 
 ## 跨源码 APK 与真实旧库
 
@@ -38,7 +62,7 @@ LegacyUpgradeProbe 仅以 Android/Java/JUnit 类型和目标 classloader 反射�
 
 驱动限制在明确的 GitHub CI、emulator serial 与 qemu 环境；旧 source/tree、两版 APK/测试 APK 的包名、版本、实际 hash 和公开证书必须核对。它在主仪器之前运行，只在完整 verify 后清理本次合成数据；原四个系统 driver 继续保留。外部 seed/verify 调用独立计数，不加入主 XML。
 
-## 已执行与待执行
+## CI76之前的本地检查与当时待执行声明
 
 本地全量核心检查实际通过 **1287 项 JVM 断言**（原1155＋新增132），SQLite迁移/标准FTS/DOM/20k压力、512MiB容器在32MiB JVM逐字节往返、原10项低空间 host 故障测试均通过。尚未以编译或本地单元结果代替新的 Android/系统 driver 结果。
 
