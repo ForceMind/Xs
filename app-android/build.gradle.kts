@@ -53,3 +53,10 @@ dependencies {
     androidTestImplementation("androidx.test:runner:1.6.2")
     androidTestImplementation("androidx.test:core:1.6.1")
 }
+
+// connected tests must exercise framework URI grants in a separate installed UID.
+// The receiver is a standalone fixture APK, never a client runtime dependency.
+tasks.configureEach {
+    if (name == "assembleDebugAndroidTest") dependsOn(":share-receiver-fixture:assembleDebug")
+    if (name == "connectedDebugAndroidTest") dependsOn(":share-receiver-fixture:installDebug")
+}

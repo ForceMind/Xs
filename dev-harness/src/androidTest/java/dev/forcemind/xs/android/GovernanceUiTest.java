@@ -1,15 +1,19 @@
 package dev.forcemind.xs.android;
 
 import android.accessibilityservice.AccessibilityServiceInfo;
+import android.accessibilityservice.AccessibilityService;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.view.accessibility.AccessibilityNodeInfo;
+import android.view.InputDevice;
+import android.view.MotionEvent;
 import android.util.Base64;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -71,6 +75,12 @@ public final class GovernanceUiTest {
     @After public void tearDown()throws Exception {
         Throwable cleanupFailure=null;
         try {
+            // A failed picker assertion must not leave another application's foreground
+            // Activity blocking the next fixture. Cancel through the real system Back action.
+            for(int i=0;i<4&&documentsUiActive();i++) {
+                instrumentation.getUiAutomation().performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK);
+                SystemClock.sleep(150);
+            }
             if(screen!=null){instrumentation.runOnMainSync(screen::finish);instrumentation.waitForIdleSync();}
             for(String library:owned) {
                 if(XsLibraryWrites.isDeleted(library))continue;
@@ -132,7 +142,10 @@ public final class GovernanceUiTest {
         assertTrue(activeText().contains("Governance native merged fixture"));clickText("Cancel","取消");
         awaitText("Canceled; no library created.","已取消；未创建资料空间。");assertEquals(before,libraries());
         clickText("Check & preview","检查并预览");awaitText("Create a separate library?","创建独立资料空间？");clickText("Create library","确认创建");
-        String result=awaitNewLibrary(before);assertEquals(defaultLibrary,XsLocalSpaces.current(app));assertSearchable(result,"beta");
+        String result=awaitNewLibrary(before);assertEquals(defaultLibrary,XsLocalSpaces.current(app));
+        // Equal-time conflicting bodies retain one current selection and both source versions.
+        // Search the version index to verify preservation without inventing a later edit time.
+        assertSearchableVersion(result,"alpha");assertSearchableVersion(result,"beta");
         awaitText("Open the new library?","打开新资料空间？");clickText("Undo new library","撤销新空间");
         awaitText("Undo the newly created library?","撤销刚创建的新空间？");clickText("Undo new library","确认撤销");
         awaitText("New library undone; sources and default preserved.","新空间已撤销，来源和默认库保留。");
@@ -195,6 +208,7 @@ public final class GovernanceUiTest {
         await(()->libraries().size()==before.size()+1,"A concrete new library was committed");Set<String> added=libraries();added.removeAll(before);assertEquals(1,added.size());String id=added.iterator().next();owned.add(id);return id;
     }
     private void assertSearchable(String library,String keyword){ArchiveSearch.Filter filter=new ArchiveSearch.Filter();filter.keyword=keyword;filter.favoriteOnly=true;try(Cursor c=archive.search(library,filter)){assertEquals(1,c.getCount());}}
+    private void assertSearchableVersion(String library,String keyword){ArchiveSearch.Filter filter=new ArchiveSearch.Filter();filter.keyword=keyword;filter.favoriteOnly=true;filter.includeSnapshotVersions=true;try(Cursor c=archive.search(library,filter)){assertEquals(1,c.getCount());}}
     private void queued(String library,Runnable operation)throws Exception {
         CountDownLatch done=new CountDownLatch(1);AtomicReference<Throwable> problem=new AtomicReference<>();
         assertTrue(XsLibraryWrites.submit(library,()->{try{operation.run();}catch(Throwable failure){problem.set(failure);}finally{done.countDown();}}));
@@ -220,8 +234,9 @@ public final class GovernanceUiTest {
         }
         clickText(GovernanceDocumentsProvider.TITLE);
     }
-    private void saveInFixtureRoot(){fixtureRoot();clickText("Save","保存");await(()->find(n->n.getPackageName()!=null&&n.getPackageName().toString().contains("documentsui"))==null,"SAF returned the saved document");}
-    private void openFixtureFile(String name){fixtureRoot();clickText(name);await(()->find(n->n.getPackageName()!=null&&n.getPackageName().toString().contains("documentsui"))==null,"SAF returned the selected document");}
+    private boolean documentsUiActive(){return find(n->n.getPackageName()!=null&&n.getPackageName().toString().contains("documentsui"))!=null;}
+    private void saveInFixtureRoot(){fixtureRoot();clickText("Save","保存");await(()->!documentsUiActive(),"SAF returned the saved document");}
+    private void openFixtureFile(String name){fixtureRoot();clickText(name);await(()->!documentsUiActive(),"SAF returned the selected document");}
     private void setEditor(int index,String value) {
         List<AccessibilityNodeInfo> fields=new ArrayList<>();AccessibilityNodeInfo root=instrumentation.getUiAutomation().getRootInActiveWindow();collect(root,n->{if(isEditor(n)&&n.isVisibleToUser())fields.add(n);return false;},new int[]{0});
         assertTrue("Native editor "+index+" is visible",fields.size()>index);Bundle args=new Bundle();args.putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE,value);
@@ -229,10 +244,20 @@ public final class GovernanceUiTest {
     }
     private static boolean isEditor(AccessibilityNodeInfo n){return n.getClassName()!=null&&n.getClassName().toString().contains("EditText");}
     private void clickText(String... alternatives) {
-        AccessibilityNodeInfo node=awaitNode(n->{String text=text(n);for(String option:alternatives)if(text.equalsIgnoreCase(option))return true;return false;});
+        AccessibilityNodeInfo node=awaitNode(n->{if(!n.isVisibleToUser()||!n.isEnabled())return false;String text=text(n);for(String option:alternatives)if(text.equalsIgnoreCase(option))return true;return false;});
         node.performAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_SHOW_ON_SCREEN.getId());
+        AccessibilityNodeInfo original=node;
         for(int i=0;i<5&&node!=null;i++,node=node.getParent())if(node.isClickable()){assertTrue("Click native UI "+Arrays.toString(alternatives),node.performAction(AccessibilityNodeInfo.ACTION_CLICK));return;}
-        throw new AssertionError("Native UI is not clickable: "+Arrays.toString(alternatives));
+        // DocumentsUI's RecyclerView can expose non-clickable title/row nodes while its
+        // touch listener owns selection. Tap only its freshly observed visible node bounds.
+        if(original.getPackageName()!=null&&original.getPackageName().toString().contains("documentsui")) {
+            Rect bounds=new Rect();original.getBoundsInScreen(bounds);assertFalse("Visible document has screen bounds",bounds.isEmpty());
+            long now=SystemClock.uptimeMillis();MotionEvent down=MotionEvent.obtain(now,now,MotionEvent.ACTION_DOWN,bounds.exactCenterX(),bounds.exactCenterY(),0);
+            MotionEvent up=MotionEvent.obtain(now,now+16,MotionEvent.ACTION_UP,bounds.exactCenterX(),bounds.exactCenterY(),0);
+            down.setSource(InputDevice.SOURCE_TOUCHSCREEN);up.setSource(InputDevice.SOURCE_TOUCHSCREEN);
+            try{assertTrue("Touch system document row",instrumentation.getUiAutomation().injectInputEvent(down,true));assertTrue("Release system document row",instrumentation.getUiAutomation().injectInputEvent(up,true));}finally{down.recycle();up.recycle();}return;
+        }
+        throw new AssertionError("Native UI is not clickable: "+Arrays.toString(alternatives)+"\n"+activeText());
     }
     private void clickId(int id){instrumentation.runOnMainSync(()->{android.view.View button=screen.findViewById(id);assertNotNull(button);assertTrue(button.performClick());});}
     private void awaitText(String... alternatives){awaitNode(n->{String text=text(n);for(String option:alternatives)if(text.contains(option))return true;return false;});}

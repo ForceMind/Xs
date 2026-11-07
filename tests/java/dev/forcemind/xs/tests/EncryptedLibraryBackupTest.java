@@ -20,7 +20,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-/** Byte-level adversarial checks plus a 64 MiB streaming roundtrip in a 32 MiB JVM. */
+/** Byte-level adversarial checks plus a maximum 512 MiB streaming roundtrip in a 32 MiB JVM. */
 public final class EncryptedLibraryBackupTest {
     private static int checks,sequence;
     private static final char[] PASSWORD="备份口令 🔐 local-only".toCharArray();
@@ -115,10 +115,11 @@ public final class EncryptedLibraryBackupTest {
         Thread.currentThread().interrupt();try{EncryptedLibraryBackup.encrypt(new ByteArrayInputStream(new byte[]{1}),new ByteArrayOutputStream(),PASSWORD,1);bad("interruption ignored");}catch(IOException expected){yes(Thread.currentThread().isInterrupted());}finally{Thread.interrupted();}
     }
     private static void memoryRoundTrip()throws Exception {
-        long size=64L*1024*1024;File ciphertext=fresh("large-encrypted"),plain=fresh("large-verified");
+        long size=EncryptedLibraryBackup.MAX_PLAINTEXT_BYTES;File ciphertext=fresh("large-encrypted"),plain=fresh("large-verified");
         try(OutputStream out=new FileOutputStream(ciphertext)){EncryptedLibraryBackup.encrypt(new PatternInput(size),out,PASSWORD,size);}
         try(InputStream in=new FileInputStream(ciphertext)){yes(EncryptedLibraryBackup.decryptToVerifiedFile(in,plain,PASSWORD)==size);}
         byte[] buffer=new byte[65536];long offset=0;try(InputStream in=new FileInputStream(plain)){int read;while((read=in.read(buffer))!=-1){for(int i=0;i<read;i++)if(buffer[i]!=(byte)((offset+i)*31+7))bad("large stream corruption");offset+=read;}}yes(offset==size);
+        System.out.println("Verified all "+size+" plaintext bytes at the container limit in a 32 MiB JVM; not a native 500-resource/device restore");
     }
     private static final class PatternInput extends InputStream {
         private final long length;private long position;PatternInput(long length){this.length=length;}

@@ -1,0 +1,48 @@
+{
+  "scope": "Local compilation/core checks only; four-API native cases and process/upgrade remain pending",
+  "source_base_head": "aaf4f1be709d12d3e05c66669fb60eacbcd75761",
+  "source_worktree_clean": false,
+  "jvm_assertions": 1155,
+  "maximum_container_bytes_actually_round_tripped_in_32_MiB_JVM": 536870912,
+  "preserving_sqlite5_dom_20k_stress": "PASS",
+  "project_checks": "PASS,6 host allowlist tests",
+  "android_build": "PASS,196 tasks,17 seconds (prior full pass31 seconds before final touch-source adjustment)",
+  "lint": {
+    "xs-runtime": {
+      "errors": 0,
+      "warnings": 20,
+      "sha256": "6723a88fd30b9fc19386816f079fb8a219861d6919fcd54e8169c5abe43e986b"
+    },
+    "app-android": {
+      "errors": 0,
+      "warnings": 12,
+      "sha256": "f6a95d9c0dc2f1317d5889f7001f51d0ecd28bd0dd97338a694a79ed11ae7946"
+    }
+  },
+  "logs": {
+    "round-d-governance-project-final.log": {
+      "sha256": "28e9d506f90e750f38fd22574e5c32b35cc671a2435a8752ea10d55e700ec06e",
+      "bytes": 277
+    },
+    "round-d-governance-core-final.log": {
+      "sha256": "f30fa3c1b5a43aa0ac299005b75de0b9e3c8807206116cf5eabe84ee552314e8",
+      "bytes": 2652
+    },
+    "round-d-governance-build-final.log": {
+      "sha256": "bd88de6ffc4b1ba89bd92837a6699f93d0a63b9643449d0a51cbfd8396958d9f",
+      "bytes": 14514
+    }
+  },
+  "declared_not_executed_cases": {
+    "harness": 52,
+    "app": 98,
+    "apis": [
+      26,
+      27,
+      30,
+      36
+    ]
+  },
+  "fixture_artifact_report": "round-d-governance-local-apks.json",
+  "prior_ci67_actual": "360 executed,336 passed,24 failed,0 errors/skips; retained separately"
+}

@@ -238,7 +238,9 @@ public final class ArchiveSearch {
         }
         if (!keyword.isEmpty()) {
             if (LATIN_WORDS.matcher(keyword).matches()) {
-                // Whitelist tokens: never pass user-written operators to MATCH.
+                // Whitelist tokens: never pass user-written operators to MATCH. Adjacent
+                // terms are implicit AND in both standard and enhanced FTS3/FTS4 syntax;
+                // explicit AND is a literal token on Android builds without enhanced syntax.
                 String[] tokens = keyword.toLowerCase(Locale.ROOT).split("[ \\t]+");
                 List<String> safe = new ArrayList<>();
                 for (String token : tokens) safe.add(token + "*");
@@ -246,7 +248,7 @@ public final class ArchiveSearch {
                 // Materialize MATCH once; correlated MATCH reran the full hit list for every post.
                 // The outer p.account_id predicate still owns all library isolation.
                 sql.append(" AND (p.rowid IN (SELECT rowid FROM posts_fts WHERE posts_fts MATCH ?)");
-                args.add(String.join(" AND ", safe));
+                args.add(String.join(" ", safe));
             } else {
                 String needle = "%" + keyword.replace("!", "!!")
                     .replace("%", "!%").replace("_", "!_") + "%";
@@ -304,7 +306,7 @@ public final class ArchiveSearch {
         args.add(Integer.toString(Math.max(1,Math.min(200,limit))));args.add(Integer.toString(offset));return new Query(sql.toString(),args);
     }
     private static String ftsTerm(String value) {
-        List<String> words=new ArrayList<>();for(String word:value.toLowerCase(Locale.ROOT).split("[ \\t]+"))words.add(word+"*");return String.join(" AND ",words);
+        List<String> words=new ArrayList<>();for(String word:value.toLowerCase(Locale.ROOT).split("[ \\t]+"))words.add(word+"*");return String.join(" ",words);
     }
     private static String likeTerm(String value){return "%"+value.replace("!","!!").replace("%","!%").replace("_","!_")+"%";}
 

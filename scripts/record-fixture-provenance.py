@@ -17,6 +17,7 @@ APKS = (
     ("app-android", "instrumentation", "app-android/build/outputs/apk/androidTest/debug/app-android-debug-androidTest.apk"),
     ("dev-harness", "application", "dev-harness/build/outputs/apk/debug/dev-harness-debug.apk"),
     ("dev-harness", "instrumentation", "dev-harness/build/outputs/apk/androidTest/debug/dev-harness-debug-androidTest.apk"),
+    ("share-receiver-fixture", "independent-uid-receiver", "share-receiver-fixture/build/outputs/apk/debug/share-receiver-fixture-debug.apk"),
 )
 
 

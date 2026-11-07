@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Xs sharing receiver fixture</string>
+    <string name="fixture_waiting">Synthetic file-sharing test receiver</string>
+</resources>

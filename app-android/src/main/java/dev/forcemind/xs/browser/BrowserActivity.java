@@ -409,7 +409,7 @@ public final class BrowserActivity extends Activity {
                 FileChooserParams params) {
             if(owner!=web || view!=web || privacyClearing){callback.onReceiveValue(null);return true;}
             cancelUpload();
-            if (view!=web || privacyClearing || !foreground || BrowserNavigation.classify(view.getUrl()) != BrowserNavigation.Target.INTERNAL ||
+            if (view!=web || privacyClearing || !foreground || !uploadRouteAllowed(view.getUrl()) ||
                     params.getMode() == FileChooserParams.MODE_SAVE) {
                 callback.onReceiveValue(null);
                 return true;
@@ -425,6 +425,7 @@ public final class BrowserActivity extends Activity {
                 .setOnCancelListener(d -> cancelUpload())
                 .setPositiveButton(R.string.open, (d, w) -> {
                     if(privacyClearing || web!=uploadOwner || upload!=callback || uploadEpoch!=pageEpoch)return;
+                    if(uploadPage==null || !uploadPage.equals(web.getUrl()) || !uploadRouteAllowed(web.getUrl())){cancelUpload();return;}
                     Intent pick = new Intent(Intent.ACTION_OPEN_DOCUMENT)
                         .addCategory(Intent.CATEGORY_OPENABLE).setType("*/*")
                         .putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"image/*", "video/*"})
@@ -444,6 +445,20 @@ public final class BrowserActivity extends Activity {
         @Override public void onHideCustomView() {if(owner==web)hideFullScreen();}
     }
 
+    private static boolean uploadRouteAllowed(String value) {
+        if(BrowserNavigation.classify(value)!=BrowserNavigation.Target.INTERNAL)return false;
+        String path=Uri.parse(value).getEncodedPath();
+        // Ambiguous encoded/dot paths never gain a native file handoff privilege.
+        if(path==null || path.contains("%") || path.contains(";") || path.contains("//") ||
+                path.contains("/./") || path.contains("/../"))return false;
+        path=path.toLowerCase(java.util.Locale.ROOT);
+        for(String sensitive:new String[]{"/i/flow","/i/oauth","/oauth","/login","/logout","/signup","/account",
+                "/settings/security","/settings/password","/settings/your_twitter_data"})
+            if(path.equals(sensitive) || path.startsWith(sensitive+"/"))return false;
+        // Ordinary browsing and post/reply composers retain explicit user file selection.
+        return true;
+    }
+
     @Override protected void onActivityResult(int request, int result, Intent data) {
         super.onActivityResult(request, result, data);
         if (request != uploadRequest || upload == null) return;
@@ -453,7 +468,7 @@ public final class BrowserActivity extends Activity {
         List<Uri> media = new ArrayList<>();
         if (!privacyClearing && result == RESULT_OK && data != null && web != null && pageEpoch == uploadEpoch &&
                 uploadPage != null && uploadPage.equals(web.getUrl()) &&
-                BrowserNavigation.classify(web.getUrl()) == BrowserNavigation.Target.INTERNAL) {
+                uploadRouteAllowed(web.getUrl())) {
             if (data.getClipData() != null) {
                 if (data.getClipData().getItemCount() <= 8) {
                     for (int i = 0; i < data.getClipData().getItemCount(); i++) {

@@ -166,15 +166,17 @@ public final class XsFullBackup {
                 if(reviewed++>=128)break; // Preserve excess markers for the next recovery pass.
                 String target="local:"+marker.getName().substring(0,36);
                 if(target.equals(XsLocalSpaces.current(app)))continue;
-                if(!registered(app,target)) {
-                    // An unpublished scope has no user-facing identity. Do not create a writer for
-                    // a permanently deleted scope; the marker owns only its new native UUID.
-                    XsMediaRepository.get(app).eraseLibrary(target);
-                    try(XsArchiveDatabase archive=new XsArchiveDatabase(app)) {
-                        if(!registered(archive.getReadableDatabase(),target))archive.clearAccount(target);
-                    }
-                    if(!marker.delete())throw new IOException("Interrupted restore cleanup incomplete");syncDirectory(markers);
-                }else finishPublishedMarker(app,target,marker); // Busy/uncertain durability is retried on a later start.
+                try {
+                    if(!registered(app,target)) {
+                        // An unpublished scope has no user-facing identity. Do not create a writer for
+                        // a permanently deleted scope; the marker owns only its new native UUID.
+                        XsMediaRepository.get(app).eraseLibrary(target);
+                        try(XsArchiveDatabase archive=new XsArchiveDatabase(app)) {
+                            if(!registered(archive.getReadableDatabase(),target))archive.clearAccount(target);
+                        }
+                        if(!marker.delete())throw new IOException("Interrupted restore cleanup incomplete");syncDirectory(markers);
+                    }else finishPublishedMarker(app,target,marker);
+                }catch(IOException|RuntimeException retryable){/* One busy/failed scope keeps its marker; unrelated recoveries can proceed. */}
             }
             File root=workRoot(app);File[] stale=root.listFiles();if(stale!=null)for(File work:stale)
                 if(work.getName().matches(UUID_PATTERN)&&!ACTIVE.contains(work.getAbsolutePath()))removeTree(work,work);
@@ -258,20 +260,14 @@ public final class XsFullBackup {
      */
     static boolean checkpointAndClearMarker(SQLiteDatabase db,File marker) {
         if(db==null||marker==null||!marker.isFile()||android.os.Looper.myLooper()==android.os.Looper.getMainLooper())return false;
-        Long previousTimeout=null;
         try {
             if(!db.isOpen()||db.inTransaction())return false;
             String mode;try(Cursor rows=db.rawQuery("PRAGMA main.journal_mode",null)){if(!rows.moveToFirst()||rows.isNull(0))return false;mode=rows.getString(0).toLowerCase(java.util.Locale.ROOT);}
             long synchronous=pragmaLong(db,"PRAGMA main.synchronous");
             if("wal".equals(mode)) {
                 if(synchronous<1||synchronous>3)return false;
-                // Android 30+ can configure every pooled connection uniformly. Older devices
-                // retain their platform timeout; this entire operation is background-only.
-                if(android.os.Build.VERSION.SDK_INT>=30) {
-                    long timeout=pragmaLong(db,"PRAGMA busy_timeout");
-                    if(timeout<0||timeout>Integer.MAX_VALUE)return false;previousTimeout=timeout;
-                    db.execPerConnectionSQL("PRAGMA busy_timeout=100",null);
-                }
+                // Keep the platform timeout. PRAGMA busy_timeout returns a row and cannot be
+                // passed through Android's execPerConnectionSQL execution path on API 30.
                 try(Cursor result=db.rawQuery("PRAGMA main.wal_checkpoint(FULL)",null)) {
                     if(result.getColumnCount()!=3||!result.moveToFirst()||result.isNull(0)||result.isNull(1)||result.isNull(2))return false;
                     long busy=result.getLong(0),frames=result.getLong(1),copied=result.getLong(2);
@@ -286,9 +282,6 @@ public final class XsFullBackup {
             syncDirectory(database.getParentFile());
             if(!marker.delete())return false;syncDirectory(marker.getParentFile());return true;
         }catch(IOException|RuntimeException uncertain){return false;}
-        finally {
-            if(previousTimeout!=null&&android.os.Build.VERSION.SDK_INT>=30)try{db.execPerConnectionSQL("PRAGMA busy_timeout="+previousTimeout,null);}catch(RuntimeException ignored){/* Dedicated production helper closes its pool next. */}
-        }
     }
     private static long pragmaLong(SQLiteDatabase db,String sql) {
         try(Cursor value=db.rawQuery(sql,null)){if(value.getColumnCount()!=1||!value.moveToFirst()||value.isNull(0))throw new IllegalStateException("Sync configuration unavailable");long result=value.getLong(0);if(value.moveToNext())throw new IllegalStateException("Ambiguous sync configuration");return result;}

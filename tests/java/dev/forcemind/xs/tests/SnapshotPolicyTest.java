@@ -43,6 +43,11 @@ public final class SnapshotPolicyTest {
         yes(!ArchiveSearch.build("local:test",filter).sql.contains("snapshot_versions_fts MATCH"));
         filter.includeSnapshotVersions=true;
         yes(ArchiveSearch.build("local:test",filter).sql.contains("snapshot_versions_fts MATCH ?"));
+        filter.keyword="native resource";
+        yes(java.util.Arrays.asList(ArchiveSearch.build("local:test",filter).args).contains("native* resource*"));
+        yes(java.util.Arrays.asList(ArchiveSearch.buildSnapshots("local:test","42","native\tresource",100,0).args).contains("native* resource*"));
+        filter.keyword="native OR resource";
+        yes(java.util.Arrays.asList(ArchiveSearch.build("local:test",filter).args).contains("native* or* resource*"));
         ArchiveSearch.Query query=ArchiveSearch.buildSnapshots("local:test","42","quoted ' injection %_",100,0);
         yes(!query.sql.contains("injection"));
         yes(query.sql.contains("v.account_id=? AND v.post_id=?"));

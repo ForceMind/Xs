@@ -25,9 +25,11 @@ import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -43,12 +45,13 @@ import static org.junit.Assert.*;
 public final class FullBackupIntegrationTest {
     private Context app;private XsArchiveDatabase archive;private XsMediaRepository media;
     private String source,defaultLibrary;private File png,movie;private final List<String> owned=new ArrayList<>();
+    private Set<String> initialMarkers;
     private static final char[] PASSWORD="Xs本地恢复-test-2026".toCharArray();
     private static final String POST="https://x.com/i/web/status/912345";
     @Before public void setUp()throws Exception {
-        app=InstrumentationRegistry.getInstrumentation().getTargetContext();archive=new XsArchiveDatabase(app);media=XsMediaRepository.get(app);
+        app=InstrumentationRegistry.getInstrumentation().getTargetContext();initialMarkers=markerNames();archive=new XsArchiveDatabase(app);media=XsMediaRepository.get(app);
         source="local:"+UUID.randomUUID();owned.add(source);defaultLibrary=XsLocalSpaces.defaultLibrary(app);
-        png=File.createTempFile("full-backup-image-",".png",app.getCacheDir());Bitmap bitmap=Bitmap.createBitmap(3,2,Bitmap.Config.ARGB_8888);bitmap.eraseColor(0xff4688ff);
+        png=File.createTempFile("full-backup-image-",".png",app.getCacheDir());Bitmap bitmap=Bitmap.createBitmap(2,3,Bitmap.Config.ARGB_8888);bitmap.eraseColor(0xff4688ff);
         try(FileOutputStream out=new FileOutputStream(png)){assertTrue(bitmap.compress(Bitmap.CompressFormat.PNG,100,out));}finally{bitmap.recycle();}
         movie=File.createTempFile("full-backup-video-",".mp4",app.getCacheDir());
         try(InputStream in=InstrumentationRegistry.getInstrumentation().getContext().getAssets().open("standard-video.mp4.b64");ByteArrayOutputStream bytes=new ByteArrayOutputStream();FileOutputStream out=new FileOutputStream(movie)) {
@@ -57,7 +60,7 @@ public final class FullBackupIntegrationTest {
         write(source,()->{archive.ensureLibrary(source,"加密资料 📚");assertTrue(archive.favorite(source,POST,"作者","加密中文正文 🚀",1000L,2000L));archive.putFavoriteDetails(source,"912345","需要保留的备注 🧪","离线,研发");archive.putCategory(source,"folder","研究");assertTrue(archive.assignCategory(source,"912345","folder"));});
     }
     @After public void tearDown()throws Exception {
-        for(String scope:owned){CountDownLatch done=new CountDownLatch(1);assertTrue(XsLibraryWrites.invalidateAndSubmit(scope,()->{try{media.eraseLibrary(scope);archive.clearAccount(scope);archive.getWritableDatabase().delete("libraries","storage_scope=?",new String[]{scope});}finally{done.countDown();}}));assertTrue(done.await(20,TimeUnit.SECONDS));}
+        for(String scope:owned){CountDownLatch done=new CountDownLatch(1);AtomicReference<Throwable> failure=new AtomicReference<>();assertTrue(XsLibraryWrites.invalidateAndSubmit(scope,()->{try{media.eraseLibrary(scope);archive.clearAccount(scope);archive.getWritableDatabase().delete("libraries","storage_scope=?",new String[]{scope});File marker=markerFile(scope);if(marker.exists()&&!marker.delete())throw new IOException("Fixture marker cleanup failed");}catch(Throwable problem){failure.set(problem);}finally{done.countDown();}}));assertTrue(done.await(20,TimeUnit.SECONDS));assertNull("Owned fixture cleanup",failure.get());}
         archive.close();if(png!=null)png.delete();if(movie!=null)movie.delete();
     }
     @Test public void encryptedRoundTripRestoresActualImageVideoMetadataAndShareableBytes()throws Exception {
@@ -81,7 +84,7 @@ public final class FullBackupIntegrationTest {
             assertNotNull(uri);assertEquals(asset.mime,app.getContentResolver().getType(uri));try(InputStream in=app.getContentResolver().openInputStream(uri)){assertNotNull(in);assertEquals(expected,hash(in));}
         }
         try(Cursor c=media.getReadableDatabase().rawQuery("SELECT media_url,url_cipher,sha256 FROM assets WHERE library_id=?",new String[]{restored})){while(c.moveToNext()){assertTrue(c.isNull(0));assertTrue(c.isNull(1));assertEquals(64,c.getString(2).length());}}
-        assertEquals(0,markerCount());
+        assertFalse("This restored scope completed its checkpoint",markerFile(restored).exists());assertNoNewMarkers();
     }
     @Test public void wrongPasswordTamperingTruncationAndCancellationNeverCreateALibrary()throws Exception {
         addResources();byte[] encrypted=export();int libraries=libraries(),assets=allAssets(),staging=stagingCount();
@@ -110,14 +113,14 @@ public final class FullBackupIntegrationTest {
             try{XsFullBackup.restoreNewLibrary(app,prepared,"reject-full-fixture");fail("SQLite fixture must abort after media staging");}
             catch(IOException expected){boolean fixture=false;for(Throwable cause=expected;cause!=null;cause=cause.getCause())if(cause.getMessage()!=null&&cause.getMessage().contains("fixture"))fixture=true;assertTrue("Reached the explicit SQLite abort after staging",fixture);}
         }finally{archive.getWritableDatabase().execSQL("DROP TRIGGER fixture_full_restore_reject");}
-        assertEquals(libraries,libraries());assertEquals(assets,allAssets());assertEquals(staging,stagingCount());assertEquals(0,markerCount());
+        assertEquals(libraries,libraries());assertEquals(assets,allAssets());assertEquals(staging,stagingCount());assertNoNewMarkers();
         assertEquals(2,media.list(source).size());assertEquals(defaultLibrary,XsLocalSpaces.defaultLibrary(app));
     }
     @Test public void clearingSourceExpiresPreparedFullRestoreWithoutResurrection()throws Exception {
         addResources();XsFullBackup.Prepared prepared=XsFullBackup.inspectEncrypted(app,source,new ByteArrayInputStream(export()),PASSWORD);int libraries=libraries();
         CountDownLatch cleared=new CountDownLatch(1);assertTrue(XsLibraryWrites.invalidateAndSubmit(source,()->{try{media.eraseLibrary(source);archive.clearAccount(source);}finally{cleared.countDown();}}));assertTrue(cleared.await(20,TimeUnit.SECONDS));
         try{XsFullBackup.restoreNewLibrary(app,prepared,null);fail("cleared source admission reused");}catch(IOException expected){}
-        assertEquals(libraries,libraries());assertEquals(0,media.list(source).size());assertEquals(0,markerCount());assertEquals(defaultLibrary,XsLocalSpaces.defaultLibrary(app));
+        assertEquals(libraries,libraries());assertEquals(0,media.list(source).size());assertNoNewMarkers();assertEquals(defaultLibrary,XsLocalSpaces.defaultLibrary(app));
     }
     @Test public void sourceEpochChangeStopsExportBeforeAuthenticatedCompletion()throws Exception {
         addResources();int libraries=libraries(),staging=stagingCount();ByteArrayOutputStream bytes=new ByteArrayOutputStream();boolean[] revoked={false};
@@ -125,7 +128,7 @@ public final class FullBackupIntegrationTest {
         java.io.OutputStream changed=new java.io.OutputStream(){boolean first=true;@Override public void write(int value){bytes.write(value);}@Override public void write(byte[] b,int off,int count){bytes.write(b,off,count);if(first){first=false;revoked[0]=true;XsLibraryWrites.invalidate(source);}}};
         try{XsFullBackup.exportEncrypted(app,source,changed,PASSWORD);fail("expired export completed");}catch(IOException expected){}
         assertTrue("Reached encrypted output before invalidation",revoked[0]);assertTrue(bytes.size()>=EncryptedLibraryBackup.HEADER_BYTES);assertFalse(XsLibraryWrites.isCurrent(original));
-        reject(bytes.toByteArray(),PASSWORD);assertEquals(libraries,libraries());assertEquals(2,media.list(source).size());assertEquals(staging,stagingCount());assertEquals(0,markerCount());
+        reject(bytes.toByteArray(),PASSWORD);assertEquals(libraries,libraries());assertEquals(2,media.list(source).size());assertEquals(staging,stagingCount());assertNoNewMarkers();
     }
     @Test public void startupRecoveryDeletesUnpublishedResourcesButPreservesACommittedResult()throws Exception {
         addResources();String pending="local:"+UUID.randomUUID();owned.add(pending);List<String> ids=new ArrayList<>();
@@ -133,27 +136,33 @@ public final class FullBackupIntegrationTest {
         File orphan=media.completedFile(pending,ids.get(0));assertTrue(orphan.exists());File pendingMarker=marker(pending);
         File staleDir=new File(new File(app.getCacheDir(),"xs-full-backup"),UUID.randomUUID().toString());assertTrue(staleDir.mkdirs());File stale=new File(staleDir,"verified.payload");try(FileOutputStream out=new FileOutputStream(stale)){out.write(7);}
         XsFullBackup.recoverInterrupted(app);assertEquals(0,media.list(pending).size());assertFalse(orphan.exists());assertFalse(pendingMarker.exists());assertFalse(staleDir.exists());
-        XsFullBackup.Prepared prepared=XsFullBackup.inspectEncrypted(app,source,new ByteArrayInputStream(export()),PASSWORD);String committed=XsFullBackup.restoreNewLibrary(app,prepared,null);owned.add(committed);File committedMarker=marker(committed);
+        XsFullBackup.Prepared prepared=XsFullBackup.inspectEncrypted(app,source,new ByteArrayInputStream(export()),PASSWORD);String committed=XsFullBackup.restoreNewLibrary(app,prepared,null);owned.add(committed);
+        assertFalse("Normal publication completed its own checkpoint",markerFile(committed).exists());File committedMarker=marker(committed);
         XsFullBackup.recoverInterrupted(app);assertFalse(committedMarker.exists());assertEquals(2,media.list(committed).size());
         for(XsMediaRepository.Asset asset:media.list(committed))assertTrue(media.completedFile(committed,asset.id).isFile());assertEquals(2,media.list(source).size());assertEquals(defaultLibrary,XsLocalSpaces.defaultLibrary(app));
     }
     @Test public void publishedMarkerWaitsForACompleteRealWalCheckpointAndRetriesAfterBusyWriter()throws Exception {
         XsLibraryBackup.ValidatedBackup metadata=XsLibraryBackup.inspect(new ByteArrayInputStream(metadata()));AtomicReference<String> created=new AtomicReference<>();
         write(source,()->created.set(XsLibraryBackup.restoreNewLibrary(app,metadata,"checkpoint fixture")));String target=created.get();owned.add(target);
-        File pending=marker(target);SQLiteDatabase db=archive.getWritableDatabase();long synchronous=pragma(db,"PRAGMA main.synchronous"),timeout=pragma(db,"PRAGMA busy_timeout");
+        File pending=marker(target);String unpublished="local:"+UUID.randomUUID();owned.add(unpublished);File unpublishedMarker=marker(unpublished);
+        SQLiteDatabase db=archive.getWritableDatabase();long synchronous=pragma(db,"PRAGMA main.synchronous"),timeout=pragma(db,"PRAGMA busy_timeout");
         try {
             try(Cursor mode=db.rawQuery("PRAGMA main.journal_mode",null)){assertTrue(mode.moveToFirst());assertEquals("wal",mode.getString(0));}
             try(SQLiteDatabase writer=SQLiteDatabase.openDatabase(db.getPath(),null,SQLiteDatabase.OPEN_READWRITE|SQLiteDatabase.ENABLE_WRITE_AHEAD_LOGGING)) {
                 writer.beginTransactionNonExclusive(); // Concrete held writer lock, no timing sleeps.
-                try {XsFullBackup.recoverInterrupted(app);assertTrue("Busy published registration keeps its recovery marker",pending.exists());}
+                try {
+                    XsFullBackup.recoverInterrupted(app);assertTrue("Busy published registration keeps its recovery marker",pending.exists());
+                    assertTrue("A busy unpublished cleanup is retained instead of aborting other recovery",unpublishedMarker.exists());
+                    try(Cursor rows=archive.search(source,new ArchiveSearch.Filter())){assertEquals(1,rows.getCount());}
+                }
                 finally{writer.endTransaction();}
             }
-            XsFullBackup.recoverInterrupted(app);assertFalse("A later complete checkpoint retires the marker",pending.exists());
+            XsFullBackup.recoverInterrupted(app);assertFalse("A later complete checkpoint retires the marker",pending.exists());assertFalse("Unpublished cleanup retries after the writer is released",unpublishedMarker.exists());
             assertEquals(synchronous,pragma(db,"PRAGMA main.synchronous"));assertEquals(timeout,pragma(db,"PRAGMA busy_timeout"));
             try(Cursor found=archive.search(target,new ArchiveSearch.Filter())){assertEquals(1,found.getCount());}
             try(Cursor found=archive.search(source,new ArchiveSearch.Filter())){assertEquals(1,found.getCount());}
             assertEquals(defaultLibrary,XsLocalSpaces.defaultLibrary(app));
-        }finally{pending.delete();}
+        }finally{pending.delete();unpublishedMarker.delete();}
     }
     @Test public void rollbackJournalFullSyncRetainsMarkerAndExtraSyncCanRetireIt()throws Exception {
         File database=File.createTempFile("full-backup-checkpoint-",".db",app.getCacheDir());File pending=marker("local:"+UUID.randomUUID());
@@ -166,6 +175,30 @@ public final class FullBackupIntegrationTest {
             try(Cursor rows=db.rawQuery("SELECT COUNT(*) FROM checkpoint_fixture",null)){assertTrue(rows.moveToFirst());assertEquals(2,rows.getInt(0));}
             assertEquals(defaultLibrary,XsLocalSpaces.defaultLibrary(app));
         }finally{pending.delete();SQLiteDatabase.deleteDatabase(database);}
+    }
+    @Test public void maximumFiveHundredActualPngFilesRoundTripThroughEncryptedFileStreams()throws Exception {
+        final int count=500;XsMediaRepository.RestoredAsset tiny=image(png);
+        write(source,()->media.restoreCompleted(source,Collections.nCopies(count,tiny)));
+        List<XsMediaRepository.CompletedAsset> originals=media.snapshotCompleted(source);assertEquals(count,originals.size());
+        Set<String> sourceIds=new HashSet<>();for(XsMediaRepository.CompletedAsset item:originals)sourceIds.add(item.asset.id);assertEquals(count,sourceIds.size());
+        File encrypted=File.createTempFile("full-backup-500-",".xsbackup",app.getCacheDir());
+        try {
+            try(FileOutputStream out=new FileOutputStream(encrypted)){XsFullBackup.exportEncrypted(app,source,out,PASSWORD);}
+            assertTrue(encrypted.length()>0);String target;
+            try(FileInputStream in=new FileInputStream(encrypted);XsFullBackup.Prepared prepared=XsFullBackup.inspectEncrypted(app,source,in,PASSWORD)) {
+                assertEquals(count,prepared.assetCount());assertEquals(count*png.length(),prepared.assetBytes());
+                target=XsFullBackup.restoreNewLibrary(app,prepared,"500 PNG fixture");owned.add(target);
+            }
+            try(Cursor rows=media.getReadableDatabase().rawQuery("SELECT COUNT(*) FROM assets WHERE library_id=? AND state='COMPLETED'",new String[]{target})){assertTrue(rows.moveToFirst());assertEquals(count,rows.getInt(0));}
+            List<XsMediaRepository.CompletedAsset> restored=media.snapshotCompleted(target);assertEquals(count,restored.size());Set<String> targetIds=new HashSet<>();String expected=hash(png);
+            for(XsMediaRepository.CompletedAsset item:restored) {
+                assertTrue(targetIds.add(item.asset.id));assertFalse(sourceIds.contains(item.asset.id));assertEquals("IMAGE",item.asset.mediaKind);assertEquals("image/png",item.asset.mime);
+                assertEquals(POST,item.asset.postUrl);assertEquals(tiny.category,item.asset.category);assertEquals(tiny.createdMs,item.asset.createdMs);assertEquals(png.length(),item.file.length());assertEquals(expected,item.sha256);assertEquals(expected,hash(item.file));
+            }
+            assertEquals(count,media.snapshotCompleted(source).size());for(XsMediaRepository.CompletedAsset item:originals){assertTrue(item.file.isFile());assertEquals(expected,hash(item.file));}
+            try(Cursor rows=archive.search(source,new ArchiveSearch.Filter())){assertEquals(1,rows.getCount());}try(Cursor rows=archive.search(target,new ArchiveSearch.Filter())){assertEquals(1,rows.getCount());}
+            assertEquals(defaultLibrary,XsLocalSpaces.defaultLibrary(app));assertFalse(markerFile(target).exists());assertNoNewMarkers();
+        }finally{encrypted.delete();}
     }
     private static long pragma(SQLiteDatabase db,String sql){try(Cursor c=db.rawQuery(sql,null)){assertTrue(c.moveToFirst());return c.getLong(0);}}
     private void addResources()throws Exception {
@@ -185,8 +218,10 @@ public final class FullBackupIntegrationTest {
         ByteArrayOutputStream plain=new ByteArrayOutputStream();EncryptedLibraryBackup.writePayload(plain,metadata,Collections.nCopies(copies,source));ByteArrayOutputStream encrypted=new ByteArrayOutputStream();EncryptedLibraryBackup.encrypt(new ByteArrayInputStream(plain.toByteArray()),encrypted,PASSWORD,plain.size());return encrypted.toByteArray();
     }
     private void reject(byte[] bytes,char[] password)throws Exception{try(XsFullBackup.Prepared ignored=XsFullBackup.inspectEncrypted(app,source,new ByteArrayInputStream(bytes),password)){fail("invalid backup accepted");}catch(IOException expected){}}
-    private File marker(String target)throws Exception{File dir=new File(app.getFilesDir(),"xs-restore-pending");if(!dir.isDirectory())assertTrue(dir.mkdirs());File marker=new File(dir,target.substring(6)+".pending");assertTrue(marker.createNewFile());try(FileOutputStream out=new FileOutputStream(marker)){out.getFD().sync();}return marker;}
-    private int markerCount(){File[] files=new File(app.getFilesDir(),"xs-restore-pending").listFiles();return files==null?0:files.length;}
+    private File markerFile(String target){return new File(new File(app.getFilesDir(),"xs-restore-pending"),target.substring(6)+".pending");}
+    private File marker(String target)throws Exception{File marker=markerFile(target);if(!marker.getParentFile().isDirectory())assertTrue(marker.getParentFile().mkdirs());assertTrue("Create only this fixture's marker",marker.createNewFile());try(FileOutputStream out=new FileOutputStream(marker)){out.getFD().sync();}return marker;}
+    private Set<String> markerNames(){Set<String> names=new HashSet<>();File[] files=new File(app.getFilesDir(),"xs-restore-pending").listFiles();if(files!=null)for(File file:files)names.add(file.getName());return names;}
+    private void assertNoNewMarkers(){Set<String> added=markerNames();added.removeAll(initialMarkers);assertTrue("This operation leaked no new pending restore",added.isEmpty());}
     private int stagingCount(){File[] files=new File(app.getCacheDir(),"xs-full-backup").listFiles();return files==null?0:files.length;}
     private int libraries(){try(Cursor c=archive.libraries()){return c.getCount();}}
     private int allAssets(){try(Cursor c=media.getReadableDatabase().rawQuery("SELECT COUNT(*) FROM assets",null)){assertTrue(c.moveToFirst());return c.getInt(0);}}

@@ -52,7 +52,7 @@ public final class CoreSmokeTest {
         yes(q.sql.contains("posts_fts MATCH ?"));
         yes(q.sql.contains("p.opened_count > 0"));
         eq("user-1", q.args[0]);
-        yes(contains(q.args, "ai* AND agent*"));
+        yes(contains(q.args, "ai* agent*"));
         eq("200", q.args[q.args.length - 2]);
 
         f.keyword = "人工智能";

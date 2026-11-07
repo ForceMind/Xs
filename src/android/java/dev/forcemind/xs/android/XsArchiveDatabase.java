@@ -21,10 +21,20 @@ import java.util.List;
  * This is source code for an Android library, not a hook or patched X APK.
  */
 public final class XsArchiveDatabase extends SQLiteOpenHelper {
+    private final Context applicationContext;
     public XsArchiveDatabase(Context context) {
         super(context.getApplicationContext(), "xs-local-history.db",
               null, ArchiveSchema.VERSION);
+        applicationContext=context.getApplicationContext();
         setWriteAheadLoggingEnabled(true);
+    }
+
+    Context applicationContext() { return applicationContext; }
+
+    /** Read only after beginTransaction acquired the SQLite writer lock, beside revocation checks. */
+    private boolean acceptsHistoryTime(String library,long eventAtMs) {
+        int days=XsRetentionSettings.getDays(this,library);
+        return days==0 || eventAtMs>=XsRetentionSettings.cutoffMs(days,System.currentTimeMillis());
     }
 
     @Override
@@ -73,6 +83,7 @@ public final class XsArchiveDatabase extends SQLiteOpenHelper {
         db.beginTransaction();
         try {
             if(XsLibraryWrites.isDeleted(accountId))return false;
+            if(!acceptsHistoryTime(accountId,openedAtMs))return false;
             insertPostIfMissing(db, accountId, id, author, text, publishedAtMs, openedAtMs);
             db.execSQL(
                 "UPDATE posts SET opened_count=MIN(opened_count+1,2147483647), " +
@@ -107,6 +118,7 @@ public final class XsArchiveDatabase extends SQLiteOpenHelper {
         db.beginTransaction();
         try {
             if(XsLibraryWrites.isDeleted(libraryId))return false;
+            if(!acceptsHistoryTime(libraryId,openedAtMs))return false;
             try (Cursor existing = db.rawQuery("SELECT post_id FROM history_events WHERE " +
                     "account_id=? AND event_type='OPEN_POST' AND event_key=?",
                     new String[]{libraryId,navigationId})) {
@@ -159,6 +171,7 @@ public final class XsArchiveDatabase extends SQLiteOpenHelper {
         db.beginTransaction();
         try {
             if(XsLibraryWrites.isDeleted(libraryId))return false;
+            if(!acceptsHistoryTime(libraryId,eventAtMs))return false;
             // Reject collision/replay before touching another post or its metadata.
             try (Cursor c = db.rawQuery("SELECT post_id,source,threshold_ms FROM history_events " +
                     "WHERE account_id=? AND event_type='FEED_VISIBLE' AND event_key=?",
@@ -397,6 +410,7 @@ public final class XsArchiveDatabase extends SQLiteOpenHelper {
         db.beginTransaction();
         try {
             if(XsLibraryWrites.isDeleted(accountId))return false;
+            if(!acceptsHistoryTime(accountId,eventAtMs))return false;
             insertPostIfMissing(db, accountId, id, author, text, publishedAtMs, eventAtMs);
             db.execSQL(
                 "UPDATE posts SET last_seen_at_ms=MAX(last_seen_at_ms, ?), " +
@@ -416,6 +430,75 @@ public final class XsArchiveDatabase extends SQLiteOpenHelper {
         } finally {
             db.endTransaction();
         }
+    }
+
+    /** Estimate only: execution uses its own wall-clock cutoff. Does not change any data. */
+    public long retentionPreview(String libraryId,int days,long nowMs) {
+        requireAccount(libraryId);long cutoff=XsRetentionSettings.cutoffMs(days,nowMs);
+        if(days==0)return 0;
+        try(Cursor c=getReadableDatabase().rawQuery("SELECT COUNT(*) FROM history_events WHERE account_id=? AND event_at_ms<?",
+                new String[]{libraryId,Long.toString(cutoff)})){c.moveToFirst();return c.getLong(0);}
+    }
+
+    /**
+     * Shared-writer operation. Only event details expire; lifetime post summaries survive.
+     * event_at_ms is native open/qualification time, never a post's publication time.
+     * Legacy migrations can have an OPEN event without a counter: reconcile its real
+     * evidence before deletion so the post cannot become a false "never opened" hit.
+     */
+    public long pruneHistory(String libraryId,int days,long nowMs) {
+        requireAccount(libraryId);long cutoff=XsRetentionSettings.cutoffMs(days,nowMs);
+        SQLiteDatabase db=getWritableDatabase();db.beginTransaction();
+        try {
+            if(XsLibraryWrites.isDeleted(libraryId))throw new IllegalStateException("Library deleted");
+            if(days==0){db.setTransactionSuccessful();return 0;}
+            String events=" FROM history_events e WHERE e.account_id=posts.account_id AND e.post_id=posts.post_id";
+            db.execSQL("UPDATE posts SET opened_count=MAX(opened_count,(SELECT COUNT(*)"+events+" AND e.event_type='OPEN_POST')),"+
+                "last_opened_at_ms=NULLIF(MAX(COALESCE(last_opened_at_ms,0),COALESCE((SELECT MAX(e.event_at_ms)"+events+" AND e.event_type='OPEN_POST'),0)),0),"+
+                "last_feed_seen_at_ms=NULLIF(MAX(COALESCE(last_feed_seen_at_ms,0),COALESCE((SELECT MAX(e.event_at_ms)"+events+" AND e.event_type='FEED_VISIBLE'),0)),0) "+
+                "WHERE account_id=? AND post_id IN (SELECT post_id FROM history_events WHERE account_id=? AND event_at_ms<?)",
+                new Object[]{libraryId,libraryId,cutoff});
+            long deleted=db.delete("history_events","account_id=? AND event_at_ms<?",new String[]{libraryId,Long.toString(cutoff)});
+            db.setTransactionSuccessful();return deleted;
+        } finally {db.endTransaction();}
+    }
+
+    /** Counts of stored evidence, not proof of reading. Dwell sums may overlap across cards. */
+    public static final class HistoryStats {
+        public final long postCount,snapshotCount,favoriteCount,openEventCount,feedEventCount;
+        public final long distinctOpenPosts,distinctFeedPosts,neverOpenedPostCount;
+        public final long lifetimeOpenedCount,everOpenedPostCount;
+        public final long totalDwellLowerBoundMs,maxDwellLowerBoundMs,unknownDwellCount,cappedDwellCount;
+        private HistoryStats(long[] p,long[] e,long snapshots,long favorites) {
+            postCount=p[0];lifetimeOpenedCount=p[1];everOpenedPostCount=p[2];neverOpenedPostCount=p[3];
+            snapshotCount=snapshots;favoriteCount=favorites;openEventCount=e[0];feedEventCount=e[1];
+            distinctOpenPosts=e[2];distinctFeedPosts=e[3];totalDwellLowerBoundMs=e[4];
+            maxDwellLowerBoundMs=e[5];unknownDwellCount=e[6];cappedDwellCount=e[7];
+        }
+    }
+
+    /** Read on a worker. All fields come from one consistent library-scoped SQLite snapshot. */
+    public HistoryStats historyStats(String libraryId) {
+        requireAccount(libraryId);SQLiteDatabase db=getReadableDatabase();db.beginTransactionNonExclusive();
+        try {
+            String opened="(p.opened_count>0 OR EXISTS (SELECT 1 FROM history_events e WHERE e.account_id=p.account_id AND e.post_id=p.post_id AND e.event_type='OPEN_POST'))";
+            long[] posts=statsRow(db,"SELECT COUNT(*),COALESCE(SUM(p.opened_count),0),COALESCE(SUM(CASE WHEN "+opened+" THEN 1 ELSE 0 END),0),COALESCE(SUM(CASE WHEN NOT "+opened+" THEN 1 ELSE 0 END),0) FROM posts p WHERE p.account_id=?",libraryId,4);
+            long[] events=statsRow(db,"SELECT COALESCE(SUM(CASE WHEN event_type='OPEN_POST' THEN 1 ELSE 0 END),0),"+
+                "COALESCE(SUM(CASE WHEN event_type='FEED_VISIBLE' THEN 1 ELSE 0 END),0),"+
+                "COUNT(DISTINCT CASE WHEN event_type='OPEN_POST' THEN post_id END),"+
+                "COUNT(DISTINCT CASE WHEN event_type='FEED_VISIBLE' THEN post_id END),"+
+                "COALESCE(SUM(CASE WHEN event_type='FEED_VISIBLE' THEN duration_ms END),0),"+
+                "COALESCE(MAX(CASE WHEN event_type='FEED_VISIBLE' THEN duration_ms END),0),"+
+                "COALESCE(SUM(CASE WHEN event_type='FEED_VISIBLE' AND (duration_ms IS NULL OR duration_quality IS NULL) THEN 1 ELSE 0 END),0),"+
+                "COALESCE(SUM(CASE WHEN event_type='FEED_VISIBLE' AND duration_quality='CAPPED_LOWER_BOUND' THEN 1 ELSE 0 END),0) "+
+                "FROM history_events WHERE account_id=?",libraryId,8);
+            long snapshots=statsRow(db,"SELECT COUNT(*) FROM snapshot_versions WHERE account_id=?",libraryId,1)[0];
+            long favorites=statsRow(db,"SELECT COUNT(*) FROM favorites WHERE account_id=?",libraryId,1)[0];
+            db.setTransactionSuccessful();return new HistoryStats(posts,events,snapshots,favorites);
+        } finally {db.endTransaction();}
+    }
+    private static long[] statsRow(SQLiteDatabase db,String sql,String library,int count) {
+        long[] row=new long[count];try(Cursor c=db.rawQuery(sql,new String[]{library})){c.moveToFirst();for(int i=0;i<count;i++)row[i]=c.getLong(i);}return row;
     }
 
     /**

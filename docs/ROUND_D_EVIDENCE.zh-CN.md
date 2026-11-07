@@ -27,7 +27,7 @@
 
 [桌面真实SQLite容量原始数据](evidence/round-d-capacity.json)：10k和100k从v1逐级到v5，保留原post rowid/正文/分类/事件，FK/integrity与current/version FTS映射通过；100k生成115294 history和101090 snapshot versions，数据库约136MB。修复了旧历史回填仅account索引导致反复扫描，以及相关FTS反复执行；结果记录原/新EXPLAIN、8类查询中位耗时，没有以机器耗时阈值伪造手机性能。
 
-20k虚拟帖子、1000次路由/遮挡/冻结循环已实际执行；候选geometry≤96，style=100（含4个可见正文）、active runs最多8，payload约6770字节，geometry周期读取正文0次。24小时**模拟时钟**压力实际执行，不是24小时真实等待：24卡、200ms采样，写入含24个cap共14400次；多日真机soak、低内存/电量仍NOT RUN。
+20k虚拟帖子、1000次路由/遮挡/冻结循环已实际执行；候选geometry≤96，style=100（含4个可见正文）、active runs最多8，payload约6770字节，geometry周期读取正文0次。另行通过`--long-stress`运行了24小时**模拟时钟**压力（CI常规为11分钟，不混称同一次运行），不是24小时真实等待：24卡、200ms采样，写入含24个cap共14400次；多日真机soak、低内存/电量仍NOT RUN。
 
 ## 签名验证
 
@@ -54,3 +54,18 @@ API26/30/36的真实WebView、SQLite、Job/Keystore、完整资源、SAF和新�
 恢复marker补完整checkpoint确认才清理，忙/不完整保留；非WAL仅EXTRA同步可清，已发布result不被清理异常改报失败。新增真实SQLite busy/解除后重试回归，不宣称物理断电已经验证。
 
 修复后的本地统一复测：[1152项JVM、SQLite/DOM/20k压力和完整Android构建/双Lint证据](evidence/round-d-fixes-local.json) 均PASS（165 tasks，27s）。新增3项隐私用例含真实Activity关闭后携旧Intent重启，持久显式导航屏障阻止自动restore/HOME/deep link；只有用户新的原生导航通过安全检查后解除。marker父目录和资源目录链接均增加fsync，但不宣称物理断电验证。模拟器执行仍须下一轮CI实际结果。
+
+
+## CI67与继续补齐的D源码
+
+[CI67 42372593770](https://github.com/ForceMind/Xs/actions/runs/42372593770)实际执行API26/30/36共360项：336通过、24失败、0错误/跳过；core1152和构建通过。head `aaf4f1be709d12d3e05c66669fb60eacbcd75761`，tested merge `67b594c27eda42de9782b692320bab51457dec81`，tree `cf99e2281e5e23e528d8b2bffd2845d1ff103549`。见[完整失败诊断](evidence/round-d-ci67-failures.json)。API26的视频首尾验证/完整播放和能力门、三版本NativeText/cleanup修复已实际PASS。剩余为API30设置`busy_timeout`的PRAGMA实际返回行，不能由`execPerConnectionSQL`执行；另有版本合并的current与历史检索预期、DocumentsUI真实文件行触摸、Android标准FTS4语法下显式AND被当作搜索词，导致隐私测试前置收藏搜索为空，以及ActivityScenario Intent bookkeeping。保留失败历史，不冒充PASS或环境阻断。
+
+接续源码另外补上默认永久/7/30/90/365天的可选事件明细保留，保留累计打开事实，防止将淘汰明细误判成从未打开；默认不限的每库媒体配额、完成/活动预算和并发预留，下调不删除完成文件；管理页双语确认与分清保留明细/累计事实的统计。保留清理使用普通同库串行队列和实际SQLite锁内时间复验，不为清理明细撤销进行中的媒体票据。历史事件懒清理，不承诺后台准时清理，其他实体不自动过期。
+
+新增独立UID接收fixture，通过真实Android Intent READ/ClipData grant测试选中媒体、拒绝未授权/未选中/写入/数据库路径，以及整库删除后接收Activity存活期间首次延迟读的实际hash；不是聊天App接收验证。新增Browser真实SAF/触摸window.open夹具、API27，以及由外部ADB驱动的存活PID→force-stop→确认进程消失→不同PID验证和同job调试证书版本3→4安装升级路径；尚待新CI执行，不把默认套件内的in-process recovery case计为OS杀进程证据。
+
+完整加密容器的最大536870912字节已在32MiB JVM真实流式加解密并逐字节核对，1152断言与DOM/SQLite压力本地PASS。它证明容器内存边界，不等于Android近512MiB实际文件恢复、真实断电或手机磁盘压力。
+
+多词FTS的实际根因已在[SDK SQLite标准语法复现](evidence/round-d-fts-compatibility.json)：旧`native* AND resource*`为0，新隐式交集`native* resource*`为1；两个Java builder统一修复，保留token白名单。新增原生Android current/history/multiword/Tab/字面OR回归及浏览器动作前完整种子校验。桌面SQLite的增强语法通过不能代替Android原生测试。
+
+本轮追加源码的[本地统一检查](evidence/round-d-governance-local.json)实际通过1155项JVM、v5迁移/搜索、DOM/20k压力、SDK标准FTS复现、完整构建和双Lint；[五个实际debug夹具APK/public cert](evidence/round-d-governance-local-apks.json)单独留证。196 tasks最终17秒（修改触摸源前完整31秒）；源码base为aaf4f1b的未提交工作树，仪器声明52＋98仅是待跑数量，不提前记600项通过。生产key/许可/真实设备边界不变。

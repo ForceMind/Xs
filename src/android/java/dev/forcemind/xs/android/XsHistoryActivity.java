@@ -135,7 +135,14 @@ public final class XsHistoryActivity extends Activity {
             libraryButton.setText(tr("Xs 本机资料库", "Xs local library"));
             write(library, () -> archive.ensureLibrary(library, tr("Xs 本机资料库", "Xs local library")), null);
         }
-        refresh();
+        maintainAndRefresh();
+    }
+
+    private void maintainAndRefresh() {
+        final String owner = library;
+        XsRetentionController.cleanNow(this, owner, (ok, count) -> {
+            if (!destroyed && owner.equals(library)) refresh();
+        });
     }
 
     private void buildScreen() {
@@ -718,7 +725,7 @@ public final class XsHistoryActivity extends Activity {
                 requested.incrementAndGet(); library=selected; resetSelection();
                 libraryButton.setText(library.equals(defaultLibrary) ? tr("Xs 本机资料库", "Xs local library") :
                     tr("独立资料空间：", "Separate library: ") + selectedLabel);
-                refresh();
+                maintainAndRefresh();
             });
         });
     }
@@ -744,7 +751,7 @@ public final class XsHistoryActivity extends Activity {
                         if(XsDeletedLibraries.isDeleted(this,ids.get(n))){startActivity(XsLibraryManagementActivity.intent(this,ids.get(n)));return;}
                         requested.incrementAndGet(); library = ids.get(n); resetSelection();
                         selectedFolder = null; folderFilter.setText(tr("全部分类", "All folders"));
-                        libraryButton.setText(names.get(n)); refresh();
+                        libraryButton.setText(names.get(n)); maintainAndRefresh();
                     }).setNeutralButton(tr("合并资料空间", "Combine libraries"),(d,n) ->
                         startActivity(XsLibrariesActivity.intent(this)))
                     .setNegativeButton(tr("取消", "Cancel"), null).show();

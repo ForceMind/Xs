@@ -17,3 +17,6 @@ include(":xs-runtime")
 include(":dev-harness")
 
 include(":app-android")
+
+// Standalone recipient APK for cross-UID grant instrumentation only.
+include(":share-receiver-fixture")

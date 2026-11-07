@@ -53,6 +53,7 @@ import static org.junit.Assert.*;
 public final class BrowserPrivacyIntegrationTest {
     private Context app;
     private ActivityScenario<BrowserActivity> scenario;
+    private Intent scenarioIntent;
     private XsArchiveDatabase archive;
     private XsMediaRepository media;
     private String library,previousDefault,assetId;
@@ -67,14 +68,17 @@ public final class BrowserPrivacyIntegrationTest {
         app=InstrumentationRegistry.getInstrumentation().getTargetContext();
         app.getSharedPreferences("browser.BrowserActivity",Context.MODE_PRIVATE).edit().clear().commit();
         previousPrivacy=new HashMap<>(app.getSharedPreferences("xs_browser_privacy",Context.MODE_PRIVATE).getAll());
+        assertFalse("No earlier fixture clear is still pending",BrowserPrivacy.pending(app));
+        app.getSharedPreferences("xs_browser_privacy",Context.MODE_PRIVATE).edit().putBoolean("needs_explicit_navigation",false).commit();
         previousDefault=XsLocalSpaces.current(app);library="local:privacy-"+UUID.randomUUID();
         app.getSharedPreferences("xs_manual_archive",Context.MODE_PRIVATE).edit().putString("local_space",library).putString("privacy_fixture_marker","keep").commit();
         app.getSharedPreferences("xs_library_settings",Context.MODE_PRIVATE).edit().putString("privacy_fixture_marker","keep").commit();
         expectedSettings=new HashMap<>(app.getSharedPreferences("xs_library_settings",Context.MODE_PRIVATE).getAll());
         expectedSpace=new HashMap<>(app.getSharedPreferences("xs_manual_archive",Context.MODE_PRIVATE).getAll());
         archive=new XsArchiveDatabase(app);archive.ensureLibrary(library,"Privacy fixture");
-        archive.saveManualLink(library,POST,System.currentTimeMillis());
-        archive.favorite(library,POST,"alice","native resource fixture",null,System.currentTimeMillis());
+        assertTrue(archive.saveManualLink(library,POST,System.currentTimeMillis()));
+        assertTrue(archive.recordObservedOpen(library,POST,"alice",null,null,System.currentTimeMillis(),"privacy-fixture-open:"+UUID.randomUUID()));
+        assertTrue(archive.favorite(library,POST,"alice","native resource fixture",null,System.currentTimeMillis()));
         archive.putFavoriteDetails(library,"777900","retained note","privacy");
         archive.putCategory(library,"keep","Retained category");assertTrue(archive.assignCategory(library,"777900","keep"));
         media=XsMediaRepository.get(app);assetId=UUID.randomUUID().toString();
@@ -86,14 +90,21 @@ public final class BrowserPrivacyIntegrationTest {
         media.getWritableDatabase().insertOrThrow("assets",null,values);
         lease=XsShareCoordinator.assetIntent(app,library,Arrays.asList(assetId)).getParcelableExtra(Intent.EXTRA_STREAM);
         XsMediaRepository.Lease grant=media.resolveLease(lease.getPathSegments().get(0),lease.getLastPathSegment());leaseFile=media.leaseFile(grant);
-        scenario=ActivityScenario.launch(BrowserActivity.class);installFixtureClient();
+        assertNativeResources(); // Seed validity is proven before any browser privacy operation.
+        scenarioIntent=new Intent(app,BrowserActivity.class).setAction(Intent.ACTION_VIEW).setData(Uri.parse(POST));
+        scenario=ActivityScenario.launch(scenarioIntent);installFixtureClient();
         load("https://x.com/fixture/privacy-one");load("https://x.com/fixture/privacy-two");
         evaluate("document.cookie='xs_privacy_fixture=1; path=/; SameSite=Lax';localStorage.setItem('xs_privacy_fixture','1');sessionStorage.setItem('xs_privacy_fixture','1');window.fixtureOldDom=37");
         assertEquals("true",evaluate("document.cookie.indexOf('xs_privacy_fixture=')>=0&&localStorage.getItem('xs_privacy_fixture')==='1'&&sessionStorage.getItem('xs_privacy_fixture')==='1'"));
         scenario.onActivity(a->assertTrue(((WebView)a.findViewById(R.id.browser_view)).canGoBack()));
     }
     @After public void cleanup()throws Exception {
-        if(scenario!=null)scenario.close();
+        if(scenario!=null){
+            // ActivityScenario keys lifecycle events by its launch Intent. The real onNewIntent
+            // path updates Activity.getIntent(); restore only this harness bookkeeping identity
+            // after the assertions, so a normal finish is observed rather than timing out.
+            scenario.onActivity(a->a.setIntent(new Intent(scenarioIntent)));scenario.close();
+        }
         CountDownLatch clear=new CountDownLatch(1);
         InstrumentationRegistry.getInstrumentation().runOnMainSync(()->{WebStorage.getInstance().deleteAllData();CookieManager.getInstance().removeAllCookies(done->clear.countDown());});
         assertTrue(clear.await(10,TimeUnit.SECONDS));
@@ -128,8 +139,10 @@ public final class BrowserPrivacyIntegrationTest {
     private void assertNativeResources()throws Exception {
         assertEquals(library,XsLocalSpaces.current(app));assertEquals(expectedSpace,app.getSharedPreferences("xs_manual_archive",Context.MODE_PRIVATE).getAll());assertEquals(expectedSettings,app.getSharedPreferences("xs_library_settings",Context.MODE_PRIVATE).getAll());
         ArchiveSearch.Filter filter=new ArchiveSearch.Filter();filter.keyword="native resource";filter.favoriteOnly=true;filter.categoryId="keep";filter.tag="privacy";
-        try(Cursor c=archive.search(library,filter)){assertEquals(1,c.getCount());}
-        try(Cursor c=archive.timeline(library,null,10,"LOCAL_SAVE")){assertEquals(1,c.getCount());}
+        try(Cursor c=archive.search(library,filter)){assertEquals("Native body/favorite/category/tag seed must remain searchable",1,c.getCount());}
+        try(Cursor c=archive.timeline(library,null,10,"OPEN_POST")){assertEquals(1,c.getCount());}
+        filter.actionType="LOCAL_SAVE";
+        try(Cursor c=archive.search(library,filter)){assertEquals("Manual saves remain distinct from opens",1,c.getCount());}
         assertNotNull(media.find(library,assetId));assertArrayEquals(png,java.nio.file.Files.readAllBytes(saved.toPath()));
         try(java.io.InputStream input=app.getContentResolver().openInputStream(lease);ByteArrayOutputStream out=new ByteArrayOutputStream()){assertNotNull(input);byte[] bytes=new byte[256];int n;while((n=input.read(bytes))!=-1)out.write(bytes,0,n);assertArrayEquals(png,out.toByteArray());}
     }
@@ -168,11 +181,10 @@ public final class BrowserPrivacyIntegrationTest {
         scenario.onActivity(a->assertFalse(((WebView)a.findViewById(R.id.browser_view)).canGoBack()));assertNativeResources();
     }
     @Test public void destroyedActivityWithOldDeepLinkStaysEmptyUntilCurrentNativeConfirmation()throws Exception {
-        final Intent oldLaunch=new Intent(app,BrowserActivity.class).setAction(Intent.ACTION_VIEW).setData(Uri.parse(POST));
+        final Intent oldLaunch=new Intent(scenarioIntent);
         // Simulate an already accepted first-use notice and an existing launch Intent without
         // opening a network page: the currently loaded document is still the local fixture.
         app.getSharedPreferences("browser.BrowserActivity",Context.MODE_PRIVATE).edit().putBoolean("browser_notice_accepted",true).commit();
-        scenario.onActivity(a->a.setIntent(oldLaunch));
         WebView old=current();confirm(false,true);awaitReplacement(old);
         assertTrue(BrowserPrivacy.needsExplicitNavigation(app));assertNativeResources();
         scenario.close();scenario=null;

@@ -90,7 +90,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        api-level: [26, 30, 36]
+        api-level: [26, 27, 30, 36]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -126,6 +126,8 @@ jobs:
             adb shell dumpsys webviewupdate > app-android/build/compatibility/webview-provider.txt
             adb shell cmd uimode night > app-android/build/compatibility/night-mode.txt
             gradle --no-daemon --no-parallel --continue :dev-harness:connectedDebugAndroidTest :app-android:connectedDebugAndroidTest
+            python3 scripts/test-process-recovery.py
+            python3 scripts/test-debug-upgrade.py
       - name: Record job-local fixture APK hashes and public signing certificates
         if: always()
         run: python3 scripts/record-fixture-provenance.py

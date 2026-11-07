@@ -37,6 +37,8 @@ public final class XsMediaRepository extends SQLiteOpenHelper {
     private final File shareDir;
     private final Scheduler scheduler;
     private final File privateRoot;
+    private final XsStorageSettings storageSettings;
+    private static final String QUOTA_ERROR="Library media quota exceeded; completed files are kept";
     private final java.util.Map<String,String> activeRuns=new java.util.HashMap<>();
     private final java.util.Set<String> stoppedRuns=new java.util.HashSet<>();
     private final java.util.Map<String,HttpURLConnection> runningConnections=new java.util.HashMap<>();
@@ -90,6 +92,7 @@ public final class XsMediaRepository extends SQLiteOpenHelper {
         this.connections=connections;
         this.scheduler=scheduler;
         privateRoot=context.getDataDir();
+        storageSettings=new XsStorageSettings(context);
         savedDir = new File(context.getFilesDir(), "xs-saved-media"+storageSuffix);
         shareDir = new File(context.getFilesDir(), "xs-share-leases"+storageSuffix);
         ensureStorageDirectory(savedDir);
@@ -160,6 +163,51 @@ public final class XsMediaRepository extends SQLiteOpenHelper {
         throw new IllegalStateException("Unable to allocate download job");
     }
 
+    public static final class StorageUsage {
+        public final long completedBytes,reservedBytes,quotaBytes;
+        StorageUsage(long completed,long reserved,long quota){completedBytes=completed;reservedBytes=reserved;quotaBytes=quota;}
+    }
+    /** Unknown response lengths conservatively reserve the existing single-file policy maximum. */
+    public synchronized StorageUsage usage(String library) {requireLibrary(library);return usage(getReadableDatabase(),library,null);}
+    private StorageUsage usage(SQLiteDatabase db,String library,String excluding) {
+        long completed=0,reserved=0;
+        try(Cursor c=db.rawQuery("SELECT id,state,bytes,total,media_kind FROM assets WHERE library_id=?",new String[]{library})) {
+            while(c.moveToNext()) {
+                if(excluding!=null&&excluding.equals(c.getString(0)))continue;
+                String state=c.getString(1);
+                if("COMPLETED".equals(state))completed=addBounded(completed,Math.max(0,c.getLong(2)));
+                else if(activeState(state)) {
+                    long cap="VIDEO".equals(c.getString(4))?MediaDownloadPolicy.MAX_VIDEO_BYTES:MediaDownloadPolicy.MAX_BYTES;
+                    long total=c.getLong(3);reserved=addBounded(reserved,total>0&&total<=cap?total:cap);
+                }
+            }
+        }
+        return new StorageUsage(completed,reserved,storageSettings.quota(library));
+    }
+    private static boolean activeState(String state){return "QUEUED".equals(state)||"DOWNLOADING".equals(state)||"WAITING_NETWORK".equals(state)||"PAUSED".equals(state)||"RETRY_WAIT".equals(state);}
+    private static long addBounded(long a,long b){return b>Long.MAX_VALUE-a?Long.MAX_VALUE:a+b;}
+    private boolean fitsQuota(SQLiteDatabase db,String library,String excluding,long additional) {
+        StorageUsage used=usage(db,library,excluding);return used.quotaBytes==0||(used.completedBytes<=used.quotaBytes&&used.reservedBytes<=used.quotaBytes-used.completedBytes&&additional<=used.quotaBytes-used.completedBytes-used.reservedBytes);
+    }
+    private static void requireWritableLibrary(String library){if(XsLibraryWrites.isDeleted(library))throw new IllegalStateException("Library has been deleted");}
+    /** Synchronous: call through the same library's XsLibraryWrites. Lowering never deletes completed files. */
+    public synchronized void setQuotaBytes(String library,long limit) {
+        requireLibrary(library);if(limit<0)throw new IllegalArgumentException("Quota must be zero or a positive byte count");
+        SQLiteDatabase db=getWritableDatabase();long previous=0;List<String> stopped=new ArrayList<>();boolean saved=false;
+        db.beginTransaction();RuntimeException failure=null;
+        try {
+            requireWritableLibrary(library);previous=storageSettings.quota(library);storageSettings.save(library,limit);saved=true;
+            if(!fitsQuota(db,library,null,0)) {
+                try(Cursor c=db.rawQuery("SELECT id,state FROM assets WHERE library_id=?",new String[]{library})){while(c.moveToNext())if(activeState(c.getString(1)))stopped.add(c.getString(0));}
+                for(String id:stopped){ContentValues v=new ContentValues();v.put("state","FAILED");v.putNull("run_token");v.put("error",QUOTA_ERROR);db.update("assets",v,"library_id=? AND id=?",new String[]{library,id});}
+            }
+            db.setTransactionSuccessful();
+        }catch(RuntimeException problem){failure=problem;}
+        finally{try{db.endTransaction();}catch(RuntimeException commitFailure){if(failure==null)failure=commitFailure;else failure.addSuppressed(commitFailure);}}
+        if(failure!=null){if(saved)try{storageSettings.save(library,previous);}catch(RuntimeException ignored){}throw failure;}
+        for(String id:stopped){stopTransfer(id);cancelJob(library,id);deleteParts(id);}
+    }
+
     public static final class Asset {
         public final String id, libraryId, postUrl, state, mime, filename, error, category,mediaKind;
         public final long bytes, total, createdMs,durationMs;
@@ -222,27 +270,42 @@ public final class XsMediaRepository extends SQLiteOpenHelper {
         XsLibraryWrites.Ticket ticket=XsLibraryWrites.ticket(libraryId);
         boolean queued=XsLibraryWrites.submit(ticket,()->{
             synchronized(XsMediaRepository.this) {
-                boolean full;
-                try (Cursor c=getReadableDatabase().rawQuery("SELECT COUNT(*) FROM assets WHERE state IN ('QUEUED','DOWNLOADING','PAUSED','RETRY_WAIT')", null)) {
-                    c.moveToFirst(); full=c.getInt(0)>=16;
-                }
-                ContentValues v=new ContentValues();
-                v.put("id",id); v.put("library_id",libraryId); v.put("post_url",PostUrls.canonicalLink(postUrl));
-                v.put("state",full?"FAILED":"QUEUED"); v.put("created_ms",System.currentTimeMillis());v.put("media_kind",video?"VIDEO":"IMAGE");
-                int jobId=allocateJobId();v.put("job_id",jobId);
-                if(full)v.put("error","Download queue full; select the media again later");
-                else try {v.put("url_cipher",XsDownloadSecrets.seal(safeUrl,secretScope(id,libraryId,postUrl,video)));}
-                catch(java.security.GeneralSecurityException unavailable){v.put("state","FAILED");v.put("error","Secure download reference unavailable; reselect media");full=true;}
-                getWritableDatabase().insertOrThrow("assets",null,v);
-                if(full)return;
-                scheduleStored(libraryId,id,jobId,maxBytes,true);
-
+                SQLiteDatabase db=getWritableDatabase();boolean blocked=false;int jobId;
+                db.beginTransaction();
+                try {
+                    requireWritableLibrary(libraryId);boolean full;
+                    try(Cursor c=db.rawQuery("SELECT COUNT(*) FROM assets WHERE state IN ('QUEUED','DOWNLOADING','PAUSED','RETRY_WAIT')",null)){c.moveToFirst();full=c.getInt(0)>=16;}
+                    boolean overQuota=!fitsQuota(db,libraryId,null,maxBytes);blocked=full||overQuota;
+                    ContentValues v=new ContentValues();v.put("id",id);v.put("library_id",libraryId);v.put("post_url",PostUrls.canonicalLink(postUrl));
+                    v.put("state",blocked?"FAILED":"QUEUED");v.put("created_ms",System.currentTimeMillis());v.put("media_kind",video?"VIDEO":"IMAGE");
+                    jobId=allocateJobId();v.put("job_id",jobId);
+                    if(full)v.put("error","Download queue full; select the media again later");else {
+                        if(overQuota)v.put("error",QUOTA_ERROR);
+                        try{v.put("url_cipher",XsDownloadSecrets.seal(safeUrl,secretScope(id,libraryId,postUrl,video)));}
+                        catch(java.security.GeneralSecurityException unavailable){v.put("state","FAILED");v.put("error","Secure download reference unavailable; reselect media");blocked=true;}
+                    }
+                    db.insertOrThrow("assets",null,v);db.setTransactionSuccessful();
+                }finally{db.endTransaction();}
+                if(!blocked)scheduleStored(libraryId,id,jobId,maxBytes,true);
             }
         });
         if(!queued)throw new IllegalStateException("Download write queue full");
         return id;
     }
 
+    /** Caller is the shared writer. SQLite's actual write lock protects reservations across helper instances. */
+    private boolean reserveTask(String library,String id,String run,String[] allowed,long budget,ContentValues values) {
+        SQLiteDatabase db=getWritableDatabase();db.beginTransaction();
+        try {
+            requireWritableLibrary(library);
+            try(Cursor c=db.rawQuery("SELECT state,run_token FROM assets WHERE library_id=? AND id=?",new String[]{library,id})) {
+                if(!c.moveToFirst()||!java.util.Arrays.asList(allowed).contains(c.getString(0))||(run!=null&&!run.equals(c.getString(1))))return false;
+            }
+            boolean fits=fitsQuota(db,library,id,budget);
+            if(!fits){values=new ContentValues();values.put("state","FAILED");values.putNull("run_token");values.put("error",QUOTA_ERROR);}
+            db.update("assets",values,"library_id=? AND id=?",new String[]{library,id});db.setTransactionSuccessful();return fits;
+        }finally{db.endTransaction();}
+    }
     private void scheduleStored(String library,String id,int jobId,long estimate,boolean userInitiated) {
         if(scheduler==null) {runScheduled(library,id,()->{});return;}
         if(!scheduler.schedule(id,library,jobId,estimate,userInitiated))schedulingRejected(library,id,"Android rejected background scheduling; retry from the visible app");
@@ -262,9 +325,9 @@ public final class XsMediaRepository extends SQLiteOpenHelper {
                     if(!c.moveToFirst()||c.isNull(0))throw new IllegalStateException("Select media again at its source");
                     boolean video="VIDEO".equals(asset.mediaKind);
                     validateUrl(asset.postUrl,XsDownloadSecrets.open(c.getString(0),secretScope(id,library,asset.postUrl,video)),video);
-                    ContentValues v=new ContentValues();v.put("state","QUEUED");v.put("bytes",0);v.put("attempt_count",0);v.putNull("run_token");v.putNull("error");
-                    getWritableDatabase().update("assets",v,"library_id=? AND id=?",new String[]{library,id});
-                    scheduleStored(library,id,c.getInt(1),video?MediaDownloadPolicy.MAX_VIDEO_BYTES:MediaDownloadPolicy.MAX_BYTES,true);
+                    ContentValues v=new ContentValues();v.put("state","QUEUED");v.put("bytes",0);v.put("total",-1);v.put("attempt_count",0);v.putNull("run_token");v.putNull("error");
+                    long budget=video?MediaDownloadPolicy.MAX_VIDEO_BYTES:MediaDownloadPolicy.MAX_BYTES;
+                    if(reserveTask(library,id,null,new String[]{"FAILED","PAUSED","RETRY_WAIT"},budget,v))scheduleStored(library,id,c.getInt(1),budget,true);
                 }catch(java.security.GeneralSecurityException invalid){schedulingRejected(library,id,"Saved media reference unavailable; select the media again");}
             }
         });
@@ -284,7 +347,8 @@ public final class XsMediaRepository extends SQLiteOpenHelper {
                     String url=validateUrl(asset.postUrl,XsDownloadSecrets.open(c.getString(0),secretScope(id,library,asset.postUrl,video)),video);
                     String run=UUID.randomUUID().toString();
                     ContentValues v=new ContentValues();v.put("state","QUEUED");v.put("bytes",0);v.put("total",-1);v.put("run_token",run);v.put("attempt_count",c.getInt(1)+1);v.putNull("error");
-                    getWritableDatabase().update("assets",v,"id=? AND library_id=?",new String[]{id,library});
+                    long budget=video?MediaDownloadPolicy.MAX_VIDEO_BYTES:MediaDownloadPolicy.MAX_BYTES;
+                    if(!reserveTask(library,id,null,new String[]{"QUEUED","PAUSED","RETRY_WAIT"},budget,v)){finished.run();return;}
                     activeRuns.put(id,run);
                     try {worker.execute(()->{
                         download(id,library,asset.postUrl,url,ticket,video,run);
@@ -425,18 +489,13 @@ public final class XsMediaRepository extends SQLiteOpenHelper {
             if(declared==0||declared>maxBytes)throw new IOException("Media size is not allowed");
             String encoding=connection.getContentEncoding();
             if(encoding!=null&&!"identity".equalsIgnoreCase(encoding))throw new IOException("Encoded response is unsupported");
-            XsLibraryWrites.submit(ticket,()->{
-                synchronized(XsMediaRepository.this) {
-                    ContentValues downloading=new ContentValues();downloading.put("state","DOWNLOADING");downloading.put("total",declared);
-                    getWritableDatabase().update("assets",downloading,"id=? AND library_id=? AND run_token=? AND state='QUEUED'",new String[]{id,libraryId,run});
-                }
-            });
+            if(!prepareDownload(ticket,libraryId,id,run,declared,declared>0?declared:maxBytes))return;
             MessageDigest digest=MessageDigest.getInstance("SHA-256"); long bytes=0,lastProgress=0; byte[] prefix=new byte[16];int prefixLength=0;
             try(InputStream input=connection.getInputStream(); FileOutputStream output=new FileOutputStream(part)) {
                 byte[] buffer=new byte[16384];int n;
                 while((n=input.read(buffer))!=-1) {
                     if(!active(id,run)||!XsLibraryWrites.isCurrent(ticket)||android.os.SystemClock.elapsedRealtime()>deadline)throw new IOException("Canceled or expired");
-                    bytes+=n;if(bytes>maxBytes||savedDir.getUsableSpace()<1048576)throw new IOException("Media exceeds available storage");
+                    bytes+=n;if(bytes>(declared>0?declared:maxBytes)||savedDir.getUsableSpace()<1048576)throw new IOException("Media exceeds available storage");
                     int copy=Math.min(n,prefix.length-prefixLength);if(copy>0){System.arraycopy(buffer,0,prefix,prefixLength,copy);prefixLength+=copy;}
                     output.write(buffer,0,n);digest.update(buffer,0,n);
                     if(bytes-lastProgress>=262144){progress(ticket,libraryId,id,bytes,run);lastProgress=bytes;}
@@ -459,17 +518,21 @@ public final class XsMediaRepository extends SQLiteOpenHelper {
             final long completedBytes=bytes;
             completionQueued=XsLibraryWrites.submit(ticket,()->{
                 synchronized(XsMediaRepository.this) {
+                    SQLiteDatabase db=getWritableDatabase();db.beginTransaction();
                     try {
-                        // Same serial barrier as library erasure, checked at actual write time.
-                        if(!active(id,run))return;
+                        // Same serial barrier as library erasure, plus actual SQLite reservation lock.
+                        requireWritableLibrary(libraryId);if(!active(id,run))return;
+                        if(!fitsQuota(db,libraryId,id,completedBytes)) {
+                            ContentValues rejected=new ContentValues();rejected.put("state","FAILED");rejected.putNull("run_token");rejected.put("error",QUOTA_ERROR);db.update("assets",rejected,"id=? AND library_id=?",new String[]{id,libraryId});db.setTransactionSuccessful();return;
+                        }
                         if(!part.renameTo(completed))throw new IOException("Could not finalize media");
                         syncDirectory(savedDir);
                         ContentValues v=new ContentValues();v.put("state","COMPLETED");v.put("bytes",completedBytes);v.put("total",completedBytes);
                         v.put("filename",filename);v.put("mime",video?"video/mp4":mime(extension));v.put("sha256",hash);
                         if(videoInfo!=null) {v.put("duration_ms",videoInfo.durationMs);v.put("width",videoInfo.width);v.put("height",videoInfo.height);v.put("video_tracks",videoInfo.videoTracks);v.put("audio_tracks",videoInfo.audioTracks);v.put("rotation_degrees",videoInfo.rotationDegrees);}v.putNull("media_url");v.putNull("url_cipher");v.putNull("run_token");v.putNull("error");
-                        getWritableDatabase().update("assets",v,"id=? AND library_id=?",new String[]{id,libraryId});
+                        db.update("assets",v,"id=? AND library_id=?",new String[]{id,libraryId});db.setTransactionSuccessful();
                     } catch(Exception failure) {completed.delete();fail(libraryId,id,"Could not finalize media",run);}
-                    finally {part.delete();}
+                    finally {try{db.endTransaction();}finally{part.delete();}}
                 }
             },()->{part.delete();fail(libraryId,id,"Context changed before completion; select media again to restart",run);});
             if(!completionQueued)fail(libraryId,id,"Write queue unavailable; restart media download",run);
@@ -479,6 +542,14 @@ public final class XsMediaRepository extends SQLiteOpenHelper {
             }else fail(libraryId,id,safeFailure(failure),run);
         }
         finally {synchronized(this){runningConnections.remove(run);}if(connection!=null)connection.disconnect();if(!completionQueued)part.delete();}
+    }
+    private boolean prepareDownload(XsLibraryWrites.Ticket ticket,String library,String id,String run,long total,long budget)throws IOException {
+        java.util.concurrent.CountDownLatch done=new java.util.concurrent.CountDownLatch(1);java.util.concurrent.atomic.AtomicBoolean allowed=new java.util.concurrent.atomic.AtomicBoolean();
+        boolean submitted=XsLibraryWrites.submit(ticket,()->{try{synchronized(XsMediaRepository.this){ContentValues values=new ContentValues();values.put("state","DOWNLOADING");values.put("total",total);allowed.set(reserveTask(library,id,run,new String[]{"QUEUED"},budget,values));}}catch(RuntimeException unavailable){fail(library,id,"Storage quota check unavailable; retry later",run);}finally{done.countDown();}},done::countDown);
+        if(!submitted)throw new IOException("Download write queue unavailable");
+        try{if(!done.await(30,TimeUnit.SECONDS))throw new IOException("Download preparation timed out");}
+        catch(InterruptedException stopped){Thread.currentThread().interrupt();throw new IOException("Download preparation stopped");}
+        return allowed.get();
     }
     private static void validateBitmap(File file)throws IOException {
         BitmapFactory.Options bounds=new BitmapFactory.Options();bounds.inJustDecodeBounds=true;BitmapFactory.decodeFile(file.getPath(),bounds);
@@ -602,10 +673,13 @@ public final class XsMediaRepository extends SQLiteOpenHelper {
     /** The caller owns new-library staging/recovery markers and must keep it hidden until metadata commits. */
     public synchronized List<String> restoreCompleted(String library,List<RestoredAsset> staged)throws IOException {
         requireLibrary(library);validateRestored(staged);
-        try(Cursor c=getReadableDatabase().rawQuery("SELECT 1 FROM assets WHERE library_id=? LIMIT 1",new String[]{library})){if(c.moveToFirst())throw new IOException("Restore requires an empty new library");}
         List<String> ids=new ArrayList<>();List<File> published=new ArrayList<>();SQLiteDatabase db=getWritableDatabase();db.beginTransaction();
-        Exception failed=null;
+        Exception failed=null;boolean ownsTarget=false;
         try {
+            requireWritableLibrary(library);
+            try(Cursor c=db.rawQuery("SELECT 1 FROM assets WHERE library_id=? LIMIT 1",new String[]{library})){if(c.moveToFirst())throw new IOException("Restore requires an empty new library");}
+            ownsTarget=true;long restoredBytes=0;for(RestoredAsset asset:staged)restoredBytes+=asset.bytes;
+            if(!fitsQuota(db,library,null,restoredBytes))throw new IOException(QUOTA_ERROR);
             for(RestoredAsset asset:staged) {
                 if(Thread.currentThread().isInterrupted()||XsLibraryWrites.isDeleted(library))throw new IOException("Restore canceled");
                 String id=UUID.randomUUID().toString();String extension="VIDEO".equals(asset.kind)?"mp4":imageExtension(asset.stageFile,asset.mime);
@@ -623,7 +697,7 @@ public final class XsMediaRepository extends SQLiteOpenHelper {
         finally{try{db.endTransaction();}catch(RuntimeException commitFailure){if(failed==null)failed=commitFailure;else failed.addSuppressed(commitFailure);}}
         if(failed!=null) {
             for(File file:published)file.delete();
-            try{getWritableDatabase().delete("assets","library_id=?",new String[]{library});syncDirectory(savedDir);}catch(RuntimeException|IOException compensation){failed.addSuppressed(compensation);}
+            if(ownsTarget)try{getWritableDatabase().delete("assets","library_id=?",new String[]{library});syncDirectory(savedDir);}catch(RuntimeException|IOException compensation){failed.addSuppressed(compensation);}
             if(failed instanceof IOException)throw (IOException)failed;throw new IOException("Resource restore failed",failed);
         }
         return java.util.Collections.unmodifiableList(ids);
