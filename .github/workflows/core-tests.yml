@@ -137,7 +137,7 @@ jobs:
             adb shell am get-config > app-android/build/compatibility/device-configuration.txt
             adb shell dumpsys webviewupdate > app-android/build/compatibility/webview-provider.txt
             adb shell cmd uimode night > app-android/build/compatibility/night-mode.txt
-            gradle --no-daemon --no-parallel --continue :dev-harness:connectedDebugAndroidTest :app-android:connectedDebugAndroidTest
+            python3 scripts/run-android-instrumentation.py
             python3 scripts/test-process-recovery.py
             python3 scripts/test-debug-upgrade.py
             python3 scripts/test-process-recovery.py --reboot
@@ -156,3 +156,4 @@ jobs:
             app-android/build/outputs/androidTest-results/
             dev-harness/build/reports/androidTests/
             dev-harness/build/outputs/androidTest-results/
+            dev-harness/build/compatibility/

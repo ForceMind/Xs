@@ -42,7 +42,9 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import static org.junit.Assert.*;
 
@@ -51,6 +53,7 @@ import static org.junit.Assert.*;
  */
 @RunWith(AndroidJUnit4.class)
 public final class GovernanceUiTest {
+    @Rule public final TestName testName=new TestName();
     private static final String METADATA="xs-library-metadata.xsmeta",FULL="xs-library-encrypted.xsbackup";
     private static final String PASSWORD="fixture-only-password-42";
     private Instrumentation instrumentation;
@@ -75,6 +78,7 @@ public final class GovernanceUiTest {
     @After public void tearDown()throws Exception {
         Throwable cleanupFailure=null;
         try {
+            if(providerReady&&!testBodyCompleted)saveFailureArtifacts();
             // A failed picker assertion must not leave another application's foreground
             // Activity blocking the next fixture. Cancel through the real system Back action.
             for(int i=0;i<4&&documentsUiActive();i++) {
@@ -259,13 +263,50 @@ public final class GovernanceUiTest {
     private static boolean systemDocumentNode(AccessibilityNodeInfo node){return node.isVisibleToUser()&&node.isEnabled()&&node.getPackageName()!=null&&node.getPackageName().toString().contains("documentsui");}
     private void touchSystemDocument(AccessibilityNodeInfo node) {
         assertTrue("Only a visible system document control is touched",systemDocumentNode(node));
-        Rect bounds=new Rect();node.getBoundsInScreen(bounds);assertFalse("Visible document has screen bounds",bounds.isEmpty());
-        long now=SystemClock.uptimeMillis();MotionEvent down=MotionEvent.obtain(now,now,MotionEvent.ACTION_DOWN,bounds.exactCenterX(),bounds.exactCenterY(),0);
-        down.setSource(InputDevice.SOURCE_TOUCHSCREEN);
+        final String expectedText=text(node),expectedId=node.getViewIdResourceName(),expectedClass=String.valueOf(node.getClassName()),expectedDescription=String.valueOf(node.getContentDescription());
+        final boolean sidebar=fixtureSidebarRoot(node);
+        // Visible nodes can already be exposed while DrawerLayout is still moving. Wait
+        // for an idle frame and fresh, clipped bounds that remain stable across frames.
+        try{instrumentation.getUiAutomation().waitForIdle(100,1000);}catch(java.util.concurrent.TimeoutException backgroundEvents){/* Geometry below is still required to stabilize. */}
+        Rect previous=null,bounds=null;long stableSince=0,deadline=SystemClock.elapsedRealtime()+2000;
+        while(SystemClock.elapsedRealtime()<deadline) {
+            AccessibilityNodeInfo fresh=find(n->systemDocumentNode(n)&&expectedText.equals(text(n))&&
+                java.util.Objects.equals(expectedId,n.getViewIdResourceName())&&expectedClass.equals(String.valueOf(n.getClassName()))&&
+                expectedDescription.equals(String.valueOf(n.getContentDescription()))&&(!sidebar||fixtureSidebarRoot(n)));
+            AccessibilityNodeInfo active=instrumentation.getUiAutomation().getRootInActiveWindow();
+            if(fresh!=null&&fresh.refresh()&&active!=null&&active.getPackageName()!=null&&active.getPackageName().toString().contains("documentsui")) {
+                Rect candidate=new Rect(),window=new Rect();fresh.getBoundsInScreen(candidate);active.getBoundsInScreen(window);
+                if(candidate.intersect(window)&&!candidate.isEmpty()) {
+                    if(candidate.equals(previous)) {if(SystemClock.elapsedRealtime()-stableSince>=100){bounds=candidate;break;}}
+                    else {previous=candidate;stableSince=SystemClock.elapsedRealtime();}
+                }
+            }
+            SystemClock.sleep(16);
+        }
+        assertNotNull("System document control has stable bounds inside its active window",bounds);
+        android.util.Log.i("XsGovernanceFixture","touch text="+expectedText+" id="+expectedId+" class="+expectedClass+" bounds="+bounds+" sidebar="+sidebar);
+        MotionEvent.PointerProperties pointer=new MotionEvent.PointerProperties();pointer.id=0;pointer.toolType=MotionEvent.TOOL_TYPE_FINGER;
+        MotionEvent.PointerCoords point=new MotionEvent.PointerCoords();point.x=bounds.exactCenterX();point.y=bounds.exactCenterY();point.pressure=1;point.size=1;
+        long now=SystemClock.uptimeMillis();MotionEvent down=MotionEvent.obtain(now,now,MotionEvent.ACTION_DOWN,1,new MotionEvent.PointerProperties[]{pointer},new MotionEvent.PointerCoords[]{point},0,0,1,1,0,0,InputDevice.SOURCE_TOUCHSCREEN,0);
+        assertEquals(MotionEvent.TOOL_TYPE_FINGER,down.getToolType(0));
         try{assertTrue("Touch system document control",instrumentation.getUiAutomation().injectInputEvent(down,true));}finally{down.recycle();}
         SystemClock.sleep(20);
-        MotionEvent up=MotionEvent.obtain(now,SystemClock.uptimeMillis(),MotionEvent.ACTION_UP,bounds.exactCenterX(),bounds.exactCenterY(),0);up.setSource(InputDevice.SOURCE_TOUCHSCREEN);
+        point.pressure=0;
+        MotionEvent up=MotionEvent.obtain(now,SystemClock.uptimeMillis(),MotionEvent.ACTION_UP,1,new MotionEvent.PointerProperties[]{pointer},new MotionEvent.PointerCoords[]{point},0,0,1,1,0,0,InputDevice.SOURCE_TOUCHSCREEN,0);
         try{assertTrue("Release system document control",instrumentation.getUiAutomation().injectInputEvent(up,true));}finally{up.recycle();}
+    }
+    private void saveFailureArtifacts() {
+        // Only this synthetic host is installed by the CI suite. Capture before canceling
+        // the picker; password field text stays redacted in the bounded AX diagnostic.
+        try {
+            File directory=app.getExternalFilesDir("xs-governance-ui");if(directory==null||(!directory.isDirectory()&&!directory.mkdirs()))return;
+            String name=testName.getMethodName();StringBuilder ax=new StringBuilder();
+            collect(instrumentation.getUiAutomation().getRootInActiveWindow(),n->{Rect rect=new Rect();n.getBoundsInScreen(rect);
+                String value=text(n).replace('\n',' ').replace('\t',' ');if(value.length()>256)value=value.substring(0,256);
+                ax.append(n.getClassName()).append('\t').append(n.getViewIdResourceName()).append('\t').append(rect).append(" visible=").append(n.isVisibleToUser()).append(" enabled=").append(n.isEnabled()).append(" clickable=").append(n.isClickable()).append('\t').append(value).append('\n');return false;},new int[]{0});
+            Files.write(new File(directory,name+".ax.txt").toPath(),ax.toString().getBytes(StandardCharsets.UTF_8));
+            Bitmap shot=instrumentation.getUiAutomation().takeScreenshot();if(shot!=null)try(FileOutputStream out=new FileOutputStream(new File(directory,name+".png"))){shot.compress(Bitmap.CompressFormat.PNG,100,out);}finally{shot.recycle();}
+        }catch(Exception unavailable){android.util.Log.i("XsGovernanceFixture","Failure capture unavailable");}
     }
     private boolean documentsUiActive(){return find(n->n.getPackageName()!=null&&n.getPackageName().toString().contains("documentsui"))!=null;}
     private void saveInFixtureRoot(){fixtureRoot();clickText("Save","保存");await(()->!documentsUiActive(),"SAF returned the saved document");}
@@ -283,8 +324,12 @@ public final class GovernanceUiTest {
     }
     private static boolean isEditor(AccessibilityNodeInfo n){return n.getClassName()!=null&&n.getClassName().toString().contains("EditText");}
     private void clickText(String... alternatives) {
-        AccessibilityNodeInfo node=awaitNode(n->{if(!n.isVisibleToUser()||!n.isEnabled())return false;String text=text(n);for(String option:alternatives)if(text.equalsIgnoreCase(option))return true;return false;});
+        Predicate<AccessibilityNodeInfo> matches=n->{if(!n.isEnabled())return false;String text=text(n);for(String option:alternatives)if(text.equalsIgnoreCase(option))return true;return false;};
+        AccessibilityNodeInfo node=awaitNode(matches);
+        // The source list is scrollable and the IME can reduce its visible height on API27.
+        // Request the actual control into view before requiring visible accessibility state.
         node.performAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_SHOW_ON_SCREEN.getId());
+        node=awaitNode(n->matches.test(n)&&n.isVisibleToUser());
         AccessibilityNodeInfo original=node;
         for(int i=0;i<5&&node!=null;i++,node=node.getParent())if(node.isClickable()){assertTrue("Click native UI "+Arrays.toString(alternatives),node.performAction(AccessibilityNodeInfo.ACTION_CLICK));return;}
         // DocumentsUI's RecyclerView can expose non-clickable title/row nodes while its

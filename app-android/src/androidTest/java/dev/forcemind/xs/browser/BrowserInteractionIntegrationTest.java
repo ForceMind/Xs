@@ -120,12 +120,17 @@ public final class BrowserInteractionIntegrationTest {
         awaitJs("window.lastFixturePointer&&window.lastFixturePointer.id==='"+id+"'&&window.lastFixturePointer.trusted===true");
     }
     private void tap(float x,float y){
-        long time=SystemClock.uptimeMillis();MotionEvent down=MotionEvent.obtain(time,time,MotionEvent.ACTION_DOWN,x,y,0);down.setSource(android.view.InputDevice.SOURCE_TOUCHSCREEN);
+        MotionEvent.PointerProperties finger=new MotionEvent.PointerProperties();finger.id=0;finger.toolType=MotionEvent.TOOL_TYPE_FINGER;
+        MotionEvent.PointerCoords point=new MotionEvent.PointerCoords();point.x=x;point.y=y;point.pressure=1;point.size=1;
+        MotionEvent.PointerProperties[] pointers={finger};MotionEvent.PointerCoords[] coordinates={point};
+        long time=SystemClock.uptimeMillis();
+        MotionEvent down=MotionEvent.obtain(time,time,MotionEvent.ACTION_DOWN,1,pointers,coordinates,0,0,1,1,0,0,android.view.InputDevice.SOURCE_TOUCHSCREEN,0);
+        assertEquals("The gesture is a real finger, not TOOL_TYPE_UNKNOWN",MotionEvent.TOOL_TYPE_FINGER,down.getToolType(0));
         try{assertTrue(instrumentation.getUiAutomation().injectInputEvent(down,true));}finally{down.recycle();}
-        MotionEvent up=MotionEvent.obtain(time,SystemClock.uptimeMillis(),MotionEvent.ACTION_UP,x,y,0);up.setSource(android.view.InputDevice.SOURCE_TOUCHSCREEN);
+        SystemClock.sleep(20);point.pressure=0;
+        MotionEvent up=MotionEvent.obtain(time,SystemClock.uptimeMillis(),MotionEvent.ACTION_UP,1,pointers,coordinates,0,0,1,1,0,0,android.view.InputDevice.SOURCE_TOUCHSCREEN,0);
         try{assertTrue(instrumentation.getUiAutomation().injectInputEvent(up,true));}finally{up.recycle();}
     }
-    private void clickText(String text){AccessibilityNodeInfo node=awaitNode(n->text.contentEquals(n.getText()==null?"":n.getText())&&n.isVisibleToUser());for(int i=0;i<6&&node!=null;i++,node=node.getParent())if(node.isClickable()){assertTrue(node.performAction(AccessibilityNodeInfo.ACTION_CLICK));return;}throw new AssertionError("Visible UI is not clickable: "+text);}
     private void clickNativeId(int resource){
         String id=app.getResources().getResourceName(resource);
         AccessibilityNodeInfo node=awaitNode(n->id.equals(n.getViewIdResourceName())&&n.isVisibleToUser()&&n.isEnabled());
@@ -133,28 +138,67 @@ public final class BrowserInteractionIntegrationTest {
     }
     private void dialogButton(boolean positive){String id="android:id/button"+(positive?"1":"2");AccessibilityNodeInfo node=awaitNode(n->id.equals(n.getViewIdResourceName())&&n.isVisibleToUser()&&n.isEnabled());assertTrue(node.performAction(AccessibilityNodeInfo.ACTION_CLICK));}
     private void chooseFixture(String name){
+        assertTrue("Only fixed synthetic filenames may be selected","xs-browser-fixture.png".equals(name)||"xs-browser-boundary.png".equals(name));
         await(this::isDocumentsUi,"System DocumentsUI opens");
-        AccessibilityNodeInfo drawer=find(n->n.getClassName()!=null&&n.getClassName().toString().contains("ImageButton")&&n.getContentDescription()!=null&&
-            (n.getContentDescription().toString().toLowerCase(java.util.Locale.ROOT).contains("roots")||n.getContentDescription().toString().toLowerCase(java.util.Locale.ROOT).contains("navigation")||n.getContentDescription().toString().toLowerCase(java.util.Locale.ROOT).contains("drawer")));
-        if(drawer!=null)assertTrue(drawer.performAction(AccessibilityNodeInfo.ACTION_CLICK));
-        if(find(n->BrowserDocumentsProvider.TITLE.contentEquals(n.getText()==null?"":n.getText())&&n.isVisibleToUser())==null){AccessibilityNodeInfo fallback=find(n->n.getClassName()!=null&&n.getClassName().toString().contains("ImageButton")&&n.isVisibleToUser());if(fallback!=null)fallback.performAction(AccessibilityNodeInfo.ACTION_CLICK);}
-        clickText(BrowserDocumentsProvider.TITLE);clickFixtureFile(name);await(()->!isDocumentsUi(),"Real SAF result returns to Xs");
+        // A picker can restore this exact root. Opening its drawer again can otherwise
+        // make the same title resolve to the toolbar/Recent section rather than the root.
+        if(!(fixtureToolbarVisible()&&find(this::fixtureSidebarRoot)==null)) {
+            if(find(this::fixtureSidebarRoot)==null) {
+                AccessibilityNodeInfo navigation=awaitNode(n->systemDocumentNode(n)&&n.getClassName()!=null&&
+                    n.getClassName().toString().contains("ImageButton")&&n.getContentDescription()!=null&&
+                    (n.getContentDescription().toString().toLowerCase(java.util.Locale.ROOT).contains("roots")||
+                     n.getContentDescription().toString().toLowerCase(java.util.Locale.ROOT).contains("navigation")||
+                     n.getContentDescription().toString().toLowerCase(java.util.Locale.ROOT).contains("drawer")));
+                touchSystemDocument(navigation);
+            }
+            touchSystemDocument(awaitNode(this::fixtureSidebarRoot));
+            await(()->fixtureToolbarVisible()&&find(this::fixtureSidebarRoot)==null,
+                "The fixed provider directory is active and its sidebar has closed");
+        }
+        // DocumentsUI's ancestor AX click can return true without activating its child.
+        // Always send a finger gesture to this exact visible file title instead.
+        touchSystemDocument(awaitNode(n->systemDocumentNode(n)&&name.contentEquals(n.getText()==null?"":n.getText())));
+        await(()->!isDocumentsUi(),"Real SAF result returns to Xs");
     }
-    private void clickFixtureFile(String name){
-        assertTrue("Only the fixed test APK filenames may use the document-row touch fallback",
-            "xs-browser-fixture.png".equals(name)||"xs-browser-boundary.png".equals(name));
-        AccessibilityNodeInfo file=awaitNode(n->n.getPackageName()!=null&&n.getPackageName().toString().contains("documentsui")&&
-            name.contentEquals(n.getText()==null?"":n.getText())&&n.isVisibleToUser());
-        AccessibilityNodeInfo candidate=file;
-        for(int i=0;i<6&&candidate!=null;i++,candidate=candidate.getParent())
-            if(candidate.isClickable()){assertTrue(candidate.performAction(AccessibilityNodeInfo.ACTION_CLICK));return;}
-        // Some DocumentsUI versions handle row taps with TouchDelegate while every AX
-        // ancestor reports non-clickable. Touch only the visible fixed filename's own bounds.
-        AccessibilityNodeInfo active=instrumentation.getUiAutomation().getRootInActiveWindow();
-        assertNotNull(active);assertNotNull(active.getPackageName());
-        assertTrue(active.getPackageName().toString().contains("documentsui"));
-        Rect bounds=new Rect(),window=new Rect();file.getBoundsInScreen(bounds);active.getBoundsInScreen(window);
-        assertTrue("The fixed filename is inside the active DocumentsUI window",bounds.intersect(window)&&!bounds.isEmpty());
+    private boolean fixtureSidebarRoot(AccessibilityNodeInfo node){
+        if(!systemDocumentNode(node)||!BrowserDocumentsProvider.TITLE.contentEquals(node.getText()==null?"":node.getText()))return false;
+        for(int depth=0;node!=null&&depth<12;depth++,node=node.getParent()) {
+            String id=node.getViewIdResourceName();CharSequence type=node.getClassName();
+            if((id!=null&&(id.equals("android:id/list")||id.endsWith(":id/roots_list")))||
+                (type!=null&&type.toString().equals("android.widget.ListView")))return true;
+        }
+        return false;
+    }
+    private boolean fixtureToolbarVisible(){return find(n->{
+        if(!systemDocumentNode(n)||!BrowserDocumentsProvider.TITLE.contentEquals(n.getText()==null?"":n.getText()))return false;
+        for(int depth=0;n!=null&&depth<10;depth++,n=n.getParent()) {
+            String id=n.getViewIdResourceName();CharSequence type=n.getClassName();
+            if((id!=null&&id.endsWith(":id/toolbar"))||(type!=null&&type.toString().endsWith(".Toolbar")))return true;
+        }
+        return false;
+    })!=null;}
+    private static boolean systemDocumentNode(AccessibilityNodeInfo node){return node.isVisibleToUser()&&node.isEnabled()&&node.getPackageName()!=null&&node.getPackageName().toString().contains("documentsui");}
+    private void touchSystemDocument(AccessibilityNodeInfo node){
+        assertTrue("Only visible system document controls are touched",systemDocumentNode(node));
+        final String text=String.valueOf(node.getText()),id=node.getViewIdResourceName(),type=String.valueOf(node.getClassName()),description=String.valueOf(node.getContentDescription());
+        final boolean sidebar=fixtureSidebarRoot(node);
+        try{instrumentation.getUiAutomation().waitForIdle(100,1000);}catch(java.util.concurrent.TimeoutException backgroundEvents){/* Bounds must still stabilize below. */}
+        Rect previous=null,bounds=null;long stableSince=0,deadline=SystemClock.elapsedRealtime()+2000;
+        while(SystemClock.elapsedRealtime()<deadline) {
+            AccessibilityNodeInfo fresh=find(n->systemDocumentNode(n)&&text.equals(String.valueOf(n.getText()))&&
+                java.util.Objects.equals(id,n.getViewIdResourceName())&&type.equals(String.valueOf(n.getClassName()))&&
+                description.equals(String.valueOf(n.getContentDescription()))&&(!sidebar||fixtureSidebarRoot(n)));
+            AccessibilityNodeInfo active=instrumentation.getUiAutomation().getRootInActiveWindow();
+            if(fresh!=null&&fresh.refresh()&&active!=null&&active.getPackageName()!=null&&active.getPackageName().toString().contains("documentsui")) {
+                Rect candidate=new Rect(),window=new Rect();fresh.getBoundsInScreen(candidate);active.getBoundsInScreen(window);
+                if(candidate.intersect(window)&&!candidate.isEmpty()) {
+                    if(candidate.equals(previous)){if(SystemClock.elapsedRealtime()-stableSince>=100){bounds=candidate;break;}}
+                    else {previous=candidate;stableSince=SystemClock.elapsedRealtime();}
+                }
+            }
+            SystemClock.sleep(16);
+        }
+        assertNotNull("The exact system control has stable clipped bounds in its active window",bounds);
         tap(bounds.exactCenterX(),bounds.exactCenterY());
     }
     private boolean isDocumentsUi(){return find(n->n.getPackageName()!=null&&n.getPackageName().toString().contains("documentsui"))!=null;}

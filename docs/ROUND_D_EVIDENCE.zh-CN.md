@@ -82,3 +82,14 @@ API26/30/36的真实WebView、SQLite、Job/Keystore、完整资源、SAF和新�
 外部OS强停/升级驱动在CI68因主仪器失败**NOT RUN**。下一轮另外实际执行同一guest serial的reboot前后kernel boot_id变化与native数据/Keystore/lease保留，及仅GITHUB_ACTIONS且证实emulator/qemu的真实/data低空间测试：唯一shell自建文件压至约28MiB可用，native实测低于40MiB并拒绝新图任务、保留既有PNG/hash/离线搜索，finally删除该唯一文件、核不存在并记录释放后容量，清理失败不能记PASS。8GiB AVD给大资源恢复余量；这些不是mid-stream ENOSPC/物理断电/厂商后台或用户手机证据。
 
 [下一轮提交前本地复测](evidence/round-d-pre-ci69-local.json)实际1155/SQLite/DOM/SDK FTS/完整Android与双Lint PASS（196 tasks28秒）；52＋100每API只为新源码声明，608项及外部drivers结果仍待下一CI，不提前记通过。
+
+
+## CI69：完整四版本已实际执行，剩测试手势修复
+
+[CI69 42376642706](https://github.com/ForceMind/Xs/actions/runs/42376642706) head `a5695701ea09baa736811403af6d687b87418920`，tested merge `d36da90b73870aa038545e36a033295d8fb49a5d`，tree `006bac2fbf0e6e2c56c145091fd8bcf3acd181d7`。4API各152项，**608实际执行、589通过、19失败、0错误/跳过**。API27 x86镜像启动和ABI实证已具备；原架构缺包不再阻断。core1155/完整构建与Lint实际通过。[完整结果/环境/20主APK签名和hash/ZIP摘要](evidence/round-d-ci69-failures.json)。
+
+四API的CrossUid5、StorageUI3、Retention10、FullBackup11（含500tiny和30个大PNG）、原生FTS与视频都PASS；API36客户端100项全部PASS。近限资源实际source bytes：API26/27为504333120，API30/36为504333510；ciphertext分别504477301/504477691字节。每套30个新UUID实际文件逐项hash/类别/时间/来源/源与default保留通过。它是约481MiB的真实原生资源恢复，与512MiB JVM容器和500tiny数量边界分别记账。
+
+19项失败为Gov每API3个SAF目录选择、API27额外1个原生合并按钮受键盘/滚动影响，以及26/27/30各2个Browser实际SAF文件选择未返回。没有把失败改为产品PASS；根因诊断集中于DocumentsUI对TOOL_TYPE_FINGER的判断、drawer呈现与陈旧/未可见节点。下一修复只改测试触摸/滚动/诊断：完整PointerProperties/PointerCoords、真实finger且当前时钟、fresh节点/窗口相交/稳定bounds和帧同步，仍强制真实目录、关闭drawer与真实导出/恢复/URI数据断言，时限不增加。
+
+[两测试APK编译/工程检查](evidence/round-d-pre70-local.json) PASS（132 tasks10秒）；runtime源码未变化，上一轮1155/Lint保留源身份。CI wrapper在Gradle失败前收集合成截图/AX并保留原退出码，[4个模拟主机故障场景](evidence/round-d-wrapper-control-flow.json)实际验证成功（不是Android结果）。外部四driver在CI69仍因主仪器失败NOT RUN；下一轮首次实际执行后才可报告OS强停/同jobdebug升级/guest reboot/真实低空间通过。
