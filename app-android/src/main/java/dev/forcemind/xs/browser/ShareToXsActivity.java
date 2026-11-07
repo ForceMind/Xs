@@ -13,16 +13,14 @@ import android.widget.LinearLayout;
 import dev.forcemind.xs.core.SharedPostParser;
 import dev.forcemind.xs.android.XsArchiveDatabase;
 import dev.forcemind.xs.android.XsLocalSpaces;
+import dev.forcemind.xs.android.XsLibraryWrites;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * Native Android share target. Never opens WebView, cookies, or any URL itself.
  * Shares are saved only after explicit user confirmation to a local space.
  */
 public final class ShareToXsActivity extends Activity {
-    private final ExecutorService io = Executors.newSingleThreadExecutor();
     private String canonical;
 
     @Override public void onCreate(Bundle saved) {
@@ -87,7 +85,7 @@ public final class ShareToXsActivity extends Activity {
         String scope = XsLocalSpaces.current(this);
         if (scope == null || canonical == null) { toast(R.string.local_save_failed); finish(); return; }
         final String url = canonical;
-        io.execute(() -> {
+        boolean queued=XsLibraryWrites.submit(scope,() -> {
             boolean success = false, fresh = false;
             try (XsArchiveDatabase db = new XsArchiveDatabase(getApplicationContext())) {
                 fresh = db.saveManualLink(scope, url, System.currentTimeMillis());
@@ -100,14 +98,11 @@ public final class ShareToXsActivity extends Activity {
                 finish();
             });
         });
+        if (!queued) { toast(R.string.local_save_failed); finish(); }
     }
 
     private void toast(int id) {
         Toast.makeText(this, id, Toast.LENGTH_SHORT).show();
     }
 
-    @Override protected void onDestroy() {
-        io.shutdown();
-        super.onDestroy();
-    }
 }

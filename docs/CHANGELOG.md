@@ -2,6 +2,81 @@
 
 本文件记录决策变化，不把文档提交计作功能完成。代码执行与测试结果保留在各执行记录和 CI 中。
 
+## 2026-11-07 — 四版本608项与16个独立系统探针全部通过
+
+当前验证源码 `0d193e4689d649970d9705818d33e8706b470d8f` / tested tree `c8551cd4a09e4466cd84e7973039aba06a5f87b2`：[CI74](https://github.com/ForceMind/Xs/actions/runs/42386764024) 六项任务全部成功。1155项JVM、构建/双Lint及API26/27/30/36主仪器608/608通过，0失败/错误/跳过；独立force-stop、同job同源debug3→4升级、guest reboot与真实低空间各4/4，共16/16通过，不并入608主XML。
+
+低空间断言以普通应用原UID和实际可用空间为准，验证新任务拒绝、原文件/hash/离线搜索保留及压力文件清理；仅CI可丢弃旧userdebug模拟器的分配器在严格环境/当次quota/UID门后临时root，并已核实finally删除、unroot及shell UID恢复。10项host故障/安全门回归另行通过。完整case、身份/包摘要与CI66～73失败历史见本轮证据；这不是物理断电、用户手机提权或无限后台保证。
+
+真实X自动打开/停留、本人动作与精简live适配仍未挂载；PNG/68字节Browser读取不代表视频上传，MP4播放与跨UID分享另行计证。现场手机/聊天App/真实CDN/厂商后台多日电量/物理断电/生产key与跨schema升级仍NOT RUN。自定义许可切换可选，当前GPL及历史授权/第三方义务继续有效。
+
+## 2026-11-07 — 四版本主测试与跨进程验证（历史CI72/73）
+
+当时的验证基线为源码 `026245fa8cfa791f85d766d34a90b2822fe5f514` / tested tree `532e0f582df363c16dd8967f96929ad2a2fa80d7`：[CI72](https://github.com/ForceMind/Xs/actions/runs/42383813896) 的1155项JVM、构建/双Lint及API26/27/30/36主仪器608/608通过，0失败/错误/跳过。外部系统driver独立记14/16：force-stop、同job同源debug3→4升级、guest reboot各4/4；低空间30/36通过，26/27在压力构造阶段遇shell配额、尚未执行原生低空间断言，因此整体run仍失败。
+
+后续[CI73](https://github.com/ForceMind/Xs/actions/runs/42385436203)实际607/608通过、1失败、0错误/跳过；API26/27/30的12个外部driver全部通过（含26/27普通UID业务断言、root分配器清理与unroot），API36因Gov侧栏provider选择失败，其四driver未执行，不与前轮拼接16/16。失败发生在SAF目录选择，未抵达ZIP/hash断言；CI74只将该roots_list标题所属直接可点击item改为单次真实ACTION_CLICK，保留文件触摸、toolbar/drawer关闭和实际字节断言。
+
+已验证的云端合成范围包括真实原生SAF导出/恢复、Browser真实SAF PNG文件选择、只读URI/68字节FileReader读取与手势子窗口、独立UID文件授权/拒绝越权/删源后延迟读取、320dp/1.8字号/中英深浅配置、500个小资源和约481MiB/30文件的实际原生备份恢复，以及512MiB容器在32MiB JVM逐字节往返。不同规模、平台与driver分别记账，不合并成真实X/手机或聊天App验收。
+
+真实Browser尚未挂载自动打开/停留、本人动作和网页精简的live适配器；开关不能把fixture能力变为现场验收。真实X登录/DOM/媒体CDN、微信/QQ/飞书/Telegram接收、厂商后台与多日电量、物理断电、生产key/跨schema升级仍缺独立证据。如选择切换自定义许可，须另行确定权利范围与条款；当前GPL及历史授权/第三方义务继续有效。
+
+## 2026-11-07 — 补齐保留/配额/统计与云端端到端验证（历史CI68状态）
+
+上一轮源码 `58585977c90307cbf97d0aadafd818bcbdf88793` / tree `595dcb18016bf4bdf2f0e520dce1236ac5fc35a5` 的 [CI68](https://github.com/ForceMind/Xs/actions/runs/42374634739) 已失败：API26/30/36共450项实际执行，415通过/35失败/0错误/0跳过；API27官方镜像架构配置导致启动失败、0 case，另计。当时后续修复提交与CI尚待生成；后续执行见上节，原失败记录保留。
+
+当时计划的下一轮矩阵为API26/27/30/36（27用x86，其余x86_64）；每API声明52宿主+100客户端仅为待跑数量。新增客体系统reboot/boot-ID与serial核对、仅CI可丢弃8GB AVD上的真实/data低空间至28MiB与原文件保留/新任务拒绝（finally仅清自建压力文件），以及原生≥480MiB/30实际资源流式备份用例，当时实际均NOT RUN；后续执行见上节。它们不代表物理断电、真实X/聊天App或生产key验收。
+
+本地已通过1155项JVM、SQLite/DOM/20k压力、SDK SQLite标准FTS语法复现（旧多词查询0条、修正后1条），以及完整Android构建/双Lint（196 tasks、17秒；运行库0错误/20警告，客户端0错误/12警告）。最大512MiB加密容器已在32MiB JVM流式往返并逐字节核对；这不等于Android近上限实际资源恢复。
+
+- 默认永久/7/30/90/365天事件明细保留、累计与最近打开/停留事实保留；普通writer与实际SQLite锁后policy复验，不撤销媒体票据。默认不限媒体quota计完成文件和活动预留，超限下调停止未完成任务、完成文件不删；双语管理预览/确认与统计明确曝光下界不是阅读时长。累计打开按每帖MAX(已有累计,保留OPEN明细数)求和，是已知下界，不双计数。
+- 独立UID实际Intent/ClipData文件授权、未授权/未选/写/数据库拒绝及删库后接收Activity存活时首次延迟hash读取；Browser真实SAF PNG文件选择、只读URI/68字节FileReader读取与触摸子窗口；新增API27，当前矩阵26/27/30/36。
+- 外部ADB OS force-stop消失PID/新PID恢复、同job调试证书版本3→4安装升级已有独立驱动，当时执行仍PENDING；不是in-process恢复、生产key或跨schema升级，不证明物理断电/厂商后台。
+- SDK标准FTS4多词旧显式AND查询为0条、修正隐式交集为1条，保留词项白名单；双Java builder与原生current/history/Tab/字面OR回归已源码。
+
+[CI67 42372593770](https://github.com/ForceMind/Xs/actions/runs/42372593770) 实际360项、336通过/24失败/0错误或跳过；与下节CI66失败完整保留在本轮证据，不写为PASS。下一轮每API52宿主+100客户端只是声明数量，最终按实际XML及独立驱动报告结算。CI68已实际结束失败（450项中415通过/35失败，0错误/跳过；API27启动0 case另计），下一提交修复，不把失败算作通过。真实X自动采集/动作/精简仍关闭，物理设备/聊天App/真实电量多日/正式key仍待验收；自定义许可切换可选，如选择才另定权利范围与条款，无正式发布。
+
+## 2026-11-07 — v5快照、系统下载、加密资源备份与资料管理增量（首轮CI失败，修正后回归待执行）
+
+接续既有仓库实际修改SQLite/Java/Android/JS和CI，不重建项目。当前源码和精确执行状态统一记录在 [本轮可靠性与资料管理证据](ROUND_D_EVIDENCE.zh-CN.md)。源码50c91ec的 [首轮CI66](https://github.com/ForceMind/Xs/actions/runs/42369802915) core/构建通过，API26/30/36共342项仪器实际执行304通过/38失败/0跳过；问题包含备份sha256字段名校验、fixture provider初始化及观察/最低版本兼容，正在修复。LibraryUiTest和AssetLibraryUiTest三个API共39项全部通过（含206版本分页、批量和整库删除），只作为该源码的局部证据。当时修正后完整回归仍**PENDING**，不将66整体改写为PASS；旧933条JVM/146项API30/36结果仅属下节历史提交。
+
+- SQLite v5新增快照版本、current pointer、质量/来源/收录时间和历史正文全文搜索；原生detail证据支持COMPLETE仅表示接受的可见DOM正文完整，不保证服务器全文。更新但较短的COMPLETE可成为current，PARTIAL不降级；全部版本保留、版本面板每页50条/前后翻页/关键词查询且浏览只读、合并沿用SnapshotPolicy且源/default不覆盖。
+- 原生帖子批量收藏/分类/标签追加替换/取消，资源分页文字/类型/状态查询、多选分类/删除/实际文件分享与单项/多项ZIP导出（每批≤200MiB）；历史/收藏/资源与整库的删除范围分开。
+- 下载用JobScheduler持久任务；API34+主动请求先尝试UIDT并可fallback普通任务，API26～33普通任务。AndroidKeystore AES-GCM密封URL且绑定task/library/post/kind，job不带URL；每轮最多3次总网络尝试（首次+2次暂时错误重试），均从头下载。进程恢复为PAUSED，已有任务尊重OS调度、缺任务不盲目重排绕过stop；取消/完成清候选，不宣称断点续传或及时后台。
+- 新增口令分块AES-256-GCM完整资源备份：PBKDF2-HMAC-SHA256/600k、64KiB认证块/最终空块/EOF、明文负载≤512MiB/500完成资源，内部元数据仍≤16MiB/20,000条，图片/视频各≤20/100MiB。口令8～1024字符不持久保存、遗失不可恢复；完整认证/元数据FK/哈希/媒体验证后预览，新UUID恢复，media-first/archive-last与崩溃markers，源/default保留。明文元数据选项保留；均不导出会话/密钥/任务/候选URL/lease，不代表SQLite加密。
+- 完整删库先持久tombstone再shared barrier，阻止旧/未来普通任务复活，事务拿写锁后再检查revocation；仅删除default才轮换UUID；媒体/元数据失败保留pending可手动/启动重试，另库和24小时接收副本租约保留。提供明确的typed确认管理UI。
+- 合格停留时长按1秒合并更新、10分钟测量cap后不再反复写，暂停观察器停止JS计时；新增压力与生命周期回归，尚不能据此宣称真实耗电/多日稳定性。
+- 增加手动内部签名候选workflow：确切main祖先SHA、环境secrets和证书pin、APK与来源摘要；无GitHub Release/商店发布。生产key/cert未配置，根GPL-3.0、历史授权和第三方声明均不变。
+
+真实X自动采集/现场本人动作/网页精简仍关闭；真机、API27、真实X视频与微信/QQ/飞书/Telegram、真实电量/多日soak、生产签名未验收；GPL及历史/第三方义务有效，自定义许可仅在选择切换时另审，阶段C/D整体与正式发布保持开放。
+
+## 2026-11-07 — 修正 minSdk 视频读取并完成新提交双版本回归
+
+发现 `MediaExtractor.getSampleSize` 仅API28起可用，而项目minSdk26；源码 `4ee242ef1ca542e6bb997acdb3d5629761cbe8dd` 统一改用API16可用的有界读取，并将运行库 `:xs-runtime:lintDebug` 纳入CI。[CI 42357220689](https://github.com/ForceMind/Xs/actions/runs/42357220689) 的core/构建/API30/API36四任务全部通过：933条JVM断言及SQLite/DOM回归、每API36项宿主＋37项客户端，合计146项，0失败/错误/跳过。实际测试merge为 `d5e6bb937dc508786d854dcfb64757a334beea7c`，tree为 `5b26ecca9529948e22637b4eb66fd6b33217fe61`；报告和APK/环境摘要见 [CI执行摘要](evidence/round-c-ci64.json)。
+
+客户端Lint为0 Error/0 NewApi/11项既有Warning；运行库首次纳入CI，同为0 Error/0 NewApi/11 Warning（3 UsableSpace、8 SetTextI18n）。API26/27实际设备与模拟器仍NOT RUN；SAF选择器和新增备份/合并UI未专项自动化，DB/事务/helper通过不代表这些UI/真机通过。合并即时撤销仅允许刚创建、未修改且无媒体/下载任务的新结果；改动或有媒体则拒绝且不使现有任务失效。稳定签名和真实X/接收应用/完整阶段C/D仍待验收，无正式发布。
+
+## 2026-11-07 — 本人行为、标准视频、精简夹具与资料治理增量
+
+在已有 A/早期 B 代码上继续实现 XS-11～13 及 XS-03/15 的有限资料治理范围，未重新创建项目，未发布正式版本。当前源码与报告见 [阶段 C 与资料治理证据](ROUND_C_EVIDENCE.zh-CN.md)；此前源码/CI/验收历史原样保留。
+
+- SQLite v4 保留 v1/v2/v3 数据，新增本人行为与事件轨迹；原生 fixture 操作身份匹配成功结果后才能写入，原创/回复/引用保留新帖与关联原帖，转帖撤销不删收藏/历史。档案与旧来源保留，未知执行者/时间/当前状态不伪造，纯RT文本不推断转帖；真实 X 现场适配仍关闭。
+- 显式选择支持的标准直链 MP4，H.264与可选AAC、≤100 MiB/10分钟；校验容器/样本范围、下载长度、轨道/时长并有限解码首尾帧/音频后进入资源库、预览及实际文件分享。blob/清单/分片/DRM仍拒绝；全程播放、实际X与接收应用尚未验收，不宣称断点续传或可靠后台调度。
+- 可撤销推广/会员营销/推荐精简具备三默认关闭偏好和合成WebView生命周期控制；关闭/遮挡/离开会恢复，真实浏览器未接入，真实X规则仍关闭。
+- 明文元数据备份≤16 MiB/20,000条，严格校验和schema3→4后恢复到独立新库，不含媒体文件/下载任务/网页会话/密钥，校验和不证明身份。显式选择2～4库、≤8 MiB/20,000条元数据，按用户预览快照创建合并新库；源和默认库保留，旧行为同身份来源冲突拒绝；结果对话框仅可撤销刚创建、未修改且无媒体/任务的新库，其他情况拒绝且保留既有任务；预览后普通编辑需重新预览，源清理/epoch失效拒绝提交。
+- 共享写入器最多32库，空闲实例可回收；票据同时绑定实例与epoch，回收不恢复旧任务权限。
+
+本地 **933 条 JVM 断言**、真实 SQLite v4/查询、观察/精简 DOM 回归及 Android AAR/客户端/宿主/测试APK构建与Lint通过。首轮 [CI 42356157321](https://github.com/ForceMind/Xs/actions/runs/42356157321) 的API30/36合计146项仪器测试通过；后续兼容修正源码的独立CI见上节，旧CI不覆盖后续修改。阶段C/D整体、真实登录/自动采集/视频/接收应用、完整媒体恢复及正式发布保持未验收。根LICENSE和历史授权不变。
+
+## 2026-11-06 — 离线闭环通过双版本 Android CI
+
+[CI 42348665957](https://github.com/ForceMind/Xs/actions/runs/42348665957) core/build/API30/API36全部通过：443项JVM断言与SQLite/DOM回归、两套模拟器各41项仪器测试（合计82），零失败/跳过。head d76bfb49与PR测试merge4793ea92分开留档。补齐测试APK实际job内的hash/公开证书和配置记录；真实X/真机/目标App仍未验收。详细结果见 [实施记录](IMPLEMENTATION_EVIDENCE.zh-CN.md)。
+
+## 2026-11-06 — 实现应用资料库、合成自动历史/停留与图片分享基础
+
+从 main `f88003c` 接续，实际修改 Java/Android/JS 和测试：Schema v3保留性迁移/旧空间选择、独立收藏备注标签、立即打开/后补正文/导航去重、连续停留档位/时长及未打开检索、有界写入与擦除屏障、旋转页面保留、用户主动选图、校验落盘/资源页/只读文件分享租约。
+
+JVM、真实SQLite和本地DOM测试已通过，Android构建/Lint已通过；本轮CI与模拟器实际结果更新在 [实施证据](IMPLEMENTATION_EVIDENCE.zh-CN.md)。新增真实WebView/SQLite/Provider/UI仪器测试，不能用“测试代码存在”替代“执行通过”。真实 X 自动观察继续关闭；真实登录/图片下载/接收App、本人行为撤销、视频、精简与正式发布仍未完成。根LICENSE不变。
+
 ## 2026-11-06 — 新增“时间线停留但未点开也记录”的产品目标
 
 用户明确认可：在 Xs 正常刷 X 时，看到一条帖子停留较久但未点击详情，也应当能在本机找回。新增 [专项规范](FEED_DWELL_PLAN.zh-CN.md) 与 [ADR-0004](adr/0004-feed-dwell.md)，细化 1.2/3（默认推荐）/5 秒独立档位、长帖 60% 可阅读区域、连续单调计时、遮罩/后台失效、同次曝光去重、实测时长、未打开检索、应用本机库与 X 账号解耦。

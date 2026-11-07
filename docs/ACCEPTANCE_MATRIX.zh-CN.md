@@ -1,6 +1,33 @@
-# Xs 验收矩阵 v2.1
+# Xs 验收矩阵 v2.2
 
-更新：2026-11-06。对应 [实施计划](IMPLEMENTATION_PLAN.zh-CN.md)。**下表为新增产品范围的待执行验收，不代表重新运行了测试。所有未附当前构建证据的项均为 NOT RUN。** 既有基础测试记录继续保留，但不能自动覆盖新语义。
+更新：2026-11-07。对应 [实施计划](IMPLEMENTATION_PLAN.zh-CN.md)。**云端子项按下列实际报告记账；后面的核心现场用例与接收应用总表仍NOT RUN。没有当前构建证据的范围不记PASS。** 既有基础测试记录继续保留，但不能自动覆盖新语义。
+
+## 本轮离线实现与仪器证据
+
+本轮源码与精确报告统一见 [可靠性与资料管理证据](ROUND_D_EVIDENCE.zh-CN.md)。**CI74主仪器608项与16个独立driver通过。现场总体验收仍NOT RUN。** 当前验证源码 `0d193e4689d649970d9705818d33e8706b470d8f` / tested tree `c8551cd4a09e4466cd84e7973039aba06a5f87b2`：[CI74](https://github.com/ForceMind/Xs/actions/runs/42386764024) 六项任务全部成功。1155项JVM、构建/双Lint及API26/27/30/36主仪器608/608通过，0失败/错误/跳过；独立force-stop、同job同源debug3→4升级、guest reboot与真实低空间各4/4，共16/16通过，不并入608主XML。
+
+低空间断言以普通应用原UID和实际可用空间为准，验证新任务拒绝、原文件/hash/离线搜索保留及压力文件清理；仅CI可丢弃旧userdebug模拟器的分配器在严格环境/当次quota/UID门后临时root，并已核实finally删除、unroot及shell UID恢复。10项host故障/安全门回归另行通过。完整case、身份/包摘要与CI66～73失败历史见本轮证据；这不是物理断电、用户手机提权或无限后台保证。
+
+
+CI74已实际通过核心/SQLite/DOM压力与Android构建检查；已验证的云端合成范围包括真实原生SAF导出/恢复、Browser真实SAF PNG文件选择、只读URI/68字节FileReader读取与手势子窗口、独立UID文件授权/拒绝越权/删源后延迟读取、320dp/1.8字号/中英深浅配置、500个小资源和约481MiB/30文件的实际原生备份恢复，以及512MiB容器在32MiB JVM逐字节往返。不同规模、平台与driver分别记账，不合并成真实X/手机或聊天App验收。 主XML为每API52宿主+100客户端，608项与外部driver独立记账。
+
+历史源码4ee242e的 [CI42357220689](https://github.com/ForceMind/Xs/actions/runs/42357220689) 已通过933条JVM、SQLite/DOM、构建/Lint及146项API30/36仪器（每API36宿主+37客户端），仅覆盖旧v4提交；历史 [阶段C摘要](evidence/round-c-ci64.json) 和 [更早记录](IMPLEMENTATION_EVIDENCE.zh-CN.md) 保留，不能覆盖下面新增语义。
+
+| 对应验收 | 已实际执行的云端子场景 | 结果与边界 |
+| --- | --- | --- |
+| L01/L03、H04 | ArchiveIntegrationTest、SnapshotVersionIntegrationTest及LibraryUiTest：v5迁移、current/质量/历史FTS、206版本分页至最旧/搜索且current不变；合并保留source/default | CI74四API PASS；真实个人资料升级/真实X正文现场仍NOT RUN |
+| F02/F03、M04、U01/U02 | LibraryUiTest、AssetLibraryUiTest、GovernanceUiTest：批量收藏/分类/标签/取消，分页资源/多选删除/SAF ZIP，scope隔离；StorageGovernanceUiTest的320dp/1.8字号/中英深浅配置 | CI74四API PASS；配置布局测量不等于真机 |
+| M03、Q03/Q04 | MediaDurabilityTest/MediaDownloadEngineTest：密封任务URL、JobScheduler、有限重试、取消/系统stop；外部force-stop探针验证PID消失/新进程恢复 | CI74四API PASS；厂商后台/真实网络电量另验，不宣称续传或准时后台 |
+| G03、Q03/Q04、X04 | FullBackupIntegrationTest11项/系统SAF口令UI：认证/坏文件拒绝、media-first/archive-last/崩溃marker；500真实tiny PNG与约481MiB/30实际文件分别恢复并逐项hash | CI74四API PASS；另有32MiB JVM下512MiB容器通过；物理断电/手机恢复仍NOT RUN，忘记口令不可恢复 |
+| Q03/Q04、F03、X04 | AssetLibraryUiTest与CrossUidSharingTest：typed删库、tombstone/default轮换、旧回调拒绝、失败pending重试、其他scope/已发share copy保留 | CI74四API PASS；受限接收Activity存活期间延迟读取，不承诺接收grant跨reboot |
+| D03/D05、Q02 | NativeCaptureIntegrationTest、DOM/CaptureSession压力：1秒合并/10分钟cap/暂停JS、有界候选与20k虚拟列表 | CI74 PASS；模拟时钟/桌面压力不是多日真实电量 |
+| Q03/Q04、D07/D08、U01/U02 | RetentionIntegrationTest10项、MediaQuotaIntegrationTest7项、StorageGovernanceUiTest3项：仅淘汰明细/累计事实与neverOpened、quota预留/完成文件保留、已知下界统计和实际确认UI | CI74四API PASS；lazy非后台定时保证，曝光下界可重叠、不是阅读时长 |
+| X01/X02/X04、B03/B04 | CrossUidSharingTest5项独立UID实际grant/拒未授权未选写入DB/删源后hash；BrowserInteractionIntegrationTest真实SAF PNG文件选择、只读URI/68字节FileReader读取与触摸window.open | CI74四API PASS；不含Browser视频上传；MP4播放/跨UID分享另验，不是聊天App送达/真实X认证上传 |
+| Q04/G02/G03 | 独立force-stop、同job同源debug3→4覆盖安装、guest reboot/boot-ID变更和元数据/文件/Keystore/app-owned lease恢复 | CI74各4/4 PASS；不并入608主XML，不代表production-key/跨schema升级或物理断电 |
+| M03/Q04/G04 | 独立真实/data低空间拒绝新图任务、原PNG/hash/FTS保留、压力文件清理 | CI74四API PASS；26/27严格CI-only分配器与普通UID原生断言、清理/unroot均已核实 |
+| G02/G04 | 手动内部签名候选main祖先/secret/证书pin与APK摘要；临时测试key构建/校验 | 工程夹具已有证据；正式key未配置，生产候选/升级/分发NOT RUN |
+
+完整加密备份不等于工作SQLite/FTS/WAL加密；不包含网页登录/密钥/任务候选URL/lease。标准MP4有限首尾解码和合成本地播放不证明真实X来源或每个聊天App全程播放。下面保留的是**现场总体验收**，未满足真实环境条件的整项仍NOT RUN；云端子项PASS不将整个阶段或发布标为完成。
 
 ## 记录规则
 
@@ -8,7 +35,7 @@
 
 不上传密码、验证码、Cookie/Token、私信、私人截图或可重用媒体凭证。只有明确授权、脱敏素材进入公共仓库。
 
-## 核心用例
+## 核心现场用例（整体NOT RUN）
 
 | ID | 场景与通过条件 | 当前状态 |
 | --- | --- | --- |
@@ -19,7 +46,7 @@
 | H01 | 开启后主动点开有效详情，停留不足 1.2 秒仍有一条 OPEN_POST；无需另点保存 | NOT RUN |
 | H02 | 同一导航五次 DOM 更新、补载、刷新、旋转/恢复只保持原事件；离开再开有新事件 | NOT RUN |
 | H03 | 点击失败/预加载/后台页面无虚假打开；离开时的迟到回调不得写入新页面上下文 | NOT RUN |
-| H04 | 正文延迟：先 LINK_ONLY，后补可见正文/作者/时间；同条事件不重复；编辑/截断质量如实 | NOT RUN |
+| H04 | 正文延迟：先 LINK_ONLY，后补可见正文/作者/时间；同条事件不重复；编辑/截断质量如实，历史版本/COMPLETE较短更新不丢失，旧正文可全文查找且不切换current | NOT RUN |
 | H05 | 随机序号不能伪造新导航；页面/会话/资料清理后过期事件全部拒绝 | NOT RUN |
 | L01 | 旧库迁移前后帖子/事件/分类/FTS 对齐，旧空间不丢失、不静默合并，失败保留原库 | NOT RUN |
 | L02 | X 退出/换号不删除或隐式切换本机历史/收藏/资源；网页会话与 library 分离 | NOT RUN |
@@ -40,7 +67,7 @@
 | X01 | 单图/多图/视频通过实际 content URI 和正确 MIME 分享，接收方能读取；不只是发链接 | NOT RUN |
 | X02 | 只授权选中完成文件；Provider 不暴露数据库/会话/根目录/密钥/未完成下载，无写权限 | NOT RUN |
 | X03 | 用户选择应用/会话并发送；取消、选中目标、返回均不被记录为“已送达” | NOT RUN |
-| X04 | 接收方延迟读取期间删除源资源/清缓存不使分享失效；副本/租约按策略回收 | NOT RUN |
+| X04 | 接收方延迟读取期间删除源资源/清缓存/整库不使已有接收副本立即失效；副本/租约按策略回收 | NOT RUN |
 | X05 | 不支持 MIME/多图/大视频时明确降级，保留原件，不自动压缩转码、水印或重发 | NOT RUN |
 | V01 | 下载标准完整视频后本地及目标应用可播，时长/音轨/方向正确 | NOT RUN |
 | V02 | 仅在需要并允许时验证 HLS/DASH 合并；播放列表、blob、片段不冒充完整视频 | NOT RUN |
@@ -59,12 +86,12 @@
 | D09 | 真实 X 帖子/引用/视频卡片、长滚动、夜间/中英文/不同 WebView 版本可测且仅在已验证页面启用，停留结果不宣传为眼球跟踪/已读证明 | NOT RUN |
 | Q01 | 同文档刷新/重放、iframe、错误来源、敏感路由、伪造空间拒绝；实际落库前二次校验 | NOT RUN |
 | Q02 | 超大/畸形/重复字段/尾随 JSON、嵌套/洪泛有限制；无任意 SQL/文件/Intent 操作 | NOT RUN |
-| Q03 | 保存/分享/导入/下载完成与清库并发后不复活旧数据；各删除范围正确且原子 | NOT RUN |
+| Q03 | 保存/分享/导入/下载完成与清库并发后不复活旧数据；各删除范围正确，完整删库持久拒绝旧/未来普通回调，默认UUID轮换；失败pending可重试，不影响其他库/已有接收租约 | NOT RUN |
 | Q04 | 存储满/升级失败/进程死亡与恢复不破坏原文件；取消与重试不会重复用户操作 | NOT RUN |
 | S01 | 原生主动取回或未来消息通道都不读取密码/验证码/私信/草稿/隐藏状态；不向页面回传私库 | NOT RUN |
 | U01 | 手机窄屏、中文/英文、深浅色、大字号下历史/收藏/搜索/分类操作可达 | NOT RUN |
 | U02 | 资源页文件大小/状态/失败原因与实际文件一致；保存和分享时来源明确 | NOT RUN |
-| G01 | 自有复用文件的来源/许可/第三方声明齐全，正式许可证与 README 不矛盾 | NOT RUN |
+| G01 | 自有复用文件的来源/有效GPL/第三方声明齐全，与README一致；仅如选择切换自定义许可才另定权利范围和条款 | NOT RUN |
 | G02 | 固定测试/发布签名、包名、来源 SHA、依赖与包摘要可追溯；debug 不冒充正式更新 | NOT RUN |
 | G03 | 备份恢复范围不含网页登录凭证；升级/恢复失败不覆盖原库；加密边界明确 | NOT RUN |
 | G04 | 真实设备性能/容量/后台边界有记录；无未关闭的串库、泄漏或数据丢失问题才发布 | NOT RUN |

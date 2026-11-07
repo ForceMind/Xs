@@ -23,7 +23,7 @@
     <string name="renderer_gone">The web renderer stopped. Retry to create a new browsing view.</string>
     <string name="webview_missing">System WebView is unavailable. Install or enable a supported system WebView, then restart Xs.</string>
     <string name="about">Build and compatibility</string>
-    <string name="about_body">Xs %1$s\nAndroid %2$s (API %3$d)\nWebView %4$s\n\nInternal W0 PoC. Automatic capture off; manual local post-link saving is available. Direct login, 2FA, Google, Apple and Passkey are separate pending checks. Downloads open externally; popups, camera and microphone are unsupported.</string>
+    <string name="about_body">Xs %1$s\nAndroid %2$s (API %3$d)\nWebView %4$s\n\nInternal W0 PoC. Automatic capture off; manual local post-link saving is available. Direct login, 2FA, Google, Apple and Passkey are separate pending checks. Local favorites, selected-image tasks and file sharing are available. Live capture remains off; authentication windows require separate validation. Camera and microphone are unsupported.</string>
     <string name="local_archive">My local archive</string>
     <string name="local_save">Save this post locally</string>
     <string name="local_scope_title">Create an on-device archive?</string>
@@ -40,4 +40,18 @@
     <string name="share_save">Save locally</string>
     <string name="share_invalid">Only HTTPS links to individual X posts are supported.</string>
     <string name="tls_failed">Certificate verification failed. The page was blocked.</string>
+    <string name="popup_title">Open window link?</string>
+    <string name="popup_internal">Open this X link in the current browsing view?</string>
+    <string name="assets">Local media</string>
+    <string name="favorite">Favorite in Xs</string>
+    <string name="favorite_saved">Saved in Xs. Link only until live snapshot capture is validated.</string>
+    <string name="share_post">Share post link</string>
+    <string name="download_images">Download selected post images</string>
+    <string name="download">Download</string>
+    <string name="image_item">Image %1$d</string>
+    <string name="images_unavailable">No supported images found for this post. Live X layouts still need validation.</string>
+    <string name="download_video">Download complete video</string>
+    <string name="video_item">Video %1$d</string>
+    <string name="video_unavailable">No permitted direct MP4 found. Blob, streaming playlists and protected videos are unsupported. Live X layouts still need validation.</string>
+    <string name="video_permission_notice">Continue only if you have permission to save this video and downloading is allowed. Only complete standard MP4 up to 100 MiB / 10 minutes is supported. No stream capture, DRM or access-control bypass. The live X layout remains unverified.</string>
 </resources>

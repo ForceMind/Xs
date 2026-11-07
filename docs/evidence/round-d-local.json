@@ -1,0 +1,77 @@
+{
+  "baseline_head": "a323b7cca2c760defd4b9b58a58e8f76431cdb96",
+  "source_identity": "uncommitted D working tree; source-specific CI records follow",
+  "jvm_assertions": 1141,
+  "jvm_counts": [
+    73,
+    79,
+    14,
+    204,
+    111,
+    72,
+    164,
+    29,
+    32,
+    220,
+    31,
+    112
+  ],
+  "sqlite": "v1-v5 preserving/current+history FTS PASS",
+  "dom": "observer/cleanup +20k stress PASS",
+  "local_instrumentation": "NOT RUN: no KVM",
+  "full_build": "PASS",
+  "tasks": 165,
+  "lint": {
+    "app-android": {
+      "errors": 0,
+      "warnings": 11
+    },
+    "xs-runtime": {
+      "errors": 0,
+      "warnings": 16
+    }
+  },
+  "artifacts": [
+    {
+      "path": "app-android/build/outputs/apk/release/app-android-release.apk",
+      "bytes": 235280,
+      "sha256": "760acf22d0a01db2929be2ee9b4d62161e4674dfb0a16d3cbcd70dbb26629bdc"
+    },
+    {
+      "path": "app-android/build/outputs/apk/debug/app-android-debug.apk",
+      "bytes": 487242,
+      "sha256": "2af195a8cbefc334edc8b07a8b766e82b24f03589296f6f0e5d44deccfa29082"
+    },
+    {
+      "path": "app-android/build/outputs/apk/androidTest/debug/app-android-debug-androidTest.apk",
+      "bytes": 1746905,
+      "sha256": "58794b2f55eaacf441f5d824bf56c87e626a50a7889fc0b68a1215f8dfe8960e"
+    },
+    {
+      "path": "dev-harness/build/outputs/apk/debug/dev-harness-debug.apk",
+      "bytes": 538099,
+      "sha256": "4dcc8d963c7a2beb12c365beafa1fa21e7c237f620d0ced4d58784d6ede39993"
+    },
+    {
+      "path": "dev-harness/build/outputs/apk/androidTest/debug/dev-harness-debug-androidTest.apk",
+      "bytes": 1735270,
+      "sha256": "b076aa4acbc054f3131848b78cabfa0e9ce172dfcee5453ee4abc404033f50a1"
+    }
+  ],
+  "round-d-build-final.log": {
+    "sha256": "6d908f39c50e90c11ffece43941c4e9b214158fcf2c2fd2488f9b8408ddc93a2",
+    "tail": [
+      "",
+      "BUILD SUCCESSFUL in 19s",
+      "165 actionable tasks: 18 executed, 147 up-to-date"
+    ]
+  },
+  "round-d-core-final.log": {
+    "sha256": "11b791ee9161ffb98f64d831124e565cc08291cce5252d9d933b2525e06d000b",
+    "tail": [
+      "  \"largeAttachedStyleReads\": 100,",
+      "  \"elapsedMs\": 1413",
+      "}"
+    ]
+  }
+}

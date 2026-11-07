@@ -1,0 +1,43 @@
+{
+  "runtime_source": "9bd4ef3c15e1b506400615414f1f01f2951de730",
+  "run_id": 42347473651,
+  "scope": "synthetic fixtures, not live X",
+  "core": "PASS",
+  "android_build_and_lint": "PASS",
+  "instrumentation": [
+    {
+      "api": 30,
+      "android": "11",
+      "webview": "com.google.android.webview 83.0.4103.106",
+      "harness_tests": 15,
+      "harness_passed": 13,
+      "harness_failed": 2,
+      "app_tests": "NOT RUN: first Gradle test task failed",
+      "artifact_id": 13563997757
+    },
+    {
+      "api": 36,
+      "android": "16",
+      "webview": "com.google.android.webview 133.0.6943.137",
+      "harness_tests": 15,
+      "harness_passed": 13,
+      "harness_failed": 2,
+      "app_tests": "NOT RUN: first Gradle test task failed",
+      "artifact_id": 13564740748
+    }
+  ],
+  "failures": [
+    {
+      "test": "LibraryUiTest.nativeSearchFiltersMeasuredDwellAndNeverOpenedOffline",
+      "line": 99,
+      "operation": "locate framework Apply button"
+    },
+    {
+      "test": "LibraryUiTest.editExistingFavoriteTagsAndClearHistoryKeepLocalFavorite",
+      "line": 123,
+      "operation": "locate framework Organize button"
+    }
+  ],
+  "fix": "Use framework button resource IDs with semantic text assertion allowing theme all-caps; retain all business assertions and original timeout. Run both independent modules sequentially with Gradle --continue.",
+  "fix_verification": "PENDING new CI; local AndroidTest compile and core PASS"
+}

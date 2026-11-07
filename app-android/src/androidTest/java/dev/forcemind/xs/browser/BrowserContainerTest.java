@@ -33,6 +33,7 @@ public class BrowserContainerTest {
         app.getSharedPreferences("browser.BrowserActivity", Context.MODE_PRIVATE).edit().clear().commit();
     }
     @Test public void initialHostHasNoNavigationAndRestrictedSettings() {
+        final boolean[] safeBrowsing={false};
         try (ActivityScenario<BrowserActivity> scenario = ActivityScenario.launch(BrowserActivity.class)) {
             scenario.onActivity(activity -> {
                 WebView web = activity.findViewById(R.id.browser_view);
@@ -45,7 +46,15 @@ public class BrowserContainerTest {
                 assertFalse(s.getAllowFileAccess());
                 assertFalse(s.getAllowContentAccess());
                 assertEquals(WebSettings.MIXED_CONTENT_NEVER_ALLOW, s.getMixedContentMode());
-                assertTrue(s.getSafeBrowsingEnabled());
+                safeBrowsing[0]=s.getSafeBrowsingEnabled();
+                if(safeBrowsing[0])assertTrue(s.getSafeBrowsingEnabled());
+                else {
+                    assertEquals(activity.getString(R.string.safe_browsing_unavailable),((TextView)activity.findViewById(R.id.browser_status)).getText().toString());
+                    activity.findViewById(R.id.open_x).performClick();
+                    assertNull("Unsupported provider must not navigate after notice acceptance",web.getUrl());
+                    assertFalse(web.canGoBack());
+                    assertEquals(activity.getString(R.string.safe_browsing_unavailable),((TextView)activity.findViewById(R.id.browser_status)).getText().toString());
+                }
                 assertTrue(s.getMediaPlaybackRequiresUserGesture());
                 assertFalse(s.getJavaScriptCanOpenWindowsAutomatically());
                 assertTrue((activity.getWindow().getAttributes().flags &
@@ -54,11 +63,18 @@ public class BrowserContainerTest {
             scenario.recreate();
             scenario.onActivity(activity -> {
                 assertNotNull(activity.findViewById(R.id.browser_view));
-                assertNotNull(activity.findViewById(R.id.open_x));
+                if(safeBrowsing[0])assertNotNull(activity.findViewById(R.id.open_x));
+                else {
+                    assertNull(activity.findViewById(R.id.open_x));
+                    assertNull(((WebView)activity.findViewById(R.id.browser_view)).getUrl());
+                    assertEquals(activity.getString(R.string.safe_browsing_unavailable),((TextView)activity.findViewById(R.id.browser_status)).getText().toString());
+                }
             });
         }
     }
     @Test public void actualWebViewExecutesSyntheticPageWithoutNativeArchive() throws Exception {
+        Context app = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        app.deleteDatabase("xs-local-history.db");
         try (ActivityScenario<BrowserActivity> scenario = ActivityScenario.launch(BrowserActivity.class)) {
             CountDownLatch loaded = new CountDownLatch(1);
             scenario.onActivity(activity -> {
@@ -84,8 +100,36 @@ public class BrowserContainerTest {
             assertTrue(evaluated.await(10, TimeUnit.SECONDS));
             assertTrue(result.get(), result.get().contains("Synthetic Xs test"));
             assertTrue(result.get(), result.get().contains("undefined"));
-            Context app = InstrumentationRegistry.getInstrumentation().getTargetContext();
             assertFalse(java.util.Arrays.asList(app.databaseList()).contains("xs-local-history.db"));
+        }
+    }
+    @Test public void configurationRecreationRetainsActualPageAndJavascriptState() throws Exception {
+        try (ActivityScenario<BrowserActivity> scenario=ActivityScenario.launch(BrowserActivity.class)) {
+            CountDownLatch loaded=new CountDownLatch(1);
+            AtomicReference<WebView> original=new AtomicReference<>();
+            scenario.onActivity(activity-> {
+                WebView view=activity.findViewById(R.id.browser_view);
+                original.set(view);
+                view.setWebViewClient(activity.new Client() {
+                    @Override public void onPageFinished(WebView web,String url) {
+                        super.onPageFinished(web,url); loaded.countDown();
+                    }
+                });
+                view.loadDataWithBaseURL("https://x.com/fixture/retained",
+                    "<html><body><div id='state'>kept</div><script>window.fixtureState=37;</script></body></html>",
+                    "text/html","UTF-8",null);
+            });
+            assertTrue(loaded.await(20,TimeUnit.SECONDS));
+            scenario.recreate();
+            CountDownLatch evaluated=new CountDownLatch(1);
+            AtomicReference<String> value=new AtomicReference<>();
+            scenario.onActivity(activity-> {
+                WebView view=activity.findViewById(R.id.browser_view);
+                assertSame(original.get(),view);
+                view.evaluateJavascript("window.fixtureState",result->{value.set(result);evaluated.countDown();});
+            });
+            assertTrue(evaluated.await(10,TimeUnit.SECONDS));
+            assertEquals("37",value.get());
         }
     }
     @Test public void subframeErrorsDoNotReplacePageAndRendererLossIsRecoverable() {

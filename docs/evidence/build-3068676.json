@@ -1,0 +1,49 @@
+{
+  "source_commit": "3068676986364e5608854c228bf583a5d97cf128",
+  "source_clean": true,
+  "recorded_at_utc": "2026-11-07T06:25:51.979715+00:00",
+  "environment": {
+    "jdk": "17.0.21",
+    "gradle": "8.9",
+    "compile_sdk": 35,
+    "build_tools": "35.0.0"
+  },
+  "project_check": "PASS",
+  "jvm_assertions": {
+    "core": 73,
+    "observation_gate": 79,
+    "shared_post": 14,
+    "capture_and_queue": 166,
+    "media_policy": 111
+  },
+  "sqlite_regressions": "PASS (v1/v2->v3, FTS, namespaces, dedup, favorites, same-exposure duration/source/date)",
+  "packaged_dom_regressions": "PASS",
+  "android_build": "PASS (AAR, browser+harness APKs, both AndroidTest APKs)",
+  "lint": "PASS (no errors; warnings remain)",
+  "instrumentation": "BLOCKED: two API30 software emulator attempts; zero application tests executed; final sequential attempt ddmlib PropertyFetcher timeout/Unknown API Level",
+  "live_x": "NOT RUN / automatic observer disabled",
+  "recipient_apps": "NOT RUN",
+  "ci": "https://github.com/ForceMind/Xs/actions/runs/42346892629",
+  "artifacts": [
+    {
+      "path": "app-android/build/outputs/apk/debug/app-android-debug.apk",
+      "sha256": "9c21bc9576019ba6a665f1194f4449556ff44c41f9a1a52bf32f9443cf5d1464"
+    },
+    {
+      "path": "xs-runtime/build/outputs/aar/xs-runtime-debug.aar",
+      "sha256": "8d202746bfbec046641220d6c58e021e7bcf4e1757a195a01a3dc0f75673f641"
+    },
+    {
+      "path": "app-android/build/outputs/apk/androidTest/debug/app-android-debug-androidTest.apk",
+      "sha256": "b18bd96883af8b8b6f016a9ca69769ac0068c1fd12198724a3c4e2e9f8cf9d41"
+    },
+    {
+      "path": "dev-harness/build/outputs/apk/debug/dev-harness-debug.apk",
+      "sha256": "8572d752277662e6b02daaf9c2c2d454c603573433bfcca497d252b5d232224d"
+    },
+    {
+      "path": "dev-harness/build/outputs/apk/androidTest/debug/dev-harness-debug-androidTest.apk",
+      "sha256": "755ec6085d29c6475e1e8cccad837849f0a0f19836b0706159e8b56e58059924"
+    }
+  ]
+}

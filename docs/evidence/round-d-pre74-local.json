@@ -1,0 +1,9 @@
+{
+  "baseline_commit": "7e86d795bac11020bd08af2b9cdef39eeb8e742c",
+  "dirty_changes": "GovernanceUiTest only: semantic ACTION_CLICK of exact refreshed roots-list item, all actual SAF/file/hash assertions retained; production runtime unchanged",
+  "harness_test_apk_build": "PASS",
+  "build_tasks": 58,
+  "build_log_sha256": "0e1e895553e5dd2d05391ed7ae1c023b1512391247efd69c81e9021412632ceb",
+  "diff_check": "PASS",
+  "native_results": "Pending CI74; compile is not device proof"
+}
