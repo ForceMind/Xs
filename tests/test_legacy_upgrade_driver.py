@@ -5,6 +5,7 @@ import contextlib
 import io
 import json
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import tempfile
@@ -114,7 +115,26 @@ class Fixture:
                     if self.scenario == "native-pid-reused" and phase == "verify": values["pid"] = 1002
                     if self.scenario == "native-path-change" and phase == "verify": values["db_path"] = DB_PATH.replace("/user/0", "/data")
                     if self.scenario == "native-scope-change" and phase == "verify": values["scope"] = SCOPE.replace("12345678", "12345679")
-                    output = "\n".join("INSTRUMENTATION_STATUS: xs_legacy_" + k + "=" + str(v) for k, v in values.items()) + "\nOK (1 test)\n"
+                    lines = ["INSTRUMENTATION_STATUS: xs_legacy_" + k + "=" + str(v) for k, v in values.items()]
+                    runner = re.fullmatch(r"runner-prefix:(seed|verify):(schema|uid|pid|db_path|scope):(raw|space|crlf)", self.scenario)
+                    if runner and phase == runner[1]:
+                        first = "INSTRUMENTATION_STATUS: xs_legacy_" + runner[2] + "=" + str(values[runner[2]])
+                        lines.remove(first)
+                        lines.insert(0, DRIVER.TEST_CLASS + ":" + (" " if runner[3] == "space" else "") + first)
+                    duplicate = re.fullmatch(r"duplicate-status:(seed|verify):(plain|prefixed):(plain|prefixed)", self.scenario)
+                    if duplicate and phase == duplicate[1]:
+                        first = "INSTRUMENTATION_STATUS: xs_legacy_uid=" + str(values["uid"])
+                        lines.remove(first)
+                        lines.insert(0, (DRIVER.TEST_CLASS + ":" if duplicate[2] == "prefixed" else "") + first)
+                        lines.append((DRIVER.TEST_CLASS + ": " if duplicate[3] == "prefixed" else "") + first)
+                    foreign = re.fullmatch(r"foreign-prefix:(seed|verify):(wrong-class|embedded|log)", self.scenario)
+                    if foreign and phase == foreign[1]:
+                        first = "INSTRUMENTATION_STATUS: xs_legacy_pid=" + str(values["pid"])
+                        lines.remove(first)
+                        prefix = {"wrong-class": "dev.forcemind.xs.android.OtherProbe:", "embedded": "ordinary log " + DRIVER.TEST_CLASS + ":", "log": "ordinary log: "}[foreign[2]]
+                        lines.insert(0, prefix + first)
+                    newline = "\r\n" if runner and runner[3] == "crlf" else "\n"
+                    output = newline.join(lines) + newline + "OK (1 test)" + newline
             elif args[:3] == ["shell", "am", "start"]:
                 output = "Status: ok\n"
             elif args[:3] == ["shell", "am", "force-stop"]:
@@ -181,6 +201,34 @@ class LegacyUpgradeDriverTests(unittest.TestCase):
                 fixture, _, _ = self.exercise(scenario, environment)
                 self.assertFalse(any(x[:3] == ["git", "worktree", "add"] or x[:2] == ["adb", "install"] for x in fixture.commands))
                 self.assertEqual([], fixture.phases())
+
+    def test_exact_android_runner_prefix_supports_every_first_field_in_both_phases(self):
+        # CI76 API26 actually puts pid first; API27/30/36 put db_path first.
+        # Bundle order is not a contract, so all five fields and both phases matter.
+        for phase in ("seed", "verify"):
+            for key in ("pid", "db_path", "schema", "uid", "scope"):
+                for framing in ("raw", "space", "crlf"):
+                    with self.subTest(phase=phase, first=key, framing=framing):
+                        fixture, report, _ = self.exercise("runner-prefix:" + phase + ":" + key + ":" + framing, expected_failure=False)
+                        self.assertEqual(["seed", "verify", "cleanup"], fixture.phases())
+                        self.assertEqual([2, 5], [report["seed"]["schema"], report["verify"]["schema"]])
+
+    def test_duplicate_plain_or_exact_prefixed_status_remains_rejected(self):
+        for phase in ("seed", "verify"):
+            for first in ("plain", "prefixed"):
+                for second in ("plain", "prefixed"):
+                    with self.subTest(phase=phase, first=first, second=second):
+                        fixture, _, failure = self.exercise("duplicate-status:" + phase + ":" + first + ":" + second)
+                        self.assertIn("Native status not unambiguously proven: " + phase + "/uid", str(failure))
+                        self.assertNotIn("cleanup", fixture.phases())
+
+    def test_arbitrary_or_wrong_class_status_prefix_is_not_accepted(self):
+        for phase in ("seed", "verify"):
+            for prefix in ("wrong-class", "embedded", "log"):
+                with self.subTest(phase=phase, prefix=prefix):
+                    fixture, _, failure = self.exercise("foreign-prefix:" + phase + ":" + prefix)
+                    self.assertIn("Native status not unambiguously proven: " + phase + "/pid", str(failure))
+                    self.assertNotIn("cleanup", fixture.phases())
 
     def test_signature_version_and_source_mismatch_prevent_install(self):
         for scenario in ("old-signature-mismatch", "test-signature-mismatch", "wrong-current-apk-version", "blank-current-apk-version", "malformed-old-apk-version", "malformed-test-apk-version", "dirty-current"):

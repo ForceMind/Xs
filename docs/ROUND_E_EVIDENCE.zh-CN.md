@@ -49,3 +49,14 @@ LegacyUpgradeProbe 仅以 Android/Java/JUnit 类型和目标 classloader 反射�
 预计声明为每 API52项harness＋104项client，四版624次主执行；新增跨源码升级加原四项 driver，共20项。这只是待跑声明，最终仅按实际 XML 和独立报告记账。新源码的真实 X、Browser服务器上传、目标聊天应用、实体手机和正式签名验收均 NOT RUN。
 
 官方依据：[WebChromeClient.FileChooserParams](https://developer.android.com/reference/android/webkit/WebChromeClient.FileChooserParams) 与 [onShowFileChooser](https://developer.android.com/reference/android/webkit/WebChromeClient) 要求宿主应用处理筛选，并自行审查不可信返回 URI。这里未复制官方实现代码，未扩展为通用文件桥接。
+
+
+## CI76：旧 APK 原生 seed 实际通过，主套件被宿主输出解析阻断
+
+[CI76 42409507801](https://github.com/ForceMind/Xs/actions/runs/42409507801) 测试head `72d4db537d4df635da39add3abd06f1896b36a33` / tree `a6e225510610ee69ccb2bbd945c1a998c1a3bc5e`。core1287/原10项低空间host＋10项legacy host/Android构建通过；四个模拟器job均在pre-main legacy seed的**宿主状态解析**阶段失败，主XML实际0次、新Browser6例各API均NOT RUN，不计为主套件零失败通过。
+
+四个旧target的真实native seed均返回`OK (1 test)`：实际schema2、旧helper/原生API/FTS/分类/私有canary写入成功，普通UID26/27/30/36分别10077/10079/10167/10216。尚未启动旧介绍页/force-stop/安装新APK/verify/cleanup；旧库升级到5仍未运行。
+
+具体framing：AndroidJUnitRunner会将第一项状态紧接在`dev.forcemind.xs.android.LegacyUpgradeProbe:`进度前缀后，没有换行。API26首项为pid，另外三版首项为db_path；原parser只匹配严格行首`INSTRUMENTATION_STATUS`，因此漏掉一个字段。这是宿主parser错误，不是旧APK链接、SQL或浏览器测试失败。
+
+下一最小修正只接受两种明确格式：行首状态，或精确测试类名＋冒号/水平空白再状态；字段仍须唯一一次，schema/UID/PID/path/scope语义校验完全保留。新增[13项host方法回归](evidence/round-e-pre77-host.json)通过，包含真实首字段、CRLF、错误prefix和混合重复字段拒绝；四份实际CI76 seed stdout的宿主回放也已成功解析。以同格式替换schema测试verify解析分支只是host合同，不冒充真的新APK迁移。生产/Android源码未变化，没有重复构建来冒充新仪器结果；下一CI仍需实际执行624/20声明。

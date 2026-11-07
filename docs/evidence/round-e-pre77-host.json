@@ -1,0 +1,12 @@
+{
+  "baseline_commit": "72d4db537d4df635da39add3abd06f1896b36a33",
+  "scope": "Only host status framing/parser regression; no Android/runtime source change",
+  "host_legacy_methods": 13,
+  "result": "PASS",
+  "failures": 0,
+  "python_compile": "PASS",
+  "diff_check": "PASS",
+  "log_sha256": "8f42c522afc46255e24ce87d8c004f427c1d729b9f23c9f3529a150fb256b013",
+  "actual_ci76_seed_stdout_replay": "Four real seed streams parse successfully; host replay is not native schema5 verification",
+  "native_tests": "Pending next CI; no new Android PASS claimed"
+}

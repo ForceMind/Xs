@@ -116,7 +116,9 @@ class LegacyUpgradeDriver:
             return None
         values = {}
         for key in ("schema", "uid", "pid", "db_path", "scope"):
-            matches = re.findall(r"^INSTRUMENTATION_STATUS: xs_legacy_" + key + r"=([^\r\n]+)$", text, re.MULTILINE)
+            # AndroidJUnitRunner can append the first status to its exact test-class
+            # progress prefix without a newline. Do not accept arbitrary log prefixes.
+            matches = re.findall(r"^(?:" + re.escape(TEST_CLASS) + r":[ \t]*)?INSTRUMENTATION_STATUS: xs_legacy_" + key + r"=([^\r\n]+)\r?$", text, re.MULTILINE)
             if len(matches) != 1:
                 raise RuntimeError("Native status not unambiguously proven: " + phase + "/" + key)
             values[key] = matches[0]
