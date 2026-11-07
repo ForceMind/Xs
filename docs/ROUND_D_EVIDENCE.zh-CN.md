@@ -144,3 +144,16 @@ API26普通app UID10082，native baseline8170389504字节；27 UID10084，baseli
 
 
 新增[10项host故障/安全门回归](evidence/round-d-pre73-host.json)全部通过，执行真实driver控制流而仅替换subprocess，不连接ADB：错误环境/初始root不得分配，当前quota才授权，旧日志+当前reset错误不得root，错误/缺失原生压力证据必须失败，root部分生效后报错仍恢复，删除/不存在检查/unroot失败永不PASS。命令异常绑定本次operation/output，避免旧日志误授权。Python语法、shell语法、工程检查通过；这些10项不并入608项Android主XML，真实26/27压力仍待下一CI。生产Java未改，没有重复冒称本次重新构建Android。
+
+
+## CI73：旧系统低空间首次真正通过，精确修正剩余系统UI夹具
+
+[CI73 42385436203](https://github.com/ForceMind/Xs/actions/runs/42385436203) head `7e86d795bac11020bd08af2b9cdef39eeb8e742c`，tested merge `2ed09f5d9641f040af67faad8927c46f105694e2`，tree `901613812c4e63504cef5f1b3debdf499888d852`。core1155和10项host测试、构建通过；**主608实际执行，607通过/1失败/0错误/跳过**。API26/27/30各152全PASS且四个外部driver均通过，12/12 attempted通过；API36客户端100/100、harness51/52，主测试失败后四个driver均NOT RUN，不与前轮拼接成16/16。[完整原始报告](evidence/round-d-ci73-results.json)保留4ZIP、20主APK和6份实际升级APK、未产出的36升级两份、环境/失败stack/PNG与AX摘要。
+
+API26/27严格先shell2000、当次dd quota、实际userdebug/debuggable1，才root并核UID0；原生分别仍UID10082/10084、与seed一致，可用28332032/28794880字节，真实空间拒绝/保留文件与FTS通过。唯一生成压力文件最终不存在，unroot后shellUID2000均通过。API30普通shell无需root，可用29065216字节。此前26/27构造失败不是忽略后硬记PASS，这次已真正执行应用业务断言。
+
+剩1失败`GovernanceUiTest.assetsMultiSelectSafZipContainsEverySelectedOriginalFile`发生于API36真实DocumentsUI选provider，未到导出完整性断言。已实际查看持久PNG和AX：完整展开的drawer仍高亮Downloads，fixture标题可见，直接roots_list item可点击。tap标题的Rect与失败AX一致，无坐标漂移证据；同DocumentsUI进程恰在DOWN/UP间有两次ProvidersAccess刷新，‘列表重绑取消触摸’是日志支持的推论，未当成已证产品根因。
+
+下一修复仅精确激活该标题所属roots_list的**直接可点击item**，fresh后再次确认其子树仍含fixture标题、可见/启用/正确窗口与边界，单次真实ACTION_CLICK；随后仍要求正确toolbar和drawer关闭。文档文件Recycler继续FINGER触摸，原SAF返回/实际字节/ZIP逐文件hash断言均保留，没有延时增加/盲重试/手造URI结果。官方[AbsListView item delegate](https://android.googlesource.com/platform/frameworks/base/+/refs/heads/master/core/java/android/widget/AbsListView.java)将item ACTION_CLICK交给performItemClick，[DocumentsUI RootsFragment](https://android.googlesource.com/platform/packages/apps/DocumentsUI/+/07e538caffec348d204096b387562b99437ba780/src/com/android/documentsui/sidebar/RootsFragment.java)的真实item listener打开所选root并关闭drawer，与泛祖先/整个ListView点击不同。
+
+[本地harness测试APK编译](evidence/round-d-pre74-local.json)通过（58 tasks9秒），生产runtime未改，实际四API结果待CI74；不将编译记为系统UI通过。
