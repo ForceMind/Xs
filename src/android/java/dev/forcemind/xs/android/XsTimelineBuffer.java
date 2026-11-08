@@ -247,6 +247,9 @@ public final class XsTimelineBuffer extends SQLiteOpenHelper {
         // Native observations may wait in the bounded queue; arbitrary future/past payload times fail closed.
         if(candidate.observedAt>clock.wall()+60000L||TimelineBufferPolicy.isExpired(TimelineBufferPolicy.expiresAt(candidate.observedAt,settings.hours),time.nowMs)){drop(db,"EXPIRED_BEFORE_WRITE");return false;}
         long reserve=WRITE_RESERVE+4L*(candidate.body==null?0:candidate.body.length())+4L*(candidate.author==null?0:candidate.author.length());
+        // Do not create eviction/FTS WAL traffic while the device lacks the write
+        // headroom itself. Keep existing cards for recovery; maintenance may run later.
+        if(freeBytes()<=reserve+TimelineBufferPolicy.MIN_HEADROOM_BYTES){drop(db,"DEVICE_SPACE");return false;}
         if(!enforceLimits(reserve)){drop(db,spaceReason(reserve));return false;}
         SQLiteFullException allocationFailure=null;
         db.beginTransaction();

@@ -204,6 +204,7 @@ public final class ProcessRecoveryProbe {
         assertTrue("Never allocate pressure on a phone: "+android.os.Build.HARDWARE,"ranchu".equals(android.os.Build.HARDWARE)||"goldfish".equals(android.os.Build.HARDWARE));
         assertTrue(Process.myUid()>=10000);
         XsTimelineBuffer timeline=XsTimelineBuffer.get(context);XsTimelineBuffer.Ticket ticket=timeline.ticket(library);
+        long previousCards=timeline.stats(library).count;
         XsLibraryWrites.Ticket mediaTicket=XsLibraryWrites.ticket(library);
         long baseline=context.getFilesDir().getUsableSpace();assertTrue(baseline>2*1048576L&&baseline<40*1048576L);
         File pressure=File.createTempFile("xs-buffer-pressure-",".fixture",context.getFilesDir());
@@ -231,6 +232,7 @@ public final class ProcessRecoveryProbe {
             assertTrue("Remove only this generated native pressure file",pressure.delete());assertFalse(pressure.exists());
         }
         long recovered=context.getFilesDir().getUsableSpace();assertTrue("Native pressure release restored usable headroom",recovered>2*1048576L);
+        assertEquals("Low device headroom must not evict existing temporary cards",previousCards,timeline.stats(library).count);
         assertTrue(XsLibraryWrites.isCurrent(mediaTicket));assertTrue(timeline.list(library,"Filesystem pressure refused",null,10,0).isEmpty());
         write(library,()->assertTrue(timeline.append(timeline.ticket(library),new XsTimelineBuffer.Batch("disk-pressure:recovered","native_navigation","unknown"),
             new XsTimelineBuffer.Candidate("https://x.com/i/web/status/991234","fixture","Filesystem pressure recovered body",null,SnapshotPolicy.Quality.PARTIAL,System.currentTimeMillis(),1))));
