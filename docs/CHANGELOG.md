@@ -1,3 +1,7 @@
+## XS-16 CI93 四API真实低空间补强验收
+
+代码/测试9e74ac8，实际merge3b36ff7/treebce4a29的CI93六作业SUCCESS：800/800主XML（0失败/错误/跳过）、20/20独立driver、44/44外部nativephase、1406 JVM、25临时SQLite、34 driver-host+6allowlist、容量/DOM/构建/双Lint通过。四API普通app UID均实测786432字节余量时拒收，压力文件删除、新观察恢复，旧临时卡片、长期收藏/晋升账本、登记媒体hash与OPEN/FEED断言通过。精确数值与8份ZIP/20份native APK独立核验见[最终证据](XS16_FILESYSTEM_PRESSURE_EVIDENCE.zh-CN.md)。CI91 API27 reboot超时保留原FAIL和UNKNOWN根因；新源码执行不覆盖历史失败。只更新文档证据，不修改已验生产/测试/workflow。T14/live/手机/正式发布仍独立。
+
 ## XS-16 设备空间不足先拒收
 
 在触发配额淘汰/FTS写入前先核验设备写入预留；空间不足直接DEVICE_SPACE拒收并保留原临时卡片，稍后释放空间/维护后可恢复，避免在低余量时主动增加eviction WAL。原应用级预算、配额淘汰和1MiB预留阈值不变。真实低空间probe新增旧卡片数量保持断言。CI92由这项运行时修复源码取代，其已执行/取消范围另记；编译/双Lint通过，原生结果待新CI，不能把本条代码本身记作PASS。

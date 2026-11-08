@@ -1,6 +1,6 @@
 # Xs 文档与执行入口
 
-**XS-16 云端验收完成。** 测试源码 `5b5f9e33e72068269408a60d74db5af5c7812772`（生产代码与 `f813e9d` 相同）通过 [CI87](https://github.com/ForceMind/Xs/actions/runs/42463984353)：1406 JVM、四API共792/792主用例（0失败/错误/跳过）、20/20独立driver、44/44外部native phase，以及构建/双Lint/SQLite/DOM/容量检查。见[精确证据](XS16_CI87_EVIDENCE.zh-CN.md)。T14真实X/手机/接收应用/耗电/生产签名仍NOT RUN；live保持关闭，无main合并或正式发布。
+**XS-16 云端源码与空间补强已验收。** 测试源码 `9e74ac85d96dcfc9f87a47c1e193d3fe85bd8f5d` 通过 [CI93](https://github.com/ForceMind/Xs/actions/runs/42519140643)：1406 JVM、四API800/800主用例（0失败/错误/跳过）、20/20独立driver、44/44外部native phase、34项driver host与6项allowlist，以及构建/双Lint/SQLite/DOM/容量检查。四API还在普通app UID下实测不足1MiB时缓冲拒收、压力文件清理与恢复。见[精确证据](XS16_FILESYSTEM_PRESSURE_EVIDENCE.zh-CN.md)。T14真实X/手机/接收应用/耗电/生产签名仍NOT RUN；live保持关闭，无main合并或正式发布。
 
 ## XS-16 最近时间线：云端验收完成
 

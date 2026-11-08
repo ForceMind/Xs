@@ -1,8 +1,8 @@
 # Xs 验收矩阵 v2.3
 
-## XS-16 最近时间线：CI87云端子场景结果
+## XS-16 最近时间线：CI93云端子场景与空间补强结果
 
-[专项方案](TIMELINE_BUFFER_PLAN.zh-CN.md)与[Issue #6](https://github.com/ForceMind/Xs/issues/6)已确认范围；运行源码、独立schema1数据库与新测试已实现，实际结果见[CI87精确证据](XS16_CI87_EVIDENCE.zh-CN.md)，CI83不验证这些项。T01～T13先做云端/原生合成验收，T14必须真实环境；前者通过不能使后者PASS。
+[专项方案](TIMELINE_BUFFER_PLAN.zh-CN.md)与[Issue #6](https://github.com/ForceMind/Xs/issues/6)已确认范围；运行源码、独立schema1数据库与新测试已实现，实际结果见[CI93精确证据](XS16_FILESYSTEM_PRESSURE_EVIDENCE.zh-CN.md)，CI83不验证这些项。T01～T13先做云端/原生合成验收，T14必须真实环境；前者通过不能使后者PASS。
 
 | 编号 | 本轮执行范围 | 状态 |
 | --- | --- | --- |
@@ -12,7 +12,7 @@
 | T04 | 去重、正文复用、同批不续TTL/跨批独立到期 | 云端PASS |
 | T05 | TTL查询/详情/FTS排除、回拨/重启、明确时钟重置不复活 | 云端PASS |
 | T06 | 正文/FTS/孤儿和实际字节回收、读锁待回收 | 云端PASS |
-| T07 | 全应用实际预算、并发、降限/淘汰/暂停 | 配额云端PASS；真实低空间driver验证media/Archive保留，未单独实压buffer<1MiB admission |
+| T07 | 全应用实际预算、并发、降限/淘汰/暂停 | CI93四API实际<1MiB拒收、旧卡片/长期资料/下载保持、释放后恢复PASS；SQLite FULL另8/8，非手机/中途ENOSPC |
 | T08 | 保存/收藏幂等、质量/时刻、预览不OPEN、进程commit→ack gap | 云端PASS；提交前rollback为guard模型，不冒充OS杀进程 |
 | T09 | buffer/历史/媒体/网页/整库删除边界独立 | 云端PASS |
 | T10 | 旧JS读取/关闭重开/清理代次/tombstone拒绝复活 | 云端PASS |

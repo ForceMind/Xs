@@ -1,0 +1,743 @@
+{
+  "tested_source": "9e74ac85d96dcfc9f87a47c1e193d3fe85bd8f5d",
+  "actual_ci_merge": "3b36ff71d83f5a8c79659524550d707df314770f",
+  "actual_ci_tree": "bce4a29f646bc5b3c2479b414d41c8bc257857d8",
+  "ci_run": 42519140643,
+  "non_document_blob_count": 182,
+  "mismatches": [],
+  "source_test_workflow_blobs": {
+    ".github/workflows/core-tests.yml": {
+      "mode": "100644",
+      "sha": "5f0f674e5f1938cbac3a96ab8c8e8f3fdc507298"
+    },
+    ".github/workflows/signed-candidate.yml": {
+      "mode": "100644",
+      "sha": "f9450e05d1c8109c4f6b0945691b22cb47a39bfd"
+    },
+    ".gitignore": {
+      "mode": "100644",
+      "sha": "75a97ca2f3f8c7ce1aed96d14742b60afd5866b5"
+    },
+    "LICENSE": {
+      "mode": "100644",
+      "sha": "f288702d2fa16d3cdf0035b15a9fcbc552cd88e7"
+    },
+    "app-android/build.gradle.kts": {
+      "mode": "100644",
+      "sha": "f108d743ca0fa0251c6eea526ca0447c49160462"
+    },
+    "app-android/src/androidTest/AndroidManifest.xml": {
+      "mode": "100644",
+      "sha": "46f63b7188e83f571bc23fb6bb87338f80efc1ab"
+    },
+    "app-android/src/androidTest/assets/VIDEO_FIXTURES.md": {
+      "mode": "100644",
+      "sha": "087892850963262437468335a020c90206645416"
+    },
+    "app-android/src/androidTest/assets/fragmented-video.mp4.b64": {
+      "mode": "100644",
+      "sha": "5356cfa716adcb0ace5906125ce5d6bf07bf6040"
+    },
+    "app-android/src/androidTest/assets/standard-video.mp4.b64": {
+      "mode": "100644",
+      "sha": "1cb29e9d90f35fb3bcd1812c48e2fb996b8231cd"
+    },
+    "app-android/src/androidTest/java/dev/forcemind/xs/android/AssetLibraryUiTest.java": {
+      "mode": "100644",
+      "sha": "dc36b9577719d22a45c72ea653600858c3dacbb0"
+    },
+    "app-android/src/androidTest/java/dev/forcemind/xs/android/CrossUidSharingTest.java": {
+      "mode": "100644",
+      "sha": "1752d154c2e76f4e8d09b0ae829770207ae71443"
+    },
+    "app-android/src/androidTest/java/dev/forcemind/xs/android/FtsCompatibilityIntegrationTest.java": {
+      "mode": "100644",
+      "sha": "6a92045c953ca516f4c8a6a1040fecb52695bb4f"
+    },
+    "app-android/src/androidTest/java/dev/forcemind/xs/android/FullBackupIntegrationTest.java": {
+      "mode": "100644",
+      "sha": "0ed4ceaadfbec2d748441e388104d1a80e4ea5c1"
+    },
+    "app-android/src/androidTest/java/dev/forcemind/xs/android/LegacyUpgradeProbe.java": {
+      "mode": "100644",
+      "sha": "ff6201b628968c92629bc2842d371a308e18692f"
+    },
+    "app-android/src/androidTest/java/dev/forcemind/xs/android/MediaDownloadEngineTest.java": {
+      "mode": "100644",
+      "sha": "6014fd8de9f265d3f12064c74edba1173674f17f"
+    },
+    "app-android/src/androidTest/java/dev/forcemind/xs/android/MediaDurabilityTest.java": {
+      "mode": "100644",
+      "sha": "5254e2913ba395871bb7adfcf6ed739ca01f43cd"
+    },
+    "app-android/src/androidTest/java/dev/forcemind/xs/android/MediaQuotaIntegrationTest.java": {
+      "mode": "100644",
+      "sha": "7d497dd3da91a9fda02410de9e711428c72d93f2"
+    },
+    "app-android/src/androidTest/java/dev/forcemind/xs/android/ProcessRecoveryProbe.java": {
+      "mode": "100644",
+      "sha": "0d26b47f084c5f9462622fc64a8b7a04269424f9"
+    },
+    "app-android/src/androidTest/java/dev/forcemind/xs/android/RecentTimelineUiTest.java": {
+      "mode": "100644",
+      "sha": "16cf55d42297b8fc043cc0e12297fc52b7529d2e"
+    },
+    "app-android/src/androidTest/java/dev/forcemind/xs/android/RetentionIntegrationTest.java": {
+      "mode": "100644",
+      "sha": "6b38827ec1fcb470eebe2618c7c7dbaf81e94f6c"
+    },
+    "app-android/src/androidTest/java/dev/forcemind/xs/android/StorageGovernanceUiTest.java": {
+      "mode": "100644",
+      "sha": "95f464a03316691c6127da6cc98db47af8dfb765"
+    },
+    "app-android/src/androidTest/java/dev/forcemind/xs/android/TimelineBufferIntegrationTest.java": {
+      "mode": "100644",
+      "sha": "73208c63404f3af940e31cf99ebc0d53f83c1bdd"
+    },
+    "app-android/src/androidTest/java/dev/forcemind/xs/android/TimelineStoragePressureTest.java": {
+      "mode": "100644",
+      "sha": "95f4f4a17ba3010062649ba9849c13741a804b38"
+    },
+    "app-android/src/androidTest/java/dev/forcemind/xs/android/VideoDownloadEngineTest.java": {
+      "mode": "100644",
+      "sha": "4fa587be5a4ec79c1ec26afd106d2010be30a0e2"
+    },
+    "app-android/src/androidTest/java/dev/forcemind/xs/browser/BrowserContainerTest.java": {
+      "mode": "100644",
+      "sha": "17e7de91b48b152df85c4542b4dd39407b922425"
+    },
+    "app-android/src/androidTest/java/dev/forcemind/xs/browser/BrowserInteractionIntegrationTest.java": {
+      "mode": "100644",
+      "sha": "689f146d8beeebef99b54d163a4e903cfa7ca9dc"
+    },
+    "app-android/src/androidTest/java/dev/forcemind/xs/browser/BrowserPrivacyIntegrationTest.java": {
+      "mode": "100644",
+      "sha": "64b81236634966b35a4e845400ea00bf9913df46"
+    },
+    "app-android/src/androidTest/java/dev/forcemind/xs/browser/MediaSharingTest.java": {
+      "mode": "100644",
+      "sha": "4e1bce497a2f6e26e46f2ae622322cabf7c95860"
+    },
+    "app-android/src/androidTest/java/dev/forcemind/xs/browser/NativeCaptureIntegrationTest.java": {
+      "mode": "100644",
+      "sha": "a86bdb2e06c4318ec8fcf6e17272d697d13ffde3"
+    },
+    "app-android/src/androidTest/java/dev/forcemind/xs/browser/ObservationParserTest.java": {
+      "mode": "100644",
+      "sha": "fecfa2428ffc020f0aa15fc258f9341a6c6576a8"
+    },
+    "app-android/src/androidTest/java/dev/forcemind/xs/browser/PageCleanupIntegrationTest.java": {
+      "mode": "100644",
+      "sha": "2c15b2601391c303f8268d11f50531e45442595c"
+    },
+    "app-android/src/androidTest/java/dev/forcemind/xs/browser/PostImageSelectionTest.java": {
+      "mode": "100644",
+      "sha": "f8bfcb3a53de519f6b1f35997480a110d0b9a3e5"
+    },
+    "app-android/src/androidTest/java/dev/forcemind/xs/browser/PostVideoSelectionTest.java": {
+      "mode": "100644",
+      "sha": "3a02b13104356a151d911705fbab3ac6b6e8bbf0"
+    },
+    "app-android/src/androidTest/java/dev/forcemind/xs/browser/fixtures/BrowserDocumentsProvider.java": {
+      "mode": "100644",
+      "sha": "315d32b545506d0ebd9421d5560394bf834f27f4"
+    },
+    "app-android/src/debug/AndroidManifest.xml": {
+      "mode": "100644",
+      "sha": "015df7cd2cec824005ad87fad3b01201cc50a32b"
+    },
+    "app-android/src/debug/java/dev/forcemind/xs/browser/CrossUidShareHostActivity.java": {
+      "mode": "100644",
+      "sha": "bb1e2bb33bb5356841671b81154420d39b8fa707"
+    },
+    "app-android/src/main/AndroidManifest.xml": {
+      "mode": "100644",
+      "sha": "9f9f0209a505fd0ceb91a7194cc0926cc9f737f4"
+    },
+    "app-android/src/main/java/dev/forcemind/xs/browser/BrowserActivity.java": {
+      "mode": "100644",
+      "sha": "ec09da8e1a8939ca13ec7c2fd661da715c0713b5"
+    },
+    "app-android/src/main/java/dev/forcemind/xs/browser/BrowserPrivacy.java": {
+      "mode": "100644",
+      "sha": "b78f191222929907036eb0497ee3f8ed14c9446a"
+    },
+    "app-android/src/main/java/dev/forcemind/xs/browser/PostImageSelection.java": {
+      "mode": "100644",
+      "sha": "eef0898957eaf4575194b235ee9c515c2a56e65b"
+    },
+    "app-android/src/main/java/dev/forcemind/xs/browser/PostVideoSelection.java": {
+      "mode": "100644",
+      "sha": "3e70112ea364f7a27b49b38d94f6fe7a4f8fdd7b"
+    },
+    "app-android/src/main/java/dev/forcemind/xs/browser/ShareToXsActivity.java": {
+      "mode": "100644",
+      "sha": "55e7abafb4c6a239891b1bd16d0e728ff6952baa"
+    },
+    "app-android/src/main/res/values-night/styles.xml": {
+      "mode": "100644",
+      "sha": "edcd22d412a50740a0e651e10c8388f704a769a4"
+    },
+    "app-android/src/main/res/values-zh-rCN/privacy.xml": {
+      "mode": "100644",
+      "sha": "1e4d9956537e4774879e5f3fd927d7f364a09f6e"
+    },
+    "app-android/src/main/res/values-zh-rCN/strings.xml": {
+      "mode": "100644",
+      "sha": "b8ca577aa905a1983a83dd70a6492d37c66c1b44"
+    },
+    "app-android/src/main/res/values/ids.xml": {
+      "mode": "100644",
+      "sha": "77b81fb8a3c13473069e4a743a354cad0e412708"
+    },
+    "app-android/src/main/res/values/privacy.xml": {
+      "mode": "100644",
+      "sha": "c20487ddb8dbbc036600b4c6ab49d60c569c061e"
+    },
+    "app-android/src/main/res/values/strings.xml": {
+      "mode": "100644",
+      "sha": "b4eef62fe2004ec1ab7b7e09c5bc266c1f33ae33"
+    },
+    "app-android/src/main/res/values/styles.xml": {
+      "mode": "100644",
+      "sha": "23fd19b5736adc5cee533f33c386172a1f731f25"
+    },
+    "app-android/src/main/res/xml/backup_rules.xml": {
+      "mode": "100644",
+      "sha": "ce0b32432a06d0978e0f0ba660c50b34c801d1e4"
+    },
+    "app-android/src/main/res/xml/data_extraction_rules.xml": {
+      "mode": "100644",
+      "sha": "335ebf65e020d72606aeb5fedfe8e377438dba58"
+    },
+    "build.gradle.kts": {
+      "mode": "100644",
+      "sha": "8cd844a99d180decd0afa8c59a2c9c89a62c6082"
+    },
+    "compat/host-allowlist.json": {
+      "mode": "100644",
+      "sha": "7148ffc97004dbde57cf2ae9bd3d7ccf59cdac11"
+    },
+    "compat/web/W0-MATRIX.md": {
+      "mode": "100644",
+      "sha": "fcaceff1a3babf04d0ee1afbdeac1e0303cffd8a"
+    },
+    "dev-harness/build.gradle.kts": {
+      "mode": "100644",
+      "sha": "ba54cdac687b682574b0edf489f6cdf54f282ec5"
+    },
+    "dev-harness/src/androidTest/AndroidManifest.xml": {
+      "mode": "100644",
+      "sha": "ac074e01f5dcc1cdc664eb8c1eec4ab1f0f57639"
+    },
+    "dev-harness/src/androidTest/java/dev/forcemind/xs/android/GovernanceDocumentsProvider.java": {
+      "mode": "100644",
+      "sha": "a976f927ceabb6ede8f6d9e918efbfb94c6627c3"
+    },
+    "dev-harness/src/androidTest/java/dev/forcemind/xs/android/GovernanceFixtureAdminProvider.java": {
+      "mode": "100644",
+      "sha": "9669f0e44d3a7260ea19bea16437f9e257b0bfdb"
+    },
+    "dev-harness/src/androidTest/java/dev/forcemind/xs/android/GovernanceUiTest.java": {
+      "mode": "100644",
+      "sha": "c580e38e7737e42385f68a761e4ab6c021ab55eb"
+    },
+    "dev-harness/src/androidTest/java/dev/forcemind/xs/android/LibraryBackupIntegrationTest.java": {
+      "mode": "100644",
+      "sha": "1fd71fb301946c9f407c63f410fa23a4a660e566"
+    },
+    "dev-harness/src/androidTest/java/dev/forcemind/xs/android/LibraryConsolidationIntegrationTest.java": {
+      "mode": "100644",
+      "sha": "0f8d57de38adcb67b12b14b4f7c185c8aed635e4"
+    },
+    "dev-harness/src/androidTest/java/dev/forcemind/xs/android/TimelinePromotionIntegrationTest.java": {
+      "mode": "100644",
+      "sha": "a98c7ab3c0dbd01b0ef77790e3a247c8381ad80b"
+    },
+    "dev-harness/src/androidTest/java/dev/forcemind/xs/harness/ArchiveIntegrationTest.java": {
+      "mode": "100644",
+      "sha": "8e2f140ee3d3bedb6939b7528e73f9da2c6a2bcd"
+    },
+    "dev-harness/src/androidTest/java/dev/forcemind/xs/harness/LibraryUiTest.java": {
+      "mode": "100644",
+      "sha": "91e974555c16e3b795415c348aaa79f66478be7d"
+    },
+    "dev-harness/src/androidTest/java/dev/forcemind/xs/harness/SnapshotVersionIntegrationTest.java": {
+      "mode": "100644",
+      "sha": "d3c756efbb2b48e273622266b22e0d2deccd827a"
+    },
+    "dev-harness/src/debug/AndroidManifest.xml": {
+      "mode": "100644",
+      "sha": "0e5b3d9ca1343d5354bb535e1a3ab4e2249aad5c"
+    },
+    "dev-harness/src/main/AndroidManifest.xml": {
+      "mode": "100644",
+      "sha": "a9407952a993d93d31f247c65b2499c25e60ac42"
+    },
+    "dev-harness/src/main/java/dev/forcemind/xs/harness/HarnessActivity.java": {
+      "mode": "100644",
+      "sha": "f58748b9203629d5b63dd6ff9eb440cbf63ab177"
+    },
+    "gradle.properties": {
+      "mode": "100644",
+      "sha": "19f09605c784de067f3f4a146a9577606275deac"
+    },
+    "scripts/check-project.sh": {
+      "mode": "100755",
+      "sha": "9c3dbf440f8291d092e524c94721fb008f729426"
+    },
+    "scripts/prepare-process-fixtures.py": {
+      "mode": "100644",
+      "sha": "a1e87f1b099a003d41a970437bcbc8b42348e847"
+    },
+    "scripts/prepare-signing.py": {
+      "mode": "100644",
+      "sha": "f39a89d0d6885c6fa8e09f0f32a0365e857089b1"
+    },
+    "scripts/record-fixture-provenance.py": {
+      "mode": "100644",
+      "sha": "ac87bc9d8d4264f7be38968c59f2147d57f724cd"
+    },
+    "scripts/record-source-inventory.py": {
+      "mode": "100644",
+      "sha": "f2a3c1a45f84e58d984fe5257463a74507c313e8"
+    },
+    "scripts/run-android-instrumentation.py": {
+      "mode": "100644",
+      "sha": "aa2bddf6c470d4e49b5394344fb0d050b45afd2d"
+    },
+    "scripts/test-core.sh": {
+      "mode": "100755",
+      "sha": "15d5d30b9d6f1aa8dd213afee9747922daf55567"
+    },
+    "scripts/test-debug-upgrade.py": {
+      "mode": "100644",
+      "sha": "18cd71b2190fcfc7268f5f960c27c2741ee992b5"
+    },
+    "scripts/test-emulator-low-space.py": {
+      "mode": "100644",
+      "sha": "47ba40e35828a2f02892d6297c8929e4e15cbc77"
+    },
+    "scripts/test-legacy-upgrade.py": {
+      "mode": "100644",
+      "sha": "a4a7bd0ad1aebd0eb77c93c99d357d89d86de689"
+    },
+    "scripts/test-low-space-driver.py": {
+      "mode": "100644",
+      "sha": "e455602f50d4baf7cd43c1b4b961f908825c7fc9"
+    },
+    "scripts/test-process-recovery.py": {
+      "mode": "100644",
+      "sha": "98047e3b4ef31316cf1b55de6dc99aae8bfb11ce"
+    },
+    "scripts/verify-candidate.py": {
+      "mode": "100644",
+      "sha": "4f7be8feca93f186d82351cd5d3f482a6174ae83"
+    },
+    "scripts/verify-host-allowlist.py": {
+      "mode": "100644",
+      "sha": "1a27334f880153d4dfe0b346048e65694c29b176"
+    },
+    "settings.gradle.kts": {
+      "mode": "100644",
+      "sha": "ce7224dcda73dfb0dcb6a048d627eee723ee6696"
+    },
+    "share-receiver-fixture/build.gradle.kts": {
+      "mode": "100644",
+      "sha": "bef02d955424e99ce6779f58c0ef7e3715c34059"
+    },
+    "share-receiver-fixture/src/main/AndroidManifest.xml": {
+      "mode": "100644",
+      "sha": "4e82caba26ecffefde506beb3bb2e57d2296fee7"
+    },
+    "share-receiver-fixture/src/main/java/dev/forcemind/xs/sharefixture/ReceiverActivity.java": {
+      "mode": "100644",
+      "sha": "f0cba9bfc2bc224bba733a710dc80b5de8d22e22"
+    },
+    "share-receiver-fixture/src/main/res/values/strings.xml": {
+      "mode": "100644",
+      "sha": "02ea1462fa6aeeb0a0065f7cfc49c0a9c8618393"
+    },
+    "src/android/java/dev/forcemind/xs/android/NativePageCaptureController.java": {
+      "mode": "100644",
+      "sha": "a4398ceb15100720339cb02dcd9b3c1e3f021730"
+    },
+    "src/android/java/dev/forcemind/xs/android/NativePageCleanupController.java": {
+      "mode": "100644",
+      "sha": "6b0298e57e95f040e3345dfd335bc3deb194eb0e"
+    },
+    "src/android/java/dev/forcemind/xs/android/VideoFileValidator.java": {
+      "mode": "100644",
+      "sha": "6d633c21e7a936089aad72a99bb6556ea8623f0b"
+    },
+    "src/android/java/dev/forcemind/xs/android/WebObservationParser.java": {
+      "mode": "100644",
+      "sha": "5453bdd24988cb9bfb07b29fb28e370fb6389dee"
+    },
+    "src/android/java/dev/forcemind/xs/android/XsArchiveDatabase.java": {
+      "mode": "100644",
+      "sha": "9e25b11d3e1c5c2f571a30628651ed4f5b844f50"
+    },
+    "src/android/java/dev/forcemind/xs/android/XsArchiveImporter.java": {
+      "mode": "100644",
+      "sha": "7c20d5eed6ac3a9c2edae340a8bd0eb0ded709d8"
+    },
+    "src/android/java/dev/forcemind/xs/android/XsArchiveLibraryOperations.java": {
+      "mode": "100644",
+      "sha": "8644fb627205821ff6f15b4af14acfedd5edc9ce"
+    },
+    "src/android/java/dev/forcemind/xs/android/XsAssetProvider.java": {
+      "mode": "100644",
+      "sha": "2ade649b343ec4a99ddbf0ce6d19bf8ff5c0ae32"
+    },
+    "src/android/java/dev/forcemind/xs/android/XsAssetsActivity.java": {
+      "mode": "100644",
+      "sha": "5197bad2f0653cd1de42d9fc72af3415d6a4aa3e"
+    },
+    "src/android/java/dev/forcemind/xs/android/XsBackupActivity.java": {
+      "mode": "100644",
+      "sha": "3285ae7077f99df7c6768fdfba0b34e2322ad5aa"
+    },
+    "src/android/java/dev/forcemind/xs/android/XsBackupRequest.java": {
+      "mode": "100644",
+      "sha": "64a3a28b0a0e6a45797d6ae48b574faca12de49c"
+    },
+    "src/android/java/dev/forcemind/xs/android/XsCaptureBridge.java": {
+      "mode": "100644",
+      "sha": "574a6fb3c787ba1bd1e5ddc85b81e17c51465e79"
+    },
+    "src/android/java/dev/forcemind/xs/android/XsDeletedLibraries.java": {
+      "mode": "100644",
+      "sha": "cbcc5d6bc53975e709ea1245b8973c678bcf8c5b"
+    },
+    "src/android/java/dev/forcemind/xs/android/XsDownloadJobService.java": {
+      "mode": "100644",
+      "sha": "4fdaaf1886a1aa8ac095f6055c9368c55c9a8039"
+    },
+    "src/android/java/dev/forcemind/xs/android/XsDownloadScheduler.java": {
+      "mode": "100644",
+      "sha": "7cf4a96cd88cbfaee8f8f4738d3314d8ddd30035"
+    },
+    "src/android/java/dev/forcemind/xs/android/XsDownloadSecrets.java": {
+      "mode": "100644",
+      "sha": "d5994a49ba13f345e5539284873218974de7c319"
+    },
+    "src/android/java/dev/forcemind/xs/android/XsFullBackup.java": {
+      "mode": "100644",
+      "sha": "2609081d6a162855129574589554e5013465aea2"
+    },
+    "src/android/java/dev/forcemind/xs/android/XsHistoryActivity.java": {
+      "mode": "100644",
+      "sha": "70ac3d1c6310a82adf97c98b039f3c4a8afae5f6"
+    },
+    "src/android/java/dev/forcemind/xs/android/XsLibrariesActivity.java": {
+      "mode": "100644",
+      "sha": "f02168e041d68e7e54f8450492d243a98d1b7ef1"
+    },
+    "src/android/java/dev/forcemind/xs/android/XsLibraryBackup.java": {
+      "mode": "100644",
+      "sha": "99ad37bf7a78fba22aeae2a6d2da2d9c29483dd1"
+    },
+    "src/android/java/dev/forcemind/xs/android/XsLibraryConsolidation.java": {
+      "mode": "100644",
+      "sha": "f00b5f9fdfa26ec7d9390dc07fb81274bf43e0df"
+    },
+    "src/android/java/dev/forcemind/xs/android/XsLibraryDeletion.java": {
+      "mode": "100644",
+      "sha": "159753ea16803df378cf1e475d509bbbfc5cb195"
+    },
+    "src/android/java/dev/forcemind/xs/android/XsLibraryManagementActivity.java": {
+      "mode": "100644",
+      "sha": "39b8905f0155a099295ddac6b837543b0b9f91b7"
+    },
+    "src/android/java/dev/forcemind/xs/android/XsLibrarySettings.java": {
+      "mode": "100644",
+      "sha": "3047132e5f40a61681dfad9e85f2336385579087"
+    },
+    "src/android/java/dev/forcemind/xs/android/XsLibraryWrites.java": {
+      "mode": "100644",
+      "sha": "3284eec242ebc73fe478dedb6de7aac29d5309b1"
+    },
+    "src/android/java/dev/forcemind/xs/android/XsLocalSpaces.java": {
+      "mode": "100644",
+      "sha": "fd65c61460fad7a30e2a99a956a8588312ed4cb8"
+    },
+    "src/android/java/dev/forcemind/xs/android/XsMediaRepository.java": {
+      "mode": "100644",
+      "sha": "1213431efde6c2f37b9cd761c7830554752ce985"
+    },
+    "src/android/java/dev/forcemind/xs/android/XsRecentTimelineActivity.java": {
+      "mode": "100644",
+      "sha": "1cdc990844c6e43d1336f72e7070b00a89f5d3c0"
+    },
+    "src/android/java/dev/forcemind/xs/android/XsRetentionController.java": {
+      "mode": "100644",
+      "sha": "ca0ed570844b930a53115b2aa459ab85e30fa743"
+    },
+    "src/android/java/dev/forcemind/xs/android/XsRetentionSettings.java": {
+      "mode": "100644",
+      "sha": "22a08465a7cdfdce1dd20b51abeffdfc852e9679"
+    },
+    "src/android/java/dev/forcemind/xs/android/XsRuntimeInitializer.java": {
+      "mode": "100644",
+      "sha": "fae533293f2f81bdb633e405f68f3f4b9d321ef8"
+    },
+    "src/android/java/dev/forcemind/xs/android/XsShareCoordinator.java": {
+      "mode": "100644",
+      "sha": "cbc7faeea4459aba787c79c7efb80a7d70426cb7"
+    },
+    "src/android/java/dev/forcemind/xs/android/XsStorageSettings.java": {
+      "mode": "100644",
+      "sha": "92301d949a724aa2f1d2c7cc87259fad733f3479"
+    },
+    "src/android/java/dev/forcemind/xs/android/XsTimelineBuffer.java": {
+      "mode": "100644",
+      "sha": "9aebc047e85ee5c4b64162239349012f871b53f3"
+    },
+    "src/android/java/dev/forcemind/xs/android/XsTimelineMaintenanceJobService.java": {
+      "mode": "100644",
+      "sha": "4ed05b644c8a940350c8e47a0b85813de366a83d"
+    },
+    "src/android/java/dev/forcemind/xs/android/XsTimelinePromotion.java": {
+      "mode": "100644",
+      "sha": "eb5449f6ca045e2a404a73e7ec8b3c0d3492c157"
+    },
+    "src/main/java/dev/forcemind/xs/core/ArchiveSchema.java": {
+      "mode": "100644",
+      "sha": "f8e1a569160bd041c01ccc0f4e0f2c8ec7a16b76"
+    },
+    "src/main/java/dev/forcemind/xs/core/ArchiveSearch.java": {
+      "mode": "100644",
+      "sha": "d04aef14820f6a90b2350f5d93d4fd53a4585235"
+    },
+    "src/main/java/dev/forcemind/xs/core/BrowserNavigation.java": {
+      "mode": "100644",
+      "sha": "dcd6b6a30c3573be5b9e3808a6046d15290803ab"
+    },
+    "src/main/java/dev/forcemind/xs/core/BrowserUploadPolicy.java": {
+      "mode": "100644",
+      "sha": "73bb97eba9d7f3c799fb999f87e0791995208b0b"
+    },
+    "src/main/java/dev/forcemind/xs/core/CaptureSession.java": {
+      "mode": "100644",
+      "sha": "a26d3900692c64f307beaa4c2c027eb989a9d9b8"
+    },
+    "src/main/java/dev/forcemind/xs/core/EncryptedLibraryBackup.java": {
+      "mode": "100644",
+      "sha": "ed45a0e34be1189c7f96c01c0c014b32908673ca"
+    },
+    "src/main/java/dev/forcemind/xs/core/FeedCapturePolicy.java": {
+      "mode": "100644",
+      "sha": "7591e30f5721282921624da78fea98b9a8da1b6b"
+    },
+    "src/main/java/dev/forcemind/xs/core/LibraryBackupCodec.java": {
+      "mode": "100644",
+      "sha": "977698854e07cae43cb6ab1e18893ab3acc47700"
+    },
+    "src/main/java/dev/forcemind/xs/core/LibraryMergePlan.java": {
+      "mode": "100644",
+      "sha": "48f1b187d5eb52466503e02aa3e107c15ea8e7f9"
+    },
+    "src/main/java/dev/forcemind/xs/core/MediaDownloadPolicy.java": {
+      "mode": "100644",
+      "sha": "20b8d4e8bea4e34b37ff5227d40638c56b6b9e9c"
+    },
+    "src/main/java/dev/forcemind/xs/core/Mp4Structure.java": {
+      "mode": "100644",
+      "sha": "d272ce38523f1f116f17bb7d706a9c3de8c7d9df"
+    },
+    "src/main/java/dev/forcemind/xs/core/ObservationGate.java": {
+      "mode": "100644",
+      "sha": "597fb2eeb66495e3880465c493b5ae6677488c77"
+    },
+    "src/main/java/dev/forcemind/xs/core/ObservationRoutes.java": {
+      "mode": "100644",
+      "sha": "48605ab64a66be17c4817639a97989da4fd81377"
+    },
+    "src/main/java/dev/forcemind/xs/core/OwnActionSession.java": {
+      "mode": "100644",
+      "sha": "4a83583cc0660fc83ee359d1c8671941bf6605f7"
+    },
+    "src/main/java/dev/forcemind/xs/core/PostUrls.java": {
+      "mode": "100644",
+      "sha": "b46553044ea7407171e7fa9786267ef880acc33a"
+    },
+    "src/main/java/dev/forcemind/xs/core/SerialWriteCoordinator.java": {
+      "mode": "100644",
+      "sha": "2ee00bec69b42742861681d248ad501402ddd183"
+    },
+    "src/main/java/dev/forcemind/xs/core/SharedPostParser.java": {
+      "mode": "100644",
+      "sha": "b49c59cc8c3430ed879f1053785b9ce8200a8544"
+    },
+    "src/main/java/dev/forcemind/xs/core/SnapshotPolicy.java": {
+      "mode": "100644",
+      "sha": "12881b519cfb29fb0c720c2a42c42b1910a8386c"
+    },
+    "src/main/java/dev/forcemind/xs/core/StrictJson.java": {
+      "mode": "100644",
+      "sha": "eb6befd38c75ce47247b3f31e01213b132d8338c"
+    },
+    "src/main/java/dev/forcemind/xs/core/TimelineBufferPolicy.java": {
+      "mode": "100644",
+      "sha": "181cd04c3e29145c5d1b6aab68b93eb33c8ed8ff"
+    },
+    "src/main/java/dev/forcemind/xs/core/TimelineBufferSchema.java": {
+      "mode": "100644",
+      "sha": "5f3ac40ce8a68aa78618cad1efbf197b0d70beea"
+    },
+    "src/main/java/dev/forcemind/xs/core/TimelineCaptureSession.java": {
+      "mode": "100644",
+      "sha": "571e56389eae4c7773929d2004eae5b7df73a752"
+    },
+    "src/main/java/dev/forcemind/xs/core/TimelinePromotionData.java": {
+      "mode": "100644",
+      "sha": "356706f84e051807c21421bb67acfe199ac83143"
+    },
+    "tests/cleanup_test.js": {
+      "mode": "100644",
+      "sha": "79b63c207e3872704f017193a360d3732ef6641b"
+    },
+    "tests/fts4_compatibility_test.py": {
+      "mode": "100644",
+      "sha": "53d4c30ae4c6e955cf7f7feca9e5926a566393da"
+    },
+    "tests/java/dev/forcemind/xs/android/BackupRequestTest.java": {
+      "mode": "100644",
+      "sha": "c5601183e0fbd7a9620315615a01b6af67591af9"
+    },
+    "tests/java/dev/forcemind/xs/tests/BrowserUploadPolicyTest.java": {
+      "mode": "100644",
+      "sha": "85647371b405d8d59575ce73f7f77489fcb22f13"
+    },
+    "tests/java/dev/forcemind/xs/tests/CapacityDump.java": {
+      "mode": "100644",
+      "sha": "f94324f28e6eaf4a67c1a4adf2abe8386e8241e4"
+    },
+    "tests/java/dev/forcemind/xs/tests/CaptureSessionTest.java": {
+      "mode": "100644",
+      "sha": "ab71a9269af94264961d14085f80ef622e635451"
+    },
+    "tests/java/dev/forcemind/xs/tests/CoreSmokeTest.java": {
+      "mode": "100644",
+      "sha": "f43b5ba2e2924ed48fc5a6f41f51b4e623eb17c5"
+    },
+    "tests/java/dev/forcemind/xs/tests/EncryptedLibraryBackupTest.java": {
+      "mode": "100644",
+      "sha": "37baa8afb457843530bb0ab0cdee845a8304aec2"
+    },
+    "tests/java/dev/forcemind/xs/tests/FtsCompatibilityDump.java": {
+      "mode": "100644",
+      "sha": "84fde26a69c3636b4c1f93409157b482a5a9b70f"
+    },
+    "tests/java/dev/forcemind/xs/tests/LibraryBackupCodecTest.java": {
+      "mode": "100644",
+      "sha": "b2039d3f41b9e8163defc148a1aa8c02f9a494bd"
+    },
+    "tests/java/dev/forcemind/xs/tests/LibraryMergePlanTest.java": {
+      "mode": "100644",
+      "sha": "e13c6948c4f13a54606499527339d6c03ebd9099"
+    },
+    "tests/java/dev/forcemind/xs/tests/LibraryWritesTest.java": {
+      "mode": "100644",
+      "sha": "e15a3182cf741a1a395d92d67b99967a98954fe4"
+    },
+    "tests/java/dev/forcemind/xs/tests/MediaDownloadPolicyTest.java": {
+      "mode": "100644",
+      "sha": "99fe59ac7909ec160a47e72941964a51ad950979"
+    },
+    "tests/java/dev/forcemind/xs/tests/Mp4StructureTest.java": {
+      "mode": "100644",
+      "sha": "00b9db6eba4087522f57cb561e7bf789dc086073"
+    },
+    "tests/java/dev/forcemind/xs/tests/ObservationGateTest.java": {
+      "mode": "100644",
+      "sha": "df993548ec7fb0302882b9a2a2d37b48c4de2043"
+    },
+    "tests/java/dev/forcemind/xs/tests/OwnActionSessionTest.java": {
+      "mode": "100644",
+      "sha": "261da73afaa0abfff0294caf9e38ad334c7933db"
+    },
+    "tests/java/dev/forcemind/xs/tests/SchemaDump.java": {
+      "mode": "100644",
+      "sha": "a4dce631d783a792b0da538fc675a350abb9fc69"
+    },
+    "tests/java/dev/forcemind/xs/tests/SharedPostParserTest.java": {
+      "mode": "100644",
+      "sha": "57ae1566ad8edc570ffdc2cdb6d59a287f013295"
+    },
+    "tests/java/dev/forcemind/xs/tests/SnapshotPolicyTest.java": {
+      "mode": "100644",
+      "sha": "4f37440e5c46a5a9862bf79fddeedd9d9c80d484"
+    },
+    "tests/java/dev/forcemind/xs/tests/TimelineBufferPolicyTest.java": {
+      "mode": "100644",
+      "sha": "c38d3effe8b59be6cb1d2c4053da4dc3bf45e4d7"
+    },
+    "tests/java/dev/forcemind/xs/tests/TimelineCaptureSessionTest.java": {
+      "mode": "100644",
+      "sha": "808fdf04b570da360933bd39a504af04f57bbf12"
+    },
+    "tests/java/dev/forcemind/xs/tests/TimelinePromotionDataTest.java": {
+      "mode": "100644",
+      "sha": "1fef9c3b271e7b7074f224ea8582c8ed6dffe6d7"
+    },
+    "tests/java/dev/forcemind/xs/tests/TimelineSchemaDump.java": {
+      "mode": "100644",
+      "sha": "db5dc3746929d9def1daf12d6cb524913a2e6e73"
+    },
+    "tests/observer_stress_test.js": {
+      "mode": "100644",
+      "sha": "5213474fbab3cafc00ddbbb1f6e28bc230d09531"
+    },
+    "tests/observer_test.js": {
+      "mode": "100644",
+      "sha": "11919d5b96467612b0cd0e1a2aac4544a3b1a8a0"
+    },
+    "tests/sqlite_capacity_benchmark.py": {
+      "mode": "100644",
+      "sha": "cfb0937044f56810aff33d6fe5a4d5235343321e"
+    },
+    "tests/sqlite_schema_test.py": {
+      "mode": "100644",
+      "sha": "5b84e8ab5a715917ba375b6baa489cb9a3c9f737"
+    },
+    "tests/test_host_allowlist.py": {
+      "mode": "100644",
+      "sha": "d4efae43775ecd2d7b93fbda8f0784e2967f5c36"
+    },
+    "tests/test_legacy_upgrade_driver.py": {
+      "mode": "100644",
+      "sha": "7fd404443e51046bcb2c9fdbf0976b2ac51c3cfe"
+    },
+    "tests/test_process_recovery_driver.py": {
+      "mode": "100644",
+      "sha": "851cf338ce8b83675024b489c59b0d42a65e220d"
+    },
+    "tests/timeline_schema_test.py": {
+      "mode": "100644",
+      "sha": "29765bf984041123c6b7a4fece15af6ea83bc1ef"
+    },
+    "xs-runtime/build.gradle.kts": {
+      "mode": "100644",
+      "sha": "00c5c526f8b3912a5681de737a0877252e8e8746"
+    },
+    "xs-runtime/src/main/AndroidManifest.xml": {
+      "mode": "100644",
+      "sha": "1c26b94da0ff7c408d6832c926fe61563cc60af3"
+    },
+    "xs-runtime/src/main/assets/xs-cleanup.js": {
+      "mode": "100644",
+      "sha": "871c728d36b885c354d4c0686005aeec480b01ff"
+    },
+    "xs-runtime/src/main/assets/xs-observer.js": {
+      "mode": "100644",
+      "sha": "7bee10bf432d8c7ba4fd9157e8ace3b34db3035d"
+    }
+  },
+  "preserved_ancestors": [
+    "78a29cb05f908e5f44b6111183a202655da009a9",
+    "f88003c8ec1ee193b75de7267db6ae7654ee77c4"
+  ],
+  "scope": "Evidence-only checkpoint; no new runtime/test/workflow inputs and no new device execution. Current document-commit SHA is deliberately omitted to avoid self-reference."
+}

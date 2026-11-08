@@ -1,7 +1,7 @@
 # XS-16｜最近时间线：滚动缓冲与刷新找回
 
 日期：2026-11-07。范围已由用户确认，跟踪 [Issue #6](https://github.com/ForceMind/Xs/issues/6)，决策见 [ADR-0005](adr/0005-timeline-buffer.md)。
-**F1–F5本轮云端实现/回归完成，CI87四API792/792主项、20/20driver实际通过；[精确证据](XS16_CI87_EVIDENCE.zh-CN.md)保留原失败与场景边界，T14/live仍未启用。**
+**F1–F5云端实现与T07空间补强已通过CI93：四API800/800主项、20/20driver及44/44原生阶段，实际不足1MiB拒收/恢复4/4。[精确证据](XS16_FILESYSTEM_PRESSURE_EVIDENCE.zh-CN.md)保留原失败与场景边界，T14/live仍未启用。**
 接续 PR #5 基线 `edf7906eee3c034d26631531feca822d15437ccc` / tree `7e5e8e6560fd766a51bb2d4c621d53ecab97fe64`。
 [CI83](https://github.com/ForceMind/Xs/actions/runs/42420707113) 的 1287 项 JVM 断言、23 项 host 检查、624/624 主仪器及 20/20 独立 driver 是已有 E 基线证据，不验证 XS-16。
 
