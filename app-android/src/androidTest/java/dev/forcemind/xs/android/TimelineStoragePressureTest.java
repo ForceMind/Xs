@@ -49,7 +49,7 @@ public final class TimelineStoragePressureTest {
     }
     @After public void tearDown()throws Exception {
         if(store!=null){
-            try{store.getWritableDatabase().setMaximumSize(100L*1024*1024);}finally{store.close();}
+            try{setMaximumSize(100L*1024*1024);}finally{store.close();}
         }
         if(archive!=null){try{write(()->archive.deleteLibraryScope(library));}finally{archive.close();}}
         if(canary!=null)assertTrue(canary.delete());
@@ -59,13 +59,13 @@ public final class TimelineStoragePressureTest {
         XsLibraryWrites.Ticket unrelated=XsLibraryWrites.ticket(library);
         SQLiteDatabase db=store.getWritableDatabase();long pages=scalar("PRAGMA page_count"),size=scalar("PRAGMA page_size");
         assertEquals("FULL fixture starts with no reusable free pages",0,scalar("PRAGMA freelist_count"));
-        assertEquals(pages*size,db.setMaximumSize(pages*size));
+        assertEquals(pages*size,setMaximumSize(pages*size));
         assertFalse("A real SQLite page cap must reject this new large snapshot",capture("98003",largeBody()));
         assertEquals("SQLITE_FULL",store.stats(library).pauseReason);assertEquals(1,store.stats(library).dropped);
         assertEquals(1,store.stats(library).count);assertTrue(store.list(library,"allocationneedle",null,10,0).isEmpty());
         assertEquals(0,scalar("SELECT COUNT(*) FROM timeline_seen WHERE post_id='98003'"));
         assertTrue(XsLibraryWrites.isCurrent(unrelated));assertDurable();
-        db.setMaximumSize(100L*1024*1024);
+        setMaximumSize(100L*1024*1024);
         assertTrue(capture("98003",largeBody()));assertEquals(2,store.stats(library).count);
         assertTrue(store.stats(library).pauseReason.isEmpty());assertEquals(1,store.stats(library).dropped);
         assertDurable();
@@ -75,11 +75,11 @@ public final class TimelineStoragePressureTest {
     @Test public void rejectedCaptureStillHasBoundedDiagnosticsWhenCounterWriteFails()throws Exception {
         SQLiteDatabase db=store.getWritableDatabase();
         db.execSQL("CREATE TRIGGER fixture_counter_failure BEFORE UPDATE OF dropped_count ON timeline_state BEGIN SELECT RAISE(ABORT,'fixture counter unavailable'); END");
-        store.maintain();long pages=scalar("PRAGMA page_count"),size=scalar("PRAGMA page_size");db.setMaximumSize(pages*size);
+        store.maintain();long pages=scalar("PRAGMA page_count"),size=scalar("PRAGMA page_size");setMaximumSize(pages*size);
         assertFalse(capture("98004",largeBody()));
         assertEquals("SQLITE_FULL",store.stats(library).pauseReason);assertEquals(1,store.stats(library).dropped);
         assertEquals(1,store.stats(library).count);assertDurable();
-        db.setMaximumSize(100L*1024*1024);db.execSQL("DROP TRIGGER fixture_counter_failure");
+        setMaximumSize(100L*1024*1024);db.execSQL("DROP TRIGGER fixture_counter_failure");
         assertTrue(capture("98004",largeBody()));assertTrue(store.stats(library).pauseReason.isEmpty());
         assertEquals("A failed telemetry write must not double count the same rejection",1,store.stats(library).dropped);
         CountDownLatch reset=new CountDownLatch(1);AtomicBoolean resetOk=new AtomicBoolean();
@@ -87,6 +87,19 @@ public final class TimelineStoragePressureTest {
         assertTrue(reset.await(20,TimeUnit.SECONDS));assertTrue(resetOk.get());
         assertEquals(0,store.stats(library).dropped);assertTrue(store.stats(library).pauseReason.isEmpty());
         assertFalse(store.settings().enabled);assertDurable();
+    }
+    private long setMaximumSize(long bytes)throws Exception {
+        java.util.concurrent.atomic.AtomicLong actual=new java.util.concurrent.atomic.AtomicLong();
+        write(()->{
+            SQLiteDatabase db=store.getWritableDatabase();db.beginTransaction();
+            try{
+                // Android's setMaximumSize may run a read-classified PRAGMA on a WAL
+                // reader. An explicit write transaction pins the writer connection.
+                actual.set(db.setMaximumSize(bytes));
+                assertEquals(actual.get()/scalar("PRAGMA page_size"),scalar("PRAGMA max_page_count"));
+                db.setTransactionSuccessful();
+            }finally{db.endTransaction();}
+        });return actual.get();
     }
     private boolean capture(String id,String body)throws Exception {
         CountDownLatch done=new CountDownLatch(1);AtomicBoolean result=new AtomicBoolean();AtomicInteger callbacks=new AtomicInteger();
