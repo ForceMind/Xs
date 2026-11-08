@@ -15,7 +15,6 @@ import dev.forcemind.xs.android.NativePageCaptureController;
 import dev.forcemind.xs.android.XsArchiveDatabase;
 import dev.forcemind.xs.android.XsLibraryWrites;
 import dev.forcemind.xs.android.XsTimelineBuffer;
-import dev.forcemind.xs.core.TimelineCaptureSession;
 import dev.forcemind.xs.core.ArchiveSearch;
 import dev.forcemind.xs.core.CaptureSession;
 import dev.forcemind.xs.core.SnapshotPolicy;
@@ -113,47 +112,28 @@ public class NativeCaptureIntegrationTest {
     private static String page(String body){return "<!doctype html><meta name='viewport' content='width=device-width,initial-scale=1'>"+
         "<style>body{margin:0}article{box-sizing:border-box;width:100vw;height:65vh;padding:20px;background:#fff}a{display:block}</style>"+body;}
     private static String card(String id,String text){return "<article data-testid='tweet' id='p"+id+"'><a href='https://x.com/alice/status/"+id+"'><time datetime='2026-11-01T00:00:00Z'>date</time></a><div data-testid='tweetText'>"+text+"</div></article>";}
+    private XsTimelineBuffer.Entry awaitBuffer(String query)throws Exception {
+        long until=SystemClock.elapsedRealtime()+10000;
+        do{java.util.List<XsTimelineBuffer.Entry> entries=timeline.list(LIBRARY,query,null,10,0);if(!entries.isEmpty())return entries.get(0);SystemClock.sleep(30);}while(SystemClock.elapsedRealtime()<until);
+        throw new AssertionError("Temporary fixture not captured: "+query);
+    }
     @Test public void independentBufferFindsQuickPartialCardsAndPriorRefreshBatchesWithoutHistory()throws Exception {
         timeline=XsTimelineBuffer.get(app);timeline.configure(true,48,100);
-        AtomicReference<CountDownLatch> saved=new AtomicReference<>(new CountDownLatch(1));
-        AtomicReference<TimelineCaptureSession.Event> observed=new AtomicReference<>();
-        scenario.onActivity(activity->{
-            NativePageCaptureController capture=controller.get();capture.setConsent(false,false,3000);
-            capture.setBufferSink(event->{
-                observed.set(event);XsTimelineBuffer.Ticket ticket=timeline.ticket(LIBRARY);
-                timeline.queue(ticket,new XsTimelineBuffer.Batch(event.batchId,event.batchReason,event.source),
-                    new XsTimelineBuffer.Candidate(event.url,event.author,event.body,event.publishedAtMs,event.quality,event.observedAtMs,event.sequence),
-                    ()->capture.isCurrent(event),ok->{if(ok)saved.get().countDown();});
-            });
-            capture.setBufferConsent(true);
-        });
+        scenario.onActivity(activity->{NativePageCaptureController capture=controller.get();capture.setConsent(false,false,3000);capture.setBufferStore(timeline);capture.setBufferConsent(true);});
         String partial=card("140","quick partial offline body").replace("<article ","<article style='height:100vh;transform:translateY(50vh)' ");
         load("https://x.com/home","buffer-first-document",false,page("<main>"+partial+"</main>"));
-        assertTrue("Partial intersection needs no qualified dwell",saved.get().await(8,TimeUnit.SECONDS));
-        TimelineCaptureSession.Event first=observed.get();assertNotNull(first);assertEquals(SnapshotPolicy.Quality.PARTIAL,first.quality);
+        XsTimelineBuffer.Entry first=awaitBuffer("quick partial");assertEquals(SnapshotPolicy.Quality.PARTIAL,first.quality);
         assertEquals("quick partial offline body",first.body);
         evaluate("document.querySelector('article').style.display='none'");
-        assertEquals(1,timeline.list(LIBRARY,"offline",null,20,0).size());
-        assertEquals(1,timeline.batches(LIBRARY).size());
-        saved.set(new CountDownLatch(1));
+        assertEquals(1,timeline.list(LIBRARY,"offline",null,20,0).size());assertEquals(1,timeline.batches(LIBRARY).size());
         scenario.onActivity(activity->controller.get().refreshed());
         evaluate("document.querySelector('main').innerHTML="+org.json.JSONObject.quote(card("141","after refresh offline body")));
-        assertTrue(saved.get().await(8,TimeUnit.SECONDS));
-        assertEquals("native_refresh",observed.get().batchReason);
-        assertEquals(2,timeline.batches(LIBRARY).size());
+        assertEquals("native_refresh",awaitBuffer("after refresh").batchReason);assertEquals(2,timeline.batches(LIBRARY).size());
         assertEquals("140",timeline.list(LIBRARY,"quick partial",first.batchId,20,0).get(0).postId);
-        saved.set(new CountDownLatch(1));
         evaluate("document.querySelector('main').outerHTML="+org.json.JSONObject.quote("<main>"+card("142","suspected structural refresh")+"</main>"));
-        assertTrue(saved.get().await(8,TimeUnit.SECONDS));
-        assertEquals("suspected_refresh",observed.get().batchReason);
-        TimelineCaptureSession.Event old=observed.get();
-        scenario.onActivity(activity->{controller.get().setBufferConsent(false);controller.get().setBufferConsent(true);});
-        assertFalse("Revoked accepted work does not revive",controller.get().isCurrent(old));
+        assertEquals("suspected_refresh",awaitBuffer("suspected structural").batchReason);
         long dropped=timeline.stats(LIBRARY).dropped;
-        scenario.onActivity(activity->{
-            controller.get().setBufferStore(timeline);
-            for(int i=0;i<512;i++)controller.get().refreshed();
-        });
+        scenario.onActivity(activity->{for(int i=0;i<512;i++)controller.get().refreshed();});
         long until=SystemClock.elapsedRealtime()+5000;
         while(timeline.stats(LIBRARY).dropped==dropped&&SystemClock.elapsedRealtime()<until)SystemClock.sleep(30);
         assertTrue("Native admission limits reach the coverage UI's persistent counter",timeline.stats(LIBRARY).dropped>dropped);
@@ -161,6 +141,39 @@ public class NativeCaptureIntegrationTest {
         CountDownLatch drained=new CountDownLatch(1);XsLibraryWrites.submit(LIBRARY,drained::countDown);assertTrue(drained.await(5,TimeUnit.SECONDS));
         try(Cursor c=db.timeline(LIBRARY,null,10,"OPEN_POST")){assertEquals(0,c.getCount());}
         try(Cursor c=db.timeline(LIBRARY,null,10,"FEED_VISIBLE")){assertEquals(0,c.getCount());}
+    }
+    @Test public void preClearNativeReadCannotAcquireFreshBufferAuthorityAndFeedTicketsSurvive()throws Exception {
+        timeline=XsTimelineBuffer.get(app);timeline.configure(true,48,100);
+        feedSaved.set(new CountDownLatch(1));
+        scenario.onActivity(activity->{controller.get().setBufferStore(timeline);controller.get().setBufferConsent(true);controller.get().setConsent(false,true,1200);});
+        load("https://x.com/home","buffer-clear-read-race",false,page(card("143","old callback canary")));
+        assertTrue(feedSaved.get().await(8,TimeUnit.SECONDS));awaitBuffer("old callback");
+        CaptureSession.Event feed=lastFeed.get();assertNotNull(feed);
+        XsLibraryWrites.Ticket mediaTicket=XsLibraryWrites.ticket(LIBRARY);
+        java.lang.reflect.Field inFlight=NativePageCaptureController.class.getDeclaredField("inFlight"),installed=NativePageCaptureController.class.getDeclaredField("installed");
+        inFlight.setAccessible(true);installed.setAccessible(true);
+        CountDownLatch cleared=new CountDownLatch(1),hidden=new CountDownLatch(1);AtomicReference<Boolean> started=new AtomicReference<>(false);
+        long until=SystemClock.elapsedRealtime()+5000;
+        do{
+            scenario.onActivity(activity->{
+                try{
+                    NativePageCaptureController capture=controller.get();if(inFlight.getBoolean(capture)||!installed.getBoolean(capture))return;
+                    // Dispatch a real evaluateJavascript read; its callback cannot run until
+                    // this same UI turn has advanced the buffer-only clear generation.
+                    capture.readNow();assertTrue(inFlight.getBoolean(capture));started.set(true);
+                    timeline.clear(LIBRARY,ok->{assertTrue(ok);cleared.countDown();});
+                    ((WebView)activity.findViewById(R.id.browser_view)).evaluateJavascript("document.getElementById('p143').style.display='none'",result->hidden.countDown());
+                }catch(IllegalAccessException failure){throw new AssertionError(failure);}
+            });
+            if(!started.get())SystemClock.sleep(20);
+        }while(!started.get()&&SystemClock.elapsedRealtime()<until);
+        assertTrue("A real native read was in flight across clear",started.get());
+        assertTrue(hidden.await(5,TimeUnit.SECONDS));assertTrue(cleared.await(5,TimeUnit.SECONDS));SystemClock.sleep(500);
+        assertEquals("The old result must not revive the cleared card",0,timeline.list(LIBRARY,"old callback",null,10,0).size());
+        assertTrue("Buffer clear preserves the shared media writer ticket",XsLibraryWrites.isCurrent(mediaTicket));
+        assertTrue("Buffer clear does not revoke an accepted qualified feed event",controller.get().isCurrent(feed));
+        evaluate("document.getElementById('p143').innerHTML="+org.json.JSONObject.quote("<a href='https://x.com/alice/status/144'><time datetime='2026-11-01T00:00:00Z'>date</time></a><div data-testid='tweetText'>fresh callback canary</div>")+";document.getElementById('p143').style.display='block'");
+        assertEquals("144",awaitBuffer("fresh callback").postId);
     }
 
     @Test public void immediateOpenLateBodyReloadAndQuickReturn()throws Exception {

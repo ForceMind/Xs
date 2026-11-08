@@ -10,6 +10,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 import dev.forcemind.xs.core.ArchiveSearch;
 import dev.forcemind.xs.core.SnapshotPolicy;
+import dev.forcemind.xs.core.TimelinePromotionData;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.nio.file.Files;
@@ -78,7 +79,19 @@ public final class ProcessRecoveryProbe {
             assertTrue(timeline.append(ticket,nativeBatch,new XsTimelineBuffer.Candidate(TEMP_POST,"fixture","Temporary process boundary canary",null,SnapshotPolicy.Quality.PARTIAL,now,1)));
             assertTrue(timeline.append(ticket,nativeBatch,new XsTimelineBuffer.Candidate(SAVED_POST,"fixture","Durably saved process buffer canary",null,SnapshotPolicy.Quality.PARTIAL,now,2)));
             XsTimelineBuffer.Entry saved=timeline.list(survivor,"Durably saved process",batch,10,0).get(0);
-            assertTrue(XsTimelinePromotion.promote(context,timeline,ticket,saved.appearanceId,false,now+1).committed);
+            TimelinePromotionData projection=new TimelinePromotionData(saved.promotionId,saved.url,saved.body,saved.author,
+                saved.publishedAt,saved.capturedAt,saved.snapshotCapturedAt,saved.source,saved.batchId,saved.batchReason,saved.provenance,saved.quality);
+            // Fixture fault seam: commit the actual Archive half, then deliberately omit
+            // buffer acknowledgement. External drivers stop this OS process before verify;
+            // the ordinary suite exercises only the same-process interruption state.
+            try(XsArchiveDatabase archive=new XsArchiveDatabase(context)){
+                assertTrue(archive.promoteTimeline(survivor,projection,false,now+1,()->{
+                    XsTimelineBuffer.Entry current=timeline.entry(ticket,saved.appearanceId);
+                    return current!=null&&saved.promotionId.equals(current.promotionId);
+                }));
+                try(Cursor c=archive.getReadableDatabase().rawQuery("SELECT COUNT(*) FROM timeline_promotions WHERE account_id=? AND promotion_id=?",new String[]{survivor,saved.promotionId})){assertTrue(c.moveToFirst());assertEquals(1,c.getInt(0));}
+            }
+            assertEquals("Seed leaves an actual Archive commit pending buffer acknowledgement",0,timeline.entry(ticket,saved.appearanceId).savedAt);
         });
         write(deleted,()->{
             long now=System.currentTimeMillis();assertTrue(timeline.append(timeline.ticket(deleted),new XsTimelineBuffer.Batch("pending-delete:"+UUID.randomUUID(),"native_navigation","unknown"),
@@ -126,23 +139,33 @@ public final class ProcessRecoveryProbe {
             try(Cursor c=archive.getReadableDatabase().rawQuery("SELECT COUNT(*) FROM posts WHERE account_id=?",new String[]{deleted})){assertTrue(c.moveToFirst());assertEquals(0,c.getInt(0));}
         }
         XsTimelineBuffer timeline=XsTimelineBuffer.get(context);
-        assertEquals("The temporary DB survives the actual process/boot/upgrade boundary",2,timeline.list(survivor,"process",null,10,0).size());
+        assertEquals(separateProcess?"The temporary DB survives the actual process/boot/upgrade boundary":"The ordinary suite verifies the same-process recovery seam only",2,timeline.list(survivor,"process",null,10,0).size());
         XsTimelineBuffer.Entry temporary=timeline.list(survivor,"Temporary process boundary",null,10,0).get(0);
         assertEquals("991232",temporary.postId);assertEquals("Temporary process boundary canary",temporary.body);
         assertEquals("home_following",temporary.source);assertEquals(SnapshotPolicy.Quality.PARTIAL,temporary.quality);
         XsTimelineBuffer.Entry saved=timeline.list(survivor,"Durably saved process",null,10,0).get(0);
-        assertTrue(saved.savedAt>0);assertEquals(0,saved.favoritedAt);
-        // Retrying after a different OS process must find the persistent archive ledger.
-        write(survivor,()->assertTrue(XsTimelinePromotion.promote(context,timeline,timeline.ticket(survivor),saved.appearanceId,false,System.currentTimeMillis()).committed));
+        assertEquals("The committed Archive result has not yet been acknowledged by the temporary DB",0,saved.savedAt);assertEquals(0,saved.favoritedAt);
+        try(XsArchiveDatabase archive=new XsArchiveDatabase(context)){
+            try(Cursor c=archive.getReadableDatabase().rawQuery("SELECT COUNT(*) FROM timeline_promotions WHERE account_id=? AND promotion_id=?",new String[]{survivor,saved.promotionId})){assertTrue(c.moveToFirst());assertEquals("Archive commit precedes recovery retry",1,c.getInt(0));}
+        }
+        // External phases retry after the driver proves the OS process/boot boundary.
+        // The default suite uses this identical native fault seam without claiming a kill.
+        write(survivor,()->{
+            XsTimelinePromotion.Result retry=XsTimelinePromotion.promote(context,timeline,timeline.ticket(survivor),saved.appearanceId,false,System.currentTimeMillis());
+            assertTrue(retry.committed);assertTrue(retry.acknowledged);
+        });
+        assertTrue("Recovery acknowledges the pre-existing Archive commit",timeline.entry(survivor,saved.appearanceId).savedAt>0);
         try(XsArchiveDatabase archive=new XsArchiveDatabase(context)){
             try(Cursor c=archive.getReadableDatabase().rawQuery("SELECT post_id,opened_count FROM posts WHERE account_id=? ORDER BY post_id",new String[]{survivor})){
                 assertEquals("Buffer-only cards do not enter the durable library",2,c.getCount());assertTrue(c.moveToFirst());
                 assertEquals("991231",c.getString(0));assertEquals(1,c.getInt(1));assertTrue(c.moveToNext());assertEquals("991233",c.getString(0));assertEquals(0,c.getInt(1));
             }
             try(Cursor c=archive.getReadableDatabase().rawQuery("SELECT COUNT(*) FROM timeline_promotions WHERE account_id=?",new String[]{survivor})){assertTrue(c.moveToFirst());assertEquals(1,c.getInt(0));}
+            try(Cursor c=archive.getReadableDatabase().rawQuery("SELECT COUNT(*) FROM user_actions WHERE account_id=? AND post_id='991233' AND action_type='LOCAL_SAVE'",new String[]{survivor})){assertTrue(c.moveToFirst());assertEquals("Recovery must not duplicate the explicit save fact",1,c.getInt(0));}
+            try(Cursor c=archive.getReadableDatabase().rawQuery("SELECT COUNT(*) FROM favorites WHERE account_id=? AND post_id='991233'",new String[]{survivor})){assertTrue(c.moveToFirst());assertEquals("Saving does not invent a favorite",0,c.getInt(0));}
         }
         try(Cursor c=timeline.getReadableDatabase().rawQuery("SELECT COUNT(*) FROM timeline_appearances WHERE library_id=?",new String[]{deleted})){assertTrue(c.moveToFirst());assertEquals(0,c.getInt(0));}
-        android.os.Bundle timelineStatus=new android.os.Bundle();timelineStatus.putString("xs_timeline_buffer_entries","2");timelineStatus.putString("xs_timeline_saved_promotions","1");InstrumentationRegistry.getInstrumentation().sendStatus(0,timelineStatus);
+        android.os.Bundle timelineStatus=new android.os.Bundle();timelineStatus.putString("xs_timeline_buffer_entries","2");timelineStatus.putString("xs_timeline_saved_promotions","1");timelineStatus.putString("xs_timeline_commit_ack_gap","verified");InstrumentationRegistry.getInstrumentation().sendStatus(0,timelineStatus);
         assertEquals(prefs.getString("default",null),XsLocalSpaces.defaultLibrary(context));
         XsMediaRepository.Asset task=media.find(survivor,id);assertNotNull(task);assertEquals("PAUSED",task.state);
         if(separateProcess){assertEquals(0,task.bytes);assertFalse(new File(new File(context.getFilesDir(),"xs-saved-media"),prefs.getString("part","")).exists());}

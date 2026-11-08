@@ -27,10 +27,10 @@
 | 命令/范围 | 当前结果 |
 | --- | --- |
 | `bash scripts/check-project.sh` | PASS，6项host检查 |
-| `bash scripts/test-core.sh` | 第一轮及后续动态开发轮PASS：Java/SQLite/DOM/20k虚拟卡与1000生命周期；最终计数与提交以最终CI为准 |
+| `bash scripts/test-core.sh` | df91eab冻结源码本地及CI85均PASS：1406 JVM、25临时SQLite、29driver host、6allowlist、DOM/20k虚拟卡与1000生命周期、10k/100k容量 |
 | 临时SQLite实际FTS/物理回收 | host最终25断言PASS；实际文件5402624→151552字节（前轮5386240→135168）（非Android/安全擦除证明） |
-| 原生AAR/app/harness/androidTest构建与双Lint | 本地实际构建多轮PASS；最终冻结源码复验执行中 |
-| API26/27/30/36主仪器与20独立driver | 新源码尚未执行；待CI，不使用旧结果替代 |
+| 原生AAR/app/harness/androidTest构建与双Lint | df91eab最终冻结源码本地完整构建/测试APK/双Lint PASS；同源CI85 core/build也PASS |
+| API26/27/30/36主仪器与20独立driver | CI85 API36实际191项、34失败；其余当时运行/排队，新提交后状态独立记账 |
 
 ## 保留的CI84失败
 
@@ -56,3 +56,20 @@
 ## 最终源码审计修复
 
 新双线程latch回归复现session→store与store→validator锁反转：临时恢复synchronized校验稳定5秒超时失败，当前volatile不可变revocation stamp无锁校验通过40条timeline断言。实际write仍检查同一不可复活撤销身份。另修复首次LINK_ONLY保存后的显式再保存正文补全：保留首保存时刻、单条LOCAL_SAVE/ledger，按实际正文捕获时间补snapshot，不生成OPEN/FEED；新增第9项native promotion回归。
+
+## CI85 实际失败与下一源码修复
+
+提交`df91eab7b32eb58333c1bcaa3f729e74550325ab`，tested merge `803d414f3b6abe789b7ce8f4205acf7bd4b3f995`，tree `b07678d5ae7a19074f5050343302d74e085a9198`。core/build实际PASS；[API36](https://github.com/ForceMind/Xs/actions/runs/42460035826/job/128668155027)主XML实际191（127客户端+64宿主），34失败、0error/skip。固定旧APK schema2→6 driver PASS，后4driver NOT RUN；不可把157个通过项或旧CI83冒充全套通过。
+
+根因堆栈为`SQLiteDatabase.execSQL → XsTimelineBuffer.onConfigure:65`：`PRAGMA busy_timeout=1000`返回一行，Android要求query/rawQuery。后续源码改为rawQuery并消费结果；SQLite实查busy_timeout/wal_autocheckpoint/journal_size_limit均返回行，auto_vacuum=FULL setter无结果。构建/host SQLite通过不能验证Android执行API的这个边界。实际下载ZIP SHA256 `2f5bcc81bc6ef923778286536aee6eb7d54715c0603099ee383b98d22a71576a`，3份APK实际aapt/apksigner核验及全191case/设备/WebView/driver/provenance见[原始解析账本](evidence/xs16-ci85-api36-failure.json)。
+
+本轮API36中规范URL迟到正文、真实来源路由与native context、3项明文/加密SAF重建/失效及真实双PNG选择均实际PASS，分别只证明这些子项。失败状态完整保留。其余旧源码任务若在新源码推送后被workflow并发规则取消，记CANCELED/NOT RUN，不写PASS，也不手动重跑掩盖旧失败。
+
+后续源码同时关闭复核发现的边界：
+
+- 已打开预览本身按最近TTL重验/到期关闭并清空视图；外部清理、暂停/销毁与旧弹窗回调有独立epoch，周期刷新保留仍有效多选。新增真实Activity暂停/恢复与预览到期/外部清理回归。
+- 设备误跳未来再调回时，旧“重试”保留未来高水位会永久拒收新卡。改为**明确确认后重置所有空间的临时缓冲和时钟**：同事务不可逆删除全部临时数据/反重放凭据后才允许降低时间域，失效全部buffer票据且收录保持OFF；小时/预算、Archive、媒体和其他writer票据保留，需另行开启。新增2项原生回归。正常TTL/关闭/修改设置仍不静默清空。
+- 每次原生JS读取前绑定buffer ticket，回调不重新签发票据。跨清理/重置旧读取仅拒buffer、不影响OPEN/FEED，下一新读取使用新batch；新增实际WebView跨清理回归。
+- 外部ProcessRecoveryProbe故意提交Archive后不ack，再让实际force-stop/guest/debug升级驱动跨进程重试；只在新CI执行后可记实际commit→ack中断证据。增加取消收藏后同出现记录再次收藏的回归（原生产逻辑已支持）。
+
+以上后续源码和新测试不得用CI85覆盖；等待新提交的四API/20driver执行。真实X/T14/live/正式发布边界不变。

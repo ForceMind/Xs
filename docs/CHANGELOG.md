@@ -1,3 +1,7 @@
+## XS-16 原生失败后的边界修复
+
+CI85 API36保留191项/34失败原证据：busy_timeout PRAGMA必须由Android rawQuery消费，已修源码。另补预览TTL/生命周期、明确确认的临时时间域重置、JS读取前票据绑定和实际进程commit→ack中断探针。执行范围见[当前证据](XS16_IMPLEMENTATION_EVIDENCE.zh-CN.md)，不能以CI85/旧CI通过替代新源码验收。
+
 # 当前增量：XS-16 与三项审阅修复
 
 - 规范 `/i/web/status/` 正文观察、解析后的来源/原生home上下文、备份SAF重建的进程内请求保留。

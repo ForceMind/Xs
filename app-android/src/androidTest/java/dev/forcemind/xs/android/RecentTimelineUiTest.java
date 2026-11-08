@@ -2,6 +2,7 @@ package dev.forcemind.xs.android;
 
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.app.Activity;
+import android.app.Application;
 import android.app.Instrumentation;
 import android.content.Context;
 import android.content.Intent;
@@ -130,6 +131,84 @@ public final class RecentTimelineUiTest {
         assertEquals(0,archive.historyStats(library).openEventCount);assertEquals(0,archive.historyStats(library).feedEventCount);
     }
 
+    @Test public void clockResetRequiresExplicitConfirmationClearsAllTemporaryScopesAndLeavesCaptureOff()throws Exception {
+        seedPages();buffer.configure(true,72,75);
+        queued(library,()->assertTrue(archive.favorite(library,"https://x.com/i/web/status/950010","durablefixture","permanent reset canary",null,System.currentTimeMillis())));
+        open();awaitCount(50);click(XsRecentTimelineActivity.ID_SETTINGS);awaitText("Recent timeline settings","最近时间线设置");
+        clickTextContaining("Reset all temporary buffers and clock","重置所有临时缓冲与时间");
+        awaitText("Reset temporary buffers and clock for every library?","重置所有空间的临时缓冲与时间？");
+        awaitText("ALL local libraries","所有本机资料空间");
+        assertEquals(55,buffer.stats(library).count);assertEquals(1,buffer.stats(other).count);assertTrue(buffer.settings().enabled);
+        clickDialog(android.R.id.button2);awaitText("Recent timeline settings","最近时间线设置");
+        assertEquals(55,buffer.stats(library).count);assertEquals(1,buffer.stats(other).count);assertTrue(buffer.settings().enabled);
+        clickTextContaining("Reset all temporary buffers and clock","重置所有临时缓冲与时间");
+        awaitText("Reset temporary buffers and clock for every library?","重置所有空间的临时缓冲与时间？");clickDialog(android.R.id.button1);
+        await(()->!buffer.settings().enabled&&buffer.stats(library).count==0&&buffer.stats(other).count==0,
+            "Explicit confirmation reset every temporary scope and left capture off");
+        awaitCount(0);awaitStatus("72 hours","72 小时");
+        assertFalse(hasText("Recent timeline settings","最近时间线设置"));
+        assertEquals(72,buffer.settings().hours);assertEquals(75,buffer.settings().budgetMiB);assertIndependentConsent();
+        assertEquals(1,archive.historyStats(library).favoriteCount);assertEquals(0,archive.historyStats(library).openEventCount);
+        ArchiveSearch.Filter favorite=new ArchiveSearch.Filter();favorite.favoriteOnly=true;favorite.keyword="permanent reset canary";
+        try(Cursor rows=archive.search(library,favorite)){assertEquals(1,rows.getCount());}
+    }
+
+    @Test public void alreadyOpenTemporaryPreviewExpiresAndExternalClearDismissesItWithoutTap()throws Exception {
+        seedOne("950001","expiringpreviewneedle");open();awaitCount(1);openRow(0);
+        awaitText("Local temporary preview","本机临时预览");awaitText("expiringpreviewneedle","expiringpreviewneedle");
+        // Shorten only this generated appearance's real SQLite deadline after the native
+        // dialog is visible. The app's native wall/elapsed clocks remain unchanged.
+        queued(library,()->{synchronized(buffer){buffer.getWritableDatabase().execSQL(
+            "UPDATE timeline_appearances SET expires_at_ms=? WHERE library_id=? AND post_id='950001'",
+            new Object[]{System.currentTimeMillis()+1800,library});}});
+        await(()->!hasText("Local temporary preview","本机临时预览"),"An open expired preview dismissed itself without another gesture");
+        awaitCount(0);assertNull(buffer.entry(library,firstAppearanceId("950001")));
+        seedOne("950002","clearpreviewneedle");search("clearpreviewneedle");awaitCount(1);openRow(0);
+        awaitText("Local temporary preview","本机临时预览");
+        CountDownLatch cleared=new CountDownLatch(1);AtomicReference<Boolean> clearedSuccessfully=new AtomicReference<>();
+        buffer.clear(library,ok->{clearedSuccessfully.set(ok);cleared.countDown();});
+        assertTrue(cleared.await(15,TimeUnit.SECONDS));assertEquals(Boolean.TRUE,clearedSuccessfully.get());
+        await(()->!hasText("Local temporary preview","本机临时预览"),"A preview of an externally cleared card was dismissed");awaitCount(0);
+        assertFalse(hasText("expiringpreviewneedle","clearpreviewneedle"));
+        assertEquals(0,archive.historyStats(library).openEventCount);assertEquals(0,archive.historyStats(library).postCount);
+    }
+
+    @Test public void delayedPreviewCannotReappearAfterActualPauseResumeOrAfterClosingNewPreview()throws Exception {
+        seedOne("950003","lifecyclepreviewneedle");open();awaitCount(1);
+        CountDownLatch locked=new CountDownLatch(1),release=new CountDownLatch(1),paused=new CountDownLatch(1),resumedAgain=new CountDownLatch(1);
+        AtomicReference<Throwable> blockingFailure=new AtomicReference<>();
+        Thread blocker=new Thread(()->{synchronized(buffer){locked.countDown();try{
+            if(!release.await(15,TimeUnit.SECONDS))blockingFailure.set(new AssertionError("Fixture store lock was not released"));
+        }catch(InterruptedException interrupted){Thread.currentThread().interrupt();blockingFailure.set(interrupted);}}},"xs-ui-fixture-store-lock");
+        Application application=(Application)app.getApplicationContext();Activity original=screen;
+        Application.ActivityLifecycleCallbacks lifecycle=new Application.ActivityLifecycleCallbacks(){
+            public void onActivityCreated(Activity a,Bundle b){}public void onActivityStarted(Activity a){}
+            public void onActivityResumed(Activity a){if(a==original)resumedAgain.countDown();}
+            public void onActivityPaused(Activity a){if(a==original)paused.countDown();}
+            public void onActivityStopped(Activity a){}public void onActivitySaveInstanceState(Activity a,Bundle b){}public void onActivityDestroyed(Activity a){}
+        };
+        Activity cover=null;application.registerActivityLifecycleCallbacks(lifecycle);
+        try {
+            blocker.start();assertTrue(locked.await(5,TimeUnit.SECONDS));openRow(0);
+            // A real second Activity covers Recent while its requested detail read waits.
+            cover=instrumentation.startActivitySync(new Intent(app,XsHistoryActivity.class)
+                .putExtra(XsHistoryActivity.EXTRA_LIBRARY,library).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+            assertTrue("The original Activity actually paused",paused.await(5,TimeUnit.SECONDS));
+            Activity finishing=cover;instrumentation.runOnMainSync(finishing::finish);
+            assertTrue("The original Activity actually resumed",resumedAgain.await(5,TimeUnit.SECONDS));
+            search("notpresentafterresume");release.countDown();blocker.join(5000);
+            assertFalse(blocker.isAlive());assertNull(blockingFailure.get());awaitCount(0);
+            assertFalse("An old worker result cannot show a dialog in a new lifecycle epoch",hasText("Local temporary preview","本机临时预览"));
+            search("");awaitCount(1);openRow(0);awaitText("Local temporary preview","本机临时预览");clickDialog(android.R.id.button2);
+            search("notpresentafterclose");awaitCount(0);
+            assertFalse("A closed current preview cannot be revived by an old callback",hasText("Local temporary preview","本机临时预览"));
+            assertEquals(0,archive.historyStats(library).openEventCount);
+        }finally {
+            release.countDown();blocker.join(5000);application.unregisterActivityLifecycleCallbacks(lifecycle);
+            if(cover!=null){Activity closing=cover;instrumentation.runOnMainSync(closing::finish);}
+        }
+    }
+
     @Test public void productionPanelActionsRemainReachableAt320DpLargeFontInBothLocalesAndThemes() {
         open();awaitStatus("Off","已关闭");
         for(String language:new String[]{"en","zh"})for(boolean night:new boolean[]{false,true}) {
@@ -162,6 +241,18 @@ public final class RecentTimelineUiTest {
             });
         }
     }
+
+    private void seedOne(String post,String body)throws Exception {
+        buffer.configure(true,48,100);XsTimelineBuffer.Ticket ticket=buffer.ticket(library);long now=System.currentTimeMillis();
+        queued(library,()->assertTrue(buffer.append(ticket,new XsTimelineBuffer.Batch("native:one:"+UUID.randomUUID(),"native_navigation","unknown"),
+            new XsTimelineBuffer.Candidate("https://x.com/i/web/status/"+post,"onefixture",body,null,SnapshotPolicy.Quality.PARTIAL,now,1))));
+    }
+    private long firstAppearanceId(String post){
+        try(Cursor row=buffer.getReadableDatabase().rawQuery("SELECT id FROM timeline_appearances WHERE library_id=? AND post_id=?",new String[]{library,post})){
+            return row.moveToFirst()?row.getLong(0):-1;
+        }
+    }
+    private boolean hasText(String en,String zh){return collect(instrumentation.getUiAutomation().getRootInActiveWindow(),n->n.isVisibleToUser()&&contains(n,en,zh),new int[]{0})!=null;}
 
     private void seedPages()throws Exception {
         buffer.configure(true,48,100);long now=System.currentTimeMillis();
@@ -201,7 +292,14 @@ public final class RecentTimelineUiTest {
     private List<AccessibilityNodeInfo> editors(){List<AccessibilityNodeInfo> found=new ArrayList<>();collect(instrumentation.getUiAutomation().getRootInActiveWindow(),n->{if(n.isVisibleToUser()&&n.getClassName()!=null&&n.getClassName().toString().endsWith("EditText"))found.add(n);return false;},new int[]{0});return found;}
     private void setEditor(int index,String value){List<AccessibilityNodeInfo> fields=editors();assertTrue(fields.size()>index);Bundle text=new Bundle();text.putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE,value);assertTrue(fields.get(index).performAction(AccessibilityNodeInfo.ACTION_SET_TEXT,text));}
     private void clickDialog(int id){String resource=app.getResources().getResourceName(id);AccessibilityNodeInfo node=awaitNode(n->n.isVisibleToUser()&&n.isEnabled()&&resource.equals(n.getViewIdResourceName()));assertTrue(node.performAction(AccessibilityNodeInfo.ACTION_CLICK));instrumentation.waitForIdleSync();}
-    private void clickTextContaining(String en,String zh){AccessibilityNodeInfo node=awaitNode(n->n.isVisibleToUser()&&n.isEnabled()&&contains(n,en,zh));for(int depth=0;node!=null&&depth<8;depth++,node=node.getParent())if(node.isClickable()){assertTrue(node.performAction(AccessibilityNodeInfo.ACTION_CLICK));instrumentation.waitForIdleSync();return;}fail("Native control is not clickable");}
+    private void clickTextContaining(String en,String zh){
+        AccessibilityNodeInfo candidate=awaitNode(n->n.isEnabled()&&contains(n,en,zh));
+        candidate.performAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_SHOW_ON_SCREEN.getId());
+        AccessibilityNodeInfo node=awaitNode(n->n.isVisibleToUser()&&n.isEnabled()&&contains(n,en,zh));
+        for(int depth=0;node!=null&&depth<8;depth++,node=node.getParent())if(node.isClickable()){
+            assertTrue(node.performAction(AccessibilityNodeInfo.ACTION_CLICK));instrumentation.waitForIdleSync();return;
+        }fail("Native control is not clickable");
+    }
     private void awaitText(String en,String zh){awaitNode(n->n.isVisibleToUser()&&contains(n,en,zh));}
     private static boolean contains(AccessibilityNodeInfo node,String en,String zh){String text=node.getText()==null?"":node.getText().toString();return text.contains(en)||text.contains(zh);}
     private AccessibilityNodeInfo awaitNode(Predicate<AccessibilityNodeInfo> match){AtomicReference<AccessibilityNodeInfo> found=new AtomicReference<>();await(()->{AccessibilityNodeInfo node=collect(instrumentation.getUiAutomation().getRootInActiveWindow(),match,new int[]{0});if(node==null)return false;found.set(node);return true;},"Native control appeared");return found.get();}

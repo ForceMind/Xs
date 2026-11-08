@@ -62,7 +62,14 @@ public final class XsTimelineBuffer extends SQLiteOpenHelper {
         app=context.getApplicationContext();file=app.getDatabasePath(name);this.clock=clock;
         setWriteAheadLoggingEnabled(true);
     }
-    @Override public void onConfigure(SQLiteDatabase db){super.onConfigure(db);db.setForeignKeyConstraintsEnabled(true);db.execSQL("PRAGMA busy_timeout=1000");try(Cursor c=db.rawQuery("PRAGMA wal_autocheckpoint=64",null)){c.moveToFirst();}try(Cursor c=db.rawQuery("PRAGMA journal_size_limit=262144",null)){c.moveToFirst();}}
+    @Override public void onConfigure(SQLiteDatabase db){
+        super.onConfigure(db);db.setForeignKeyConstraintsEnabled(true);
+        // These PRAGMA assignments return a row on Android SQLite. Consume them as queries;
+        // execSQL rejects them before any temporary schema or policy can be opened.
+        for(String pragma:new String[]{"PRAGMA busy_timeout=1000","PRAGMA wal_autocheckpoint=64","PRAGMA journal_size_limit=262144"}){
+            try(Cursor result=db.rawQuery(pragma,null)){result.moveToFirst();}
+        }
+    }
     @Override public void onCreate(SQLiteDatabase db){
         // FULL moves freed pages to the end at each commit; checkpoint releases the WAL separately.
         db.execSQL("PRAGMA auto_vacuum=FULL");
@@ -125,10 +132,41 @@ public final class XsTimelineBuffer extends SQLiteOpenHelper {
         }finally{db.endTransaction();}
         enforceLimits(WRITE_RESERVE);scheduleMaintenance(app);
     }
-    /** An explicit user retry reanchors wall-clock drift; the persistent high-water never falls. */
-    public synchronized void resumeAfterClockChange(){
-        SQLiteDatabase db=getWritableDatabase();long high=scalar(db,"SELECT logical_now_ms FROM timeline_state WHERE id=1");
-        db.execSQL("UPDATE timeline_state SET logical_now_ms=?,wall_ms=?,elapsed_ms=?,boot_id=?,clock_paused=0,pause_reason='' WHERE id=1",new Object[]{Math.max(high,clock.wall()),clock.wall(),clock.elapsed(),clock.boot()});
+    /**
+     * Explicit all-temporary reset, never a silent clock retry. An anomalous future high-water
+     * can fall only in the same transaction that removes every old body/reference/receipt.
+     * Capture stays OFF; a later independent enable issues another consent generation.
+     */
+    public void resetAfterClockChange(String requestingLibrary,Callback callback){
+        final Ticket request;Handler main=new Handler(Looper.getMainLooper());
+        Runnable skipped=()->main.post(()->{if(callback!=null)callback.onComplete(false);});
+        try{request=ticket(requestingLibrary);}catch(RuntimeException unavailable){skipped.run();return;}
+        boolean queued=XsLibraryWrites.submit(request.writer,()->{
+            boolean committed=false;
+            try{synchronized(this){
+                if(isCurrent(request)){
+                    SQLiteDatabase db=getWritableDatabase();db.beginTransaction();
+                    try{
+                        if(!isCurrent(request))throw new IllegalStateException("Reset request invalidated");
+                        db.delete("timeline_appearances",null,null);
+                        db.delete("timeline_seen",null,null);
+                        db.delete("timeline_batches",null,null);
+                        db.delete("timeline_snapshots",null,null);
+                        db.delete("timeline_snapshots_fts",null,null);
+                        db.execSQL("UPDATE timeline_scopes SET generation=generation+1,pending_clear=0");
+                        long wall=clock.wall(),elapsed=clock.elapsed();String boot=clock.boot();
+                        // Validate the new native clock sample before committing any erasure.
+                        TimelineBufferPolicy.advance(null,wall,elapsed,boot);
+                        db.execSQL("UPDATE timeline_state SET enabled=0,consent_generation=consent_generation+1,policy_version=policy_version+1,logical_now_ms=?,wall_ms=?,elapsed_ms=?,boot_id=?,clock_paused=0,pause_reason='',dropped_count=0 WHERE id=1",new Object[]{wall,wall,elapsed,boot});
+                        db.setTransactionSuccessful();
+                    }finally{db.endTransaction();}
+                    committed=true;
+                    reclaim(db,readSettings(db).budgetMiB*1048576L);
+                }
+            }}catch(RuntimeException unavailable){/* Failed transactions preserve both the old clock domain and old rows. */}
+            final boolean result=committed;main.post(()->{if(callback!=null)callback.onComplete(result);});
+        },skipped);
+        if(!queued)skipped.run();
     }
     private TimelineBufferPolicy.ClockResult now(SQLiteDatabase db){
         if(!db.inTransaction()){
@@ -158,7 +196,7 @@ public final class XsTimelineBuffer extends SQLiteOpenHelper {
     public synchronized boolean isCurrent(Ticket ticket){
         if(ticket==null||ticket.owner!=this||!XsLibraryWrites.isCurrent(ticket.writer)||XsDeletedLibraries.isDeleted(app,ticket.library))return false;
         SQLiteDatabase db=getWritableDatabase();
-        return ticket.generation==scalar(db,"SELECT generation FROM timeline_scopes WHERE library_id=?",ticket.library)&&ticket.consent==scalar(db,"SELECT consent_generation FROM timeline_state WHERE id=1");
+        return ticket.generation==scalar(db,"SELECT generation FROM timeline_scopes WHERE library_id=?",ticket.library)&&ticket.consent==scalar(db,"SELECT consent_generation FROM timeline_state WHERE id=1")&&scalar(db,"SELECT pending_clear FROM timeline_scopes WHERE library_id=?",ticket.library)==0;
     }
     public boolean queue(Ticket ticket,Batch batch,Candidate candidate,Callback callback){return queue(ticket,batch,candidate,()->true,callback);}
     /** Revalidate controller consent/revocation at actual persistence, after any queue delay. */

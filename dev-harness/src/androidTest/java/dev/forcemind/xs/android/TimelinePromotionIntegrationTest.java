@@ -77,6 +77,19 @@ public final class TimelinePromotionIntegrationTest {
         clock.wall+=49*3600000L;clock.elapsed+=49*3600000L;assertNull(buffer.entry(ticket,id));buffer.maintain();
         assertEquals(1,count("favorites"));assertEquals(1,count("posts"));assertEquals(1,count("snapshot_versions"));
     }
+    @Test public void explicitFavoriteAfterUnfavoriteRecreatesRelationAndPreservesFirstLedgerTime()throws Exception {
+        long id=append("332","refavorite visible body",0),firstFavorite=clock.wall+1;
+        XsTimelinePromotion.Result first=queuedResult(()->XsTimelinePromotion.promote(app,buffer,ticket,id,true,firstFavorite));
+        assertTrue(first.committed);assertTrue(first.favorite);assertEquals(1,count("favorites"));
+        queued(()->assertTrue(archive.removeFavorite(library,"332")));assertEquals(0,count("favorites"));
+        long secondFavorite=clock.wall+2000;
+        XsTimelinePromotion.Result second=queuedResult(()->XsTimelinePromotion.promote(app,buffer,ticket,id,true,secondFavorite));
+        assertTrue(second.committed);assertTrue(second.favorite);assertTrue(second.acknowledged);
+        assertEquals(1,count("favorites"));assertEquals(secondFavorite,scalar("SELECT favorited_at_ms FROM favorites WHERE account_id=?"));
+        assertEquals(1,count("timeline_promotions"));assertEquals(firstFavorite,scalar("SELECT favorited_at_ms FROM timeline_promotions WHERE account_id=?"));
+        assertEquals(firstFavorite,scalar("SELECT saved_at_ms FROM timeline_promotions WHERE account_id=?"));
+        assertEquals(1,count("user_actions"));assertEquals(1,count("snapshot_versions"));assertEquals(0,count("history_events"));assertEquals(0,count("own_actions"));
+    }
     @Test public void expiredOrRevokedBeforeWriteNeverPromotesAndLateGuardRollsBack()throws Exception {
         long id=append("323","must expire",0);XsTimelineBuffer.Entry e=buffer.entry(ticket,id);AtomicInteger guard=new AtomicInteger();
         queued(()->assertFalse(archive.promoteTimeline(library,data(e),true,clock.wall+1,()->guard.incrementAndGet()==1)));

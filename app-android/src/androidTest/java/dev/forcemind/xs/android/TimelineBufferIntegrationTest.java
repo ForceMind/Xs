@@ -115,6 +115,50 @@ public final class TimelineBufferIntegrationTest {
         assertTrue(store.list(library,null,null,100,0).isEmpty());assertEquals("CLOCK_CHANGED",store.stats(library).pauseReason);
         store.maintain();assertEquals(0,count("timeline_snapshots"));
     }
+    @Test public void explicitAllTemporaryClockResetPreservesDurableStateAndAcceptsFreshCaptureAfterReenable() throws Exception {
+        store.configure(true,48,25);XsTimelineBuffer.Ticket old=store.ticket(library),outside=store.ticket(other);
+        assertTrue(append(old,batch("old-clock"),candidate("9181","old clock body never revived",0)));
+        assertTrue(append(outside,batch("other-clock"),candidate("9182","other scope temporary body",0)));
+        long oldId=store.list(library,null,null,100,0).get(0).appearanceId;
+        XsLibraryWrites.Ticket mediaTicket=XsLibraryWrites.ticket(library);
+        File durable=new File(app.getFilesDir(),"timeline-clock-survivor-"+UUID.randomUUID());
+        try(FileOutputStream out=new FileOutputStream(durable)){out.write(new byte[]{3,1,4,1,5});}
+        try(XsArchiveDatabase archive=new XsArchiveDatabase(app)){
+            write(library,()->{archive.ensureLibrary(library,"clock reset archive survivor");assertTrue(archive.recordOpened(library,url("9180"),"alice","permanent clock survivor",null,System.currentTimeMillis()));});
+            long original=clock.wall;clock.wall+=4L*365*24*HOUR;clock.elapsed+=1000;
+            assertTrue(store.list(library,null,null,100,0).isEmpty());
+            clock.wall=original+2000;clock.elapsed+=1000;
+            assertEquals("CLOCK_CHANGED",store.stats(library).pauseReason);
+            CountDownLatch reset=new CountDownLatch(1);AtomicBoolean success=new AtomicBoolean();
+            store.resetAfterClockChange(library,ok->{success.set(ok);reset.countDown();});assertTrue(reset.await(20,TimeUnit.SECONDS));assertTrue(success.get());
+            assertFalse(store.settings().enabled);assertEquals(48,store.settings().hours);assertEquals(25,store.settings().budgetMiB);
+            assertFalse(store.isCurrent(old));assertFalse(store.isCurrent(outside));assertTrue(XsLibraryWrites.isCurrent(mediaTicket));
+            for(String table:new String[]{"timeline_appearances","timeline_snapshots","timeline_snapshots_fts","timeline_seen","timeline_batches"})assertEquals(table,0,count(table));
+            assertEquals(1,archive.historyStats(library).openEventCount);assertTrue(durable.isFile());assertEquals(5,durable.length());
+            assertFalse(append(old,batch("old-callback"),candidate("9181","must remain revoked",0)));
+            XsTimelineBuffer.Ticket whileOff=store.ticket(library);store.configure(true,48,25);assertFalse(store.isCurrent(whileOff));
+            XsTimelineBuffer.Ticket fresh=store.ticket(library);assertTrue(append(fresh,batch("new-clock"),candidate("9183","fresh corrected clock body",0)));
+            assertEquals(1,store.stats(library).count);assertEquals(0,store.stats(other).count);assertTrue(store.list(library,"never revived",null,100,0).isEmpty());
+            assertTrue(store.list(library,null,null,100,0).get(0).appearanceId>oldId);assertNull(store.entry(library,oldId));
+            store.close();clock.boot="timeline-reset-next-boot";clock.elapsed=50;store=new XsTimelineBuffer(app,name,clock);
+            assertTrue("Corrected clock works after an actual reopen/new boot identity",store.stats(library).pauseReason.isEmpty());
+            assertTrue(append(store.ticket(library),batch("new-boot"),candidate("9184","fresh after reset boot",0)));
+            write(library,()->{archive.clearAccount(library);archive.getWritableDatabase().delete("libraries","storage_scope=?",new String[]{library});});
+        }finally{assertTrue(durable.delete());}
+    }
+    @Test public void clockResetRejectsAnOldQueuedCaptureWithoutRevokingItsSharedWriter() throws Exception {
+        store.configure(true,48,100);XsTimelineBuffer.Ticket old=store.ticket(library);
+        assertTrue(append(old,batch("before-reset"),candidate("9185","before explicit reset",0)));
+        CountDownLatch entered=new CountDownLatch(1),release=new CountDownLatch(1),resetDone=new CountDownLatch(1),oldDone=new CountDownLatch(1);
+        AtomicBoolean resetOk=new AtomicBoolean(),oldAccepted=new AtomicBoolean(true);
+        assertTrue(XsLibraryWrites.submit(store.writerTicket(old),()->{entered.countDown();try{release.await(20,TimeUnit.SECONDS);}catch(InterruptedException stop){Thread.currentThread().interrupt();}}));assertTrue(entered.await(20,TimeUnit.SECONDS));
+        try{
+            store.resetAfterClockChange(library,ok->{resetOk.set(ok);resetDone.countDown();});
+            assertTrue(store.queue(old,batch("queued-before-reset"),candidate("9186","queued old native result",0),ok->{oldAccepted.set(ok);oldDone.countDown();}));
+        }finally{release.countDown();}
+        assertTrue(resetDone.await(20,TimeUnit.SECONDS));assertTrue(oldDone.await(20,TimeUnit.SECONDS));assertTrue(resetOk.get());assertFalse(oldAccepted.get());
+        assertTrue(XsLibraryWrites.isCurrent(store.writerTicket(old)));assertFalse(store.isCurrent(old));assertEquals(0,store.stats(library).count);assertEquals(0,count("timeline_snapshots_fts"));
+    }
     @Test public void maintenanceActuallyReclaimsSnapshotFtsAndWalBytes() throws Exception {
         store.configure(true,1,25);XsTimelineBuffer.Ticket ticket=store.ticket(library);
         StringBuilder body=new StringBuilder("temporary reclamation ");while(body.length()<7000)body.append("visible temporary metadata ");

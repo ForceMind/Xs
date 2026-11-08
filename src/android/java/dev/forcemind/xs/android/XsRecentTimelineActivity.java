@@ -47,8 +47,13 @@ public final class XsRecentTimelineActivity extends Activity {
     private final List<XsTimelineBuffer.Entry> entries=new ArrayList<>();
     private final List<String> labels=new ArrayList<>();
     private final Set<Long> selected=new LinkedHashSet<>();
-    private final Runnable search=()->{offset=0;load();};
+    private final Runnable search=()->{selected.clear();offset=0;load();};
     private final Runnable expiryRefresh=this::load;
+    private final Runnable previewRefresh=this::checkPreview;
+    private final Set<AlertDialog> dialogs=new LinkedHashSet<>();
+    private AlertDialog previewDialog;
+    private TextView previewBody,previewMetadata;
+    private long previewId=-1,lifecycleEpoch,dialogRequest;
     private XsTimelineBuffer buffer;
     private Context ui;
     private String library,batchId;
@@ -94,8 +99,8 @@ public final class XsRecentTimelineActivity extends Activity {
         results.setNestedScrollingEnabled(true);root.addView(results,new LinearLayout.LayoutParams(-1,dp(280)));
         results.setOnItemClickListener((p,v,n,id)->{if(n>=entries.size()||busy)return;XsTimelineBuffer.Entry entry=entries.get(n);
             if(selecting){if(!selected.remove(entry.appearanceId))selected.add(entry.appearanceId);updateLabels();}else preview(entry.appearanceId);});
-        LinearLayout paging=row();previous=button(tr("上一页","Previous"),ID_PREVIOUS,()->{offset=Math.max(0,offset-PAGE);load();});
-        next=button(tr("下一页","Next"),ID_NEXT,()->{offset+=PAGE;load();});paging.addView(previous,weight());paging.addView(next,weight());root.addView(paging);
+        LinearLayout paging=row();previous=button(tr("上一页","Previous"),ID_PREVIOUS,()->{selected.clear();offset=Math.max(0,offset-PAGE);load();});
+        next=button(tr("下一页","Next"),ID_NEXT,()->{selected.clear();offset+=PAGE;load();});paging.addView(previous,weight());paging.addView(next,weight());root.addView(paging);
         LinearLayout actions=row();select=button(tr("选择","Select"),ID_SELECT,()->{selecting=!selecting;selected.clear();updateLabels();});
         clear=button(tr("清空此缓冲","Clear this buffer"),ID_CLEAR,this::confirmClear);actions.addView(select,weight());actions.addView(clear,weight());root.addView(actions);
         LinearLayout promotions=row();save=button(tr("长期保存","Save long term"),ID_SAVE,()->promoteSelected(false));
@@ -104,26 +109,35 @@ public final class XsRecentTimelineActivity extends Activity {
     }
     @Override protected void onResume(){super.onResume();resumed=true;if(buffer!=null)load();}
     private void load(){
-        if(destroyed||buffer==null)return;
+        if(destroyed||!resumed||buffer==null)return;
         if(XsDeletedLibraries.isDeleted(this,library)){finish();return;}
         final int generation=++request,start=offset;final String term=query.getText().toString(),batch=batchId;
         execute(()->{
             try {
                 List<XsTimelineBuffer.Entry> page=buffer.list(library,term,batch,PAGE+1,start);
                 XsTimelineBuffer.Stats stats=buffer.stats(library);XsTimelineBuffer.Settings config=buffer.settings();
-                main.post(()->{if(destroyed||generation!=request)return;
-                    entries.clear();entries.addAll(page.subList(0,Math.min(PAGE,page.size())));selected.clear();
+                main.post(()->{if(destroyed||!resumed||generation!=request)return;
+                    entries.clear();entries.addAll(page.subList(0,Math.min(PAGE,page.size())));
+                    Set<Long> present=new LinkedHashSet<>();for(XsTimelineBuffer.Entry entry:entries)present.add(entry.appearanceId);
+                    selected.retainAll(present);
                     previous.setEnabled(!busy&&start>0);next.setEnabled(!busy&&page.size()>PAGE);
                     status.setText(summary(stats,config));updateLabels();scheduleExpiry();});
-            }catch(Exception failure){main.post(()->{if(!destroyed&&generation==request){entries.clear();updateLabels();status.setText(tr("暂时无法读取缓冲，请重试。长期资料保留。","Could not read the buffer. Retry; long-term data is preserved."));}});}
+            }catch(Exception failure){main.post(()->{if(!destroyed&&resumed&&generation==request){entries.clear();selected.clear();updateLabels();status.setText(tr("暂时无法读取缓冲，请重试。长期资料保留。","Could not read the buffer. Retry; long-term data is preserved."));}});}
         });
     }
     private void scheduleExpiry(){
-        main.removeCallbacks(expiryRefresh);
-        execute(()->{try{long delay=buffer.nextExpiryDelayMillis(library);main.post(()->{if(!destroyed&&resumed)main.postDelayed(expiryRefresh,delay<0?60000:Math.max(1,Math.min(60000,delay)));});}
-            catch(Exception failure){/* A fresh query on resume still filters expiration. */}});
+        main.removeCallbacks(expiryRefresh);final long epoch=lifecycleEpoch;final int generation=request;
+        execute(()->{try{long delay=buffer.nextExpiryDelayMillis(library);main.post(()->{
+            if(active(epoch)&&generation==request){main.removeCallbacks(expiryRefresh);
+                main.postDelayed(expiryRefresh,delay<0?60000:Math.max(1,Math.min(60000,delay)));}
+        });}catch(Exception failure){/* A fresh query on resume still filters expiration. */}});
     }
-    @Override protected void onPause(){resumed=false;main.removeCallbacks(expiryRefresh);super.onPause();}
+    private boolean active(long epoch){return !destroyed&&resumed&&lifecycleEpoch==epoch;}
+    private boolean currentDialog(long epoch,long read){return active(epoch)&&dialogRequest==read;}
+    @Override protected void onPause(){
+        resumed=false;++lifecycleEpoch;++dialogRequest;++request;
+        main.removeCallbacks(search);main.removeCallbacks(expiryRefresh);dismissDialogs();super.onPause();
+    }
     private String summary(XsTimelineBuffer.Stats s,XsTimelineBuffer.Settings c){
         String state=c.enabled?tr("已开启","On"):tr("已关闭 · 停止新收录","Off · no new capture");
         String coverage=s.count==0?tr("尚无有效卡片","No unexpired cards"):s.count+tr(" 条 · 覆盖 "," cards · coverage ")+date(s.oldest)+" – "+date(s.latest);
@@ -156,28 +170,69 @@ public final class XsRecentTimelineActivity extends Activity {
         if(save!=null)save.setEnabled(!busy&&!selected.isEmpty());if(favorite!=null)favorite.setEnabled(!busy&&!selected.isEmpty());
     }
     private void chooseBatch(){
+        if(!resumed||destroyed)return;final long epoch=lifecycleEpoch,read=++dialogRequest;
         execute(()->{try{List<XsTimelineBuffer.Batch> choices=buffer.batches(library);String[] names=new String[choices.size()+1];names[0]=tr("全部批次","All batches");
             for(int i=0;i<choices.size();i++){XsTimelineBuffer.Batch b=choices.get(i);names[i+1]=date(b.createdAt)+" · "+source(b.source)+" · "+batchReason(b.reason)+" ("+b.count+")";}
-            main.post(()->{if(!destroyed)new AlertDialog.Builder(this).setTitle(tr("刷新与浏览批次","Refresh and browsing batches")).setItems(names,(d,n)->{
-                batchId=n==0?null:choices.get(n-1).id;batches.setText(n==0?names[0]:date(choices.get(n-1).createdAt));offset=0;load();}).show();});
-        }catch(Exception failure){main.post(()->toast(tr("无法读取批次","Could not read batches")));}});
+            main.post(()->{if(!currentDialog(epoch,read))return;dismissDialogs();
+                showDialog(new AlertDialog.Builder(this).setTitle(tr("刷新与浏览批次","Refresh and browsing batches")).setItems(names,(d,n)->{
+                    if(!active(epoch))return;selected.clear();batchId=n==0?null:choices.get(n-1).id;
+                    batches.setText(n==0?names[0]:date(choices.get(n-1).createdAt));offset=0;load();}).create());});
+        }catch(Exception failure){main.post(()->{if(currentDialog(epoch,read))toast(tr("无法读取批次","Could not read batches"));});}});
     }
     private void preview(long id){
+        if(!resumed||destroyed)return;final long epoch=lifecycleEpoch,read=++dialogRequest;
         execute(()->{try{XsTimelineBuffer.Entry e=buffer.entry(library,id);main.post(()->{
-            if(destroyed)return;if(e==null){toast(tr("卡片已到期或已清理","This card expired or was cleared"));load();return;}
-            LinearLayout fields=column();fields.setPadding(dp(16),dp(8),dp(16),dp(8));
+            if(!currentDialog(epoch,read))return;
+            if(e==null){toast(tr("卡片已到期或已清理","This card expired or was cleared"));load();return;}
+            dismissDialogs();LinearLayout fields=column();fields.setPadding(dp(16),dp(8),dp(16),dp(8));
             TextView metadata=text((e.author==null?"":e.author)+"\n"+e.url+"\n"+tr("收录：","Captured: ")+date(e.capturedAt)+
                 (e.publishedAt==null?"":"\n"+tr("发布：","Published: ")+date(e.publishedAt))+"\n"+source(e.source)+" · "+batchReason(e.batchReason)+" · "+quality(e));fields.addView(metadata);
             TextView body=text(e.body==null||e.body.isEmpty()?tr("尚未捕获可见正文。","No visible text captured."):e.body);body.setTextIsSelectable(true);body.setPadding(0,dp(16),0,dp(16));fields.addView(body);
             Button original=button(tr("打开原帖","Open original post"),0,()->openOriginal(id));fields.addView(original);
             ScrollView scroll=new ScrollView(ui);scroll.addView(fields);
-            new AlertDialog.Builder(this).setTitle(tr("本机临时预览","Local temporary preview")).setView(scroll)
+            previewId=id;previewBody=body;previewMetadata=metadata;
+            previewDialog=new AlertDialog.Builder(this).setTitle(tr("本机临时预览","Local temporary preview")).setView(scroll)
                 .setNegativeButton(tr("关闭","Close"),null).setNeutralButton(tr("长期保存","Save long term"),(d,n)->promote(id,false,null))
-                .setPositiveButton(tr("收藏到 Xs","Favorite in Xs"),(d,n)->promote(id,true,null)).show();});
-        }catch(Exception failure){main.post(()->toast(tr("预览未完成，请重试","Preview unavailable; retry")));}});
+                .setPositiveButton(tr("收藏到 Xs","Favorite in Xs"),(d,n)->promote(id,true,null)).create();
+            showDialog(previewDialog);checkPreview();});
+        }catch(Exception failure){main.post(()->{if(currentDialog(epoch,read))toast(tr("预览未完成，请重试","Preview unavailable; retry"));});}});
+    }
+    /** The open dialog is a temporary view too: expire/redact it without another user gesture. */
+    private void checkPreview(){
+        main.removeCallbacks(previewRefresh);
+        if(!resumed||destroyed||previewDialog==null)return;
+        final AlertDialog shown=previewDialog;final long id=previewId,epoch=lifecycleEpoch;
+        boolean accepted=execute(()->{
+            boolean present=false;long delay=-1;
+            try{present=buffer.entry(library,id)!=null;if(present)delay=buffer.nextExpiryDelayMillis(library);}
+            catch(RuntimeException unavailable){/* A cleared/deleted/unavailable scope cannot keep a stale preview. */}
+            final boolean exists=present;final long expires=delay;
+            main.post(()->{
+                if(!active(epoch)||previewDialog!=shown||previewId!=id)return;
+                if(!exists){shown.dismiss();load();return;}
+                // Exact nearest TTL, capped at one second only while a dialog is visible,
+                // also detects external clears/policy changes without background polling.
+                main.postDelayed(previewRefresh,expires<0?1000:Math.max(1,Math.min(1000,expires)));
+            });
+        });
+        if(!accepted&&previewDialog==shown)shown.dismiss();
+    }
+    private void clearPreview(){
+        main.removeCallbacks(previewRefresh);
+        if(previewBody!=null)previewBody.setText("");if(previewMetadata!=null)previewMetadata.setText("");
+        previewBody=previewMetadata=null;previewDialog=null;previewId=-1;
+    }
+    private void showDialog(AlertDialog dialog){
+        dialogs.add(dialog);dialog.setOnDismissListener(d->{dialogs.remove(dialog);if(previewDialog==dialog)clearPreview();});
+        if(dialog.getWindow()!=null)dialog.getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);dialog.show();
+    }
+    private void dismissDialogs(){
+        for(AlertDialog dialog:new ArrayList<>(dialogs))try{dialog.dismiss();}catch(RuntimeException removed){/* Activity window already removed. */}
+        dialogs.clear();clearPreview();
     }
     private void openOriginal(long id){
-        execute(()->{try{XsTimelineBuffer.Entry e=buffer.entry(library,id);main.post(()->{if(destroyed)return;
+        if(!resumed||destroyed)return;final long epoch=lifecycleEpoch;
+        execute(()->{try{XsTimelineBuffer.Entry e=buffer.entry(library,id);main.post(()->{if(!active(epoch))return;
             if(e==null){toast(tr("卡片已到期","This card expired"));return;}
             try{Intent intent=new Intent(Intent.ACTION_VIEW,Uri.parse(e.url)).setPackage(getPackageName());
                 if(intent.resolveActivity(getPackageManager())==null)intent.setPackage(null);startActivity(intent);
@@ -201,8 +256,10 @@ public final class XsRecentTimelineActivity extends Activity {
                 tr("保存未完成：卡片可能已到期、清理或空间不足。","Save incomplete: the card may have expired, been cleared, or storage is low."));load();});
     }
     private void settings(){
-        execute(()->{try{XsTimelineBuffer.Settings c=buffer.settings();main.post(()->{if(!destroyed)showSettings(c);});}
-            catch(Exception failure){main.post(()->toast(tr("无法读取设置","Could not read settings")));}});
+        if(!resumed||destroyed)return;final long epoch=lifecycleEpoch,read=++dialogRequest;
+        execute(()->{try{XsTimelineBuffer.Settings c=buffer.settings();main.post(()->{
+            if(currentDialog(epoch,read)){dismissDialogs();showSettings(c);}});}
+            catch(Exception failure){main.post(()->{if(currentDialog(epoch,read))toast(tr("无法读取设置","Could not read settings"));});}});
     }
     private void showSettings(XsTimelineBuffer.Settings c){
         LinearLayout fields=column();fields.setPadding(dp(16),dp(8),dp(16),dp(8));
@@ -211,36 +268,57 @@ public final class XsRecentTimelineActivity extends Activity {
         Switch enabled=new Switch(ui);enabled.setId(ID_ENABLED);enabled.setText(tr("开启最近时间线","Enable recent timeline"));enabled.setChecked(c.enabled);fields.addView(enabled);
         fields.addView(text(tr("保留小时数（1–168）","Retention hours (1–168)")));EditText hours=number(ID_HOURS,c.hours);fields.addView(hours);
         fields.addView(button(tr("选择 24 / 48 / 72 小时 / 7 天","Choose 24 / 48 / 72 hours / 7 days"),0,()->
-            new AlertDialog.Builder(this).setItems(new String[]{"24", "48", "72", "168"},(d,n)->hours.setText(new String[]{"24","48","72","168"}[n])).show()));
+            showDialog(new AlertDialog.Builder(this).setItems(new String[]{"24", "48", "72", "168"},(d,n)->hours.setText(new String[]{"24","48","72","168"}[n])).create())));
         fields.addView(text(tr("全应用临时预算 MiB（25–500）","App-wide temporary budget MiB (25–500)")));EditText budget=number(ID_BUDGET,c.budgetMiB);fields.addView(budget);
-        fields.addView(button(tr("已检查设备时间，重试收录","Time settings checked; retry capture"),0,()->{
-            execute(()->{try{buffer.resumeAfterClockChange();main.post(()->{toast(tr("已重新检查时间；已到期卡片不会恢复","Clock rechecked; expired cards remain expired"));load();});}
-                catch(Exception failure){main.post(()->toast(tr("时间状态未能更新，请重试","Could not update clock state; retry")));}});
-        }));
+        fields.addView(button(tr("重置所有临时缓冲与时间","Reset all temporary buffers and clock"),0,this::confirmClockReset));
         fields.addView(text(tr("容量不足会先淘汰较旧卡片。仅覆盖实际捕获的内容，不能保证完整保留所选时长。后台清理可能由系统延迟，查询会立即排除过期项。",
             "Older cards are evicted under pressure. Coverage includes only captured content and may be shorter than this window. Android can delay background cleanup; queries exclude expired cards immediately.")));
         ScrollView scroll=new ScrollView(ui);scroll.addView(fields);
         AlertDialog dialog=new AlertDialog.Builder(this).setTitle(tr("最近时间线设置","Recent timeline settings")).setView(scroll)
-            .setNegativeButton(android.R.string.cancel,null).setPositiveButton(tr("保存","Save"),null).create();dialog.show();
+            .setNegativeButton(android.R.string.cancel,null).setPositiveButton(tr("保存","Save"),null).create();showDialog(dialog);
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v->{
+            if(!resumed||destroyed)return;
             final int h,m;try{h=Integer.parseInt(hours.getText().toString());m=Integer.parseInt(budget.getText().toString());
                 if(h<1||h>168||m<25||m>500)throw new IllegalArgumentException();
             }catch(RuntimeException invalid){toast(tr("请输入 1–168 小时和 25–500 MiB。","Enter 1–168 hours and 25–500 MiB."));return;}
             boolean active=enabled.isChecked();dialog.dismiss();setBusy(true);execute(()->{
                 boolean ok;try{buffer.configure(active,h,m);ok=true;}catch(Exception failure){ok=false;}final boolean saved=ok;
-                main.post(()->{if(!destroyed){setBusy(false);toast(saved?tr("设置已保存","Settings saved"):tr("设置未能保存，请重试","Settings could not be saved; retry"));offset=0;load();}});});
+                main.post(()->{if(!destroyed){setBusy(false);toast(saved?tr("设置已保存","Settings saved"):tr("设置未能保存，请重试","Settings could not be saved; retry"));selected.clear();offset=0;load();}});});
         });
     }
+    private void confirmClockReset(){
+        if(!resumed||destroyed||busy)return;final long epoch=lifecycleEpoch;
+        showDialog(new AlertDialog.Builder(this).setTitle(tr("重置所有空间的临时缓冲与时间？","Reset temporary buffers and clock for every library?"))
+            .setMessage(tr("设备时间曾大幅前跳后恢复时，可以用此操作重新开始收录。确认会清空所有本机资料空间的临时时间线卡片、正文和搜索索引，并重置缓冲时钟。收录会保持关闭；请先检查设备时间，再按需重新开启。保留小时数、空间预算、长期保存、收藏、历史和下载文件不变。此操作不能撤销。",
+                "Use this after correcting a device clock that jumped far into the future. Confirmation clears temporary timeline cards, text and search indexes from ALL local libraries and resets the buffer clock. Capture remains OFF: check the device time, then enable capture again if wanted. Retention hours, space budget, long-term saves, favorites, history and downloads are preserved. This cannot be undone."))
+            .setNegativeButton(android.R.string.cancel,null)
+            .setPositiveButton(tr("确认清空并重置","Clear and reset"),(d,n)->{
+                if(!active(epoch)||busy)return;dismissDialogs();selected.clear();setBusy(true);
+                try{buffer.resetAfterClockChange(library,ok->main.post(()->{
+                    if(destroyed)return;setBusy(false);
+                    if(active(epoch)){batchId=null;offset=0;toast(ok?
+                        tr("所有空间的临时缓冲与时间已重置，收录保持关闭。检查时间后可重新开启。","All temporary buffers and the clock were reset. Capture remains off; check the time before enabling it again."):
+                        tr("重置未完成，请重试。现有长期资料保留。","Reset did not complete. Retry; long-term data is preserved."));}
+                    if(resumed)load();
+                }));}catch(RuntimeException unavailable){setBusy(false);if(active(epoch))toast(tr("重置未完成，请重试","Reset did not complete; retry"));}
+            }).create());
+    }
     private void confirmClear(){
-        new AlertDialog.Builder(this).setTitle(tr("清空此空间的临时时间线？","Clear this library's temporary timeline?"))
+        if(!resumed||destroyed)return;
+        showDialog(new AlertDialog.Builder(this).setTitle(tr("清空此空间的临时时间线？","Clear this library's temporary timeline?"))
             .setMessage(tr("仅清除此空间的临时卡片和搜索索引。长期保存、收藏、历史、下载和网页会话保留。",
                 "Clears this library's temporary cards and search index. Long-term saves, favorites, history, downloads and web session are preserved."))
             .setNegativeButton(android.R.string.cancel,null).setPositiveButton(tr("清空缓冲","Clear buffer"),(d,n)->{
-                setBusy(true);buffer.clear(library,ok->main.post(()->{if(!destroyed){setBusy(false);batchId=null;offset=0;
-                    toast(ok?tr("临时缓冲已清空","Temporary buffer cleared"):tr("清理尚未完成，请重试","Cleanup pending; retry"));load();}}));}).show();
+                if(!resumed||destroyed)return;selected.clear();setBusy(true);buffer.clear(library,ok->main.post(()->{if(!destroyed){setBusy(false);batchId=null;offset=0;
+                    toast(ok?tr("临时缓冲已清空","Temporary buffer cleared"):tr("清理尚未完成，请重试","Cleanup pending; retry"));load();}}));}).create());
     }
     private void setBusy(boolean value){busy=value;if(value){previous.setEnabled(false);next.setEnabled(false);}settings.setEnabled(!value);clear.setEnabled(!value);select.setEnabled(!value);batches.setEnabled(!value);query.setEnabled(!value);updateLabels();}
-    private void execute(Runnable work){try{reader.execute(work);}catch(RuntimeException rejected){if(!destroyed){setBusy(false);toast(tr("操作繁忙，请重试","Busy; retry"));}}}
+    private boolean execute(Runnable work){
+        try{reader.execute(work);return true;}
+        catch(RuntimeException rejected){if(!destroyed){setBusy(false);toast(tr("操作繁忙，请重试","Busy; retry"));
+            if(resumed){main.removeCallbacks(expiryRefresh);main.postDelayed(expiryRefresh,1000);}}
+            return false;}
+    }
     private String source(String value){if("home_for_you".equals(value))return tr("为你推荐","For you");if("home_following".equals(value))return tr("正在关注","Following");if("search_results".equals(value))return tr("搜索结果","Search results");return tr("来源未知","Unknown source");}
     private String batchReason(String value){if("refresh".equals(value)||"native_refresh".equals(value))return tr("原生刷新","Native refresh");if("suspected_refresh".equals(value))return tr("疑似刷新","Suspected refresh");if("native_stream_switch".equals(value)||"native_stream_change".equals(value)||"feed_switch".equals(value))return tr("切换时间线","Feed switch");return tr("浏览批次","Browsing batch");}
     private String quality(XsTimelineBuffer.Entry e){return e.body==null||e.body.isEmpty()?tr("仅链接","Link only"):tr("可见的部分正文","Partial visible text");}
@@ -253,6 +331,6 @@ public final class XsRecentTimelineActivity extends Activity {
     private Button button(String label,int id,Runnable click){Button v=new Button(ui);if(id!=0)v.setId(id);v.setText(label);v.setAllCaps(false);v.setMinWidth(0);v.setPadding(dp(4),dp(6),dp(4),dp(6));v.setOnClickListener(w->click.run());return v;}
     private String tr(String zh,String en){return ui.getResources().getConfiguration().getLocales().get(0).getLanguage().equals("zh")?zh:en;}
     private int dp(int value){return Math.round(value*ui.getResources().getDisplayMetrics().density);}
-    private void toast(String text){if(!destroyed)Toast.makeText(this,text,Toast.LENGTH_LONG).show();}
-    @Override protected void onDestroy(){destroyed=true;++request;main.removeCallbacks(search);main.removeCallbacks(expiryRefresh);reader.shutdownNow();super.onDestroy();}
+    private void toast(String text){if(!destroyed&&resumed)Toast.makeText(this,text,Toast.LENGTH_LONG).show();}
+    @Override protected void onDestroy(){destroyed=true;resumed=false;++lifecycleEpoch;++dialogRequest;++request;main.removeCallbacks(search);main.removeCallbacks(expiryRefresh);dismissDialogs();reader.shutdownNow();super.onDestroy();}
 }

@@ -29,6 +29,10 @@ public final class NativePageCaptureController {
     private final WebView web;
     private final CaptureSession session;
     private final TimelineCaptureSession buffer;
+    private final String library;
+    private XsTimelineBuffer boundBufferStore;
+    /** Present only during synchronous delivery from one native read's immutable ticket. */
+    private XsTimelineBuffer.Ticket deliveringBufferTicket,lastBufferTicket;
     private boolean bufferConsent;
     private final Handler handler=new Handler(Looper.getMainLooper());
     private final String script;
@@ -40,7 +44,7 @@ public final class NativePageCaptureController {
     private String currentUrl, verifiedFeedContext;
     private final Runnable poll=() -> readNow();
     public NativePageCaptureController(WebView web,String library,CaptureSession.Sink sink) {
-        mainThread();this.web=web; session=new CaptureSession(library,sink);buffer=new TimelineCaptureSession(library);
+        mainThread();this.web=web;this.library=library; session=new CaptureSession(library,sink);buffer=new TimelineCaptureSession(library);
         try(InputStream in=web.getContext().getAssets().open("xs-observer.js")) {
             ByteArrayOutputStream out=new ByteArrayOutputStream(); byte[] bytes=new byte[4096];int n;
             while((n=in.read(bytes))!=-1) { out.write(bytes,0,n);if(out.size()>65536)throw new IllegalStateException(); }
@@ -52,20 +56,28 @@ public final class NativePageCaptureController {
         session.setConsent(opens,feed,threshold);consent=opens||feed;
         if(!observing())stopObserver();else {ensureObserver();schedule();}
     }
-    public void setBufferSink(TimelineCaptureSession.Sink sink){mainThread();if(!destroyed)buffer.setSink(sink);}
-    /** Concrete fixture wiring: library tickets are captured now and native admission is rechecked at write time. */
+    /** Observation-only seam; persistent wiring must use setBufferStore's pre-read ticket. */
+    public void setBufferSink(TimelineCaptureSession.Sink sink){
+        mainThread();if(destroyed)return;stopObserver();boundBufferStore=null;deliveringBufferTicket=null;lastBufferTicket=null;buffer.setSink(sink);
+        ensureObserver();schedule();
+    }
+    /** Concrete fixture wiring: every read binds its store generation before JavaScript starts. */
     public void setBufferStore(XsTimelineBuffer store){
-        mainThread();if(store==null)throw new IllegalArgumentException();
-        setBufferSink(new TimelineCaptureSession.Sink(){
+        mainThread();if(store==null)throw new IllegalArgumentException();if(destroyed)return;
+        stopObserver();boundBufferStore=store;deliveringBufferTicket=null;lastBufferTicket=null;
+        buffer.setSink(new TimelineCaptureSession.Sink(){
             public void observed(TimelineCaptureSession.Event event){
-                final XsTimelineBuffer.Ticket ticket;
-                try{ticket=store.ticket(event.library);}catch(RuntimeException unavailable){return;}
+                // Never mint a fresh ticket after the DOM observation: clear/reset could
+                // otherwise re-authorize a read that started in a revoked store generation.
+                final XsTimelineBuffer.Ticket ticket=deliveringBufferTicket;
+                if(ticket==null)return;
                 store.queue(ticket,new XsTimelineBuffer.Batch(event.batchId,event.batchReason,event.source),
                     new XsTimelineBuffer.Candidate(event.url,event.author,event.body,event.publishedAtMs,event.quality,event.observedAtMs,event.sequence),
                     ()->isCurrent(event),null);
             }
             public void dropped(long count,String reason){store.recordAdmissionDrops(count,reason);}
         });
+        ensureObserver();schedule();
     }
     public void setBufferConsent(boolean enabled){
         mainThread();if(destroyed)return;if(bufferConsent!=enabled)stopObserver();bufferConsent=enabled;buffer.setConsent(enabled);
@@ -140,11 +152,23 @@ public final class NativePageCaptureController {
         if(!visible){stopObserver();schedule();return;}
         if(!installed || !same(currentUrl,web.getUrl())) {ensureObserver();schedule();return;}
         final long epoch=session.generation();final String url=currentUrl;
+        final boolean requestedBuffer=bufferConsent;
+        final XsTimelineBuffer requestStore=boundBufferStore;
+        XsTimelineBuffer.Ticket issued=null;
+        if(requestedBuffer&&requestStore!=null){
+            try{
+                // A clear can also land just after an earlier callback's validation.
+                // Retire that read's dedup batch before admitting a new store generation.
+                if(lastBufferTicket!=null&&!requestStore.isCurrent(lastBufferTicket)){buffer.invalidate();rootRevision=-1;lastBufferTicket=null;}
+                issued=requestStore.ticket(library);
+            }catch(RuntimeException unavailable){/* Existing open/feed capture still runs. */}
+        }
+        final XsTimelineBuffer.Ticket readTicket=issued;
         inFlight=true;final long request=++requestSerial;
         timeout=() -> {if(request==requestSerial){inFlight=false;requestSerial++;
             session.sample(new ArrayList<>(),null,SystemClock.elapsedRealtime(),System.currentTimeMillis());schedule();}};
         handler.postDelayed(timeout,1500);
-        web.evaluateJavascript(bufferConsent?READ.replace(".read()", ".read(true)"):READ,raw -> {
+        web.evaluateJavascript(requestedBuffer?READ.replace(".read()", ".read(true)"):READ,raw -> {
             if(request!=requestSerial)return;
             inFlight=false;if(timeout!=null)handler.removeCallbacks(timeout);
             if(!available() || covered || !observing() || destroyed || epoch!=session.generation() || !same(url,currentUrl) || !same(url,web.getUrl())){schedule();return;}
@@ -153,7 +177,7 @@ public final class NativePageCaptureController {
                 Object outer=StrictJson.parse(raw);
                 if(!(outer instanceof String))throw new IllegalArgumentException();
                 Map<String,Object> envelope=object(StrictJson.parse((String)outer));
-                if(bufferConsent)keys(envelope,"v","url","cards","rootRevision");
+                if(requestedBuffer)keys(envelope,"v","url","cards","rootRevision");
                 else keys(envelope,"v","url","cards");
                 if(!Long.valueOf(1).equals(envelope.get("v")) || !url.equals(envelope.get("url")))throw new IllegalArgumentException();
                 Object cardsValue=envelope.get("cards");
@@ -175,19 +199,32 @@ public final class NativePageCaptureController {
                     cards.add(card);
                 }
                 long wall=System.currentTimeMillis();
-                if(bufferConsent){
+                boolean currentBuffer=requestedBuffer;
+                if(requestedBuffer&&requestStore!=null){
+                    try{currentBuffer=requestStore==boundBufferStore&&readTicket!=null&&requestStore.isCurrent(readTicket);}
+                    catch(RuntimeException unavailable){currentBuffer=false;}
+                    if(!currentBuffer){buffer.invalidate();rootRevision=-1;lastBufferTicket=null;}
+                }
+                if(requestedBuffer){
                     Object revision=envelope.get("rootRevision");
                     if(!(revision instanceof Long)||(Long)revision<0||(Long)revision>1_000_000)throw new IllegalArgumentException();
                     long current=(Long)revision;
-                    if(rootRevision>=0 && current!=rootRevision)buffer.suspectedRefresh();
-                    rootRevision=current;
+                    if(currentBuffer){
+                        if(rootRevision>=0 && current!=rootRevision)buffer.suspectedRefresh();
+                        rootRevision=current;
+                    }
                 }
                 if(ObservationRoutes.classify(url)==ObservationRoutes.Kind.POST_DETAIL) {
                     for(CaptureSession.Card card:cards)session.detail(card,wall);
                 } else {
                     String source=ObservationRoutes.feedSource(url,verifiedFeedContext);
                     session.sample(cards,source,SystemClock.elapsedRealtime(),wall);
-                    buffer.sample(cards,wall,SystemClock.elapsedRealtime());
+                    if(currentBuffer){
+                        lastBufferTicket=readTicket;deliveringBufferTicket=readTicket;
+                        try{buffer.sample(cards,wall,SystemClock.elapsedRealtime());}
+                        catch(RuntimeException unavailable){buffer.invalidate();lastBufferTicket=null;}
+                        finally{deliveringBufferTicket=null;}
+                    }
                 }
             } catch(RuntimeException invalid) {
                 session.sample(new ArrayList<>(),null,SystemClock.elapsedRealtime(),System.currentTimeMillis());
