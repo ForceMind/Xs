@@ -1,0 +1,3493 @@
+{
+  "scope": "Downloaded CI91 synthetic emulator artifacts. Full main XML checked, independent drivers counted separately. Not real-X, physical-device or production acceptance.",
+  "run": {
+    "id": 42516366007,
+    "number": 91,
+    "head": "1672756ff2fb67c30c92df9bc7a5885f19b84c46",
+    "merge": "eea88356636b6c7bd389e9f1594f001b3c73cee3",
+    "tree": "52532383a3e86118f5516e18875669beeb0891a8",
+    "url": "https://github.com/ForceMind/Xs/actions/runs/42516366007"
+  },
+  "jobs": [
+    {
+      "id": 128840214962,
+      "name": "core",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 42516366007,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-java@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Check bilingual docs and independent source tree",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Compile JVM code and check real SQLite",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Check cross-source upgrade driver safety and failure handling",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Check 10k and 100k preserving migrations and search capacity",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Post Run actions/setup-java@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17
+        }
+      ]
+    },
+    {
+      "id": 128840215248,
+      "name": "android-library",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 42516366007,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-java@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run android-actions/setup-android@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Install Android SDK 35",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Run gradle/actions/setup-gradle@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Compile independent Android archive AAR",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Upload Android library (not an APK)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Upload development test host (NOT X)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Record PoC build provenance",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "Upload non-instrumented browser feasibility APK (NOT Alpha)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        },
+        {
+          "name": "Post Run gradle/actions/setup-gradle@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 20
+        },
+        {
+          "name": "Post Run actions/setup-java@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 21
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 22
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 23
+        }
+      ]
+    },
+    {
+      "id": 128841249579,
+      "name": "android-instrumentation (27, x86)",
+      "status": "completed",
+      "conclusion": "failure",
+      "run_id": 42516366007,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-java@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run android-actions/setup-android@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Run gradle/actions/setup-gradle@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Install fixed tools for fixture upgrade verification",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Assemble current APKs before the old-source installation fixture",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Enable KVM acceleration",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Run reactivecircus/android-emulator-runner@v2",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 9
+        },
+        {
+          "name": "Record job-local fixture APK hashes and public signing certificates",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "Upload synthetic Android test reports",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        },
+        {
+          "name": "Post Run gradle/actions/setup-gradle@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 20
+        },
+        {
+          "name": "Post Run actions/setup-java@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 21
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 22
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 23
+        }
+      ]
+    },
+    {
+      "id": 128841249586,
+      "name": "android-instrumentation (30, x86_64)",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 42516366007,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-java@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run android-actions/setup-android@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Run gradle/actions/setup-gradle@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Install fixed tools for fixture upgrade verification",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Assemble current APKs before the old-source installation fixture",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Enable KVM acceleration",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Run reactivecircus/android-emulator-runner@v2",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Record job-local fixture APK hashes and public signing certificates",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "Upload synthetic Android test reports",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        },
+        {
+          "name": "Post Run gradle/actions/setup-gradle@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 20
+        },
+        {
+          "name": "Post Run actions/setup-java@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 21
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 22
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 23
+        }
+      ]
+    },
+    {
+      "id": 128841249657,
+      "name": "android-instrumentation (36, x86_64)",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 42516366007,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-java@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run android-actions/setup-android@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Run gradle/actions/setup-gradle@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Install fixed tools for fixture upgrade verification",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Assemble current APKs before the old-source installation fixture",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Enable KVM acceleration",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Run reactivecircus/android-emulator-runner@v2",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Record job-local fixture APK hashes and public signing certificates",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "Upload synthetic Android test reports",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        },
+        {
+          "name": "Post Run gradle/actions/setup-gradle@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 20
+        },
+        {
+          "name": "Post Run actions/setup-java@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 21
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 22
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 23
+        }
+      ]
+    },
+    {
+      "id": 128841249679,
+      "name": "android-instrumentation (26, x86_64)",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 42516366007,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-java@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run android-actions/setup-android@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Run gradle/actions/setup-gradle@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Install fixed tools for fixture upgrade verification",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Assemble current APKs before the old-source installation fixture",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Enable KVM acceleration",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Run reactivecircus/android-emulator-runner@v2",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Record job-local fixture APK hashes and public signing certificates",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "Upload synthetic Android test reports",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        },
+        {
+          "name": "Post Run gradle/actions/setup-gradle@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 20
+        },
+        {
+          "name": "Post Run actions/setup-java@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 21
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 22
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 23
+        }
+      ]
+    }
+  ],
+  "core_check_lines": [
+    "2026-11-08T19:44:18.6053426Z Ran 6 tests in 0.481s",
+    "2026-11-08T19:44:18.6134176Z PASS bilingual documentation, independent source tree, and host compatibility checks",
+    "2026-11-08T19:44:21.2404903Z PASS 73 core assertions",
+    "2026-11-08T19:44:21.2973028Z PASS 86 observation admission assertions (no WebView hook)",
+    "2026-11-08T19:44:21.3614837Z PASS 14 shared-post parsing assertions",
+    "2026-11-08T19:44:21.4191624Z PASS 132 browser upload policy assertions",
+    "2026-11-08T19:44:23.8542440Z CaptureSession: 204 assertions passed",
+    "2026-11-08T19:44:24.1636294Z PASS 40 independent timeline admission assertions",
+    "2026-11-08T19:44:24.2751692Z PASS 111 media download policy assertions",
+    "2026-11-08T19:44:24.3576917Z PASS 72 native own-action admission assertions (live disabled)",
+    "2026-11-08T19:44:24.6100760Z PASS 164 MP4 structure/video policy assertions",
+    "2026-11-08T19:44:25.1635406Z PASS 41 bounded backup codec assertions",
+    "2026-11-08T19:44:25.3213692Z PASS 36 explicit library merge invariants",
+    "2026-11-08T19:44:25.4161909Z PASS 220 library writer lifetime/concurrency assertions",
+    "2026-11-08T19:44:25.4696951Z PASS BackupRequestTest 16 assertions",
+    "2026-11-08T19:44:25.5517084Z PASS 34 snapshot selection/hash/query assertions",
+    "2026-11-08T19:44:25.6099145Z PASS 12 native timeline promotion projection assertions",
+    "2026-11-08T19:44:25.6611178Z PASS 39 timeline policy/clock assertions",
+    "2026-11-08T19:44:35.2160552Z PASS bounded-memory encrypted stream",
+    "2026-11-08T19:44:35.3045610Z PASS 112 encrypted backup/container assertions",
+    "2026-11-08T19:44:35.4202469Z PASS SQLite v6 DDL, v1/v2/v3/v4/v5 preserving migrations, snapshot history/current FTS, honest own-action provenance/reversal and same-action filtering, scope mappings, FTS, exposure dedup, dwell/never-opened and same-exposure date/source queries, independent favorites",
+    "2026-11-08T19:44:35.5939490Z PASS 25 temporary SQLite/FTS4 assertions; actual bytes 5402624 -> 151552",
+    "2026-11-08T19:44:35.8926960Z   \"result\": \"PASS\",",
+    "2026-11-08T19:44:36.0573285Z PASS packaged DOM observer: long-card geometry, 59/60%, overlays, sensitive routes, rebind/reentry, bounded escaped payload",
+    "2026-11-08T19:44:36.1730433Z PASS reversible cleanup: independent defaults, exact structures, restore/site edits, paid/sensitive exclusion, rebind, visibility, 128-node cap, observer exclusion",
+    "2026-11-08T19:44:37.5522324Z   \"result\": \"PASS\",",
+    "2026-11-08T19:44:37.7292254Z Ran 10 tests in 0.055s",
+    "2026-11-08T19:44:37.8345851Z Ran 6 tests in 0.017s",
+    "2026-11-08T19:44:38.5419281Z Ran 16 tests in 0.625s",
+    "2026-11-08T19:44:56.6710382Z   \"result\": \"PASS\",",
+    "2026-11-08T19:44:56.6724677Z       \"ftsRowidIdentity\": \"PASS\",",
+    "2026-11-08T19:44:56.6725108Z       \"foreignKeys\": \"PASS\",",
+    "2026-11-08T19:44:56.6725524Z       \"integrity\": \"PASS\",",
+    "2026-11-08T19:44:56.6725933Z       \"retainedOriginalRows\": \"PASS\",",
+    "2026-11-08T19:44:56.6889525Z       \"ftsRowidIdentity\": \"PASS\",",
+    "2026-11-08T19:44:56.6889766Z       \"foreignKeys\": \"PASS\",",
+    "2026-11-08T19:44:56.6889995Z       \"integrity\": \"PASS\",",
+    "2026-11-08T19:44:56.6890226Z       \"retainedOriginalRows\": \"PASS\","
+  ],
+  "artifacts": [
+    {
+      "id": 13632331039,
+      "name": "xs-android-test-reports-api-30",
+      "size_in_bytes": 3748671,
+      "url": "https://api.github.com/repos/ForceMind/Xs/actions/artifacts/13632331039",
+      "archive_download_url": "https://api.github.com/repos/ForceMind/Xs/actions/artifacts/13632331039/zip",
+      "expired": false,
+      "created_at": "2026-11-08T20:03:31Z",
+      "expires_at": "2027-02-06T19:42:20Z",
+      "updated_at": "2026-11-08T20:03:31Z",
+      "digest": "sha256:9579b414a5e0c307346530a8174d4f13a420a3fa074191432611e36e9bc40dc5",
+      "workflow_run": {
+        "id": 42516366007,
+        "repository_id": 1431408381,
+        "head_repository_id": 1431408381,
+        "head_branch": "feat/local-library-capture-media",
+        "head_sha": "1672756ff2fb67c30c92df9bc7a5885f19b84c46"
+      }
+    },
+    {
+      "id": 13632012077,
+      "name": "xs-android-test-reports-api-36",
+      "size_in_bytes": 4220048,
+      "url": "https://api.github.com/repos/ForceMind/Xs/actions/artifacts/13632012077",
+      "archive_download_url": "https://api.github.com/repos/ForceMind/Xs/actions/artifacts/13632012077/zip",
+      "expired": false,
+      "created_at": "2026-11-08T20:02:35Z",
+      "expires_at": "2027-02-06T19:42:20Z",
+      "updated_at": "2026-11-08T20:02:35Z",
+      "digest": "sha256:0c11948a13aaa1d10cb813e7e950a9a5c795295db86d4ecda7bf42678feb1dce",
+      "workflow_run": {
+        "id": 42516366007,
+        "repository_id": 1431408381,
+        "head_repository_id": 1431408381,
+        "head_branch": "feat/local-library-capture-media",
+        "head_sha": "1672756ff2fb67c30c92df9bc7a5885f19b84c46"
+      }
+    },
+    {
+      "id": 13631844335,
+      "name": "xs-android-test-reports-api-27",
+      "size_in_bytes": 3786656,
+      "url": "https://api.github.com/repos/ForceMind/Xs/actions/artifacts/13631844335",
+      "archive_download_url": "https://api.github.com/repos/ForceMind/Xs/actions/artifacts/13631844335/zip",
+      "expired": false,
+      "created_at": "2026-11-08T20:03:40Z",
+      "expires_at": "2027-02-06T19:42:20Z",
+      "updated_at": "2026-11-08T20:03:40Z",
+      "digest": "sha256:4969f78d2ec0e98092d961ea779960b8de942cd6168cc3354187ac7ec20c13ea",
+      "workflow_run": {
+        "id": 42516366007,
+        "repository_id": 1431408381,
+        "head_repository_id": 1431408381,
+        "head_branch": "feat/local-library-capture-media",
+        "head_sha": "1672756ff2fb67c30c92df9bc7a5885f19b84c46"
+      }
+    },
+    {
+      "id": 13631507993,
+      "name": "xs-dev-harness-only",
+      "size_in_bytes": 342147,
+      "url": "https://api.github.com/repos/ForceMind/Xs/actions/artifacts/13631507993",
+      "archive_download_url": "https://api.github.com/repos/ForceMind/Xs/actions/artifacts/13631507993/zip",
+      "expired": false,
+      "created_at": "2026-11-08T19:46:26Z",
+      "expires_at": "2027-02-06T19:42:20Z",
+      "updated_at": "2026-11-08T19:46:26Z",
+      "digest": "sha256:dccc150ccd25e3a61da8c4dbe9bf6b3a4968d517e6dd786463a529fd18b15d41",
+      "workflow_run": {
+        "id": 42516366007,
+        "repository_id": 1431408381,
+        "head_repository_id": 1431408381,
+        "head_branch": "feat/local-library-capture-media",
+        "head_sha": "1672756ff2fb67c30c92df9bc7a5885f19b84c46"
+      }
+    },
+    {
+      "id": 13631389117,
+      "name": "xs-android-test-reports-api-26",
+      "size_in_bytes": 3681401,
+      "url": "https://api.github.com/repos/ForceMind/Xs/actions/artifacts/13631389117",
+      "archive_download_url": "https://api.github.com/repos/ForceMind/Xs/actions/artifacts/13631389117/zip",
+      "expired": false,
+      "created_at": "2026-11-08T20:04:16Z",
+      "expires_at": "2027-02-06T19:42:20Z",
+      "updated_at": "2026-11-08T20:04:16Z",
+      "digest": "sha256:dfc3abc420f11a006163aa46ef32f820ffb0b6f4e749d60bc1274b4a0ade9c90",
+      "workflow_run": {
+        "id": 42516366007,
+        "repository_id": 1431408381,
+        "head_repository_id": 1431408381,
+        "head_branch": "feat/local-library-capture-media",
+        "head_sha": "1672756ff2fb67c30c92df9bc7a5885f19b84c46"
+      }
+    },
+    {
+      "id": 13631274098,
+      "name": "xs-runtime-debug-aar",
+      "size_in_bytes": 478084,
+      "url": "https://api.github.com/repos/ForceMind/Xs/actions/artifacts/13631274098",
+      "archive_download_url": "https://api.github.com/repos/ForceMind/Xs/actions/artifacts/13631274098/zip",
+      "expired": false,
+      "created_at": "2026-11-08T19:46:24Z",
+      "expires_at": "2027-02-06T19:42:20Z",
+      "updated_at": "2026-11-08T19:46:24Z",
+      "digest": "sha256:5e123730fede62d851cdfd4958449f73f2f80cd25eeb47a2367a65d2f5390007",
+      "workflow_run": {
+        "id": 42516366007,
+        "repository_id": 1431408381,
+        "head_repository_id": 1431408381,
+        "head_branch": "feat/local-library-capture-media",
+        "head_sha": "1672756ff2fb67c30c92df9bc7a5885f19b84c46"
+      }
+    },
+    {
+      "id": 13631217670,
+      "name": "xs-core-capacity-and-source",
+      "size_in_bytes": 18240,
+      "url": "https://api.github.com/repos/ForceMind/Xs/actions/artifacts/13631217670",
+      "archive_download_url": "https://api.github.com/repos/ForceMind/Xs/actions/artifacts/13631217670/zip",
+      "expired": false,
+      "created_at": "2026-11-08T19:44:57Z",
+      "expires_at": "2027-02-06T19:42:20Z",
+      "updated_at": "2026-11-08T19:44:57Z",
+      "digest": "sha256:2391523807fa6b3cdba3ae642273379ec06aa89233cfbb2df9a50dd4ad38b6f1",
+      "workflow_run": {
+        "id": 42516366007,
+        "repository_id": 1431408381,
+        "head_repository_id": 1431408381,
+        "head_branch": "feat/local-library-capture-media",
+        "head_sha": "1672756ff2fb67c30c92df9bc7a5885f19b84c46"
+      }
+    },
+    {
+      "id": 13631154847,
+      "name": "xs-w0-browser-poc",
+      "size_in_bytes": 398669,
+      "url": "https://api.github.com/repos/ForceMind/Xs/actions/artifacts/13631154847",
+      "archive_download_url": "https://api.github.com/repos/ForceMind/Xs/actions/artifacts/13631154847/zip",
+      "expired": false,
+      "created_at": "2026-11-08T19:46:36Z",
+      "expires_at": "2027-02-06T19:42:20Z",
+      "updated_at": "2026-11-08T19:46:36Z",
+      "digest": "sha256:d49e3bb37d2d2f2b551cd49aa0e50cd77b1ed47c360a8a473070360887701631",
+      "workflow_run": {
+        "id": 42516366007,
+        "repository_id": 1431408381,
+        "head_repository_id": 1431408381,
+        "head_branch": "feat/local-library-capture-media",
+        "head_sha": "1672756ff2fb67c30c92df9bc7a5885f19b84c46"
+      }
+    }
+  ],
+  "apis": {
+    "26": {
+      "zip": {
+        "bytes": 3681401,
+        "sha256": "dfc3abc420f11a006163aa46ef32f820ffb0b6f4e749d60bc1274b4a0ade9c90"
+      },
+      "main_counts": {
+        "tests": 200,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "driver_counts": {
+        "attempted": 5,
+        "passed": 5,
+        "failed": 0
+      },
+      "native_driver_phase_counts": {
+        "executed": 11,
+        "passed": 11
+      },
+      "native_driver_phases": [
+        {
+          "driver": "app-android/build/compatibility/emulator-reboot",
+          "phase": "seed",
+          "path": "app-android/build/compatibility/emulator-reboot/seed.txt",
+          "sha256": "b0c1bdb17f10dad8cfabcb341282657849ef7dcb05bf3c5229710242e4918f80",
+          "passed": true,
+          "status_lines": [
+            "dev.forcemind.xs.android.ProcessRecoveryProbe:INSTRUMENTATION_STATUS: xs_seed_app_uid=10082",
+            "INSTRUMENTATION_STATUS: xs_seed_available_bytes=8168779776"
+          ]
+        },
+        {
+          "driver": "app-android/build/compatibility/emulator-reboot",
+          "phase": "verify",
+          "path": "app-android/build/compatibility/emulator-reboot/verify.txt",
+          "sha256": "fa11d86dad7ab4598f480ba5f3dd4dd6c56cd5237bb3884f32320fb1bafe5e18",
+          "passed": true,
+          "status_lines": [
+            "dev.forcemind.xs.android.ProcessRecoveryProbe:INSTRUMENTATION_STATUS: xs_verify_pid=2510",
+            "INSTRUMENTATION_STATUS: xs_timeline_commit_ack_gap=verified",
+            "INSTRUMENTATION_STATUS: xs_timeline_buffer_entries=2",
+            "INSTRUMENTATION_STATUS: xs_timeline_saved_promotions=1"
+          ]
+        },
+        {
+          "driver": "app-android/build/compatibility/legacy-upgrade",
+          "phase": "cleanup",
+          "path": "app-android/build/compatibility/legacy-upgrade/cleanup.result.json",
+          "sha256": "aa1062ad54d61ab888feaf6da22643500c3bb946eb32c6f289ca6d1dd8d51e7b",
+          "passed": true,
+          "status_lines": []
+        },
+        {
+          "driver": "app-android/build/compatibility/legacy-upgrade",
+          "phase": "seed",
+          "path": "app-android/build/compatibility/legacy-upgrade/seed.result.json",
+          "sha256": "3f02ec3999ed2f927e1ea51832f1475dadf47691f18da21665de76d943997a93",
+          "passed": true,
+          "status_lines": [
+            "dev.forcemind.xs.android.LegacyUpgradeProbe:INSTRUMENTATION_STATUS: xs_legacy_pid=4608",
+            "INSTRUMENTATION_STATUS: xs_legacy_uid=10077",
+            "INSTRUMENTATION_STATUS: xs_legacy_db_path=/data/data/dev.forcemind.xs/databases/xs-local-history.db",
+            "INSTRUMENTATION_STATUS: xs_legacy_schema=2",
+            "INSTRUMENTATION_STATUS: xs_legacy_scope=local:4f79c303-e24a-4008-b647-3b8546f67fd3"
+          ]
+        },
+        {
+          "driver": "app-android/build/compatibility/legacy-upgrade",
+          "phase": "verify",
+          "path": "app-android/build/compatibility/legacy-upgrade/verify.result.json",
+          "sha256": "61f572476a924b7593ec6e5b5025745355418a43da873a7f5bdf6c633451c981",
+          "passed": true,
+          "status_lines": [
+            "dev.forcemind.xs.android.LegacyUpgradeProbe:INSTRUMENTATION_STATUS: xs_legacy_pid=4782",
+            "INSTRUMENTATION_STATUS: xs_legacy_uid=10077",
+            "INSTRUMENTATION_STATUS: xs_legacy_db_path=/data/data/dev.forcemind.xs/databases/xs-local-history.db",
+            "INSTRUMENTATION_STATUS: xs_legacy_schema=6",
+            "INSTRUMENTATION_STATUS: xs_legacy_scope=local:4f79c303-e24a-4008-b647-3b8546f67fd3"
+          ]
+        },
+        {
+          "driver": "app-android/build/compatibility/low-space",
+          "phase": "seed",
+          "path": "app-android/build/compatibility/low-space/seed.txt",
+          "sha256": "2351efe295cbe68bccc150aafd3168f863d3ab9fa9adc91326108b102a455e77",
+          "passed": true,
+          "status_lines": [
+            "dev.forcemind.xs.android.ProcessRecoveryProbe:INSTRUMENTATION_STATUS: xs_seed_app_uid=10082",
+            "INSTRUMENTATION_STATUS: xs_seed_available_bytes=8169824256"
+          ]
+        },
+        {
+          "driver": "app-android/build/compatibility/low-space",
+          "phase": "low-space",
+          "path": "app-android/build/compatibility/low-space/low-space.txt",
+          "sha256": "165f479e23fe32c5819b8dfd0adb07f89be4728e20e7dfda3c4534884100b36a",
+          "passed": true,
+          "status_lines": [
+            "dev.forcemind.xs.android.ProcessRecoveryProbe:INSTRUMENTATION_STATUS: xs_low_space_app_uid=10082",
+            "INSTRUMENTATION_STATUS: xs_available_bytes=28667904"
+          ]
+        },
+        {
+          "driver": "app-android/build/compatibility/process-recovery",
+          "phase": "seed",
+          "path": "app-android/build/compatibility/process-recovery/seed.txt",
+          "sha256": "f323ba4ba37cd0b3b07c3712b6b831c9ac23a711da6f4c80996c9588c2d7c9a4",
+          "passed": true,
+          "status_lines": [
+            "dev.forcemind.xs.android.ProcessRecoveryProbe:INSTRUMENTATION_STATUS: xs_seed_app_uid=10082",
+            "INSTRUMENTATION_STATUS: xs_seed_available_bytes=8169443328"
+          ]
+        },
+        {
+          "driver": "app-android/build/compatibility/process-recovery",
+          "phase": "verify",
+          "path": "app-android/build/compatibility/process-recovery/verify.txt",
+          "sha256": "b45fd2ba25a024f320220227254b7db2fbcef0700d722e11de5df501d8c95984",
+          "passed": true,
+          "status_lines": [
+            "dev.forcemind.xs.android.ProcessRecoveryProbe:INSTRUMENTATION_STATUS: xs_verify_pid=9501",
+            "INSTRUMENTATION_STATUS: xs_timeline_commit_ack_gap=verified",
+            "INSTRUMENTATION_STATUS: xs_timeline_buffer_entries=2",
+            "INSTRUMENTATION_STATUS: xs_timeline_saved_promotions=1"
+          ]
+        },
+        {
+          "driver": "app-android/build/compatibility/signed-debug-upgrade",
+          "phase": "seed",
+          "path": "app-android/build/compatibility/signed-debug-upgrade/seed.txt",
+          "sha256": "495c2f0a802195efa5eb55200fdbfd9d923d045ee664032e8afb50c460beff7c",
+          "passed": true,
+          "status_lines": [
+            "dev.forcemind.xs.android.ProcessRecoveryProbe:INSTRUMENTATION_STATUS: xs_seed_app_uid=10082",
+            "INSTRUMENTATION_STATUS: xs_seed_available_bytes=8168972288"
+          ]
+        },
+        {
+          "driver": "app-android/build/compatibility/signed-debug-upgrade",
+          "phase": "verify",
+          "path": "app-android/build/compatibility/signed-debug-upgrade/verify.txt",
+          "sha256": "c9a94dfa6f4aec528260cbd6ecaf7b89889f82b869abacf377c559f2bc0709a0",
+          "passed": true,
+          "status_lines": [
+            "dev.forcemind.xs.android.ProcessRecoveryProbe:INSTRUMENTATION_STATUS: xs_verify_pid=9758",
+            "INSTRUMENTATION_STATUS: xs_timeline_commit_ack_gap=verified",
+            "INSTRUMENTATION_STATUS: xs_timeline_buffer_entries=2",
+            "INSTRUMENTATION_STATUS: xs_timeline_saved_promotions=1"
+          ]
+        }
+      ],
+      "device": {
+        "source-commit.txt": "eea88356636b6c7bd389e9f1594f001b3c73cee3\n",
+        "android-api.txt": "26\n",
+        "android-release.txt": "8.0.0\n",
+        "primary-abi.txt": "x86_64\n",
+        "supported-abis.txt": "x86_64,x86\n",
+        "locale.txt": "\n",
+        "night-mode.txt": "Night mode: no\n",
+        "device-configuration.txt": "config: mcc310-mnc260-en-rUS-ldltr-sw320dp-w320dp-h616dp-normal-long-notround-lowdr-nowidecg-port-notnight-mdpi-finger-keysexposed-nokeys-navexposed-trackball-v26\nabi: x86_64,x86\n",
+        "webview-provider.txt": "Current WebView Update Service state\n  Fallback logic enabled: true\n  Current WebView package (name, version): (com.android.chrome, 69.0.3497.100)\n  Minimum WebView version code: 349710067\n  Number of relros started: 2\n  Number of relros finished: 2\n  WebView package dirty: false\n  Any WebView package installed: true\n  Preferred WebView package (name, version): (com.android.chrome, 69.0.3497.100)\n  WebView packages:\n    Valid package com.android.chrome (versionName: 69.0.3497.100, versionCode: 349710067, targetSdkVersion: 28) is  installed/enabled for all users\n    Valid package com.google.android.webview (versionName: 69.0.3497.100, versionCode: 349710065, targetSdkVersion: 28) is NOT installed/enabled for all users\n"
+      },
+      "drivers": {
+        "app-android/build/compatibility/emulator-reboot": {
+          "status": "PASS",
+          "scope": "Synthetic native data survives actual emulator guest OS reboot and explicit post-stop launch; not physical power loss or vendor-device behavior",
+          "phases": [
+            "seed_pass",
+            "live_process_confirmed_stopped",
+            "separate_process_startup_recovery_pass"
+          ],
+          "reboot_requested": true,
+          "recovery_verified": true,
+          "foreground_pid": 9841,
+          "previous_boot_id": "5fdbb417-b112-45b8-9000-24ca87db1e00",
+          "current_boot_id": "85a4c64f-5d60-402c-b621-9ca765f551a2",
+          "verify_pid": 2510,
+          "summary_sha256": "25eaf488d2bacd011e9e6b574af0355f85f0e82b94a648ed20f0cf23b8a14ba3"
+        },
+        "app-android/build/compatibility/legacy-upgrade": {
+          "status": "PASS",
+          "scope": "Actual fixed old-main source APK/schema2 to current source APK/schema6, using one job-local debug signer on a disposable CI emulator. Synthetic native records only; not production-key, physical-device or live-X acceptance.",
+          "phases": [
+            "old_source_apk_schema2_native_seed_pass",
+            "old_seed_process_stopped_and_absent",
+            "old_live_process_stopped_and_absent",
+            "current_source_apk_schema6_native_verification_pass",
+            "only_owned_synthetic_fixtures_cleaned"
+          ],
+          "old_independent_favorites": "NOT APPLICABLE: absent in this old main",
+          "old_media_library": "NOT APPLICABLE: absent in this old main",
+          "external_probe_invocations_counted_in_main_xml": false,
+          "emulator_serial": "emulator-5554",
+          "initial_shell_uid": 2000,
+          "initial_target_absent": true,
+          "current_source": {
+            "head_commit": "eea88356636b6c7bd389e9f1594f001b3c73cee3",
+            "head_tree": "52532383a3e86118f5516e18875669beeb0891a8",
+            "working_tree_clean": true
+          },
+          "old_source": {
+            "head_commit": "f88003c8ec1ee193b75de7267db6ae7654ee77c4",
+            "head_tree": "82011cd71d591eb1a300e7dd07725628dcc6f1fd",
+            "working_tree_clean_before_build": true
+          },
+          "apk_artifacts": [
+            {
+              "role": "old-application",
+              "package": "dev.forcemind.xs",
+              "version_code": 1,
+              "bytes": 84446,
+              "sha256": "b135015a8814d4dbd62654b18cbbf54c83d53e66d11f88de2bf761aab424a5ef",
+              "certificate_sha256": "00aaa20667b81010854fa0498d4e9a8b401e56c982c48a388505c6fb5fe31389",
+              "signature_verification": "passed"
+            },
+            {
+              "role": "current-application",
+              "package": "dev.forcemind.xs",
+              "version_code": 3,
+              "bytes": 392295,
+              "sha256": "5a1227222efc017fc77409a9dd3fef63a7e61eaf7dfca19a342fcfa92715c9c8",
+              "certificate_sha256": "00aaa20667b81010854fa0498d4e9a8b401e56c982c48a388505c6fb5fe31389",
+              "signature_verification": "passed"
+            },
+            {
+              "role": "current-instrumentation",
+              "package": "dev.forcemind.xs.test",
+              "version_code": null,
+              "bytes": 1871495,
+              "sha256": "3f5484b7ed02ac33e1aff5dc89bbc258c4141ef3985980e91e14a6c143ad4814",
+              "certificate_sha256": "00aaa20667b81010854fa0498d4e9a8b401e56c982c48a388505c6fb5fe31389",
+              "signature_verification": "passed"
+            }
+          ],
+          "current_build_outputs_preserved": true,
+          "installed_old": {
+            "package": "dev.forcemind.xs",
+            "version_code": 1,
+            "uid": 10077
+          },
+          "seed": {
+            "schema": 2,
+            "uid": 10077,
+            "pid": 4608,
+            "db_path": "/data/data/dev.forcemind.xs/databases/xs-local-history.db",
+            "scope": "local:4f79c303-e24a-4008-b647-3b8546f67fd3"
+          },
+          "old_foreground_pid": 4641,
+          "installed_current": {
+            "package": "dev.forcemind.xs",
+            "version_code": 3,
+            "uid": 10077
+          },
+          "verify": {
+            "schema": 6,
+            "uid": 10077,
+            "pid": 4782,
+            "db_path": "/data/data/dev.forcemind.xs/databases/xs-local-history.db",
+            "scope": "local:4f79c303-e24a-4008-b647-3b8546f67fd3"
+          },
+          "source_schema_version": 2,
+          "target_schema_version": 6,
+          "external_native_probe_invocations": 3,
+          "summary_sha256": "cceb63a435fe262ba5c65267388345bda8f52c346f006d5f8f4109893c4de53c"
+        },
+        "app-android/build/compatibility/low-space": {
+          "status": "PASS",
+          "scope": "Real emulator /data space below image-admission requirement; saved fixture bytes and local search preserved. Not mid-stream ENOSPC, physical flash, or user-device evidence.",
+          "allocator": "isolated-root-after-shell-quota",
+          "allocator_uid_before": 2000,
+          "native_baseline_available_bytes": 8169824256,
+          "native_actor_uid": 10082,
+          "diagnostic_df_available_bytes": 8169824256,
+          "allocator_uid_during": 0,
+          "native_available_bytes": 28667904,
+          "requested_allocation_bytes": 8140464128,
+          "allocator_uid_restored": 2000,
+          "summary_sha256": "64a47049316a1782177c318418dd4f957d969c185aa3bfb2e76c3433f83dd4ee"
+        },
+        "app-android/build/compatibility/process-recovery": {
+          "status": "PASS",
+          "scope": "Synthetic native fixtures; real emulator OS force-stop and new target process, not reboot/physical power loss/vendor background/live X",
+          "phases": [
+            "seed_pass",
+            "live_process_confirmed_stopped",
+            "separate_process_startup_recovery_pass"
+          ],
+          "foreground_pid": 9384,
+          "verify_pid": 9501,
+          "summary_sha256": "07dc316ae599a0986a5e511d206d499027436058a45f3c0b4ed5caa9ad186bdf"
+        },
+        "app-android/build/compatibility/signed-debug-upgrade": {
+          "status": "PASS",
+          "scope": "Synthetic native fixtures; real emulator OS force-stop and new target process, not reboot/physical power loss/vendor background/live X",
+          "phases": [
+            "seed_pass",
+            "live_process_confirmed_stopped",
+            "separate_process_startup_recovery_pass"
+          ],
+          "foreground_pid": 9595,
+          "upgrade_artifacts": [
+            {
+              "label": "source",
+              "sha256": "5a1227222efc017fc77409a9dd3fef63a7e61eaf7dfca19a342fcfa92715c9c8",
+              "certificate_sha256": "00aaa20667b81010854fa0498d4e9a8b401e56c982c48a388505c6fb5fe31389",
+              "version_code": 3,
+              "debug_fixture": true
+            },
+            {
+              "label": "target",
+              "sha256": "0a7700390c6422c4ab82f635d242d5dc759ffbd04a24c3b7940378eed45e5dff",
+              "certificate_sha256": "00aaa20667b81010854fa0498d4e9a8b401e56c982c48a388505c6fb5fe31389",
+              "version_code": 4,
+              "debug_fixture": true
+            }
+          ],
+          "verify_pid": 9758,
+          "summary_sha256": "b113b4f5f676557476b2b5b94af92a438b2de6859d3fd4847d10b5cb81663ea7"
+        }
+      },
+      "xml": [
+        {
+          "path": "app-android/build/outputs/androidTest-results/connected/debug/TEST-emulator-5554 - 8.0.0-_app-android-.xml",
+          "attributes": {
+            "name": "dev.forcemind.xs.android.AssetLibraryUiTest",
+            "tests": "135",
+            "failures": "0",
+            "errors": "0",
+            "skipped": "0",
+            "time": "251.062",
+            "timestamp": "2026-11-08T20:02:17",
+            "hostname": "localhost"
+          },
+          "sha256": "74df503a6dc17aa4a0dbd49e630e74e4b4903480f76c6c3cd61ef4fd748daa2e",
+          "checked_case_count": 135,
+          "case_identity_sha256": "9c658dd059eafc13e10d1a6cbce13db3332366161e3127e4706a8cc17154dd14",
+          "failures": [],
+          "storage_pressure_cases": [
+            {
+              "class": "dev.forcemind.xs.android.TimelineStoragePressureTest",
+              "name": "sqliteFullRollsBackCaptureReportsReasonAndAllowsExplicitRetry",
+              "seconds": "0.151",
+              "failure": []
+            },
+            {
+              "class": "dev.forcemind.xs.android.TimelineStoragePressureTest",
+              "name": "rejectedCaptureStillHasBoundedDiagnosticsWhenCounterWriteFails",
+              "seconds": "0.177",
+              "failure": []
+            }
+          ]
+        },
+        {
+          "path": "dev-harness/build/outputs/androidTest-results/connected/debug/TEST-emulator-5554 - 8.0.0-_dev-harness-.xml",
+          "attributes": {
+            "name": "dev.forcemind.xs.android.GovernanceUiTest",
+            "tests": "65",
+            "failures": "0",
+            "errors": "0",
+            "skipped": "0",
+            "time": "37.64",
+            "timestamp": "2026-11-08T20:03:03",
+            "hostname": "localhost"
+          },
+          "sha256": "adb6195d228cb57c2fb5a335e2feece96dc8f410f90bef2a2a500afa02af3992",
+          "checked_case_count": 65,
+          "case_identity_sha256": "3be8298fc5e7684a90eff6c5d6a3b485d101e09526a21b5009ef8e31468c2760",
+          "failures": [],
+          "storage_pressure_cases": []
+        }
+      ],
+      "downloaded_apks": [
+        {
+          "path": "app-android/build/compatibility/legacy-upgrade/current-instrumentation.apk",
+          "sha256": "3f5484b7ed02ac33e1aff5dc89bbc258c4141ef3985980e91e14a6c143ad4814",
+          "bytes": 1871495,
+          "badging": "package: name='dev.forcemind.xs.test' versionCode='' versionName='' platformBuildVersionName='15' platformBuildVersionCode='35' compileSdkVersion='35' compileSdkVersionCodename='15'",
+          "certificate_sha256": [
+            "00aaa20667b81010854fa0498d4e9a8b401e56c982c48a388505c6fb5fe31389"
+          ],
+          "independent_signature_verification": "PASS"
+        },
+        {
+          "path": "app-android/build/compatibility/legacy-upgrade/current-main-v3.apk",
+          "sha256": "5a1227222efc017fc77409a9dd3fef63a7e61eaf7dfca19a342fcfa92715c9c8",
+          "bytes": 392295,
+          "badging": "package: name='dev.forcemind.xs' versionCode='3' versionName='0.3-reliability-poc' platformBuildVersionName='15' platformBuildVersionCode='35' compileSdkVersion='35' compileSdkVersionCodename='15'",
+          "certificate_sha256": [
+            "00aaa20667b81010854fa0498d4e9a8b401e56c982c48a388505c6fb5fe31389"
+          ],
+          "independent_signature_verification": "PASS"
+        },
+        {
+          "path": "app-android/build/compatibility/legacy-upgrade/old-main-v1.apk",
+          "sha256": "b135015a8814d4dbd62654b18cbbf54c83d53e66d11f88de2bf761aab424a5ef",
+          "bytes": 84446,
+          "badging": "package: name='dev.forcemind.xs' versionCode='1' versionName='0.1-w0-poc' platformBuildVersionName='15' platformBuildVersionCode='35' compileSdkVersion='35' compileSdkVersionCodename='15'",
+          "certificate_sha256": [
+            "00aaa20667b81010854fa0498d4e9a8b401e56c982c48a388505c6fb5fe31389"
+          ],
+          "independent_signature_verification": "PASS"
+        },
+        {
+          "path": "app-android/build/compatibility/signed-debug-upgrade/version-3-debug.apk",
+          "sha256": "5a1227222efc017fc77409a9dd3fef63a7e61eaf7dfca19a342fcfa92715c9c8",
+          "bytes": 392295,
+          "badging": "package: name='dev.forcemind.xs' versionCode='3' versionName='0.3-reliability-poc' platformBuildVersionName='15' platformBuildVersionCode='35' compileSdkVersion='35' compileSdkVersionCodename='15'",
+          "certificate_sha256": [
+            "00aaa20667b81010854fa0498d4e9a8b401e56c982c48a388505c6fb5fe31389"
+          ],
+          "independent_signature_verification": "PASS"
+        },
+        {
+          "path": "app-android/build/compatibility/signed-debug-upgrade/version-4-debug.apk",
+          "sha256": "0a7700390c6422c4ab82f635d242d5dc759ffbd04a24c3b7940378eed45e5dff",
+          "bytes": 392295,
+          "badging": "package: name='dev.forcemind.xs' versionCode='4' versionName='0.3-reliability-poc' platformBuildVersionName='15' platformBuildVersionCode='35' compileSdkVersion='35' compileSdkVersionCodename='15'",
+          "certificate_sha256": [
+            "00aaa20667b81010854fa0498d4e9a8b401e56c982c48a388505c6fb5fe31389"
+          ],
+          "independent_signature_verification": "PASS"
+        }
+      ],
+      "provenance": [
+        {
+          "source": {
+            "head_commit": "eea88356636b6c7bd389e9f1594f001b3c73cee3",
+            "head_tree": "52532383a3e86118f5516e18875669beeb0891a8",
+            "working_tree_clean": true,
+            "working_tree_status": []
+          },
+          "artifacts": [
+            {
+              "module": "app-android",
+              "role": "application",
+              "path": "app-android/build/outputs/apk/debug/app-android-debug.apk",
+              "availability": "present",
+              "bytes": 392295,
+              "sha256": "5a1227222efc017fc77409a9dd3fef63a7e61eaf7dfca19a342fcfa92715c9c8",
+              "signature_verification": {
+                "status": "passed",
+                "exit_code": 0,
+                "certificate_sha256": [
+                  "00aaa20667b81010854fa0498d4e9a8b401e56c982c48a388505c6fb5fe31389"
+                ]
+              }
+            },
+            {
+              "module": "app-android",
+              "role": "instrumentation",
+              "path": "app-android/build/outputs/apk/androidTest/debug/app-android-debug-androidTest.apk",
+              "availability": "present",
+              "bytes": 1871495,
+              "sha256": "3f5484b7ed02ac33e1aff5dc89bbc258c4141ef3985980e91e14a6c143ad4814",
+              "signature_verification": {
+                "status": "passed",
+                "exit_code": 0,
+                "certificate_sha256": [
+                  "00aaa20667b81010854fa0498d4e9a8b401e56c982c48a388505c6fb5fe31389"
+                ]
+              }
+            },
+            {
+              "module": "dev-harness",
+              "role": "application",
+              "path": "dev-harness/build/outputs/apk/debug/dev-harness-debug.apk",
+              "availability": "present",
+              "bytes": 345594,
+              "sha256": "1ff4d77a0ac5aa0e7e9cb2a0f1b02402e4ec75d2dfe864d9a43c03d65629ce53",
+              "signature_verification": {
+                "status": "passed",
+                "exit_code": 0,
+                "certificate_sha256": [
+                  "00aaa20667b81010854fa0498d4e9a8b401e56c982c48a388505c6fb5fe31389"
+                ]
+              }
+            },
+            {
+              "module": "dev-harness",
+              "role": "instrumentation",
+              "path": "dev-harness/build/outputs/apk/androidTest/debug/dev-harness-debug-androidTest.apk",
+              "availability": "present",
+              "bytes": 1749033,
+              "sha256": "cdaef50db643954e05dee3d4b45622498085663bf919b9f18f85dacac79e860a",
+              "signature_verification": {
+                "status": "passed",
+                "exit_code": 0,
+                "certificate_sha256": [
+                  "00aaa20667b81010854fa0498d4e9a8b401e56c982c48a388505c6fb5fe31389"
+                ]
+              }
+            },
+            {
+              "module": "share-receiver-fixture",
+              "role": "independent-uid-receiver",
+              "path": "share-receiver-fixture/build/outputs/apk/debug/share-receiver-fixture-debug.apk",
+              "availability": "present",
+              "bytes": 11769,
+              "sha256": "0a7f3b6bafce7ed72d78878d075c1402adc3496e4a3de75079f3058f58fcf43e",
+              "signature_verification": {
+                "status": "passed",
+                "exit_code": 0,
+                "certificate_sha256": [
+                  "00aaa20667b81010854fa0498d4e9a8b401e56c982c48a388505c6fb5fe31389"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "27": {
+      "zip": {
+        "bytes": 3786656,
+        "sha256": "4969f78d2ec0e98092d961ea779960b8de942cd6168cc3354187ac7ec20c13ea"
+      },
+      "main_counts": {
+        "tests": 200,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "driver_counts": {
+        "attempted": 4,
+        "passed": 3,
+        "failed": 1
+      },
+      "native_driver_phase_counts": {
+        "executed": 8,
+        "passed": 8
+      },
+      "native_driver_phases": [
+        {
+          "driver": "app-android/build/compatibility/emulator-reboot",
+          "phase": "seed",
+          "path": "app-android/build/compatibility/emulator-reboot/seed.txt",
+          "sha256": "546bc87037f32f893a3982e01ab49e02c309aee2093d16b905ba26b0d5611cba",
+          "passed": true,
+          "status_lines": [
+            "dev.forcemind.xs.android.ProcessRecoveryProbe:INSTRUMENTATION_STATUS: xs_seed_app_uid=10084",
+            "INSTRUMENTATION_STATUS: xs_seed_available_bytes=8170831872"
+          ]
+        },
+        {
+          "driver": "app-android/build/compatibility/legacy-upgrade",
+          "phase": "cleanup",
+          "path": "app-android/build/compatibility/legacy-upgrade/cleanup.result.json",
+          "sha256": "258484d4bca024bdc0152cf0fe6ee75881f18061710c0c7b35eb2f5a50abfc8e",
+          "passed": true,
+          "status_lines": []
+        },
+        {
+          "driver": "app-android/build/compatibility/legacy-upgrade",
+          "phase": "seed",
+          "path": "app-android/build/compatibility/legacy-upgrade/seed.result.json",
+          "sha256": "60d83129121a0247344516f511245da0189f8acffe6d58ec45d42436750ee1ad",
+          "passed": true,
+          "status_lines": [
+            "dev.forcemind.xs.android.LegacyUpgradeProbe:INSTRUMENTATION_STATUS: xs_legacy_db_path=/data/data/dev.forcemind.xs/databases/xs-local-history.db",
+            "INSTRUMENTATION_STATUS: xs_legacy_pid=4381",
+            "INSTRUMENTATION_STATUS: xs_legacy_schema=2",
+            "INSTRUMENTATION_STATUS: xs_legacy_scope=local:eb2b3c63-e494-4d29-b608-4e9ca44cbe21",
+            "INSTRUMENTATION_STATUS: xs_legacy_uid=10079"
+          ]
+        },
+        {
+          "driver": "app-android/build/compatibility/legacy-upgrade",
+          "phase": "verify",
+          "path": "app-android/build/compatibility/legacy-upgrade/verify.result.json",
+          "sha256": "4687feadcf0e3e145fb0fe6459106fbaa683e4e8be8f3e719436918fc1958683",
+          "passed": true,
+          "status_lines": [
+            "dev.forcemind.xs.android.LegacyUpgradeProbe:INSTRUMENTATION_STATUS: xs_legacy_db_path=/data/data/dev.forcemind.xs/databases/xs-local-history.db",
+            "INSTRUMENTATION_STATUS: xs_legacy_pid=4666",
+            "INSTRUMENTATION_STATUS: xs_legacy_schema=6",
+            "INSTRUMENTATION_STATUS: xs_legacy_scope=local:eb2b3c63-e494-4d29-b608-4e9ca44cbe21",
+            "INSTRUMENTATION_STATUS: xs_legacy_uid=10079"
+          ]
+        },
+        {
+          "driver": "app-android/build/compatibility/process-recovery",
+          "phase": "seed",
+          "path": "app-android/build/compatibility/process-recovery/seed.txt",
+          "sha256": "3bb78a735be9551224e2d00926301aa3f361de60120c2714e49df31ab6ca79e9",
+          "passed": true,
+          "status_lines": [
+            "dev.forcemind.xs.android.ProcessRecoveryProbe:INSTRUMENTATION_STATUS: xs_seed_app_uid=10084",
+            "INSTRUMENTATION_STATUS: xs_seed_available_bytes=8171577344"
+          ]
+        },
+        {
+          "driver": "app-android/build/compatibility/process-recovery",
+          "phase": "verify",
+          "path": "app-android/build/compatibility/process-recovery/verify.txt",
+          "sha256": "ea934d97909f7478798bef553978ef2dc95fa27b6360b0fb0f853797514ea407",
+          "passed": true,
+          "status_lines": [
+            "dev.forcemind.xs.android.ProcessRecoveryProbe:INSTRUMENTATION_STATUS: xs_verify_pid=9312",
+            "INSTRUMENTATION_STATUS: xs_timeline_buffer_entries=2",
+            "INSTRUMENTATION_STATUS: xs_timeline_commit_ack_gap=verified",
+            "INSTRUMENTATION_STATUS: xs_timeline_saved_promotions=1"
+          ]
+        },
+        {
+          "driver": "app-android/build/compatibility/signed-debug-upgrade",
+          "phase": "seed",
+          "path": "app-android/build/compatibility/signed-debug-upgrade/seed.txt",
+          "sha256": "49c24434ae0bd05033ba08f5ed43860444c87fadb18ba9cbbfdc071765bdf101",
+          "passed": true,
+          "status_lines": [
+            "dev.forcemind.xs.android.ProcessRecoveryProbe:INSTRUMENTATION_STATUS: xs_seed_app_uid=10084",
+            "INSTRUMENTATION_STATUS: xs_seed_available_bytes=8171233280"
+          ]
+        },
+        {
+          "driver": "app-android/build/compatibility/signed-debug-upgrade",
+          "phase": "verify",
+          "path": "app-android/build/compatibility/signed-debug-upgrade/verify.txt",
+          "sha256": "70707f7102a0ebfdbd5e693928de77ce27dc0dfd666c180c6a7941b8e8cb92ff",
+          "passed": true,
+          "status_lines": [
+            "dev.forcemind.xs.android.ProcessRecoveryProbe:INSTRUMENTATION_STATUS: xs_verify_pid=9569",
+            "INSTRUMENTATION_STATUS: xs_timeline_buffer_entries=2",
+            "INSTRUMENTATION_STATUS: xs_timeline_commit_ack_gap=verified",
+            "INSTRUMENTATION_STATUS: xs_timeline_saved_promotions=1"
+          ]
+        }
+      ],
+      "device": {
+        "source-commit.txt": "eea88356636b6c7bd389e9f1594f001b3c73cee3\n",
+        "android-api.txt": "27\n",
+        "android-release.txt": "8.1.0\n",
+        "primary-abi.txt": "x86\n",
+        "supported-abis.txt": "x86\n",
+        "locale.txt": "\n",
+        "night-mode.txt": "Night mode: no\n",
+        "device-configuration.txt": "config: mcc310-mnc260-en-rUS-ldltr-sw320dp-w320dp-h616dp-normal-long-notround-lowdr-nowidecg-port-notnight-mdpi-finger-keysexposed-nokeys-navexposed-trackball-v27\nabi: x86\nrecentConfigs:\n  config: mcc310-mnc260-en-rUS-ldltr-sw320dp-w320dp-h616dp-normal-long-notround-lowdr-nowidecg-port-notnight-mdpi-finger-keyshidden-nokeys-navexposed-trackball-v27\n  config: en-rUS-ldltr-sw320dp-w320dp-h616dp-normal-long-notround-lowdr-nowidecg-port-mdpi-notouch-keyshidden-nokeys-navhidden-nonav-v27\n  config: en-rUS-ldltr-sw320dp-w320dp-h640dp-normal-long-notround-lowdr-nowidecg-port-mdpi-notouch-keyshidden-nokeys-navhidden-nonav-v27\n  config: en-rUS-ldltr-sw320dp-w320dp-h616dp-normal-long-notround-lowdr-nowidecg-port-notnight-mdpi-finger-keyshidden-nokeys-navexposed-trackball-v27\n  config: mcc310-mnc260-en-rUS-ldltr-sw320dp-w320dp-h616dp-normal-long-notround-lowdr-nowidecg-port-notnight-mdpi-finger-keysexposed-nokeys-navexposed-trackball-v27\n  config: en-rUS-ldltr-sw320dp-w320dp-h616dp-normal-long-notround-lowdr-nowidecg-port-notnight-mdpi-notouch-keyshidden-nokeys-navhidden-nonav-v27\n",
+        "webview-provider.txt": "Current WebView Update Service state\n  Fallback logic enabled: true\n  Multiprocess enabled: true\n  Current WebView package (name, version): (com.android.chrome, 69.0.3497.100)\n  Minimum WebView version code: 349710017\n  Number of relros started: 1\n  Number of relros finished: 1\n  WebView package dirty: false\n  Any WebView package installed: true\n  Preferred WebView package (name, version): (com.android.chrome, 69.0.3497.100)\n  WebView packages:\n    Valid package com.android.chrome (versionName: 69.0.3497.100, versionCode: 349710017, targetSdkVersion: 28) is  installed/enabled for all users\n    Valid package com.google.android.webview (versionName: 69.0.3497.100, versionCode: 349710065, targetSdkVersion: 28) is NOT installed/enabled for all users\n"
+      },
+      "drivers": {
+        "app-android/build/compatibility/emulator-reboot": {
+          "status": "FAIL",
+          "scope": "Synthetic guest reboot recovery; requires a different kernel boot ID and post-reboot native verification; not physical power loss or vendor-device behavior",
+          "phases": [
+            "seed_pass",
+            "live_process_confirmed_stopped"
+          ],
+          "reboot_requested": true,
+          "recovery_verified": false,
+          "foreground_pid": 9650,
+          "failure": {
+            "type": "TimeoutExpired",
+            "message": "Command '['adb', 'wait-for-device']' timed out after 180 seconds"
+          },
+          "summary_sha256": "ffc06d2cf33cbfa040c1a6cf57653c7362e57006b8dfa4604f7d1a95f3a27061"
+        },
+        "app-android/build/compatibility/legacy-upgrade": {
+          "status": "PASS",
+          "scope": "Actual fixed old-main source APK/schema2 to current source APK/schema6, using one job-local debug signer on a disposable CI emulator. Synthetic native records only; not production-key, physical-device or live-X acceptance.",
+          "phases": [
+            "old_source_apk_schema2_native_seed_pass",
+            "old_seed_process_stopped_and_absent",
+            "old_live_process_stopped_and_absent",
+            "current_source_apk_schema6_native_verification_pass",
+            "only_owned_synthetic_fixtures_cleaned"
+          ],
+          "old_independent_favorites": "NOT APPLICABLE: absent in this old main",
+          "old_media_library": "NOT APPLICABLE: absent in this old main",
+          "external_probe_invocations_counted_in_main_xml": false,
+          "emulator_serial": "emulator-5554",
+          "initial_shell_uid": 2000,
+          "initial_target_absent": true,
+          "current_source": {
+            "head_commit": "eea88356636b6c7bd389e9f1594f001b3c73cee3",
+            "head_tree": "52532383a3e86118f5516e18875669beeb0891a8",
+            "working_tree_clean": true
+          },
+          "old_source": {
+            "head_commit": "f88003c8ec1ee193b75de7267db6ae7654ee77c4",
+            "head_tree": "82011cd71d591eb1a300e7dd07725628dcc6f1fd",
+            "working_tree_clean_before_build": true
+          },
+          "apk_artifacts": [
+            {
+              "role": "old-application",
+              "package": "dev.forcemind.xs",
+              "version_code": 1,
+              "bytes": 84446,
+              "sha256": "e340df31a5f0550d621faf3816032efcb329a49ee9047dbb46ba484da94bb5b6",
+              "certificate_sha256": "3ab09e6dc423a94e95651f7ad075f22e1c22f6e4925eff29b72ced2d30238559",
+              "signature_verification": "passed"
+            },
+            {
+              "role": "current-application",
+              "package": "dev.forcemind.xs",
+              "version_code": 3,
+              "bytes": 392295,
+              "sha256": "a975f280f5ebea49c2a40cf14dc0d7bf31b7a24645f0beec960ae7e30d38b5fe",
+              "certificate_sha256": "3ab09e6dc423a94e95651f7ad075f22e1c22f6e4925eff29b72ced2d30238559",
+              "signature_verification": "passed"
+            },
+            {
+              "role": "current-instrumentation",
+              "package": "dev.forcemind.xs.test",
+              "version_code": null,
+              "bytes": 1871495,
+              "sha256": "654800f24b69914d93a3330bc38727229c596a54144f82598e799de60c926d27",
+              "certificate_sha256": "3ab09e6dc423a94e95651f7ad075f22e1c22f6e4925eff29b72ced2d30238559",
+              "signature_verification": "passed"
+            }
+          ],
+          "current_build_outputs_preserved": true,
+          "installed_old": {
+            "package": "dev.forcemind.xs",
+            "version_code": 1,
+            "uid": 10079
+          },
+          "seed": {
+            "schema": 2,
+            "uid": 10079,
+            "pid": 4381,
+            "db_path": "/data/data/dev.forcemind.xs/databases/xs-local-history.db",
+            "scope": "local:eb2b3c63-e494-4d29-b608-4e9ca44cbe21"
+          },
+          "old_foreground_pid": 4429,
+          "installed_current": {
+            "package": "dev.forcemind.xs",
+            "version_code": 3,
+            "uid": 10079
+          },
+          "verify": {
+            "schema": 6,
+            "uid": 10079,
+            "pid": 4666,
+            "db_path": "/data/data/dev.forcemind.xs/databases/xs-local-history.db",
+            "scope": "local:eb2b3c63-e494-4d29-b608-4e9ca44cbe21"
+          },
+          "source_schema_version": 2,
+          "target_schema_version": 6,
+          "external_native_probe_invocations": 3,
+          "summary_sha256": "73111ce62f30fbc778a5a8689b69dcc0ae8202ff8312be0492c69406c9a6548c"
+        },
+        "app-android/build/compatibility/process-recovery": {
+          "status": "PASS",
+          "scope": "Synthetic native fixtures; real emulator OS force-stop and new target process, not reboot/physical power loss/vendor background/live X",
+          "phases": [
+            "seed_pass",
+            "live_process_confirmed_stopped",
+            "separate_process_startup_recovery_pass"
+          ],
+          "foreground_pid": 9194,
+          "verify_pid": 9312,
+          "summary_sha256": "3d18241b131b7a98986f1f052ca68aa851297655feaa0cf3d03bd5952d272e35"
+        },
+        "app-android/build/compatibility/signed-debug-upgrade": {
+          "status": "PASS",
+          "scope": "Synthetic native fixtures; real emulator OS force-stop and new target process, not reboot/physical power loss/vendor background/live X",
+          "phases": [
+            "seed_pass",
+            "live_process_confirmed_stopped",
+            "separate_process_startup_recovery_pass"
+          ],
+          "foreground_pid": 9399,
+          "upgrade_artifacts": [
+            {
+              "label": "source",
+              "sha256": "a975f280f5ebea49c2a40cf14dc0d7bf31b7a24645f0beec960ae7e30d38b5fe",
+              "certificate_sha256": "3ab09e6dc423a94e95651f7ad075f22e1c22f6e4925eff29b72ced2d30238559",
+              "version_code": 3,
+              "debug_fixture": true
+            },
+            {
+              "label": "target",
+              "sha256": "473d0fb72d559a89855c00b7e1440cd4942589df345db8270bad2e5caddbb98f",
+              "certificate_sha256": "3ab09e6dc423a94e95651f7ad075f22e1c22f6e4925eff29b72ced2d30238559",
+              "version_code": 4,
+              "debug_fixture": true
+            }
+          ],
+          "verify_pid": 9569,
+          "summary_sha256": "e0cd199f286c57f62763510eec4e98154252e1cf52223f30fb99f2ae44ba7813"
+        }
+      },
+      "xml": [
+        {
+          "path": "app-android/build/outputs/androidTest-results/connected/debug/TEST-emulator-5554 - 8.1.0-_app-android-.xml",
+          "attributes": {
+            "name": "dev.forcemind.xs.android.AssetLibraryUiTest",
+            "tests": "135",
+            "failures": "0",
+            "errors": "0",
+            "skipped": "0",
+            "time": "360.1",
+            "timestamp": "2026-11-08T19:58:50",
+            "hostname": "localhost"
+          },
+          "sha256": "c073ba86f77ecd3696b5c08f5ea3facfa3e46a119b9b3f3bfc868ce775256a69",
+          "checked_case_count": 135,
+          "case_identity_sha256": "9c658dd059eafc13e10d1a6cbce13db3332366161e3127e4706a8cc17154dd14",
+          "failures": [],
+          "storage_pressure_cases": [
+            {
+              "class": "dev.forcemind.xs.android.TimelineStoragePressureTest",
+              "name": "sqliteFullRollsBackCaptureReportsReasonAndAllowsExplicitRetry",
+              "seconds": "0.203",
+              "failure": []
+            },
+            {
+              "class": "dev.forcemind.xs.android.TimelineStoragePressureTest",
+              "name": "rejectedCaptureStillHasBoundedDiagnosticsWhenCounterWriteFails",
+              "seconds": "0.226",
+              "failure": []
+            }
+          ]
+        },
+        {
+          "path": "dev-harness/build/outputs/androidTest-results/connected/debug/TEST-emulator-5554 - 8.1.0-_dev-harness-.xml",
+          "attributes": {
+            "name": "dev.forcemind.xs.android.GovernanceUiTest",
+            "tests": "65",
+            "failures": "0",
+            "errors": "0",
+            "skipped": "0",
+            "time": "53.631",
+            "timestamp": "2026-11-08T19:59:54",
+            "hostname": "localhost"
+          },
+          "sha256": "b29979734526d20cf28a9e9b3940bbb3aafd3941ff1e0e671302bc1675079003",
+          "checked_case_count": 65,
+          "case_identity_sha256": "3be8298fc5e7684a90eff6c5d6a3b485d101e09526a21b5009ef8e31468c2760",
+          "failures": [],
+          "storage_pressure_cases": []
+        }
+      ],
+      "downloaded_apks": [
+        {
+          "path": "app-android/build/compatibility/legacy-upgrade/current-instrumentation.apk",
+          "sha256": "654800f24b69914d93a3330bc38727229c596a54144f82598e799de60c926d27",
+          "bytes": 1871495,
+          "badging": "package: name='dev.forcemind.xs.test' versionCode='' versionName='' platformBuildVersionName='15' platformBuildVersionCode='35' compileSdkVersion='35' compileSdkVersionCodename='15'",
+          "certificate_sha256": [
+            "3ab09e6dc423a94e95651f7ad075f22e1c22f6e4925eff29b72ced2d30238559"
+          ],
+          "independent_signature_verification": "PASS"
+        },
+        {
+          "path": "app-android/build/compatibility/legacy-upgrade/current-main-v3.apk",
+          "sha256": "a975f280f5ebea49c2a40cf14dc0d7bf31b7a24645f0beec960ae7e30d38b5fe",
+          "bytes": 392295,
+          "badging": "package: name='dev.forcemind.xs' versionCode='3' versionName='0.3-reliability-poc' platformBuildVersionName='15' platformBuildVersionCode='35' compileSdkVersion='35' compileSdkVersionCodename='15'",
+          "certificate_sha256": [
+            "3ab09e6dc423a94e95651f7ad075f22e1c22f6e4925eff29b72ced2d30238559"
+          ],
+          "independent_signature_verification": "PASS"
+        },
+        {
+          "path": "app-android/build/compatibility/legacy-upgrade/old-main-v1.apk",
+          "sha256": "e340df31a5f0550d621faf3816032efcb329a49ee9047dbb46ba484da94bb5b6",
+          "bytes": 84446,
+          "badging": "package: name='dev.forcemind.xs' versionCode='1' versionName='0.1-w0-poc' platformBuildVersionName='15' platformBuildVersionCode='35' compileSdkVersion='35' compileSdkVersionCodename='15'",
+          "certificate_sha256": [
+            "3ab09e6dc423a94e95651f7ad075f22e1c22f6e4925eff29b72ced2d30238559"
+          ],
+          "independent_signature_verification": "PASS"
+        },
+        {
+          "path": "app-android/build/compatibility/signed-debug-upgrade/version-3-debug.apk",
+          "sha256": "a975f280f5ebea49c2a40cf14dc0d7bf31b7a24645f0beec960ae7e30d38b5fe",
+          "bytes": 392295,
+          "badging": "package: name='dev.forcemind.xs' versionCode='3' versionName='0.3-reliability-poc' platformBuildVersionName='15' platformBuildVersionCode='35' compileSdkVersion='35' compileSdkVersionCodename='15'",
+          "certificate_sha256": [
+            "3ab09e6dc423a94e95651f7ad075f22e1c22f6e4925eff29b72ced2d30238559"
+          ],
+          "independent_signature_verification": "PASS"
+        },
+        {
+          "path": "app-android/build/compatibility/signed-debug-upgrade/version-4-debug.apk",
+          "sha256": "473d0fb72d559a89855c00b7e1440cd4942589df345db8270bad2e5caddbb98f",
+          "bytes": 392295,
+          "badging": "package: name='dev.forcemind.xs' versionCode='4' versionName='0.3-reliability-poc' platformBuildVersionName='15' platformBuildVersionCode='35' compileSdkVersion='35' compileSdkVersionCodename='15'",
+          "certificate_sha256": [
+            "3ab09e6dc423a94e95651f7ad075f22e1c22f6e4925eff29b72ced2d30238559"
+          ],
+          "independent_signature_verification": "PASS"
+        }
+      ],
+      "provenance": [
+        {
+          "source": {
+            "head_commit": "eea88356636b6c7bd389e9f1594f001b3c73cee3",
+            "head_tree": "52532383a3e86118f5516e18875669beeb0891a8",
+            "working_tree_clean": true,
+            "working_tree_status": []
+          },
+          "artifacts": [
+            {
+              "module": "app-android",
+              "role": "application",
+              "path": "app-android/build/outputs/apk/debug/app-android-debug.apk",
+              "availability": "present",
+              "bytes": 392295,
+              "sha256": "a975f280f5ebea49c2a40cf14dc0d7bf31b7a24645f0beec960ae7e30d38b5fe",
+              "signature_verification": {
+                "status": "passed",
+                "exit_code": 0,
+                "certificate_sha256": [
+                  "3ab09e6dc423a94e95651f7ad075f22e1c22f6e4925eff29b72ced2d30238559"
+                ]
+              }
+            },
+            {
+              "module": "app-android",
+              "role": "instrumentation",
+              "path": "app-android/build/outputs/apk/androidTest/debug/app-android-debug-androidTest.apk",
+              "availability": "present",
+              "bytes": 1871495,
+              "sha256": "654800f24b69914d93a3330bc38727229c596a54144f82598e799de60c926d27",
+              "signature_verification": {
+                "status": "passed",
+                "exit_code": 0,
+                "certificate_sha256": [
+                  "3ab09e6dc423a94e95651f7ad075f22e1c22f6e4925eff29b72ced2d30238559"
+                ]
+              }
+            },
+            {
+              "module": "dev-harness",
+              "role": "application",
+              "path": "dev-harness/build/outputs/apk/debug/dev-harness-debug.apk",
+              "availability": "present",
+              "bytes": 345594,
+              "sha256": "916a774584f52f49f14f19ac119fc9eac52e5f8696abb20e2bd2fbe276d15c8d",
+              "signature_verification": {
+                "status": "passed",
+                "exit_code": 0,
+                "certificate_sha256": [
+                  "3ab09e6dc423a94e95651f7ad075f22e1c22f6e4925eff29b72ced2d30238559"
+                ]
+              }
+            },
+            {
+              "module": "dev-harness",
+              "role": "instrumentation",
+              "path": "dev-harness/build/outputs/apk/androidTest/debug/dev-harness-debug-androidTest.apk",
+              "availability": "present",
+              "bytes": 1749033,
+              "sha256": "cea782ba36590b8fba2a768b5421c33f2cb99a4f9f65bb05225c1e500dbc7269",
+              "signature_verification": {
+                "status": "passed",
+                "exit_code": 0,
+                "certificate_sha256": [
+                  "3ab09e6dc423a94e95651f7ad075f22e1c22f6e4925eff29b72ced2d30238559"
+                ]
+              }
+            },
+            {
+              "module": "share-receiver-fixture",
+              "role": "independent-uid-receiver",
+              "path": "share-receiver-fixture/build/outputs/apk/debug/share-receiver-fixture-debug.apk",
+              "availability": "present",
+              "bytes": 11769,
+              "sha256": "0b3fc64e93d087b0a7a8f59cc5ddd3d523e17eb92a0ab043438d9359083e335b",
+              "signature_verification": {
+                "status": "passed",
+                "exit_code": 0,
+                "certificate_sha256": [
+                  "3ab09e6dc423a94e95651f7ad075f22e1c22f6e4925eff29b72ced2d30238559"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "30": {
+      "zip": {
+        "bytes": 3748671,
+        "sha256": "9579b414a5e0c307346530a8174d4f13a420a3fa074191432611e36e9bc40dc5"
+      },
+      "main_counts": {
+        "tests": 200,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "driver_counts": {
+        "attempted": 5,
+        "passed": 5,
+        "failed": 0
+      },
+      "native_driver_phase_counts": {
+        "executed": 11,
+        "passed": 11
+      },
+      "native_driver_phases": [
+        {
+          "driver": "app-android/build/compatibility/emulator-reboot",
+          "phase": "seed",
+          "path": "app-android/build/compatibility/emulator-reboot/seed.txt",
+          "sha256": "441e6249287a5d385bebb42031eef1d00610e76f4d74494cd98127981287fd2d",
+          "passed": true,
+          "status_lines": [
+            "dev.forcemind.xs.android.ProcessRecoveryProbe:INSTRUMENTATION_STATUS: xs_seed_app_uid=10172",
+            "INSTRUMENTATION_STATUS: xs_seed_available_bytes=7946186752"
+          ]
+        },
+        {
+          "driver": "app-android/build/compatibility/emulator-reboot",
+          "phase": "verify",
+          "path": "app-android/build/compatibility/emulator-reboot/verify.txt",
+          "sha256": "c8119e927dc1d096bb8a241b85ada22fb425eafa11889c9ed92ba1a1e65b43f3",
+          "passed": true,
+          "status_lines": [
+            "dev.forcemind.xs.android.ProcessRecoveryProbe:INSTRUMENTATION_STATUS: xs_verify_pid=1589",
+            "INSTRUMENTATION_STATUS: xs_timeline_buffer_entries=2",
+            "INSTRUMENTATION_STATUS: xs_timeline_commit_ack_gap=verified",
+            "INSTRUMENTATION_STATUS: xs_timeline_saved_promotions=1"
+          ]
+        },
+        {
+          "driver": "app-android/build/compatibility/legacy-upgrade",
+          "phase": "cleanup",
+          "path": "app-android/build/compatibility/legacy-upgrade/cleanup.result.json",
+          "sha256": "2096b0a4fd73af352f25f06894ac5faa63a7ab59ef8c3fe9ea1b45c50e40a343",
+          "passed": true,
+          "status_lines": []
+        },
+        {
+          "driver": "app-android/build/compatibility/legacy-upgrade",
+          "phase": "seed",
+          "path": "app-android/build/compatibility/legacy-upgrade/seed.result.json",
+          "sha256": "50cd7209dcf3443238aa5922b80d7aa682ca64c2ba6a81f21ad7cc841715c377",
+          "passed": true,
+          "status_lines": [
+            "dev.forcemind.xs.android.LegacyUpgradeProbe:INSTRUMENTATION_STATUS: xs_legacy_db_path=/data/data/dev.forcemind.xs/databases/xs-local-history.db",
+            "INSTRUMENTATION_STATUS: xs_legacy_pid=5027",
+            "INSTRUMENTATION_STATUS: xs_legacy_schema=2",
+            "INSTRUMENTATION_STATUS: xs_legacy_scope=local:4e3e3f27-4f39-42e2-9202-ba822d170d78",
+            "INSTRUMENTATION_STATUS: xs_legacy_uid=10167"
+          ]
+        },
+        {
+          "driver": "app-android/build/compatibility/legacy-upgrade",
+          "phase": "verify",
+          "path": "app-android/build/compatibility/legacy-upgrade/verify.result.json",
+          "sha256": "cff687ee0a0c6d2af99c3cb42c1bb6a3d30d0ca292f2dd4da7a2d203643818e6",
+          "passed": true,
+          "status_lines": [
+            "dev.forcemind.xs.android.LegacyUpgradeProbe:INSTRUMENTATION_STATUS: xs_legacy_db_path=/data/data/dev.forcemind.xs/databases/xs-local-history.db",
+            "INSTRUMENTATION_STATUS: xs_legacy_pid=5350",
+            "INSTRUMENTATION_STATUS: xs_legacy_schema=6",
+            "INSTRUMENTATION_STATUS: xs_legacy_scope=local:4e3e3f27-4f39-42e2-9202-ba822d170d78",
+            "INSTRUMENTATION_STATUS: xs_legacy_uid=10167"
+          ]
+        },
+        {
+          "driver": "app-android/build/compatibility/low-space",
+          "phase": "seed",
+          "path": "app-android/build/compatibility/low-space/seed.txt",
+          "sha256": "3238f25a2be975644a5c6613ab98e493fa4d0c975661a4f9a56729984e170837",
+          "passed": true,
+          "status_lines": [
+            "dev.forcemind.xs.android.ProcessRecoveryProbe:INSTRUMENTATION_STATUS: xs_seed_app_uid=10172",
+            "INSTRUMENTATION_STATUS: xs_seed_available_bytes=7946067968"
+          ]
+        },
+        {
+          "driver": "app-android/build/compatibility/low-space",
+          "phase": "low-space",
+          "path": "app-android/build/compatibility/low-space/low-space.txt",
+          "sha256": "30fb744461295e14633f2463e1c381be1eca364420611514b4c6319a346538d1",
+          "passed": true,
+          "status_lines": [
+            "dev.forcemind.xs.android.ProcessRecoveryProbe:INSTRUMENTATION_STATUS: xs_available_bytes=29134848",
+            "INSTRUMENTATION_STATUS: xs_low_space_app_uid=10172"
+          ]
+        },
+        {
+          "driver": "app-android/build/compatibility/process-recovery",
+          "phase": "seed",
+          "path": "app-android/build/compatibility/process-recovery/seed.txt",
+          "sha256": "faff25a6ca9b08b86c821bd7b930bc6b8df103ce05c6b5d22638e97412582300",
+          "passed": true,
+          "status_lines": [
+            "dev.forcemind.xs.android.ProcessRecoveryProbe:INSTRUMENTATION_STATUS: xs_seed_app_uid=10172",
+            "INSTRUMENTATION_STATUS: xs_seed_available_bytes=7946543104"
+          ]
+        },
+        {
+          "driver": "app-android/build/compatibility/process-recovery",
+          "phase": "verify",
+          "path": "app-android/build/compatibility/process-recovery/verify.txt",
+          "sha256": "4b24088fbcedd7743b2a8741f8573675e5747a7c1582852bcbd10b6bbfc8a324",
+          "passed": true,
+          "status_lines": [
+            "dev.forcemind.xs.android.ProcessRecoveryProbe:INSTRUMENTATION_STATUS: xs_verify_pid=10659",
+            "INSTRUMENTATION_STATUS: xs_timeline_buffer_entries=2",
+            "INSTRUMENTATION_STATUS: xs_timeline_commit_ack_gap=verified",
+            "INSTRUMENTATION_STATUS: xs_timeline_saved_promotions=1"
+          ]
+        },
+        {
+          "driver": "app-android/build/compatibility/signed-debug-upgrade",
+          "phase": "seed",
+          "path": "app-android/build/compatibility/signed-debug-upgrade/seed.txt",
+          "sha256": "beaf64c2706a63c02dab8759018ade3738fb6434f3783b470edfef2cb6ae374b",
+          "passed": true,
+          "status_lines": [
+            "dev.forcemind.xs.android.ProcessRecoveryProbe:INSTRUMENTATION_STATUS: xs_seed_app_uid=10172",
+            "INSTRUMENTATION_STATUS: xs_seed_available_bytes=7946174464"
+          ]
+        },
+        {
+          "driver": "app-android/build/compatibility/signed-debug-upgrade",
+          "phase": "verify",
+          "path": "app-android/build/compatibility/signed-debug-upgrade/verify.txt",
+          "sha256": "2811776fbea08b573b4901fd9effbd52991747be75f4688cdfeed29be7c6cd09",
+          "passed": true,
+          "status_lines": [
+            "dev.forcemind.xs.android.ProcessRecoveryProbe:INSTRUMENTATION_STATUS: xs_verify_pid=10919",
+            "INSTRUMENTATION_STATUS: xs_timeline_buffer_entries=2",
+            "INSTRUMENTATION_STATUS: xs_timeline_commit_ack_gap=verified",
+            "INSTRUMENTATION_STATUS: xs_timeline_saved_promotions=1"
+          ]
+        }
+      ],
+      "device": {
+        "source-commit.txt": "eea88356636b6c7bd389e9f1594f001b3c73cee3\n",
+        "android-api.txt": "30\n",
+        "android-release.txt": "11\n",
+        "primary-abi.txt": "x86_64\n",
+        "supported-abis.txt": "x86_64,x86,arm64-v8a,armeabi-v7a,armeabi\n",
+        "locale.txt": "\n",
+        "night-mode.txt": "Night mode: no\n",
+        "device-configuration.txt": "config: mcc310-mnc260-en-rUS-ldltr-sw320dp-w320dp-h616dp-normal-long-notround-nowidecg-lowdr-port-notnight-mdpi-finger-keysexposed-qwerty-navhidden-nonav-640x320-v30\nabi: x86_64,x86,arm64-v8a,armeabi-v7a,armeabi\n",
+        "webview-provider.txt": "Current WebView Update Service state\n  Fallback logic enabled: false\n  Multiprocess enabled: true\n  Current WebView package (name, version): (com.google.android.webview, 83.0.4103.106)\n  Minimum targetSdkVersion: 30\n  Minimum WebView version code: 410410686\n  Number of relros started: 2\n  Number of relros finished: 2\n  WebView package dirty: false\n  Any WebView package installed: true\n  Preferred WebView package (name, version): (com.google.android.webview, 83.0.4103.106)\n  WebView packages:\n    Valid package com.google.android.webview (versionName: 83.0.4103.106, versionCode: 410410686, targetSdkVersion: 30) is  installed/enabled for all users\n    com.google.android.webview.beta is NOT installed.\n    com.google.android.webview.dev is NOT installed.\n    com.google.android.webview.canary is NOT installed.\n    com.google.android.webview.debug is NOT installed.\n    com.android.webview is NOT installed.\n"
+      },
+      "drivers": {
+        "app-android/build/compatibility/emulator-reboot": {
+          "status": "PASS",
+          "scope": "Synthetic native data survives actual emulator guest OS reboot and explicit post-stop launch; not physical power loss or vendor-device behavior",
+          "phases": [
+            "seed_pass",
+            "live_process_confirmed_stopped",
+            "separate_process_startup_recovery_pass"
+          ],
+          "reboot_requested": true,
+          "recovery_verified": true,
+          "foreground_pid": 11020,
+          "previous_boot_id": "d7b9d211-e7ec-42dd-a6a8-2a8fe64b1161",
+          "current_boot_id": "8cbaf378-6581-4ea2-9331-89db3dec50b0",
+          "verify_pid": 1589,
+          "summary_sha256": "3882ec337fc459599e4eb50eed054abe3885348193b728fd6653b34168bc5d2b"
+        },
+        "app-android/build/compatibility/legacy-upgrade": {
+          "status": "PASS",
+          "scope": "Actual fixed old-main source APK/schema2 to current source APK/schema6, using one job-local debug signer on a disposable CI emulator. Synthetic native records only; not production-key, physical-device or live-X acceptance.",
+          "phases": [
+            "old_source_apk_schema2_native_seed_pass",
+            "old_seed_process_stopped_and_absent",
+            "old_live_process_stopped_and_absent",
+            "current_source_apk_schema6_native_verification_pass",
+            "only_owned_synthetic_fixtures_cleaned"
+          ],
+          "old_independent_favorites": "NOT APPLICABLE: absent in this old main",
+          "old_media_library": "NOT APPLICABLE: absent in this old main",
+          "external_probe_invocations_counted_in_main_xml": false,
+          "emulator_serial": "emulator-5554",
+          "initial_shell_uid": 2000,
+          "initial_target_absent": true,
+          "current_source": {
+            "head_commit": "eea88356636b6c7bd389e9f1594f001b3c73cee3",
+            "head_tree": "52532383a3e86118f5516e18875669beeb0891a8",
+            "working_tree_clean": true
+          },
+          "old_source": {
+            "head_commit": "f88003c8ec1ee193b75de7267db6ae7654ee77c4",
+            "head_tree": "82011cd71d591eb1a300e7dd07725628dcc6f1fd",
+            "working_tree_clean_before_build": true
+          },
+          "apk_artifacts": [
+            {
+              "role": "old-application",
+              "package": "dev.forcemind.xs",
+              "version_code": 1,
+              "bytes": 84446,
+              "sha256": "5e0600954eedd52311584d2d329285b588b742fd17f12f74350c7a1329ae9f6b",
+              "certificate_sha256": "2ed6752f1945a578bab44d8de319fabd6b3a6720442abaad7e371ca01d1125c4",
+              "signature_verification": "passed"
+            },
+            {
+              "role": "current-application",
+              "package": "dev.forcemind.xs",
+              "version_code": 3,
+              "bytes": 392295,
+              "sha256": "7460d83a0eaac013d65ae6d75ad919662da28a4a9916c2a3e464b938b20eb995",
+              "certificate_sha256": "2ed6752f1945a578bab44d8de319fabd6b3a6720442abaad7e371ca01d1125c4",
+              "signature_verification": "passed"
+            },
+            {
+              "role": "current-instrumentation",
+              "package": "dev.forcemind.xs.test",
+              "version_code": null,
+              "bytes": 1871495,
+              "sha256": "5a3aaa610f600e2c4171a13c34a716042986d8a00452307e34bc66bd6a1ea075",
+              "certificate_sha256": "2ed6752f1945a578bab44d8de319fabd6b3a6720442abaad7e371ca01d1125c4",
+              "signature_verification": "passed"
+            }
+          ],
+          "current_build_outputs_preserved": true,
+          "installed_old": {
+            "package": "dev.forcemind.xs",
+            "version_code": 1,
+            "uid": 10167
+          },
+          "seed": {
+            "schema": 2,
+            "uid": 10167,
+            "pid": 5027,
+            "db_path": "/data/data/dev.forcemind.xs/databases/xs-local-history.db",
+            "scope": "local:4e3e3f27-4f39-42e2-9202-ba822d170d78"
+          },
+          "old_foreground_pid": 5082,
+          "installed_current": {
+            "package": "dev.forcemind.xs",
+            "version_code": 3,
+            "uid": 10167
+          },
+          "verify": {
+            "schema": 6,
+            "uid": 10167,
+            "pid": 5350,
+            "db_path": "/data/data/dev.forcemind.xs/databases/xs-local-history.db",
+            "scope": "local:4e3e3f27-4f39-42e2-9202-ba822d170d78"
+          },
+          "source_schema_version": 2,
+          "target_schema_version": 6,
+          "external_native_probe_invocations": 3,
+          "summary_sha256": "2788c59a75effefbf00fe3eb763d066eb3e14c097b0124431c56e26182daaa8e"
+        },
+        "app-android/build/compatibility/low-space": {
+          "status": "PASS",
+          "scope": "Real emulator /data space below image-admission requirement; saved fixture bytes and local search preserved. Not mid-stream ENOSPC, physical flash, or user-device evidence.",
+          "allocator": "ordinary-shell",
+          "allocator_uid_before": 2000,
+          "native_baseline_available_bytes": 7946067968,
+          "native_actor_uid": 10172,
+          "diagnostic_df_available_bytes": 7946072064,
+          "native_available_bytes": 29134848,
+          "requested_allocation_bytes": 7916707840,
+          "summary_sha256": "fc17dd6a03aea6bf84ffa7e6478cb6d2c75a9bf1b1e40ce810865e08ca729765"
+        },
+        "app-android/build/compatibility/process-recovery": {
+          "status": "PASS",
+          "scope": "Synthetic native fixtures; real emulator OS force-stop and new target process, not reboot/physical power loss/vendor background/live X",
+          "phases": [
+            "seed_pass",
+            "live_process_confirmed_stopped",
+            "separate_process_startup_recovery_pass"
+          ],
+          "foreground_pid": 10531,
+          "verify_pid": 10659,
+          "summary_sha256": "2cf2cb5d7bd89faebe1e68d3033fba5b43ae6bad525138337b2b793f832c4c56"
+        },
+        "app-android/build/compatibility/signed-debug-upgrade": {
+          "status": "PASS",
+          "scope": "Synthetic native fixtures; real emulator OS force-stop and new target process, not reboot/physical power loss/vendor background/live X",
+          "phases": [
+            "seed_pass",
+            "live_process_confirmed_stopped",
+            "separate_process_startup_recovery_pass"
+          ],
+          "foreground_pid": 10759,
+          "upgrade_artifacts": [
+            {
+              "label": "source",
+              "sha256": "7460d83a0eaac013d65ae6d75ad919662da28a4a9916c2a3e464b938b20eb995",
+              "certificate_sha256": "2ed6752f1945a578bab44d8de319fabd6b3a6720442abaad7e371ca01d1125c4",
+              "version_code": 3,
+              "debug_fixture": true
+            },
+            {
+              "label": "target",
+              "sha256": "4799e0466b5d510b21b7fb409037afe52944c831e40d185cb319c3087604ab7d",
+              "certificate_sha256": "2ed6752f1945a578bab44d8de319fabd6b3a6720442abaad7e371ca01d1125c4",
+              "version_code": 4,
+              "debug_fixture": true
+            }
+          ],
+          "verify_pid": 10919,
+          "summary_sha256": "3479a72646c7714946a820e8f4f2eebbabfb4b158983dfc878e1fead65f01965"
+        }
+      },
+      "xml": [
+        {
+          "path": "app-android/build/outputs/androidTest-results/connected/debug/TEST-emulator-5554 - 11-_app-android-.xml",
+          "attributes": {
+            "name": "dev.forcemind.xs.android.AssetLibraryUiTest",
+            "tests": "135",
+            "failures": "0",
+            "errors": "0",
+            "skipped": "0",
+            "time": "241.549",
+            "timestamp": "2026-11-08T20:01:41",
+            "hostname": "localhost"
+          },
+          "sha256": "96e8e28576fda71d0a312d7031969e86b4c03c5d20f9a2b7d1c2906fd205d2ba",
+          "checked_case_count": 135,
+          "case_identity_sha256": "9c658dd059eafc13e10d1a6cbce13db3332366161e3127e4706a8cc17154dd14",
+          "failures": [],
+          "storage_pressure_cases": [
+            {
+              "class": "dev.forcemind.xs.android.TimelineStoragePressureTest",
+              "name": "sqliteFullRollsBackCaptureReportsReasonAndAllowsExplicitRetry",
+              "seconds": "0.052",
+              "failure": []
+            },
+            {
+              "class": "dev.forcemind.xs.android.TimelineStoragePressureTest",
+              "name": "rejectedCaptureStillHasBoundedDiagnosticsWhenCounterWriteFails",
+              "seconds": "0.101",
+              "failure": []
+            }
+          ]
+        },
+        {
+          "path": "dev-harness/build/outputs/androidTest-results/connected/debug/TEST-emulator-5554 - 11-_dev-harness-.xml",
+          "attributes": {
+            "name": "dev.forcemind.xs.android.GovernanceUiTest",
+            "tests": "65",
+            "failures": "0",
+            "errors": "0",
+            "skipped": "0",
+            "time": "35.356",
+            "timestamp": "2026-11-08T20:02:24",
+            "hostname": "localhost"
+          },
+          "sha256": "4eb234d813c96512aae7df6c00de0550cee447b7d6444fce2e35b78e5bff2b69",
+          "checked_case_count": 65,
+          "case_identity_sha256": "3be8298fc5e7684a90eff6c5d6a3b485d101e09526a21b5009ef8e31468c2760",
+          "failures": [],
+          "storage_pressure_cases": []
+        }
+      ],
+      "downloaded_apks": [
+        {
+          "path": "app-android/build/compatibility/legacy-upgrade/current-instrumentation.apk",
+          "sha256": "5a3aaa610f600e2c4171a13c34a716042986d8a00452307e34bc66bd6a1ea075",
+          "bytes": 1871495,
+          "badging": "package: name='dev.forcemind.xs.test' versionCode='' versionName='' platformBuildVersionName='15' platformBuildVersionCode='35' compileSdkVersion='35' compileSdkVersionCodename='15'",
+          "certificate_sha256": [
+            "2ed6752f1945a578bab44d8de319fabd6b3a6720442abaad7e371ca01d1125c4"
+          ],
+          "independent_signature_verification": "PASS"
+        },
+        {
+          "path": "app-android/build/compatibility/legacy-upgrade/current-main-v3.apk",
+          "sha256": "7460d83a0eaac013d65ae6d75ad919662da28a4a9916c2a3e464b938b20eb995",
+          "bytes": 392295,
+          "badging": "package: name='dev.forcemind.xs' versionCode='3' versionName='0.3-reliability-poc' platformBuildVersionName='15' platformBuildVersionCode='35' compileSdkVersion='35' compileSdkVersionCodename='15'",
+          "certificate_sha256": [
+            "2ed6752f1945a578bab44d8de319fabd6b3a6720442abaad7e371ca01d1125c4"
+          ],
+          "independent_signature_verification": "PASS"
+        },
+        {
+          "path": "app-android/build/compatibility/legacy-upgrade/old-main-v1.apk",
+          "sha256": "5e0600954eedd52311584d2d329285b588b742fd17f12f74350c7a1329ae9f6b",
+          "bytes": 84446,
+          "badging": "package: name='dev.forcemind.xs' versionCode='1' versionName='0.1-w0-poc' platformBuildVersionName='15' platformBuildVersionCode='35' compileSdkVersion='35' compileSdkVersionCodename='15'",
+          "certificate_sha256": [
+            "2ed6752f1945a578bab44d8de319fabd6b3a6720442abaad7e371ca01d1125c4"
+          ],
+          "independent_signature_verification": "PASS"
+        },
+        {
+          "path": "app-android/build/compatibility/signed-debug-upgrade/version-3-debug.apk",
+          "sha256": "7460d83a0eaac013d65ae6d75ad919662da28a4a9916c2a3e464b938b20eb995",
+          "bytes": 392295,
+          "badging": "package: name='dev.forcemind.xs' versionCode='3' versionName='0.3-reliability-poc' platformBuildVersionName='15' platformBuildVersionCode='35' compileSdkVersion='35' compileSdkVersionCodename='15'",
+          "certificate_sha256": [
+            "2ed6752f1945a578bab44d8de319fabd6b3a6720442abaad7e371ca01d1125c4"
+          ],
+          "independent_signature_verification": "PASS"
+        },
+        {
+          "path": "app-android/build/compatibility/signed-debug-upgrade/version-4-debug.apk",
+          "sha256": "4799e0466b5d510b21b7fb409037afe52944c831e40d185cb319c3087604ab7d",
+          "bytes": 392295,
+          "badging": "package: name='dev.forcemind.xs' versionCode='4' versionName='0.3-reliability-poc' platformBuildVersionName='15' platformBuildVersionCode='35' compileSdkVersion='35' compileSdkVersionCodename='15'",
+          "certificate_sha256": [
+            "2ed6752f1945a578bab44d8de319fabd6b3a6720442abaad7e371ca01d1125c4"
+          ],
+          "independent_signature_verification": "PASS"
+        }
+      ],
+      "provenance": [
+        {
+          "source": {
+            "head_commit": "eea88356636b6c7bd389e9f1594f001b3c73cee3",
+            "head_tree": "52532383a3e86118f5516e18875669beeb0891a8",
+            "working_tree_clean": true,
+            "working_tree_status": []
+          },
+          "artifacts": [
+            {
+              "module": "app-android",
+              "role": "application",
+              "path": "app-android/build/outputs/apk/debug/app-android-debug.apk",
+              "availability": "present",
+              "bytes": 392295,
+              "sha256": "7460d83a0eaac013d65ae6d75ad919662da28a4a9916c2a3e464b938b20eb995",
+              "signature_verification": {
+                "status": "passed",
+                "exit_code": 0,
+                "certificate_sha256": [
+                  "2ed6752f1945a578bab44d8de319fabd6b3a6720442abaad7e371ca01d1125c4"
+                ]
+              }
+            },
+            {
+              "module": "app-android",
+              "role": "instrumentation",
+              "path": "app-android/build/outputs/apk/androidTest/debug/app-android-debug-androidTest.apk",
+              "availability": "present",
+              "bytes": 1871495,
+              "sha256": "5a3aaa610f600e2c4171a13c34a716042986d8a00452307e34bc66bd6a1ea075",
+              "signature_verification": {
+                "status": "passed",
+                "exit_code": 0,
+                "certificate_sha256": [
+                  "2ed6752f1945a578bab44d8de319fabd6b3a6720442abaad7e371ca01d1125c4"
+                ]
+              }
+            },
+            {
+              "module": "dev-harness",
+              "role": "application",
+              "path": "dev-harness/build/outputs/apk/debug/dev-harness-debug.apk",
+              "availability": "present",
+              "bytes": 345594,
+              "sha256": "30268e8bf69d38e05454ab4c32764504a4bd6d1dd913cf58adef47b62a83bc52",
+              "signature_verification": {
+                "status": "passed",
+                "exit_code": 0,
+                "certificate_sha256": [
+                  "2ed6752f1945a578bab44d8de319fabd6b3a6720442abaad7e371ca01d1125c4"
+                ]
+              }
+            },
+            {
+              "module": "dev-harness",
+              "role": "instrumentation",
+              "path": "dev-harness/build/outputs/apk/androidTest/debug/dev-harness-debug-androidTest.apk",
+              "availability": "present",
+              "bytes": 1749033,
+              "sha256": "85a21685fcc3fda44b67f0f856033b68a502095317319ed044dcbaff7f431d8c",
+              "signature_verification": {
+                "status": "passed",
+                "exit_code": 0,
+                "certificate_sha256": [
+                  "2ed6752f1945a578bab44d8de319fabd6b3a6720442abaad7e371ca01d1125c4"
+                ]
+              }
+            },
+            {
+              "module": "share-receiver-fixture",
+              "role": "independent-uid-receiver",
+              "path": "share-receiver-fixture/build/outputs/apk/debug/share-receiver-fixture-debug.apk",
+              "availability": "present",
+              "bytes": 11769,
+              "sha256": "a7c11aa04e1af80308b31fc4b824991020d146497510829ede6e2e57051b1b29",
+              "signature_verification": {
+                "status": "passed",
+                "exit_code": 0,
+                "certificate_sha256": [
+                  "2ed6752f1945a578bab44d8de319fabd6b3a6720442abaad7e371ca01d1125c4"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "36": {
+      "zip": {
+        "bytes": 4220048,
+        "sha256": "0c11948a13aaa1d10cb813e7e950a9a5c795295db86d4ecda7bf42678feb1dce"
+      },
+      "main_counts": {
+        "tests": 200,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "driver_counts": {
+        "attempted": 5,
+        "passed": 5,
+        "failed": 0
+      },
+      "native_driver_phase_counts": {
+        "executed": 11,
+        "passed": 11
+      },
+      "native_driver_phases": [
+        {
+          "driver": "app-android/build/compatibility/emulator-reboot",
+          "phase": "seed",
+          "path": "app-android/build/compatibility/emulator-reboot/seed.txt",
+          "sha256": "fddebc692ac16b5aab4df1e51a704d6a02e4fdfd7af283b923d18653ac660699",
+          "passed": true,
+          "status_lines": [
+            "dev.forcemind.xs.android.ProcessRecoveryProbe:INSTRUMENTATION_STATUS: xs_seed_app_uid=10221",
+            "INSTRUMENTATION_STATUS: xs_seed_available_bytes=6881726464"
+          ]
+        },
+        {
+          "driver": "app-android/build/compatibility/emulator-reboot",
+          "phase": "verify",
+          "path": "app-android/build/compatibility/emulator-reboot/verify.txt",
+          "sha256": "7e30e757b0600bb5eb84997bc9170ee839d9261d9caf5974b21ad12b06a10127",
+          "passed": true,
+          "status_lines": [
+            "dev.forcemind.xs.android.ProcessRecoveryProbe:INSTRUMENTATION_STATUS: xs_verify_pid=1746",
+            "INSTRUMENTATION_STATUS: xs_timeline_buffer_entries=2",
+            "INSTRUMENTATION_STATUS: xs_timeline_commit_ack_gap=verified",
+            "INSTRUMENTATION_STATUS: xs_timeline_saved_promotions=1"
+          ]
+        },
+        {
+          "driver": "app-android/build/compatibility/legacy-upgrade",
+          "phase": "cleanup",
+          "path": "app-android/build/compatibility/legacy-upgrade/cleanup.result.json",
+          "sha256": "f8c56aa6b9073a7dfba210b122a06368fdb453dc8f2b7877e888966449fae3ae",
+          "passed": true,
+          "status_lines": []
+        },
+        {
+          "driver": "app-android/build/compatibility/legacy-upgrade",
+          "phase": "seed",
+          "path": "app-android/build/compatibility/legacy-upgrade/seed.result.json",
+          "sha256": "c251db275ca7784460d01ab2f1508e37cbf4008fb1345b185fcbe1ba8a469d5c",
+          "passed": true,
+          "status_lines": [
+            "dev.forcemind.xs.android.LegacyUpgradeProbe:INSTRUMENTATION_STATUS: xs_legacy_db_path=/data/data/dev.forcemind.xs/databases/xs-local-history.db",
+            "INSTRUMENTATION_STATUS: xs_legacy_pid=3310",
+            "INSTRUMENTATION_STATUS: xs_legacy_schema=2",
+            "INSTRUMENTATION_STATUS: xs_legacy_scope=local:89ec8775-e337-499f-ae1e-deb7bbcc0694",
+            "INSTRUMENTATION_STATUS: xs_legacy_uid=10216"
+          ]
+        },
+        {
+          "driver": "app-android/build/compatibility/legacy-upgrade",
+          "phase": "verify",
+          "path": "app-android/build/compatibility/legacy-upgrade/verify.result.json",
+          "sha256": "0b28ac02c6553d125ea9e52b1923967d7cdf7639ca21dd18fe473d2268f48d0d",
+          "passed": true,
+          "status_lines": [
+            "dev.forcemind.xs.android.LegacyUpgradeProbe:INSTRUMENTATION_STATUS: xs_legacy_db_path=/data/data/dev.forcemind.xs/databases/xs-local-history.db",
+            "INSTRUMENTATION_STATUS: xs_legacy_pid=3770",
+            "INSTRUMENTATION_STATUS: xs_legacy_schema=6",
+            "INSTRUMENTATION_STATUS: xs_legacy_scope=local:89ec8775-e337-499f-ae1e-deb7bbcc0694",
+            "INSTRUMENTATION_STATUS: xs_legacy_uid=10216"
+          ]
+        },
+        {
+          "driver": "app-android/build/compatibility/low-space",
+          "phase": "seed",
+          "path": "app-android/build/compatibility/low-space/seed.txt",
+          "sha256": "c481b11ce5c4e4d11dbbef08108b9bedd406531355dd62c3891379dda17ebe9a",
+          "passed": true,
+          "status_lines": [
+            "dev.forcemind.xs.android.ProcessRecoveryProbe:INSTRUMENTATION_STATUS: xs_seed_app_uid=10221",
+            "INSTRUMENTATION_STATUS: xs_seed_available_bytes=6881210368"
+          ]
+        },
+        {
+          "driver": "app-android/build/compatibility/low-space",
+          "phase": "low-space",
+          "path": "app-android/build/compatibility/low-space/low-space.txt",
+          "sha256": "a93e07d37af90af5ab1e848cf9dfcd3b01dba716587ea10899d11750a8f7be66",
+          "passed": true,
+          "status_lines": [
+            "dev.forcemind.xs.android.ProcessRecoveryProbe:INSTRUMENTATION_STATUS: xs_available_bytes=20656128",
+            "INSTRUMENTATION_STATUS: xs_low_space_app_uid=10221"
+          ]
+        },
+        {
+          "driver": "app-android/build/compatibility/process-recovery",
+          "phase": "seed",
+          "path": "app-android/build/compatibility/process-recovery/seed.txt",
+          "sha256": "9d6f1504c30166943991d544dd8e1987ba37749d99bdd5a1f55bfee42840633c",
+          "passed": true,
+          "status_lines": [
+            "dev.forcemind.xs.android.ProcessRecoveryProbe:INSTRUMENTATION_STATUS: xs_seed_app_uid=10221",
+            "INSTRUMENTATION_STATUS: xs_seed_available_bytes=6882361344"
+          ]
+        },
+        {
+          "driver": "app-android/build/compatibility/process-recovery",
+          "phase": "verify",
+          "path": "app-android/build/compatibility/process-recovery/verify.txt",
+          "sha256": "2f764d239f0528e8f25dbbaf1a639e454d42877e687756c4cf40be8d4a5f8b9d",
+          "passed": true,
+          "status_lines": [
+            "dev.forcemind.xs.android.ProcessRecoveryProbe:INSTRUMENTATION_STATUS: xs_verify_pid=8454",
+            "INSTRUMENTATION_STATUS: xs_timeline_buffer_entries=2",
+            "INSTRUMENTATION_STATUS: xs_timeline_commit_ack_gap=verified",
+            "INSTRUMENTATION_STATUS: xs_timeline_saved_promotions=1"
+          ]
+        },
+        {
+          "driver": "app-android/build/compatibility/signed-debug-upgrade",
+          "phase": "seed",
+          "path": "app-android/build/compatibility/signed-debug-upgrade/seed.txt",
+          "sha256": "0cc1f22f47d94ff97f6899207399432c0890fd0b78a931d01d4fe47009173c51",
+          "passed": true,
+          "status_lines": [
+            "dev.forcemind.xs.android.ProcessRecoveryProbe:INSTRUMENTATION_STATUS: xs_seed_app_uid=10221",
+            "INSTRUMENTATION_STATUS: xs_seed_available_bytes=6881738752"
+          ]
+        },
+        {
+          "driver": "app-android/build/compatibility/signed-debug-upgrade",
+          "phase": "verify",
+          "path": "app-android/build/compatibility/signed-debug-upgrade/verify.txt",
+          "sha256": "cbeacfbb11d297c8fa2e8ac209d9979ae03eb06ed3856aa52adf49a3545f09cc",
+          "passed": true,
+          "status_lines": [
+            "dev.forcemind.xs.android.ProcessRecoveryProbe:INSTRUMENTATION_STATUS: xs_verify_pid=8632",
+            "INSTRUMENTATION_STATUS: xs_timeline_buffer_entries=2",
+            "INSTRUMENTATION_STATUS: xs_timeline_commit_ack_gap=verified",
+            "INSTRUMENTATION_STATUS: xs_timeline_saved_promotions=1"
+          ]
+        }
+      ],
+      "device": {
+        "source-commit.txt": "eea88356636b6c7bd389e9f1594f001b3c73cee3\n",
+        "android-api.txt": "36\n",
+        "android-release.txt": "16\n",
+        "primary-abi.txt": "x86_64\n",
+        "supported-abis.txt": "x86_64,arm64-v8a\n",
+        "locale.txt": "\n",
+        "night-mode.txt": "Night mode: no\n",
+        "device-configuration.txt": "config: mcc310-mnc260-en-rUS-ldltr-sw320dp-w320dp-h640dp-normal-long-notround-nowidecg-lowdr-port-notnight-mdpi-finger-keysexposed-qwerty-navhidden-nonav-640x320-v36\nabi: x86_64,arm64-v8a\n",
+        "webview-provider.txt": "Current WebView Update Service state\n  Current WebView package (name, version): (com.google.android.webview, 133.0.6943.137)\n  Minimum targetSdkVersion: 33\n  Minimum WebView version code: 694313738\n  Number of relros started: 1\n  Number of relros finished: 1\n  WebView package dirty: false\n  Any WebView package installed: true\n  Preferred WebView package (name, version): (com.google.android.webview, 133.0.6943.137)\n  WebView packages:\n    Valid package com.google.android.webview (versionName: 133.0.6943.137, versionCode: 694313738, targetSdkVersion: 34) is  installed/enabled for all users\n    com.google.android.webview.beta is NOT installed.\n    com.google.android.webview.dev is NOT installed.\n    com.google.android.webview.canary is NOT installed.\n    com.google.android.webview.debug is NOT installed.\n    com.android.webview is NOT installed.\n"
+      },
+      "drivers": {
+        "app-android/build/compatibility/emulator-reboot": {
+          "status": "PASS",
+          "scope": "Synthetic native data survives actual emulator guest OS reboot and explicit post-stop launch; not physical power loss or vendor-device behavior",
+          "phases": [
+            "seed_pass",
+            "live_process_confirmed_stopped",
+            "separate_process_startup_recovery_pass"
+          ],
+          "reboot_requested": true,
+          "recovery_verified": true,
+          "foreground_pid": 8744,
+          "previous_boot_id": "7cd159dc-0a65-485b-a80a-c171d17d4586",
+          "current_boot_id": "7b19d63d-d260-44c0-9a4a-f277e246c220",
+          "verify_pid": 1746,
+          "summary_sha256": "130a716d5352dac4f41261fb9ca288582427e7b7758f79e5ab52f446cce02602"
+        },
+        "app-android/build/compatibility/legacy-upgrade": {
+          "status": "PASS",
+          "scope": "Actual fixed old-main source APK/schema2 to current source APK/schema6, using one job-local debug signer on a disposable CI emulator. Synthetic native records only; not production-key, physical-device or live-X acceptance.",
+          "phases": [
+            "old_source_apk_schema2_native_seed_pass",
+            "old_seed_process_stopped_and_absent",
+            "old_live_process_stopped_and_absent",
+            "current_source_apk_schema6_native_verification_pass",
+            "only_owned_synthetic_fixtures_cleaned"
+          ],
+          "old_independent_favorites": "NOT APPLICABLE: absent in this old main",
+          "old_media_library": "NOT APPLICABLE: absent in this old main",
+          "external_probe_invocations_counted_in_main_xml": false,
+          "emulator_serial": "emulator-5554",
+          "initial_shell_uid": 2000,
+          "initial_target_absent": true,
+          "current_source": {
+            "head_commit": "eea88356636b6c7bd389e9f1594f001b3c73cee3",
+            "head_tree": "52532383a3e86118f5516e18875669beeb0891a8",
+            "working_tree_clean": true
+          },
+          "old_source": {
+            "head_commit": "f88003c8ec1ee193b75de7267db6ae7654ee77c4",
+            "head_tree": "82011cd71d591eb1a300e7dd07725628dcc6f1fd",
+            "working_tree_clean_before_build": true
+          },
+          "apk_artifacts": [
+            {
+              "role": "old-application",
+              "package": "dev.forcemind.xs",
+              "version_code": 1,
+              "bytes": 84446,
+              "sha256": "015cf6d10c911b11092762cd728611b859b29485603b1394bcfecb3b95edff07",
+              "certificate_sha256": "62915c4d6bc73c386d3b88d9fb731e5734531a5900991ca25f3bbf96bdb10884",
+              "signature_verification": "passed"
+            },
+            {
+              "role": "current-application",
+              "package": "dev.forcemind.xs",
+              "version_code": 3,
+              "bytes": 392295,
+              "sha256": "12a4611f50438a3287793bfbda92bfe6958e6333b1f0da20400feb84c5530844",
+              "certificate_sha256": "62915c4d6bc73c386d3b88d9fb731e5734531a5900991ca25f3bbf96bdb10884",
+              "signature_verification": "passed"
+            },
+            {
+              "role": "current-instrumentation",
+              "package": "dev.forcemind.xs.test",
+              "version_code": null,
+              "bytes": 1871495,
+              "sha256": "7ebdf98ded02163a5ebc2d445aaf7a576aafe54374fb109a2964a8462747e733",
+              "certificate_sha256": "62915c4d6bc73c386d3b88d9fb731e5734531a5900991ca25f3bbf96bdb10884",
+              "signature_verification": "passed"
+            }
+          ],
+          "current_build_outputs_preserved": true,
+          "installed_old": {
+            "package": "dev.forcemind.xs",
+            "version_code": 1,
+            "uid": 10216
+          },
+          "seed": {
+            "schema": 2,
+            "uid": 10216,
+            "pid": 3310,
+            "db_path": "/data/data/dev.forcemind.xs/databases/xs-local-history.db",
+            "scope": "local:89ec8775-e337-499f-ae1e-deb7bbcc0694"
+          },
+          "old_foreground_pid": 3501,
+          "installed_current": {
+            "package": "dev.forcemind.xs",
+            "version_code": 3,
+            "uid": 10216
+          },
+          "verify": {
+            "schema": 6,
+            "uid": 10216,
+            "pid": 3770,
+            "db_path": "/data/data/dev.forcemind.xs/databases/xs-local-history.db",
+            "scope": "local:89ec8775-e337-499f-ae1e-deb7bbcc0694"
+          },
+          "source_schema_version": 2,
+          "target_schema_version": 6,
+          "external_native_probe_invocations": 3,
+          "summary_sha256": "267f4a38ef0dde807133182d2a456aab22737147d359dc6209884560362bffd7"
+        },
+        "app-android/build/compatibility/low-space": {
+          "status": "PASS",
+          "scope": "Real emulator /data space below image-admission requirement; saved fixture bytes and local search preserved. Not mid-stream ENOSPC, physical flash, or user-device evidence.",
+          "allocator": "ordinary-shell",
+          "allocator_uid_before": 2000,
+          "native_baseline_available_bytes": 6881210368,
+          "native_actor_uid": 10221,
+          "diagnostic_df_available_bytes": 6881210368,
+          "native_available_bytes": 20656128,
+          "requested_allocation_bytes": 6851850240,
+          "summary_sha256": "30ac83fbe40ea55aa6292ebb2adfd67adca1406effb09ca025bca6c15e5f5159"
+        },
+        "app-android/build/compatibility/process-recovery": {
+          "status": "PASS",
+          "scope": "Synthetic native fixtures; real emulator OS force-stop and new target process, not reboot/physical power loss/vendor background/live X",
+          "phases": [
+            "seed_pass",
+            "live_process_confirmed_stopped",
+            "separate_process_startup_recovery_pass"
+          ],
+          "foreground_pid": 8354,
+          "verify_pid": 8454,
+          "summary_sha256": "78d2b769ebc239eb8c3e846653105eea489eeb72f79423759452a6d103d0f6be"
+        },
+        "app-android/build/compatibility/signed-debug-upgrade": {
+          "status": "PASS",
+          "scope": "Synthetic native fixtures; real emulator OS force-stop and new target process, not reboot/physical power loss/vendor background/live X",
+          "phases": [
+            "seed_pass",
+            "live_process_confirmed_stopped",
+            "separate_process_startup_recovery_pass"
+          ],
+          "foreground_pid": 8524,
+          "upgrade_artifacts": [
+            {
+              "label": "source",
+              "sha256": "12a4611f50438a3287793bfbda92bfe6958e6333b1f0da20400feb84c5530844",
+              "certificate_sha256": "62915c4d6bc73c386d3b88d9fb731e5734531a5900991ca25f3bbf96bdb10884",
+              "version_code": 3,
+              "debug_fixture": true
+            },
+            {
+              "label": "target",
+              "sha256": "860b33546650eab2443b50041c7107834362c89e36ad60e4551b3b58d9870732",
+              "certificate_sha256": "62915c4d6bc73c386d3b88d9fb731e5734531a5900991ca25f3bbf96bdb10884",
+              "version_code": 4,
+              "debug_fixture": true
+            }
+          ],
+          "verify_pid": 8632,
+          "summary_sha256": "aaeefcf6b74511685da911a2ab1ce89aea24a099b3f231bbc030936a2d0ac4b2"
+        }
+      },
+      "xml": [
+        {
+          "path": "app-android/build/outputs/androidTest-results/connected/debug/TEST-emulator-5554 - 16-_app-android-.xml",
+          "attributes": {
+            "name": "dev.forcemind.xs.android.AssetLibraryUiTest",
+            "tests": "135",
+            "failures": "0",
+            "errors": "0",
+            "skipped": "0",
+            "time": "273.615",
+            "timestamp": "2026-11-08T20:00:26",
+            "hostname": "localhost"
+          },
+          "sha256": "1c55c8d38ff4856bc6b68ae3bfb1875f2e91a8026d33b9909856554b5b819d8d",
+          "checked_case_count": 135,
+          "case_identity_sha256": "9c658dd059eafc13e10d1a6cbce13db3332366161e3127e4706a8cc17154dd14",
+          "failures": [],
+          "storage_pressure_cases": [
+            {
+              "class": "dev.forcemind.xs.android.TimelineStoragePressureTest",
+              "name": "sqliteFullRollsBackCaptureReportsReasonAndAllowsExplicitRetry",
+              "seconds": "0.052",
+              "failure": []
+            },
+            {
+              "class": "dev.forcemind.xs.android.TimelineStoragePressureTest",
+              "name": "rejectedCaptureStillHasBoundedDiagnosticsWhenCounterWriteFails",
+              "seconds": "0.102",
+              "failure": []
+            }
+          ]
+        },
+        {
+          "path": "dev-harness/build/outputs/androidTest-results/connected/debug/TEST-emulator-5554 - 16-_dev-harness-.xml",
+          "attributes": {
+            "name": "dev.forcemind.xs.android.GovernanceUiTest",
+            "tests": "65",
+            "failures": "0",
+            "errors": "0",
+            "skipped": "0",
+            "time": "47.64",
+            "timestamp": "2026-11-08T20:01:21",
+            "hostname": "localhost"
+          },
+          "sha256": "831e4f6ae20f6da6256b582e49972e392512d9bcf55990bcb7e5de1e9c0f3862",
+          "checked_case_count": 65,
+          "case_identity_sha256": "3be8298fc5e7684a90eff6c5d6a3b485d101e09526a21b5009ef8e31468c2760",
+          "failures": [],
+          "storage_pressure_cases": []
+        }
+      ],
+      "downloaded_apks": [
+        {
+          "path": "app-android/build/compatibility/legacy-upgrade/current-instrumentation.apk",
+          "sha256": "7ebdf98ded02163a5ebc2d445aaf7a576aafe54374fb109a2964a8462747e733",
+          "bytes": 1871495,
+          "badging": "package: name='dev.forcemind.xs.test' versionCode='' versionName='' platformBuildVersionName='15' platformBuildVersionCode='35' compileSdkVersion='35' compileSdkVersionCodename='15'",
+          "certificate_sha256": [
+            "62915c4d6bc73c386d3b88d9fb731e5734531a5900991ca25f3bbf96bdb10884"
+          ],
+          "independent_signature_verification": "PASS"
+        },
+        {
+          "path": "app-android/build/compatibility/legacy-upgrade/current-main-v3.apk",
+          "sha256": "12a4611f50438a3287793bfbda92bfe6958e6333b1f0da20400feb84c5530844",
+          "bytes": 392295,
+          "badging": "package: name='dev.forcemind.xs' versionCode='3' versionName='0.3-reliability-poc' platformBuildVersionName='15' platformBuildVersionCode='35' compileSdkVersion='35' compileSdkVersionCodename='15'",
+          "certificate_sha256": [
+            "62915c4d6bc73c386d3b88d9fb731e5734531a5900991ca25f3bbf96bdb10884"
+          ],
+          "independent_signature_verification": "PASS"
+        },
+        {
+          "path": "app-android/build/compatibility/legacy-upgrade/old-main-v1.apk",
+          "sha256": "015cf6d10c911b11092762cd728611b859b29485603b1394bcfecb3b95edff07",
+          "bytes": 84446,
+          "badging": "package: name='dev.forcemind.xs' versionCode='1' versionName='0.1-w0-poc' platformBuildVersionName='15' platformBuildVersionCode='35' compileSdkVersion='35' compileSdkVersionCodename='15'",
+          "certificate_sha256": [
+            "62915c4d6bc73c386d3b88d9fb731e5734531a5900991ca25f3bbf96bdb10884"
+          ],
+          "independent_signature_verification": "PASS"
+        },
+        {
+          "path": "app-android/build/compatibility/signed-debug-upgrade/version-3-debug.apk",
+          "sha256": "12a4611f50438a3287793bfbda92bfe6958e6333b1f0da20400feb84c5530844",
+          "bytes": 392295,
+          "badging": "package: name='dev.forcemind.xs' versionCode='3' versionName='0.3-reliability-poc' platformBuildVersionName='15' platformBuildVersionCode='35' compileSdkVersion='35' compileSdkVersionCodename='15'",
+          "certificate_sha256": [
+            "62915c4d6bc73c386d3b88d9fb731e5734531a5900991ca25f3bbf96bdb10884"
+          ],
+          "independent_signature_verification": "PASS"
+        },
+        {
+          "path": "app-android/build/compatibility/signed-debug-upgrade/version-4-debug.apk",
+          "sha256": "860b33546650eab2443b50041c7107834362c89e36ad60e4551b3b58d9870732",
+          "bytes": 392295,
+          "badging": "package: name='dev.forcemind.xs' versionCode='4' versionName='0.3-reliability-poc' platformBuildVersionName='15' platformBuildVersionCode='35' compileSdkVersion='35' compileSdkVersionCodename='15'",
+          "certificate_sha256": [
+            "62915c4d6bc73c386d3b88d9fb731e5734531a5900991ca25f3bbf96bdb10884"
+          ],
+          "independent_signature_verification": "PASS"
+        }
+      ],
+      "provenance": [
+        {
+          "source": {
+            "head_commit": "eea88356636b6c7bd389e9f1594f001b3c73cee3",
+            "head_tree": "52532383a3e86118f5516e18875669beeb0891a8",
+            "working_tree_clean": true,
+            "working_tree_status": []
+          },
+          "artifacts": [
+            {
+              "module": "app-android",
+              "role": "application",
+              "path": "app-android/build/outputs/apk/debug/app-android-debug.apk",
+              "availability": "present",
+              "bytes": 392295,
+              "sha256": "12a4611f50438a3287793bfbda92bfe6958e6333b1f0da20400feb84c5530844",
+              "signature_verification": {
+                "status": "passed",
+                "exit_code": 0,
+                "certificate_sha256": [
+                  "62915c4d6bc73c386d3b88d9fb731e5734531a5900991ca25f3bbf96bdb10884"
+                ]
+              }
+            },
+            {
+              "module": "app-android",
+              "role": "instrumentation",
+              "path": "app-android/build/outputs/apk/androidTest/debug/app-android-debug-androidTest.apk",
+              "availability": "present",
+              "bytes": 1871495,
+              "sha256": "7ebdf98ded02163a5ebc2d445aaf7a576aafe54374fb109a2964a8462747e733",
+              "signature_verification": {
+                "status": "passed",
+                "exit_code": 0,
+                "certificate_sha256": [
+                  "62915c4d6bc73c386d3b88d9fb731e5734531a5900991ca25f3bbf96bdb10884"
+                ]
+              }
+            },
+            {
+              "module": "dev-harness",
+              "role": "application",
+              "path": "dev-harness/build/outputs/apk/debug/dev-harness-debug.apk",
+              "availability": "present",
+              "bytes": 345594,
+              "sha256": "184e6122f2ddf6a8405332bce101a37891dcdae53bab0fb69a0204dc1b788540",
+              "signature_verification": {
+                "status": "passed",
+                "exit_code": 0,
+                "certificate_sha256": [
+                  "62915c4d6bc73c386d3b88d9fb731e5734531a5900991ca25f3bbf96bdb10884"
+                ]
+              }
+            },
+            {
+              "module": "dev-harness",
+              "role": "instrumentation",
+              "path": "dev-harness/build/outputs/apk/androidTest/debug/dev-harness-debug-androidTest.apk",
+              "availability": "present",
+              "bytes": 1749033,
+              "sha256": "c25204dfec3c8f465e8cb39b474cdbb9084ed13bbc709ee38482ebcd7e2386db",
+              "signature_verification": {
+                "status": "passed",
+                "exit_code": 0,
+                "certificate_sha256": [
+                  "62915c4d6bc73c386d3b88d9fb731e5734531a5900991ca25f3bbf96bdb10884"
+                ]
+              }
+            },
+            {
+              "module": "share-receiver-fixture",
+              "role": "independent-uid-receiver",
+              "path": "share-receiver-fixture/build/outputs/apk/debug/share-receiver-fixture-debug.apk",
+              "availability": "present",
+              "bytes": 11769,
+              "sha256": "11cdffe4126f91f69ad09b688c0bad84a7a50cb7074fb8c447a382bed880a591",
+              "signature_verification": {
+                "status": "passed",
+                "exit_code": 0,
+                "certificate_sha256": [
+                  "62915c4d6bc73c386d3b88d9fb731e5734531a5900991ca25f3bbf96bdb10884"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "totals": {
+    "main": 800,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "drivers_attempted": 19,
+    "drivers_passed": 18,
+    "native_phases": 41,
+    "native_phases_passed": 41,
+    "storage_pressure_cases": 8,
+    "downloaded_apk_copies": 20
+  },
+  "reboot_failure_diagnostics": {
+    "failure-adb-state.txt": "error: device 'emulator-5554' not found\n",
+    "failure-emulator-console.txt": "error: could not connect to TCP port 5554: Connection refused\n"
+  },
+  "reboot_failure_classification": "API27 ADB wait timed out180s; device absent and console TCP5554 refused. Guest recovery not verified; root cause UNKNOWN. API27 low-space driver NOT RUN. No emulator restart/rerun used to change this result.",
+  "build_checks": {
+    "actual_merge": "eea88356636b6c7bd389e9f1594f001b3c73cee3",
+    "actual_tree": "52532383a3e86118f5516e18875669beeb0891a8",
+    "capacity": {
+      "result": "PASS",
+      "scope": "synthetic desktop SQLite; no Android/real-device timing claim",
+      "python": "3.12.3",
+      "sqlite": "3.45.1",
+      "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
+      "workloads": [
+        {
+          "posts": 10000,
+          "historyEvents": 11530,
+          "snapshotVersions": 10199,
+          "populateMs": 538.548,
+          "migrationMs": {
+            "v1_to_v2": 25.713,
+            "v2_to_v3": 23.362,
+            "v3_to_v4": 1.214,
+            "v4_to_v5": 127.538,
+            "v5_to_v6": 0.559
+          },
+          "legacyLookupPlan": [
+            "SEARCH history_events USING INDEX idx_history_account_time (account_id=?)"
+          ],
+          "indexedLookupPlan": [
+            "SEARCH history_events USING COVERING INDEX idx_history_post_type_time (account_id=? AND post_id=? AND event_type=?)"
+          ],
+          "legacyBackfillSelectMs": null,
+          "databaseBytes": 13574144,
+          "ftsRowidIdentity": "PASS",
+          "foreignKeys": "PASS",
+          "integrity": "PASS",
+          "retainedOriginalRows": "PASS",
+          "queries": {
+            "AUTHOR": {
+              "matchedPosts": 100,
+              "returnedRows": 50,
+              "runsMs": [
+                16.363,
+                16.015,
+                15.919
+              ],
+              "medianMs": 16.015,
+              "explainQueryPlan": [
+                "MATERIALIZE matched_feed",
+                "SEARCH e USING INDEX idx_history_dwell (account_id=?)",
+                "MATERIALIZE matched_action",
+                "SEARCH a USING INDEX idx_own_actions_post (account_id=?)",
+                "SEARCH p USING INDEX idx_posts_opened (account_id=?)",
+                "SEARCH matched_feed USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "SEARCH matched_action USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "CORRELATED SCALAR SUBQUERY 1",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 2",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 3",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 4",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 5",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 6",
+                "SEARCH v USING COVERING INDEX idx_snapshot_versions_post (account_id=? AND post_id=?)",
+                "USE TEMP B-TREE FOR RIGHT PART OF ORDER BY"
+              ]
+            },
+            "CJK": {
+              "matchedPosts": 112,
+              "returnedRows": 50,
+              "runsMs": [
+                20.171,
+                20.127,
+                20.179
+              ],
+              "medianMs": 20.171,
+              "explainQueryPlan": [
+                "MATERIALIZE matched_feed",
+                "SEARCH e USING INDEX idx_history_dwell (account_id=?)",
+                "MATERIALIZE matched_action",
+                "SEARCH a USING INDEX idx_own_actions_post (account_id=?)",
+                "SEARCH p USING INDEX idx_posts_opened (account_id=?)",
+                "CORRELATED SCALAR SUBQUERY 9",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 10",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "SEARCH matched_feed USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "SEARCH matched_action USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "CORRELATED SCALAR SUBQUERY 1",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 2",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 3",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 4",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 5",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 6",
+                "SEARCH v USING COVERING INDEX idx_snapshot_versions_post (account_id=? AND post_id=?)",
+                "USE TEMP B-TREE FOR RIGHT PART OF ORDER BY"
+              ]
+            },
+            "DWELL_DATE_SOURCE": {
+              "matchedPosts": 141,
+              "returnedRows": 50,
+              "runsMs": [
+                11.291,
+                11.36,
+                10.977
+              ],
+              "medianMs": 11.291,
+              "explainQueryPlan": [
+                "MATERIALIZE matched_feed",
+                "SEARCH e USING INDEX idx_history_account_time (account_id=? AND event_at_ms>? AND event_at_ms<?)",
+                "USE TEMP B-TREE FOR GROUP BY",
+                "MATERIALIZE matched_action",
+                "SEARCH a USING INDEX idx_own_actions_post (account_id=?)",
+                "SEARCH p USING INDEX idx_posts_feed_time (account_id=?)",
+                "CORRELATED SCALAR SUBQUERY 9",
+                "SEARCH o USING COVERING INDEX idx_history_dwell (account_id=? AND post_id=? AND event_type=?)",
+                "SEARCH matched_feed USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "SEARCH matched_action USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "CORRELATED SCALAR SUBQUERY 1",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 2",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 3",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 4",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 5",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 6",
+                "SEARCH v USING COVERING INDEX idx_snapshot_versions_post (account_id=? AND post_id=?)",
+                "USE TEMP B-TREE FOR ORDER BY"
+              ]
+            },
+            "DWELL_NEVER_OPENED": {
+              "matchedPosts": 2823,
+              "returnedRows": 50,
+              "runsMs": [
+                18.793,
+                18.546,
+                18.74
+              ],
+              "medianMs": 18.74,
+              "explainQueryPlan": [
+                "MATERIALIZE matched_feed",
+                "SEARCH e USING INDEX idx_history_dwell (account_id=?)",
+                "MATERIALIZE matched_action",
+                "SEARCH a USING INDEX idx_own_actions_post (account_id=?)",
+                "SEARCH p USING INDEX idx_posts_feed_time (account_id=?)",
+                "CORRELATED SCALAR SUBQUERY 9",
+                "SEARCH o USING COVERING INDEX idx_history_dwell (account_id=? AND post_id=? AND event_type=?)",
+                "SEARCH matched_feed USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "SEARCH matched_action USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "CORRELATED SCALAR SUBQUERY 1",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 2",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 3",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 4",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 5",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 6",
+                "SEARCH v USING COVERING INDEX idx_snapshot_versions_post (account_id=? AND post_id=?)",
+                "USE TEMP B-TREE FOR ORDER BY"
+              ]
+            },
+            "FAVORITE_CATEGORY": {
+              "matchedPosts": 109,
+              "returnedRows": 50,
+              "runsMs": [
+                18.044,
+                17.995,
+                18.014
+              ],
+              "medianMs": 18.014,
+              "explainQueryPlan": [
+                "MATERIALIZE matched_feed",
+                "SEARCH e USING INDEX idx_history_dwell (account_id=?)",
+                "MATERIALIZE matched_action",
+                "SEARCH a USING INDEX idx_own_actions_post (account_id=?)",
+                "SEARCH p USING INDEX idx_posts_opened (account_id=?)",
+                "CORRELATED SCALAR SUBQUERY 9",
+                "SEARCH f USING COVERING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 10",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=? AND tag=?)",
+                "CORRELATED SCALAR SUBQUERY 11",
+                "SEARCH c USING COVERING INDEX sqlite_autoindex_post_categories_1 (account_id=? AND post_id=? AND category_id=?)",
+                "SEARCH matched_feed USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "SEARCH matched_action USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "CORRELATED SCALAR SUBQUERY 1",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 2",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 3",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 4",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 5",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 6",
+                "SEARCH v USING COVERING INDEX idx_snapshot_versions_post (account_id=? AND post_id=?)",
+                "USE TEMP B-TREE FOR RIGHT PART OF ORDER BY"
+              ]
+            },
+            "LATIN": {
+              "matchedPosts": 103,
+              "returnedRows": 50,
+              "runsMs": [
+                20.96,
+                20.442,
+                20.573
+              ],
+              "medianMs": 20.573,
+              "explainQueryPlan": [
+                "MATERIALIZE matched_feed",
+                "SEARCH e USING INDEX idx_history_dwell (account_id=?)",
+                "MATERIALIZE matched_action",
+                "SEARCH a USING INDEX idx_own_actions_post (account_id=?)",
+                "SEARCH p USING INDEX idx_posts_opened (account_id=?)",
+                "LIST SUBQUERY 9",
+                "SCAN posts_fts VIRTUAL TABLE INDEX 6:",
+                "CORRELATED SCALAR SUBQUERY 10",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 11",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "SEARCH matched_feed USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "SEARCH matched_action USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "CORRELATED SCALAR SUBQUERY 1",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 2",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 3",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 4",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 5",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 6",
+                "SEARCH v USING COVERING INDEX idx_snapshot_versions_post (account_id=? AND post_id=?)",
+                "USE TEMP B-TREE FOR RIGHT PART OF ORDER BY"
+              ]
+            },
+            "RECENT": {
+              "matchedPosts": 10000,
+              "returnedRows": 50,
+              "runsMs": [
+                14.769,
+                14.041,
+                13.895
+              ],
+              "medianMs": 14.041,
+              "explainQueryPlan": [
+                "MATERIALIZE matched_feed",
+                "SEARCH e USING INDEX idx_history_dwell (account_id=?)",
+                "MATERIALIZE matched_action",
+                "SEARCH a USING INDEX idx_own_actions_post (account_id=?)",
+                "SEARCH p USING INDEX idx_posts_opened (account_id=?)",
+                "SEARCH matched_feed USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "SEARCH matched_action USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "CORRELATED SCALAR SUBQUERY 1",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 2",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 3",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 4",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 5",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 6",
+                "SEARCH v USING COVERING INDEX idx_snapshot_versions_post (account_id=? AND post_id=?)",
+                "USE TEMP B-TREE FOR RIGHT PART OF ORDER BY"
+              ]
+            },
+            "VERSION_HISTORY": {
+              "matchedPosts": 99,
+              "returnedRows": 50,
+              "runsMs": [
+                21.59,
+                22.016,
+                21.648
+              ],
+              "medianMs": 21.648,
+              "explainQueryPlan": [
+                "MATERIALIZE matched_feed",
+                "SEARCH e USING INDEX idx_history_dwell (account_id=?)",
+                "MATERIALIZE matched_action",
+                "SEARCH a USING INDEX idx_own_actions_post (account_id=?)",
+                "SEARCH p USING INDEX idx_posts_opened (account_id=?)",
+                "LIST SUBQUERY 9",
+                "SCAN posts_fts VIRTUAL TABLE INDEX 6:",
+                "LIST SUBQUERY 10",
+                "SCAN snapshot_versions_fts VIRTUAL TABLE INDEX 7:",
+                "CORRELATED SCALAR SUBQUERY 11",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 12",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "SEARCH matched_feed USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "SEARCH matched_action USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "CORRELATED SCALAR SUBQUERY 1",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 2",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 3",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 4",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 5",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 6",
+                "SEARCH v USING COVERING INDEX idx_snapshot_versions_post (account_id=? AND post_id=?)",
+                "USE TEMP B-TREE FOR RIGHT PART OF ORDER BY"
+              ]
+            }
+          }
+        },
+        {
+          "posts": 100000,
+          "historyEvents": 115294,
+          "snapshotVersions": 101090,
+          "populateMs": 5693.673,
+          "migrationMs": {
+            "v1_to_v2": 389.204,
+            "v2_to_v3": 348.136,
+            "v3_to_v4": 1.411,
+            "v4_to_v5": 1256.733,
+            "v5_to_v6": 0.704
+          },
+          "legacyLookupPlan": [
+            "SEARCH history_events USING INDEX idx_history_account_time (account_id=?)"
+          ],
+          "indexedLookupPlan": [
+            "SEARCH history_events USING COVERING INDEX idx_history_post_type_time (account_id=? AND post_id=? AND event_type=?)"
+          ],
+          "legacyBackfillSelectMs": null,
+          "databaseBytes": 136257536,
+          "ftsRowidIdentity": "PASS",
+          "foreignKeys": "PASS",
+          "integrity": "PASS",
+          "retainedOriginalRows": "PASS",
+          "queries": {
+            "AUTHOR": {
+              "matchedPosts": 1000,
+              "returnedRows": 50,
+              "runsMs": [
+                150.725,
+                152.144,
+                150.095
+              ],
+              "medianMs": 150.725,
+              "explainQueryPlan": [
+                "MATERIALIZE matched_feed",
+                "SEARCH e USING INDEX idx_history_dwell (account_id=?)",
+                "MATERIALIZE matched_action",
+                "SEARCH a USING INDEX idx_own_actions_post (account_id=?)",
+                "SEARCH p USING INDEX idx_posts_opened (account_id=?)",
+                "SEARCH matched_feed USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "SEARCH matched_action USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "CORRELATED SCALAR SUBQUERY 1",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 2",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 3",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 4",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 5",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 6",
+                "SEARCH v USING COVERING INDEX idx_snapshot_versions_post (account_id=? AND post_id=?)",
+                "USE TEMP B-TREE FOR RIGHT PART OF ORDER BY"
+              ]
+            },
+            "CJK": {
+              "matchedPosts": 1123,
+              "returnedRows": 50,
+              "runsMs": [
+                155.716,
+                154.547,
+                156.689
+              ],
+              "medianMs": 155.716,
+              "explainQueryPlan": [
+                "MATERIALIZE matched_feed",
+                "SEARCH e USING INDEX idx_history_dwell (account_id=?)",
+                "MATERIALIZE matched_action",
+                "SEARCH a USING INDEX idx_own_actions_post (account_id=?)",
+                "SEARCH p USING INDEX idx_posts_opened (account_id=?)",
+                "CORRELATED SCALAR SUBQUERY 9",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 10",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "SEARCH matched_feed USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "SEARCH matched_action USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "CORRELATED SCALAR SUBQUERY 1",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 2",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 3",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 4",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 5",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 6",
+                "SEARCH v USING COVERING INDEX idx_snapshot_versions_post (account_id=? AND post_id=?)",
+                "USE TEMP B-TREE FOR RIGHT PART OF ORDER BY"
+              ]
+            },
+            "DWELL_DATE_SOURCE": {
+              "matchedPosts": 141,
+              "returnedRows": 50,
+              "runsMs": [
+                114.699,
+                114.314,
+                114.636
+              ],
+              "medianMs": 114.636,
+              "explainQueryPlan": [
+                "MATERIALIZE matched_feed",
+                "SEARCH e USING INDEX idx_history_account_time (account_id=? AND event_at_ms>? AND event_at_ms<?)",
+                "USE TEMP B-TREE FOR GROUP BY",
+                "MATERIALIZE matched_action",
+                "SEARCH a USING INDEX idx_own_actions_post (account_id=?)",
+                "SEARCH p USING INDEX idx_posts_feed_time (account_id=?)",
+                "CORRELATED SCALAR SUBQUERY 9",
+                "SEARCH o USING COVERING INDEX idx_history_dwell (account_id=? AND post_id=? AND event_type=?)",
+                "SEARCH matched_feed USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "SEARCH matched_action USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "CORRELATED SCALAR SUBQUERY 1",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 2",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 3",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 4",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 5",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 6",
+                "SEARCH v USING COVERING INDEX idx_snapshot_versions_post (account_id=? AND post_id=?)",
+                "USE TEMP B-TREE FOR ORDER BY"
+              ]
+            },
+            "DWELL_NEVER_OPENED": {
+              "matchedPosts": 28235,
+              "returnedRows": 50,
+              "runsMs": [
+                210.551,
+                208.004,
+                209.682
+              ],
+              "medianMs": 209.682,
+              "explainQueryPlan": [
+                "MATERIALIZE matched_feed",
+                "SEARCH e USING INDEX idx_history_dwell (account_id=?)",
+                "MATERIALIZE matched_action",
+                "SEARCH a USING INDEX idx_own_actions_post (account_id=?)",
+                "SEARCH p USING INDEX idx_posts_feed_time (account_id=?)",
+                "CORRELATED SCALAR SUBQUERY 9",
+                "SEARCH o USING COVERING INDEX idx_history_dwell (account_id=? AND post_id=? AND event_type=?)",
+                "SEARCH matched_feed USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "SEARCH matched_action USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "CORRELATED SCALAR SUBQUERY 1",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 2",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 3",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 4",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 5",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 6",
+                "SEARCH v USING COVERING INDEX idx_snapshot_versions_post (account_id=? AND post_id=?)",
+                "USE TEMP B-TREE FOR ORDER BY"
+              ]
+            },
+            "FAVORITE_CATEGORY": {
+              "matchedPosts": 1098,
+              "returnedRows": 50,
+              "runsMs": [
+                152.899,
+                152.664,
+                152.278
+              ],
+              "medianMs": 152.664,
+              "explainQueryPlan": [
+                "MATERIALIZE matched_feed",
+                "SEARCH e USING INDEX idx_history_dwell (account_id=?)",
+                "MATERIALIZE matched_action",
+                "SEARCH a USING INDEX idx_own_actions_post (account_id=?)",
+                "SEARCH p USING INDEX idx_posts_opened (account_id=?)",
+                "CORRELATED SCALAR SUBQUERY 9",
+                "SEARCH f USING COVERING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 10",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=? AND tag=?)",
+                "CORRELATED SCALAR SUBQUERY 11",
+                "SEARCH c USING COVERING INDEX sqlite_autoindex_post_categories_1 (account_id=? AND post_id=? AND category_id=?)",
+                "SEARCH matched_feed USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "SEARCH matched_action USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "CORRELATED SCALAR SUBQUERY 1",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 2",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 3",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 4",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 5",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 6",
+                "SEARCH v USING COVERING INDEX idx_snapshot_versions_post (account_id=? AND post_id=?)",
+                "USE TEMP B-TREE FOR RIGHT PART OF ORDER BY"
+              ]
+            },
+            "LATIN": {
+              "matchedPosts": 1030,
+              "returnedRows": 50,
+              "runsMs": [
+                156.281,
+                156.901,
+                157.843
+              ],
+              "medianMs": 156.901,
+              "explainQueryPlan": [
+                "MATERIALIZE matched_feed",
+                "SEARCH e USING INDEX idx_history_dwell (account_id=?)",
+                "MATERIALIZE matched_action",
+                "SEARCH a USING INDEX idx_own_actions_post (account_id=?)",
+                "SEARCH p USING INDEX idx_posts_opened (account_id=?)",
+                "LIST SUBQUERY 9",
+                "SCAN posts_fts VIRTUAL TABLE INDEX 6:",
+                "CORRELATED SCALAR SUBQUERY 10",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 11",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "SEARCH matched_feed USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "SEARCH matched_action USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "CORRELATED SCALAR SUBQUERY 1",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 2",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 3",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 4",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 5",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 6",
+                "SEARCH v USING COVERING INDEX idx_snapshot_versions_post (account_id=? AND post_id=?)",
+                "USE TEMP B-TREE FOR RIGHT PART OF ORDER BY"
+              ]
+            },
+            "RECENT": {
+              "matchedPosts": 100000,
+              "returnedRows": 50,
+              "runsMs": [
+                149.911,
+                150.477,
+                147.434
+              ],
+              "medianMs": 149.911,
+              "explainQueryPlan": [
+                "MATERIALIZE matched_feed",
+                "SEARCH e USING INDEX idx_history_dwell (account_id=?)",
+                "MATERIALIZE matched_action",
+                "SEARCH a USING INDEX idx_own_actions_post (account_id=?)",
+                "SEARCH p USING INDEX idx_posts_opened (account_id=?)",
+                "SEARCH matched_feed USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "SEARCH matched_action USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "CORRELATED SCALAR SUBQUERY 1",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 2",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 3",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 4",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 5",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 6",
+                "SEARCH v USING COVERING INDEX idx_snapshot_versions_post (account_id=? AND post_id=?)",
+                "USE TEMP B-TREE FOR RIGHT PART OF ORDER BY"
+              ]
+            },
+            "VERSION_HISTORY": {
+              "matchedPosts": 990,
+              "returnedRows": 50,
+              "runsMs": [
+                159.986,
+                160.322,
+                161.002
+              ],
+              "medianMs": 160.322,
+              "explainQueryPlan": [
+                "MATERIALIZE matched_feed",
+                "SEARCH e USING INDEX idx_history_dwell (account_id=?)",
+                "MATERIALIZE matched_action",
+                "SEARCH a USING INDEX idx_own_actions_post (account_id=?)",
+                "SEARCH p USING INDEX idx_posts_opened (account_id=?)",
+                "LIST SUBQUERY 9",
+                "SCAN posts_fts VIRTUAL TABLE INDEX 6:",
+                "LIST SUBQUERY 10",
+                "SCAN snapshot_versions_fts VIRTUAL TABLE INDEX 7:",
+                "CORRELATED SCALAR SUBQUERY 11",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 12",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "SEARCH matched_feed USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "SEARCH matched_action USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "CORRELATED SCALAR SUBQUERY 1",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 2",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 3",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 4",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 5",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 6",
+                "SEARCH v USING COVERING INDEX idx_snapshot_versions_post (account_id=? AND post_id=?)",
+                "USE TEMP B-TREE FOR RIGHT PART OF ORDER BY"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "browser_apk": {
+      "sha256": "c670c24736663ac5f56821b2d7158a86eac60c278bf739adced94ed6cd6cf4fc",
+      "bytes": 392295,
+      "badging": "package: name='dev.forcemind.xs' versionCode='3' versionName='0.3-reliability-poc' platformBuildVersionName='15' platformBuildVersionCode='35' compileSdkVersion='35' compileSdkVersionCodename='15'",
+      "certificate_sha256": [
+        "9806f9320c03d1df7a6116140c143ecc4b7af245be242be6952ab03936c028f7"
+      ],
+      "signature_exit": 0
+    },
+    "local_zip_verification": [
+      {
+        "id": 13632331039,
+        "name": "xs-android-test-reports-api-30",
+        "digest": "sha256:9579b414a5e0c307346530a8174d4f13a420a3fa074191432611e36e9bc40dc5",
+        "actual_sha256": "9579b414a5e0c307346530a8174d4f13a420a3fa074191432611e36e9bc40dc5"
+      },
+      {
+        "id": 13632012077,
+        "name": "xs-android-test-reports-api-36",
+        "digest": "sha256:0c11948a13aaa1d10cb813e7e950a9a5c795295db86d4ecda7bf42678feb1dce",
+        "actual_sha256": "0c11948a13aaa1d10cb813e7e950a9a5c795295db86d4ecda7bf42678feb1dce"
+      },
+      {
+        "id": 13631844335,
+        "name": "xs-android-test-reports-api-27",
+        "digest": "sha256:4969f78d2ec0e98092d961ea779960b8de942cd6168cc3354187ac7ec20c13ea",
+        "actual_sha256": "4969f78d2ec0e98092d961ea779960b8de942cd6168cc3354187ac7ec20c13ea"
+      },
+      {
+        "id": 13631507993,
+        "name": "xs-dev-harness-only",
+        "digest": "sha256:dccc150ccd25e3a61da8c4dbe9bf6b3a4968d517e6dd786463a529fd18b15d41",
+        "actual_sha256": "dccc150ccd25e3a61da8c4dbe9bf6b3a4968d517e6dd786463a529fd18b15d41"
+      },
+      {
+        "id": 13631389117,
+        "name": "xs-android-test-reports-api-26",
+        "digest": "sha256:dfc3abc420f11a006163aa46ef32f820ffb0b6f4e749d60bc1274b4a0ade9c90",
+        "actual_sha256": "dfc3abc420f11a006163aa46ef32f820ffb0b6f4e749d60bc1274b4a0ade9c90"
+      },
+      {
+        "id": 13631274098,
+        "name": "xs-runtime-debug-aar",
+        "digest": "sha256:5e123730fede62d851cdfd4958449f73f2f80cd25eeb47a2367a65d2f5390007",
+        "actual_sha256": "5e123730fede62d851cdfd4958449f73f2f80cd25eeb47a2367a65d2f5390007"
+      },
+      {
+        "id": 13631217670,
+        "name": "xs-core-capacity-and-source",
+        "digest": "sha256:2391523807fa6b3cdba3ae642273379ec06aa89233cfbb2df9a50dd4ad38b6f1",
+        "actual_sha256": "2391523807fa6b3cdba3ae642273379ec06aa89233cfbb2df9a50dd4ad38b6f1"
+      },
+      {
+        "id": 13631154847,
+        "name": "xs-w0-browser-poc",
+        "digest": "sha256:d49e3bb37d2d2f2b551cd49aa0e50cd77b1ed47c360a8a473070360887701631",
+        "actual_sha256": "d49e3bb37d2d2f2b551cd49aa0e50cd77b1ed47c360a8a473070360887701631"
+      }
+    ]
+  }
+}

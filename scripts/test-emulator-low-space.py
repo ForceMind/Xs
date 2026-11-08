@@ -31,14 +31,15 @@ def run(args,name,timeout=120):
 
 
 def instrument(phase):
-    text=run(["shell","am","instrument","-w","-e","class",TEST_CLASS,"-e","xs_phase",phase,COMPONENT],phase)
+    text=run(["shell","am","instrument","-w","-e","class",TEST_CLASS,"-e","xs_phase",phase,
+              *([] if phase!="low-space" else ["-e","xs_pressure_fixture","bounded-native-buffer-v1"]),COMPONENT],phase)
     if not re.search(r"OK \(1 test\)",text) or "FAILURES" in text or "INSTRUMENTATION_FAILED" in text:raise RuntimeError("Low-space instrumentation did not pass: "+phase)
     return text
 
 
 def main():
     OUT.mkdir(parents=True,exist_ok=True)
-    report={"status":"FAIL","scope":"Real emulator /data space below image-admission requirement; saved fixture bytes and local search preserved. Not mid-stream ENOSPC, physical flash, or user-device evidence."}
+    report={"status":"FAIL","scope":"Real disposable emulator /data pressure: media admission plus ordinary-UID buffer admission below1MiB, bounded native tail allocation/release and fresh capture recovery; actual registered file/Archive preserved. Not mid-stream ENOSPC, physical flash, or user-device evidence."}
     allocation="/data/local/tmp/xs-disk-pressure-fixture-"+uuid.uuid4().hex
     allocation_attempted=False
     root_attempted=False
@@ -88,6 +89,16 @@ def main():
         measured=re.search(r"INSTRUMENTATION_STATUS: xs_available_bytes=(\d+)",text)
         measured_uid=re.search(r"INSTRUMENTATION_STATUS: xs_low_space_app_uid=(\d+)",text)
         if not measured or not 0<int(measured[1])<40*1024*1024 or not measured_uid or int(measured_uid[1])!=int(native_uid[1]):raise RuntimeError("Native measured pressure at the ordinary application UID not proven")
+        buffer={}
+        for key in ("available_before","available_after","pressure_bytes","recovered_bytes","rejected","retry_accepted","file_removed"):
+            values=re.findall(r"INSTRUMENTATION_STATUS: xs_buffer_"+key+r"=(\d+)(?:\r?\n|$)",text)
+            if len(values)!=1:raise RuntimeError("Unambiguous native buffer pressure proof required: "+key)
+            buffer[key]=int(values[0])
+        if not (128*1024<=buffer["available_before"]<1024*1024 and 0<buffer["available_after"]<1024*1024
+                and 0<buffer["pressure_bytes"]<=40*1024*1024 and buffer["recovered_bytes"]>2*1024*1024
+                and buffer["rejected"]==buffer["retry_accepted"]==buffer["file_removed"]==1):
+            raise RuntimeError("Actual native buffer rejection, bounded pressure release and recovery not proven")
+        report["native_buffer_pressure"]=buffer
         report.update(status="PASS",native_available_bytes=int(measured[1]),requested_allocation_bytes=allocate)
     finally:
         try:

@@ -50,8 +50,13 @@ class AdbModel:
             if phase=="seed":
                 return self.result(command,"INSTRUMENTATION_STATUS: xs_seed_available_bytes="+str(2560*MIB)+"\nINSTRUMENTATION_STATUS: xs_seed_app_uid="+str(self.options.get("seed_uid",10123))+"\nOK (1 test)\n")
             if phase!="low-space":raise AssertionError("Unexpected native fixture phase")
+            if args[args.index("xs_pressure_fixture")+1]!="bounded-native-buffer-v1":raise AssertionError("Missing bounded native pressure capability")
             self.low_ran=True
-            return self.result(command,"INSTRUMENTATION_STATUS: xs_available_bytes="+str(self.options.get("low_bytes",29*MIB))+"\nINSTRUMENTATION_STATUS: xs_low_space_app_uid="+str(self.options.get("low_uid",10123))+"\n"+("FAILURES!!!\n" if self.options.get("native_failure") else "OK (1 test)\n"))
+            proof={"available_before":768*1024,"available_after":700*1024,"pressure_bytes":28*MIB,"recovered_bytes":29*MIB,"rejected":1,"retry_accepted":1,"file_removed":1}
+            proof.update(self.options.get("buffer",{}))
+            lines="".join("INSTRUMENTATION_STATUS: xs_buffer_"+key+"="+str(value)+"\n" for key,value in proof.items() if value is not None)
+            if self.options.get("duplicate_buffer"):lines+="INSTRUMENTATION_STATUS: xs_buffer_available_before=786432\n"
+            return self.result(command,"INSTRUMENTATION_STATUS: xs_available_bytes="+str(self.options.get("low_bytes",29*MIB))+"\nINSTRUMENTATION_STATUS: xs_low_space_app_uid="+str(self.options.get("low_uid",10123))+"\n"+lines+("FAILURES!!!\n" if self.options.get("native_failure") else "OK (1 test)\n"))
         if args==["shell","df","-k","/data"]:
             return self.result(command,"Filesystem 1K-blocks Used Available Use% Mounted on\n/dev/block/data 8388608 1000000 3145728 12% /data\n")
         if args[:2]==["shell","fallocate"]:
@@ -145,6 +150,14 @@ class LowSpaceDriverTests(unittest.TestCase):
     def test_failed_privilege_restore_can_never_report_pass(self):
         model=AdbModel(unroot_failure=True);report=self.failed(self.execute(model))
         self.assertTrue(report["privilege_restore_failed"]);self.assertFalse(model.allocated);self.assertEqual("0",model.uid)
+    def test_actual_buffer_floor_rejection_release_and_recovery_are_all_required(self):
+        for bad in ({"available_before":None},{"available_before":0},{"available_before":MIB},{"available_after":0},
+                    {"available_after":MIB},{"pressure_bytes":0},{"pressure_bytes":40*MIB+1},{"recovered_bytes":2*MIB},
+                    {"rejected":0},{"retry_accepted":0},{"file_removed":0}):
+            with self.subTest(bad=bad):
+                model=AdbModel(buffer=bad);self.failed(self.execute(model));self.restored_and_clean(model)
+    def test_duplicate_buffer_status_cannot_prove_the_native_window(self):
+        model=AdbModel(duplicate_buffer=True);self.failed(self.execute(model));self.restored_and_clean(model)
 
 
 if __name__=="__main__":unittest.main(verbosity=2)

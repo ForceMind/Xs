@@ -184,8 +184,62 @@ public final class ProcessRecoveryProbe {
         catch(IllegalStateException expected){assertEquals("Insufficient free space",expected.getMessage());}
         assertEquals(before,media.list(survivor).size());int completed=0;
         for(XsMediaRepository.Asset asset:media.list(survivor))if("COMPLETED".equals(asset.state)){completed++;assertEquals(prefs.getString("sha256",null),hash(media.completedFile(survivor,asset.id)));}assertEquals(1,completed);
-        try(XsArchiveDatabase archive=new XsArchiveDatabase(context)){ArchiveSearch.Filter filter=new ArchiveSearch.Filter();filter.keyword="Process boundary";filter.favoriteOnly=true;try(Cursor c=archive.search(survivor,filter)){assertEquals(1,c.getCount());}}
+        long opens,feeds;
+        try(XsArchiveDatabase archive=new XsArchiveDatabase(context)){ArchiveSearch.Filter filter=new ArchiveSearch.Filter();filter.keyword="Process boundary";filter.favoriteOnly=true;try(Cursor c=archive.search(survivor,filter)){assertEquals(1,c.getCount());}
+            opens=archive.historyStats(survivor).openEventCount;feeds=archive.historyStats(survivor).feedEventCount;}
+        bufferUnderFilesystemPressure(context,survivor);
+        // Recheck the actual registered download and Archive after native pressure,
+        // independently of the temporary DB's permitted oldest-card eviction.
+        for(XsMediaRepository.Asset asset:media.list(survivor))if("COMPLETED".equals(asset.state))assertEquals(prefs.getString("sha256",null),hash(media.completedFile(survivor,asset.id)));
+        try(XsArchiveDatabase archive=new XsArchiveDatabase(context)){ArchiveSearch.Filter filter=new ArchiveSearch.Filter();filter.keyword="Process boundary";filter.favoriteOnly=true;try(Cursor c=archive.search(survivor,filter)){assertEquals(1,c.getCount());}
+            assertEquals(opens,archive.historyStats(survivor).openEventCount);assertEquals(feeds,archive.historyStats(survivor).feedEventCount);
+            filter=new ArchiveSearch.Filter();filter.keyword="Durably saved process buffer";try(Cursor c=archive.search(survivor,filter)){assertEquals(1,c.getCount());}
+            try(Cursor c=archive.getReadableDatabase().rawQuery("SELECT COUNT(*) FROM timeline_promotions WHERE account_id=?",new String[]{survivor})){assertTrue(c.moveToFirst());assertEquals(1,c.getInt(0));}}
         android.os.Bundle status=new android.os.Bundle();status.putString("xs_available_bytes",Long.toString(available));status.putString("xs_low_space_app_uid",Integer.toString(Process.myUid()));InstrumentationRegistry.getInstrumentation().sendStatus(0,status);
+    }
+    /** The guarded host leaves ~28MiB. Only this already-running ordinary UID
+     * briefly consumes the final bounded tail; no new process starts below1MiB. */
+    private void bufferUnderFilesystemPressure(Context context,String library)throws Exception {
+        assertEquals("Guarded CI driver capability required","bounded-native-buffer-v1",InstrumentationRegistry.getArguments().getString("xs_pressure_fixture"));
+        assertTrue("Never allocate pressure on a phone: "+android.os.Build.HARDWARE,"ranchu".equals(android.os.Build.HARDWARE)||"goldfish".equals(android.os.Build.HARDWARE));
+        assertTrue(Process.myUid()>=10000);
+        XsTimelineBuffer timeline=XsTimelineBuffer.get(context);XsTimelineBuffer.Ticket ticket=timeline.ticket(library);
+        XsLibraryWrites.Ticket mediaTicket=XsLibraryWrites.ticket(library);
+        long baseline=context.getFilesDir().getUsableSpace();assertTrue(baseline>2*1048576L&&baseline<40*1048576L);
+        File pressure=File.createTempFile("xs-buffer-pressure-",".fixture",context.getFilesDir());
+        long before=0,after=0,written=0;java.util.concurrent.atomic.AtomicBoolean accepted=new java.util.concurrent.atomic.AtomicBoolean(true);
+        try{
+            byte[] block=new byte[65536];java.util.Random random=new java.util.Random(0x585316L);
+            try(FileOutputStream out=new FileOutputStream(pressure)){
+                while(context.getFilesDir().getUsableSpace()>768*1024L&&written<40*1048576L){
+                    long remaining=context.getFilesDir().getUsableSpace()-768*1024L;
+                    if(remaining<=0)break;
+                    int bytes=(int)Math.min(block.length,Math.min(remaining,40*1048576L-written));
+                    random.nextBytes(block);out.write(block,0,bytes);written+=bytes;
+                    // Avoid treating delayed allocation as actual available space.
+                    out.getFD().sync();
+                }
+            }
+            assertEquals(written,pressure.length());
+            before=context.getFilesDir().getUsableSpace();assertTrue("Actual native filesystem floor required: available="+before+", written="+written,before>=128*1024L&&before<1048576L);
+            write(library,()->accepted.set(timeline.append(ticket,new XsTimelineBuffer.Batch("disk-pressure:refused","native_navigation","unknown"),
+                new XsTimelineBuffer.Candidate("https://x.com/i/web/status/991234","fixture","Filesystem pressure refused body",null,SnapshotPolicy.Quality.PARTIAL,System.currentTimeMillis(),1))));
+            after=context.getFilesDir().getUsableSpace();assertTrue("Capture remained inside the measured low-space window: "+after,after>0&&after<1048576L);
+            assertFalse("No temporary admission below the native headroom floor",accepted.get());
+            try(Cursor reason=timeline.getReadableDatabase().rawQuery("SELECT pause_reason FROM timeline_state WHERE id=1",null)){assertTrue(reason.moveToFirst());assertEquals("DEVICE_SPACE",reason.getString(0));}
+        }finally{
+            assertTrue("Remove only this generated native pressure file",pressure.delete());assertFalse(pressure.exists());
+        }
+        long recovered=context.getFilesDir().getUsableSpace();assertTrue("Native pressure release restored usable headroom",recovered>2*1048576L);
+        assertTrue(XsLibraryWrites.isCurrent(mediaTicket));assertTrue(timeline.list(library,"Filesystem pressure refused",null,10,0).isEmpty());
+        write(library,()->assertTrue(timeline.append(timeline.ticket(library),new XsTimelineBuffer.Batch("disk-pressure:recovered","native_navigation","unknown"),
+            new XsTimelineBuffer.Candidate("https://x.com/i/web/status/991234","fixture","Filesystem pressure recovered body",null,SnapshotPolicy.Quality.PARTIAL,System.currentTimeMillis(),1))));
+        assertEquals(1,timeline.list(library,"Filesystem pressure recovered",null,10,0).size());assertTrue(timeline.stats(library).pauseReason.isEmpty());
+        android.os.Bundle status=new android.os.Bundle();
+        status.putString("xs_buffer_available_before",Long.toString(before));status.putString("xs_buffer_available_after",Long.toString(after));
+        status.putString("xs_buffer_pressure_bytes",Long.toString(written));status.putString("xs_buffer_recovered_bytes",Long.toString(recovered));
+        status.putString("xs_buffer_rejected","1");status.putString("xs_buffer_retry_accepted","1");status.putString("xs_buffer_file_removed","1");
+        InstrumentationRegistry.getInstrumentation().sendStatus(0,status);
     }
     private void cleanup()throws Exception {
         Context context=app();SharedPreferences prefs=context.getSharedPreferences(PREFS,Context.MODE_PRIVATE);XsMediaRepository media=XsMediaRepository.get(context);

@@ -1,3 +1,9 @@
+## XS-16 T07 真实文件系统余量入口补测源码
+
+保留CI91的800/800主项和18/19独立driver结果；API27 guest reboot后ADB及控制端口丢失，恢复未验证、其后低空间driver未执行，根因UNKNOWN，不能称全绿。完整8份ZIP/20份native APK核验、首次无效夹具与软件环境失败已入库。
+
+在现有严格CI/emulator/qemu/UID与旧userdebug配额门内，低空间driver新增一次性native capability：普通app UID仅在当前调用中写自己的随机临时文件（上限40MiB），实测余量降至128KiB～1MiB，核验临时写入拒收，finally删该文件后新观察恢复。新native证明还核验真实已登记下载hash、长期收藏、晋升正文/账本、无新增OPEN/FEED与媒体ticket；不启动低余量下的新进程，不放宽任何配额/预留阈值。新增DEVICE_SPACE固定说明，与应用SPACE_BUDGET分开。host要求唯一的前后余量/限量写入/清理/恢复状态；12项low-space、16项legacy、6项instrument host及6项allowlist通过。该真实文件系统增量已编译/双Lint，但尚待新CI原生验收，不把新增代码记为T07 PASS。
+
 ## XS-16 保留FULL原始异常
 
 实际host SQLite3.53.1诊断复现reader页面上限不限制writer；writer上限触发SQLITE_FULL/code13后事务已自动回滚，再ROLLBACK会报无活动事务。此为host引擎证据，不是Android执行结果（evidence/xs16-pressure-host-engine.json）。核对Android30官方SQLiteSession源码后，补保留原始SQLiteFullException：仍调用endTransaction释放Android session，但若它再次回滚报错，不让该次清理异常覆盖已确认的FULL；其它结束事务失败继续抛出，不将失败当成功。原生页面上限用例保留，等待新源码矩阵实证。

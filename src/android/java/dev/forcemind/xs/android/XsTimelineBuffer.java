@@ -247,7 +247,7 @@ public final class XsTimelineBuffer extends SQLiteOpenHelper {
         // Native observations may wait in the bounded queue; arbitrary future/past payload times fail closed.
         if(candidate.observedAt>clock.wall()+60000L||TimelineBufferPolicy.isExpired(TimelineBufferPolicy.expiresAt(candidate.observedAt,settings.hours),time.nowMs)){drop(db,"EXPIRED_BEFORE_WRITE");return false;}
         long reserve=WRITE_RESERVE+4L*(candidate.body==null?0:candidate.body.length())+4L*(candidate.author==null?0:candidate.author.length());
-        if(!enforceLimits(reserve)){drop(db,"SPACE_BUDGET");return false;}
+        if(!enforceLimits(reserve)){drop(db,spaceReason(reserve));return false;}
         SQLiteFullException allocationFailure=null;
         db.beginTransaction();
         try{
@@ -321,7 +321,7 @@ public final class XsTimelineBuffer extends SQLiteOpenHelper {
             reclaim(db,limit);if(removed==0)break;
         }
         boolean fits=actualBytes()+reserve+TimelineBufferPolicy.MIN_HEADROOM_BYTES<=limit&&freeBytes()>reserve+TimelineBufferPolicy.MIN_HEADROOM_BYTES;
-        if(!fits)db.execSQL("UPDATE timeline_state SET pause_reason='SPACE_BUDGET' WHERE id=1");return fits;
+        if(!fits)db.execSQL("UPDATE timeline_state SET pause_reason=? WHERE id=1",new Object[]{spaceReason(reserve)});return fits;
     }
     public synchronized long actualBytes(){
         // All scopes share this file. Include sidecars and any SQLite vacuum/temp sidecar, not character estimates.
@@ -330,6 +330,7 @@ public final class XsTimelineBuffer extends SQLiteOpenHelper {
         return bytes;
     }
     private long freeBytes(){return file.getParentFile()==null?0:file.getParentFile().getUsableSpace();}
+    private String spaceReason(long reserve){return freeBytes()<=reserve+TimelineBufferPolicy.MIN_HEADROOM_BYTES?"DEVICE_SPACE":"SPACE_BUDGET";}
     private void reclaim(SQLiteDatabase db,long budget){
         reclaimReason="";
         try{
