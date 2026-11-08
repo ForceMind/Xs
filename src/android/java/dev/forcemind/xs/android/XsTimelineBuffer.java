@@ -248,6 +248,7 @@ public final class XsTimelineBuffer extends SQLiteOpenHelper {
         if(candidate.observedAt>clock.wall()+60000L||TimelineBufferPolicy.isExpired(TimelineBufferPolicy.expiresAt(candidate.observedAt,settings.hours),time.nowMs)){drop(db,"EXPIRED_BEFORE_WRITE");return false;}
         long reserve=WRITE_RESERVE+4L*(candidate.body==null?0:candidate.body.length())+4L*(candidate.author==null?0:candidate.author.length());
         if(!enforceLimits(reserve)){drop(db,"SPACE_BUDGET");return false;}
+        SQLiteFullException allocationFailure=null;
         db.beginTransaction();
         try{
             if(!isCurrent(ticket)||!readSettings(db).enabled||scalar(db,"SELECT pending_clear FROM timeline_scopes WHERE library_id=?",ticket.library)!=0)return false;
@@ -279,7 +280,15 @@ public final class XsTimelineBuffer extends SQLiteOpenHelper {
             }
             pruneOrphans(db);enforceRowCaps(db);db.execSQL("UPDATE timeline_state SET pause_reason='' WHERE id=1 AND clock_paused=0");
             db.setTransactionSuccessful();
-        }finally{db.endTransaction();}
+        }catch(SQLiteFullException full){allocationFailure=full;throw full;}
+        finally{
+            try{db.endTransaction();}
+            catch(RuntimeException rollbackFailure){
+                // SQLite FULL may already have rolled back the native transaction.
+                // Still unwind Android's session, but preserve the allocation cause.
+                if(allocationFailure==null)throw rollbackFailure;
+            }
+        }
         // The reservation above is conservative. If SQLite's measured allocation exceeds it, reclaim and stop further writes.
         if(actualBytes()>settings.budgetMiB*1048576L){enforceLimits(WRITE_RESERVE);return false;}
         scheduleMaintenance(app);return true;

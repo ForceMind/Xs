@@ -1,0 +1,9 @@
+{
+  "scope": "Host SQLite engine diagnostic only; not Android execution",
+  "sqlite": "3.53.1",
+  "reader_cap_did_not_limit_writer": true,
+  "code": 13,
+  "name": "SQLITE_FULL",
+  "transaction_still_active": false,
+  "rollback_after_full": "cannot rollback - no transaction is active"
+}

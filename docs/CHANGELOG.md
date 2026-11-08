@@ -1,3 +1,7 @@
+## XS-16 保留FULL原始异常
+
+实际host SQLite3.53.1诊断复现reader页面上限不限制writer；writer上限触发SQLITE_FULL/code13后事务已自动回滚，再ROLLBACK会报无活动事务。此为host引擎证据，不是Android执行结果（evidence/xs16-pressure-host-engine.json）。核对Android30官方SQLiteSession源码后，补保留原始SQLiteFullException：仍调用endTransaction释放Android session，但若它再次回滚报错，不让该次清理异常覆盖已确认的FULL；其它结束事务失败继续抛出，不将失败当成功。原生页面上限用例保留，等待新源码矩阵实证。
+
 ## XS-16 CI89 旧包驱动进程栅栏
 
 CI89/API36在旧APK seed后失败：am start返回Status:ok/LaunchState UNKNOWN，紧随的pidof返回1/空；主XML为0，新增压力测试未执行。原始驱动/包/ZIP/设备摘要见evidence/xs16-ci89-api36-blocked.json。旧流程未隔离instrumentation异步结束与独立介绍页启动，现先显式force-stop seed并证明PID不存在，再启动、证明不同于seed的真实PID，仍执行原来的停止/缺席/正常升级/UID/原生内容断言。原失败原因未被日志充分确定，不将可能的时序竞态当已证根因；后续失败补有界只读logcat/activity诊断，原FAIL不被覆盖。16项旧包驱动host测试通过（新增seed栅栏、缺失/复用PID负例），安装仍禁止降级、卸载或清数据。
