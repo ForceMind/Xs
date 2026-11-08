@@ -1,4 +1,27 @@
-# Xs 验收矩阵 v2.2
+# Xs 验收矩阵 v2.3
+
+## XS-16 最近时间线新增验收（全部NOT RUN）
+
+[专项方案](TIMELINE_BUFFER_PLAN.zh-CN.md)与[Issue #6](https://github.com/ForceMind/Xs/issues/6)已确认设计；运行源码、数据库与新测试尚未实现，CI83不验证这些项。T01～T13先做云端/原生合成验收，T14必须真实环境；前者通过不能使后者PASS。
+
+| 编号 | 目标 | 当前状态 |
+| --- | --- | --- |
+| T01 | 独立默认关闭、48h/100MiB及合法设置范围；禁用失效旧观察但不偷偷删现有条目 | NOT RUN |
+| T02 | 0.5～1秒仅缓冲；3.5秒可另有合格FEED；无伪造OPEN/FAVORITE/已读 | NOT RUN |
+| T03 | 刷新前批次与顺序、断网正文/作者/时间/来源查找，区分原生与疑似刷新 | NOT RUN |
+| T04 | 同批重绘去重、正文版本复用、跨批appearance各自到期，不无限续旧批TTL | NOT RUN |
+| T05 | 48h到期边界在查询/详情立即排除；时钟回拨/重启/时区不复活已过期项 | NOT RUN |
+| T06 | 到期移除临时正文/FTS/版本/孤儿并实际回收磁盘；WAL/checkpoint忙失败可解释 | NOT RUN |
+| T07 | 应用全局含所有scope/DB/索引/WAL/预留的100MiB预算；降限/满盘不删长期资料 | NOT RUN |
+| T08 | 长期保存/收藏幂等、跨库中断/提交后ack恢复；质量与来源保留，本地预览不计打开 | NOT RUN |
+| T09 | 清缓冲、历史、网页缓存/会话、收藏、媒体、整库和两种配额范围独立 | NOT RUN |
+| T10 | 导航/后台/切号/清理/删除tombstone与writer代次复验；旧回调不能复活 | NOT RUN |
+| T11 | 实际新进程/guest重启、临时新库/必要迁移失败保留Archive5和原文件 | NOT RUN |
+| T12 | 原生分页和CJK检索/正文质量/覆盖范围提示；320dp1.8字号中英深浅可操作 | NOT RUN |
+| T13 | 虚拟列表和洪泛预算有界、遗漏可解释；不存rawAPI/凭据/隐藏内容、不自动下媒体 | NOT RUN |
+| T14 | 真实X/W0、同URL自动刷新/换流/虚拟卡、账号切换与真机耗电的独立现场验收 | NOT RUN |
+
+
 
 本轮E验证源码 `2c667517e5a812232a8b41e7a3f99166855963e6` / tested tree `e52dfdd3f5f7b51751154bf1cf2601554786ef33` 的[CI82](https://github.com/ForceMind/Xs/actions/runs/42419306946)已通过：1287项JVM、23项host检查、Android构建/双Lint，以及API26/27/30/36共624/624主用例（0失败/错误/跳过）。BrowserInteraction24/24、真实旧APK升级4/4通过；另有20/20独立driver、44次native phase通过，内部重复probe不计入主XML；均为本轮同源fresh attempt1。源码/merge/包摘要与CI76～81真实失败见[本轮E证据](ROUND_E_EVIDENCE.zh-CN.md)；D/CI75仅作历史基线。
 

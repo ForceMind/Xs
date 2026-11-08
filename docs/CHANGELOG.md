@@ -2,6 +2,14 @@
 
 本文件记录决策变化，不把文档提交计作功能完成。代码执行与测试结果保留在各执行记录和 CI 中。
 
+## 2026-11-07 — XS-16最近时间线缓冲与新对话交接（仅设计）
+
+用户确认开始新增默认关闭、启用后48小时/应用级100MiB可调的短期时间线找回。新增专项方案、ADR-0005、T01～T14与Issue #6；同步中英文README/产品/实施计划/路线图/架构/资料语义，并重写新Work接手指令。只记录F0，未实现F1～F5运行时，没有新缓冲功能或测试PASS，不以文档代替后续编码。
+
+接续PR #5，不从旧main丢掉未合并进展。真实已验收基线edf7906/tree7e5e8e65的CI83通过1287 JVM断言、23项host驱动、624主执行、20driver/44外部phase；完整最终账为PR comment6714025860，属于该源码。另明确未解决P2：NativePageCaptureController按整URL contains('/search')否则ForYou推来源，探索页和查询参数可能误分；新对话先验证修复，再实现F1；同时复现规范i/web/status观察器P2与备份选择器重建丢requestTicket的旧P2，后者outdated不代表已修。不得把历史green当无此缺陷。
+
+新缓冲独立临时存储/索引、批次引用到期、实际空间计量/回收和幂等持久提升；不改既有合格停留、打开、收藏和媒体保留。只观察已呈现卡片，不新增raw API记录或隐藏内容采集，不自动下媒体。未解决真实X/W0/手机/CDN/聊天App/生产签名门；本轮未合并main或发布正式版。
+
 ## 2026-11-07 — E轮上传策略与真实旧APK升级通过CI82
 
 本轮E验证源码 `2c667517e5a812232a8b41e7a3f99166855963e6` / tested tree `e52dfdd3f5f7b51751154bf1cf2601554786ef33` 的[CI82](https://github.com/ForceMind/Xs/actions/runs/42419306946)已通过：1287项JVM、23项host检查、Android构建/双Lint，以及API26/27/30/36共624/624主用例（0失败/错误/跳过）。BrowserInteraction24/24、真实旧APK升级4/4通过；另有20/20独立driver、44次native phase通过，内部重复probe不计入主XML；均为本轮同源fresh attempt1。源码/merge/包摘要与CI76～81真实失败见[本轮E证据](ROUND_E_EVIDENCE.zh-CN.md)；D/CI75仅作历史基线。

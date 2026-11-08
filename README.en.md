@@ -2,6 +2,8 @@
 
 [简体中文](README.md) | [English](README.en.md)
 
+**Next work package: Recent timeline (XS-16; not implemented).** A separate opt-in buffer defaults to 48 hours and a configurable app-wide 100 MiB temporary-storage budget. It will retain observed, presented post snapshots for offline search and pre-refresh batch lookup, without creating opens, qualified dwell, favorites or media downloads. Raw API responses and credentials are excluded. Capacity can shorten the retained window; expiry removes temporary text/indexes while preserving durable library data. See the [specification](docs/TIMELINE_BUFFER_PLAN.zh-CN.md), [Issue #6](https://github.com/ForceMind/Xs/issues/6) and [continuation instructions](docs/WORK_HANDOFF_PROMPT.zh-CN.md). This update records design/handoff only. Next execution first resolves the reviewed source-classification P2, then implements F1.
+
 **Xs is an independent, local-first enhancement client for X.** Browse official X web normally while an app-owned library keeps open history, optional feed dwell, independent favorites and media. Share selected actual files through Android. No official APK modification, new social backend or account proxy.
 
 > **Internal development PoC; no production release.** This increment adds SQLite v5 snapshot versions, batch organization, system download scheduling, passphrase-encrypted resource backups and persistent whole-library deletion. Live X automatic capture, own-action confirmation and cleanup remain disabled. See [current reliability and library evidence](docs/ROUND_D_EVIDENCE.zh-CN.md). Round D CI74 and documentation checkpoint CI75 passed; Round E passed its own CI82 with 624 main cases and 20 independent drivers; live/device gates remain open.

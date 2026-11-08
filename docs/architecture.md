@@ -1,5 +1,12 @@
 # Xs architecture — app-owned library and native-pull plan
 
+## Planned XS-16 temporary timeline boundary
+
+[ADR-0005](adr/0005-timeline-buffer.md) and the [buffer specification](TIMELINE_BUFFER_PLAN.zh-CN.md) add a separate opt-in recent-timeline store (default 48 hours, app-wide 100 MiB). This is a design, not existing runtime. Temporary snapshots/FTS, expiry and disk accounting must not enter the Archive v5 lifetime-retention path or existing backups. Reuse library ownership, bounded native-pull validation and shared write barriers; add a buffer generation without unnecessarily revoking media tickets. Durable promotion needs stable idempotency and an archive-first commit, not a fictitious cross-database atomic transaction. Preserve v5 data; any necessary archive-format change requires an explicit preserving migration and codec/import/consolidation regressions. No raw traffic interception, hidden-state capture or live enablement is authorized by this plan.
+
+First fix [reviewed feed-source classification](https://github.com/ForceMind/Xs/pull/5#discussion_r4504042361) before reusing it for the new batches. CI83 passed the old source; it did not establish this bug was absent or test XS-16.
+
+
 Round E source `2c667517e5a812232a8b41e7a3f99166855963e6` / tested tree `e52dfdd3f5f7b51751154bf1cf2601554786ef33` passed [CI82](https://github.com/ForceMind/Xs/actions/runs/42419306946): 1,287 JVM assertions, 23 host checks, Android builds and both lint checks, and 624/624 main cases across API26/27/30/36, with 0 failures, errors or skips. BrowserInteraction passed 24/24 and actual old-APK upgrades passed 4/4. Separately, 20/20 independent drivers and 44 native phases passed in this same-source fresh attempt1; repeated probes are excluded from main XML. Exact merge and package provenance and the actual CI76–81 failures remain in [Round E evidence](ROUND_E_EVIDENCE.zh-CN.md); D/CI75 is historical.
 
 Native cases verified real SAF selection of the 5,783-byte synthetic MP4, complete FileReader bytes/hash and playback to ended after a user gesture; two new PNGs chosen through real system multi-select with per-file set checks; and rejection of old results after a sensitive SPA route returns HOME. The actual fixed old-main f88003c8ec1ee193b75de7267db6ae7654ee77c4 code1/schema2→current3/schema5 upgrade preserved UID, DB path, default UUID, original rows, categories, FTS and a generated file. Default LegacyUpgradeProbe is only a current-version round trip; the real old-APK upgrade is counted as a separate driver.

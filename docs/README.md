@@ -1,5 +1,14 @@
 # Xs 文档与执行入口
 
+## 新增优先工作：XS-16 最近时间线
+
+用户已确认增加独立临时缓冲：默认关闭、48小时/应用级100MiB可调、只保存允许时间线已呈现且被观察到的帖子字段与本地批次。0.5–1秒快划可暂存，但不因此产生合格停留、打开、收藏或已读；原1.2/3/5秒和60%可读FEED规则不变。接口预取/未呈现/未采样项目不承诺覆盖。临时正文和FTS必须真正可回收，不直接复用只清历史事件的retention。
+
+当前只完成规范与新对话交接，F1–F5源码/运行验收均未完成；基线edf7906的CI83不验证新功能。跟踪[Issue #6](https://github.com/ForceMind/Xs/issues/6)，读[专项方案](TIMELINE_BUFFER_PLAN.zh-CN.md)、[ADR-0005](adr/0005-timeline-buffer.md)、[接续指令](WORK_HANDOFF_PROMPT.zh-CN.md)。先修[来源误分类P2](https://github.com/ForceMind/Xs/pull/5#discussion_r4504042361)，再实施F1策略/临时SQLite/TTL/配额，连续进入F2观察器、F3原生查找/持久提升、F4回收与F5真实回归；不要重新实现已验收的E工作代替新任务。
+
+
+复查review和当前源码另确认两项应先复现修复：规范i/web/status链接在JS观察器匹配中缺失（r4500601373）；备份选择器Activity重建丢实例requestTicket（r4501080305虽outdated，当前仍无保留/恢复且manifest无configChanges）。新对话补DOM/WebView和实际SAF重建回归，密码不得持久保存。其它outdated评论须以当前源码/证据确认，不能自动当已解决。本轮仅记录，未修runtime。
+
 本轮E验证源码 `2c667517e5a812232a8b41e7a3f99166855963e6` / tested tree `e52dfdd3f5f7b51751154bf1cf2601554786ef33` 的[CI82](https://github.com/ForceMind/Xs/actions/runs/42419306946)已通过：1287项JVM、23项host检查、Android构建/双Lint，以及API26/27/30/36共624/624主用例（0失败/错误/跳过）。BrowserInteraction24/24、真实旧APK升级4/4通过；另有20/20独立driver、44次native phase通过，内部重复probe不计入主XML；均为本轮同源fresh attempt1。源码/merge/包摘要与CI76～81真实失败见[本轮E证据](ROUND_E_EVIDENCE.zh-CN.md)；D/CI75仅作历史基线。
 
 已实际验证5783字节合成MP4的真实SAF选择、FileReader完整字节/hash与用户手势播放至ended，两份新PNG的系统多选/逐文件集合核对，以及敏感SPA路由回HOME仍拒旧结果。固定旧main f88003c8ec1ee193b75de7267db6ae7654ee77c4的真实code1/schema2→current3/schema5升级保留UID/DB路径/默认UUID/旧行/分类/FTS/生成文件；默认LegacyUpgradeProbe只算current roundtrip，真正旧包升级另计driver。
@@ -25,8 +34,9 @@ D轮已验证源码 `0d193e4689d649970d9705818d33e8706b470d8f` / tested tree `c8
 | --- | --- |
 | [产品要求](product.md) | 用户确认的范围、点开/停留/转帖/收藏语义与资料所有权 |
 | [本机资料库、下载与分享规范](LOCAL_LIBRARY_MEDIA_PLAN.zh-CN.md) | 详细交互、下载和分享约束 |
+| [最近时间线滚动缓冲](TIMELINE_BUFFER_PLAN.zh-CN.md) | XS-16：48小时/容量上限、刷新找回、临时与长期数据分离、T01～T14 |
 | [时间线停留记录专项方案](FEED_DWELL_PLAN.zh-CN.md) | 不打开帖子也能记录，1.2/3/5秒档、时长、去重、未打开检索和 XS-14 验收 |
-| [完整实施计划](IMPLEMENTATION_PLAN.zh-CN.md) | XS-01～XS-15 工作包、依赖、阶段交付和下一步 |
+| [完整实施计划](IMPLEMENTATION_PLAN.zh-CN.md) | XS-01～XS-16 工作包、依赖、阶段交付和下一步 |
 | [Work 持续研发交接指令](WORK_HANDOFF_PROMPT.zh-CN.md) | 新 Work 会话直接复制；要求实际代码、测试、提交和证据 |
 | [架构](architecture.md) | 浏览底座、原生主动获取、统一写入、媒体与分享边界 |
 | [ChatGPT Studio 借鉴与迁移清单](CHATGPT_STUDIO_REUSE.zh-CN.md) | 已审阅源码基线、可复用部分、不应照搬部分和许可检查 |
@@ -40,9 +50,10 @@ D轮已验证源码 `0d193e4689d649970d9705818d33e8706b470d8f` / tested tree `c8
 1. 用户新确认的要求及 [ADR-0002](adr/0002-local-library-media.md)：应用拥有资料，点开无停留门槛，独立收藏、下载和对外分享。
 2. [ADR-0003](adr/0003-native-pull-delivery.md)：借鉴已有浏览底座，优先原生主动取回受限观察结果；离线实现与真机验证并行。
 3. [ADR-0004](adr/0004-feed-dwell.md)：可选时间线停留（未点开也能记录）、默认 3 秒和基础阶段提前到 B，优先于旧“全部留到 D”的顺序。
-4. 本目录的产品要求、实施计划、架构与验收矩阵，按各自职责执行。
-5. [原 Web-first 计划](WEB_FIRST_PLAN.zh-CN.md) 和 [ADR-0001](adr/0001-web-first.md)：保留原始决策与未被覆盖的安全要求，不再把旧账号归属、严格串行开发顺序或消息桥选型当作新要求的前置。
-6. `integration.md`、`integration-contract.md`、旧 APK allowlist 为历史资产，不恢复官方 APK 修改路线。
+4. [ADR-0005](adr/0005-timeline-buffer.md)：新增临时时间线，与合格停留/打开/收藏独立；不放宽流量/敏感内容禁区。
+5. 本目录的产品要求、实施计划、架构与验收矩阵，按各自职责执行。
+6. [原 Web-first 计划](WEB_FIRST_PLAN.zh-CN.md) 和 [ADR-0001](adr/0001-web-first.md)：保留原始决策与未被覆盖的安全要求，不再把旧账号归属、严格串行开发顺序或消息桥选型当作新要求的前置。
+7. `integration.md`、`integration-contract.md`、旧 APK allowlist 为历史资产，不恢复官方 APK 修改路线。
 
 文档有冲突时先按以上优先级解释并修正文档，不擅自改变产品目标。源码实现现状不因文档优先级变化自动改变。
 

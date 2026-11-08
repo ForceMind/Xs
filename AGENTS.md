@@ -19,6 +19,16 @@ Keep this public independent repository and synchronized Chinese/English READMEs
 - WeChat/QQ/Feishu/Telegram are recipient compatibility targets. Users choose application, conversation and sending; no contact/token harvesting or accessibility automation. Chooser callbacks are not delivery receipts.
 - Unfavorite, clear history, delete media, clear cache, clear web session and delete library have different scopes. Cache cleanup never deletes user downloads; favorites do not silently download every video.
 
+## Next accepted work: XS-16 recent timeline
+
+Follow [Issue #6](https://github.com/ForceMind/Xs/issues/6), [TIMELINE_BUFFER_PLAN](docs/TIMELINE_BUFFER_PLAN.zh-CN.md) and [ADR-0005](docs/adr/0005-timeline-buffer.md). F0 is design/handoff only; no buffer runtime is implemented. First fix the [reviewed route/source P2](https://github.com/ForceMind/Xs/pull/5#discussion_r4504042361), then implement F1–F5 continuously. Do not use whole-URL substring matching or default unknown feeds to For You.
+
+The buffer is separate opt-in consent, default OFF; when enabled,48h and an app-wide100MiB temporary DB/index/WAL budget are configurable. Captured presented cards need no dwell, but create no OPEN/qualified FEED/favorite/read fact. Keep existing FEED60% and1.2/3/5s rules. Metadata only; no media prefetch, raw network packets, credentials, internal cursors or hidden content. Batch identity is native observation/refresh provenance, not an invented API response ID. Capture is bounded/best effort; unrendered and missed transient items are not guaranteed.
+
+Use separate temporary storage/FTS and query-time expiry plus physical GC; existing lifetime snapshot retention cannot serve as cache cleanup. Keep durable data and backups unchanged unless an explicit compatible schema/codec migration is needed. Stable promotion identity, archive-first commit/ack and retry idempotency must handle process death; independent SQLite files are not one atomic transaction. Buffer-clear generation must not revoke unrelated media tickets. Library tombstones/erasure/old-callback checks apply to the buffer too. Actual X/W0 and phone gates remain unchanged.
+
+复查review和当前源码另确认两项应先复现修复：规范i/web/status链接在JS观察器匹配中缺失（r4500601373）；备份选择器Activity重建丢实例requestTicket（r4501080305虽outdated，当前仍无保留/恢复且manifest无configChanges）。新对话补DOM/WebView和实际SAF重建回归，密码不得持久保存。其它outdated评论须以当前源码/证据确认，不能自动当已解决。本轮仅记录，未修runtime。
+
 ## Existing versus planned
 
 - Round E source `2c667517e5a812232a8b41e7a3f99166855963e6` / tested tree `e52dfdd3f5f7b51751154bf1cf2601554786ef33` passed [CI82](https://github.com/ForceMind/Xs/actions/runs/42419306946): 1,287 JVM assertions, 23 host checks, Android builds and both lint checks, and 624/624 main cases across API26/27/30/36, with 0 failures, errors or skips. BrowserInteraction passed 24/24 and actual old-APK upgrades passed 4/4. Separately, 20/20 independent drivers and 44 native phases passed in this same-source fresh attempt1; repeated probes are excluded from main XML. Exact merge and package provenance and the actual CI76–81 failures remain in [Round E evidence](docs/ROUND_E_EVIDENCE.zh-CN.md); D/CI75 is historical.

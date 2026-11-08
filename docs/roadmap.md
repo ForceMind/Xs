@@ -1,5 +1,12 @@
 # Xs delivery roadmap — current A–D plan
 
+## Next work: XS-16 recent timeline (design accepted; runtime NOT RUN)
+
+Continue PR #5, not a fresh main-only implementation. First resolve the reviewed route/source P2, then execute F1 policy/temporary SQLite/TTL/budget → F2 bounded DOM/native buffer admission → F3 offline batch/search/settings/promotion UI → F4 actual disk reclamation and lifecycle barriers → F5 real code/build/instrumentation evidence. See [Issue #6](https://github.com/ForceMind/Xs/issues/6), [specification](TIMELINE_BUFFER_PLAN.zh-CN.md), [ADR-0005](adr/0005-timeline-buffer.md) and [new-work handoff](WORK_HANDOFF_PROMPT.zh-CN.md). The separate buffer defaults to OFF; when enabled,48 hours and a global100MiB budget are configurable. Old qualified-dwell/open/favorite semantics and live/device gates stay intact.
+
+This handoff only records F0. CI83 remains evidence for edf7906, not for this planned feature.
+
+
 Round E source `2c667517e5a812232a8b41e7a3f99166855963e6` / tested tree `e52dfdd3f5f7b51751154bf1cf2601554786ef33` passed [CI82](https://github.com/ForceMind/Xs/actions/runs/42419306946): 1,287 JVM assertions, 23 host checks, Android builds and both lint checks, and 624/624 main cases across API26/27/30/36, with 0 failures, errors or skips. BrowserInteraction passed 24/24 and actual old-APK upgrades passed 4/4. Separately, 20/20 independent drivers and 44 native phases passed in this same-source fresh attempt1; repeated probes are excluded from main XML. Exact merge and package provenance and the actual CI76–81 failures remain in [Round E evidence](ROUND_E_EVIDENCE.zh-CN.md); D/CI75 is historical.
 
 Native cases verified real SAF selection of the 5,783-byte synthetic MP4, complete FileReader bytes/hash and playback to ended after a user gesture; two new PNGs chosen through real system multi-select with per-file set checks; and rejection of old results after a sensitive SPA route returns HOME. The actual fixed old-main f88003c8ec1ee193b75de7267db6ae7654ee77c4 code1/schema2→current3/schema5 upgrade preserved UID, DB path, default UUID, original rows, categories, FTS and a generated file. Default LegacyUpgradeProbe is only a current-version round trip; the real old-APK upgrade is counted as a separate driver.
@@ -50,7 +57,7 @@ The primary client remains Android. Standard desktop browser extensions are a po
 
 ## Next executable slice
 
-Preserve Round E CI82 proof of 624 main cases/20 independent drivers and record one source-bound final documentation/evidence checkpoint. Further implementation changes require their own regression. Do not widen live-site enablement from fixture success.
+Preserve the completed E/CI83 checkpoint, verify the outstanding review items, then execute XS-16 F1–F5 above. Further runtime changes require source-specific regression; do not create another static-SHA-only evidence loop. Do not widen live-site enablement from fixture success.
 
 1. Preserve CI74’s 608 main cases and 16 independent system drivers with exact source/artifacts; keep the narrowly scoped CI-only allocator and cleanup/unroot safety gates. Add further tests only for new changes or unresolved risks.
 2. Retain v1–v4→v5 migration, snapshot policy/source/current-pointer and full historical-text evidence. COMPLETE means accepted visible DOM text; newer shorter COMPLETE can become current, PARTIAL cannot downgrade it, and all versions remain. Keep source/default scopes unchanged during consolidation.
