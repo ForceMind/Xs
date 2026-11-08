@@ -2,6 +2,10 @@
 
 继续 ForceMind/Xs 的现有实现，不从旧main重建、不另写一轮计划、不丢 PR #5 未合并进展。
 
+**XS-16 云端验收完成。** 测试源码 `5b5f9e33e72068269408a60d74db5af5c7812772`（生产代码与 `f813e9d` 相同）通过 [CI87](https://github.com/ForceMind/Xs/actions/runs/42463984353)：1406 JVM、四API共792/792主用例（0失败/错误/跳过）、20/20独立driver、44/44外部native phase，以及构建/双Lint/SQLite/DOM/容量检查。见[精确证据](XS16_CI87_EVIDENCE.zh-CN.md)。T14真实X/手机/接收应用/耗电/生产签名仍NOT RUN；live保持关闭，无main合并或正式发布。
+
+当前三项P2、F1–F5云端代码/测试已完成；后续从最新Issue/PR的真实未验项推进，不再次从F1开始。最后文档checkpoint仅增加证据、同步状态；测试源码及workflow与已验5b5f9e3一致。
+
 - 仓库：https://github.com/ForceMind/Xs
 - PR：https://github.com/ForceMind/Xs/pull/5
 - 分支：`feat/local-library-capture-media`

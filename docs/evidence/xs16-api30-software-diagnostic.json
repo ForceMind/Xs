@@ -1,5 +1,4 @@
 {
-  "source": "f813e9d0a849521b41a36621bbebc07331a0131a",
   "environment": "cloud local software TCG, API30 default x86_64, no KVM,480x800 mdpi,2 cores,2048MiB",
   "apks": {
     "app-android/build/outputs/apk/debug/app-android-debug.apk": "7f78e810654d5f19064897fe5ead040327a6d5e7605544acb74933f44ab9219c",
@@ -72,5 +71,14 @@
       "bytes": 7443,
       "sha256": "e6c016ca2a2e53ac7932daffc7b19a6dcd8848d5091386d3d0837472a8f3ac4d"
     }
+  },
+  "source_provenance": {
+    "classification": "launch-declared context only, not independently verified installed source",
+    "launch_git_head": "f813e9d0a849521b41a36621bbebc07331a0131a",
+    "clean_tree_or_build_binding_verified": false,
+    "immutable_apk_snapshots": false,
+    "hash_collection": "Host mutable project output bytes hashed immediately before each adb install; no output lock or post-install guest pm-path/pull hash check. A hash-to-install-read replacement window exists.",
+    "apk_hash_meaning": "Pre-install host-file SHA256, not independently verified installed guest bytes. adb Success means installation acceptance only.",
+    "formal_matrix_use": "Excluded. Diagnostic failures retained without using passing cases as a verified-source acceptance result."
   }
 }

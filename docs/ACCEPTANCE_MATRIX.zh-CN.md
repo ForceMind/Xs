@@ -1,25 +1,25 @@
 # Xs 验收矩阵 v2.3
 
-## XS-16 最近时间线新增验收（新原生结果待CI）
+## XS-16 最近时间线：CI87云端子场景结果
 
-[专项方案](TIMELINE_BUFFER_PLAN.zh-CN.md)与[Issue #6](https://github.com/ForceMind/Xs/issues/6)已确认范围；运行源码、独立schema1数据库与新测试已实现，实际本地/CI结果见[本轮证据](XS16_IMPLEMENTATION_EVIDENCE.zh-CN.md)，CI83不验证这些项。T01～T13先做云端/原生合成验收，T14必须真实环境；前者通过不能使后者PASS。
+[专项方案](TIMELINE_BUFFER_PLAN.zh-CN.md)与[Issue #6](https://github.com/ForceMind/Xs/issues/6)已确认范围；运行源码、独立schema1数据库与新测试已实现，实际结果见[CI87精确证据](XS16_CI87_EVIDENCE.zh-CN.md)，CI83不验证这些项。T01～T13先做云端/原生合成验收，T14必须真实环境；前者通过不能使后者PASS。
 
-| 编号 | 目标 | 当前状态 |
+| 编号 | 本轮执行范围 | 状态 |
 | --- | --- | --- |
-| T01 | 独立默认关闭、48h/100MiB及合法设置范围；禁用失效旧观察但不偷偷删现有条目 | NOT RUN |
-| T02 | 0.5～1秒仅缓冲；3.5秒可另有合格FEED；无伪造OPEN/FAVORITE/已读 | NOT RUN |
-| T03 | 刷新前批次与顺序、断网正文/作者/时间/来源查找，区分原生与疑似刷新 | NOT RUN |
-| T04 | 同批重绘去重、正文版本复用、跨批appearance各自到期，不无限续旧批TTL | NOT RUN |
-| T05 | 48h到期边界在查询/详情立即排除；时钟回拨/重启/时区不复活已过期项 | NOT RUN |
-| T06 | 到期移除临时正文/FTS/版本/孤儿并实际回收磁盘；WAL/checkpoint忙失败可解释 | NOT RUN |
-| T07 | 应用全局含所有scope/DB/索引/WAL/预留的100MiB预算；降限/满盘不删长期资料 | NOT RUN |
-| T08 | 长期保存/收藏幂等、跨库中断/提交后ack恢复；质量与来源保留，本地预览不计打开 | NOT RUN |
-| T09 | 清缓冲、历史、网页缓存/会话、收藏、媒体、整库和两种配额范围独立 | NOT RUN |
-| T10 | 导航/后台/切号/清理/删除tombstone与writer代次复验；旧回调不能复活 | NOT RUN |
-| T11 | 实际新进程/guest重启、临时新库/必要迁移失败保留长期Archive资料和原文件 | NOT RUN |
-| T12 | 原生分页和CJK检索/正文质量/覆盖范围提示；320dp1.8字号中英深浅可操作 | NOT RUN |
-| T13 | 虚拟列表和洪泛预算有界、遗漏可解释；不存rawAPI/凭据/隐藏内容、不自动下媒体 | NOT RUN |
-| T14 | 真实X/W0、同URL自动刷新/换流/虚拟卡、账号切换与真机耗电的独立现场验收 | NOT RUN |
+| T01 | 独立OFF/48h/100MiB、设置边界、失效旧观察 | 云端PASS |
+| T02 | 快卡仅缓冲、持续卡另有FEED；不造OPEN/收藏/已读 | 云端PASS |
+| T03 | 刷新批次、顺序、断网CJK/作者/正文查找 | 云端PASS |
+| T04 | 去重、正文复用、同批不续TTL/跨批独立到期 | 云端PASS |
+| T05 | TTL查询/详情/FTS排除、回拨/重启、明确时钟重置不复活 | 云端PASS |
+| T06 | 正文/FTS/孤儿和实际字节回收、读锁待回收 | 云端PASS |
+| T07 | 全应用实际预算、并发、降限/淘汰/暂停 | 配额云端PASS；真实低空间driver验证media/Archive保留，未单独实压buffer<1MiB admission |
+| T08 | 保存/收藏幂等、质量/时刻、预览不OPEN、进程commit→ack gap | 云端PASS；提交前rollback为guard模型，不冒充OS杀进程 |
+| T09 | buffer/历史/媒体/网页/整库删除边界独立 | 云端PASS |
+| T10 | 旧JS读取/关闭重开/清理代次/tombstone拒绝复活 | 云端PASS |
+| T11 | 实际force-stop/guest/debug升级与旧schema2→6、临时损坏隔离 | 云端PASS；不等于物理断电/真实个人库 |
+| T12 | 原生分页/批次/CJK/partial、320dp/1.8字号中英深浅 | 云端PASS；真机另验 |
+| T13 | 有界观察/队列/虚拟DOM/洪泛、不采rawAPI/隐藏内容/媒体 | 云端PASS；耗电另验 |
+| T14 | 真实X/W0/刷新/虚拟卡/登录切换/真机耗电 | NOT RUN；live OFF |
 
 
 

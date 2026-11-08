@@ -1,6 +1,8 @@
+Current XS-16 source5b5f9e3 passed792/792main cases and20/20drivers inCI87; [exact evidence](XS16_CI87_EVIDENCE.zh-CN.md).
+
 # Xs delivery roadmap — current A–D plan
 
-## Next work: XS-16 recent timeline (design accepted; runtime NOT RUN)
+## XS-16 recent timeline (cloud implementation verified; live OFF)
 
 Continue PR #5, not a fresh main-only implementation. First resolve the reviewed route/source P2, then execute F1 policy/temporary SQLite/TTL/budget → F2 bounded DOM/native buffer admission → F3 offline batch/search/settings/promotion UI → F4 actual disk reclamation and lifecycle barriers → F5 real code/build/instrumentation evidence. See [Issue #6](https://github.com/ForceMind/Xs/issues/6), [specification](TIMELINE_BUFFER_PLAN.zh-CN.md), [ADR-0005](adr/0005-timeline-buffer.md) and [new-work handoff](WORK_HANDOFF_PROMPT.zh-CN.md). The separate buffer defaults to OFF; when enabled,48 hours and a global100MiB budget are configurable. Old qualified-dwell/open/favorite semantics and live/device gates stay intact.
 
@@ -57,7 +59,7 @@ The primary client remains Android. Standard desktop browser extensions are a po
 
 ## Next executable slice
 
-Preserve the completed E/CI83 checkpoint, verify the outstanding review items, then execute XS-16 F1–F5 above. Further runtime changes require source-specific regression; do not create another static-SHA-only evidence loop. Do not widen live-site enablement from fixture success.
+Preserve E history and the completed XS-16/CI87 source checkpoint. F1–F5 cloud work is complete; T14 real-site/physical-device acceptance remains separate. Further runtime changes require source-specific regression; do not create another static-SHA-only evidence loop. Do not widen live-site enablement from fixture success.
 
 1. Preserve CI74’s 608 main cases and 16 independent system drivers with exact source/artifacts; keep the narrowly scoped CI-only allocator and cleanup/unroot safety gates. Add further tests only for new changes or unresolved risks.
 2. Retain v1–v4→v5 migration, snapshot policy/source/current-pointer and full historical-text evidence. COMPLETE means accepted visible DOM text; newer shorter COMPLETE can become current, PARTIAL cannot downgrade it, and all versions remain. Keep source/default scopes unchanged during consolidation.

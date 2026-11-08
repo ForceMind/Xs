@@ -19,9 +19,9 @@ Keep this public independent repository and synchronized Chinese/English READMEs
 - WeChat/QQ/Feishu/Telegram are recipient compatibility targets. Users choose application, conversation and sending; no contact/token harvesting or accessibility automation. Chooser callbacks are not delivery receipts.
 - Unfavorite, clear history, delete media, clear cache, clear web session and delete library have different scopes. Cache cleanup never deletes user downloads; favorites do not silently download every video.
 
-## Next accepted work: XS-16 recent timeline
+## XS-16 verified cloud implementation
 
-Follow [Issue #6](https://github.com/ForceMind/Xs/issues/6), [TIMELINE_BUFFER_PLAN](docs/TIMELINE_BUFFER_PLAN.zh-CN.md) and [ADR-0005](docs/adr/0005-timeline-buffer.md). F1–F4 runtime source and regressions now exist; F5 execution is tracked in [current evidence](docs/XS16_IMPLEMENTATION_EVIDENCE.zh-CN.md). Preserve the three review fixes and continue from actual failing/pending checks. Do not use whole-URL substring matching or default unknown feeds to For You.
+Follow [Issue #6](https://github.com/ForceMind/Xs/issues/6), [TIMELINE_BUFFER_PLAN](docs/TIMELINE_BUFFER_PLAN.zh-CN.md) and [ADR-0005](docs/adr/0005-timeline-buffer.md). F1–F5 cloud implementation/regression is verified on source 5b5f9e33e72068269408a60d74db5af5c7812772 / CI87: 792/792 main cases, 20/20 independent drivers, 44/44 native phases. Read [exact evidence](docs/XS16_CI87_EVIDENCE.zh-CN.md). Preserve the three P2 fixes and prior incremental/revocation P1 safeguards; all five review threads were resolved only after actual current-source checks. Do not repeat completed work because a historical F0 paragraph or outdated comment exists. T14/live enablement remains separate. Do not use whole-URL substring matching or default unknown feeds to For You.
 
 The buffer is separate opt-in consent, default OFF; when enabled,48h and an app-wide100MiB temporary DB/index/WAL budget are configurable. Captured presented cards need no dwell, but create no OPEN/qualified FEED/favorite/read fact. Keep existing FEED60% and1.2/3/5s rules. Metadata only; no media prefetch, raw network packets, credentials, internal cursors or hidden content. Batch identity is native observation/refresh provenance, not an invented API response ID. Capture is bounded/best effort; unrendered and missed transient items are not guaranteed.
 
@@ -116,3 +116,5 @@ Do not change the user's computer/servers, upload private content/keys, publish 
 ## XS-16 implementation continuation
 
 The temporary DB is schema1 and app-global across libraries. Archive is now schema6: a preserving additive migration from v5 adds timeline_promotions and the native_timeline_buffer snapshot source for explicit promotion. Current backups support schema3/4/5 normalization to6; old fixed code1/schema2 APK upgrade must target6. Never roll back schema6 or silently drop the promotion ledger. Read [current evidence](docs/XS16_IMPLEMENTATION_EVIDENCE.zh-CN.md) before claiming test or device results. Live X capture and production publication remain disabled.
+
+Final acceptance ledger: [CI87](docs/XS16_CI87_EVIDENCE.zh-CN.md). Evidence-only documentation checkpoints preserve the tested production/test source; they do not claim another device run. Actual buffer admission under an independently forced <1MiB filesystem is not claimed: global quota/reclamation tests and existing real-low-space media/Archive drivers have distinct scopes.

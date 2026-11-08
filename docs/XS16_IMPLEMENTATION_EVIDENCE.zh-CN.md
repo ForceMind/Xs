@@ -1,5 +1,9 @@
 # XS-16 本轮源码与执行证据
 
+**XS-16 云端验收完成。** 测试源码 `5b5f9e33e72068269408a60d74db5af5c7812772`（生产代码与 `f813e9d` 相同）通过 [CI87](https://github.com/ForceMind/Xs/actions/runs/42463984353)：1406 JVM、四API共792/792主用例（0失败/错误/跳过）、20/20独立driver、44/44外部native phase，以及构建/双Lint/SQLite/DOM/容量检查。见[精确证据](XS16_CI87_EVIDENCE.zh-CN.md)。T14真实X/手机/接收应用/耗电/生产签名仍NOT RUN；live保持关闭，无main合并或正式发布。
+
+下方CI85/86及过程性“待新CI”状态为历史检查点；最终执行以CI87专页/JSON为准，不删除失败。
+
 本轮接续 PR #5 `78a29cb05f908e5f44b6111183a202655da009a9` / tree `0aa07c42ac901a877a4112b92255f4e2697b2370`，完整保留 30 个未合并提交。main 重新核对为 `f88003c8ec1ee193b75de7267db6ae7654ee77c4`。本页不以旧 CI83 验证 XS-16，不发布正式版，也不启用 live 适配。
 
 ## 已复现并修复的审阅项
@@ -86,4 +90,6 @@
 
 新夹具源码本地完整构建/测试APK/双Lint及1406 JVM/SQLite/DOM/host回归通过；实际四API/后16driver等待新提交CI，不能引用CI86冒充新测试全过。
 
-另外尝试了云端API30软件TCG（无KVM，2核/2GiB，AOSP WebView83）：实际启动294.92秒并运行39项，28PASS/11FAIL。promotion10/10；store17/18，其并发quota Future.get超时（同18项在加速CI86四API通过）；UI1/7、capture0/4为可见性/夹具等待失败，原因不作未经证实的归因。这个失败诊断通道与加速CI/真机分开，不算正式矩阵通过；[摘要](evidence/xs16-api30-software-diagnostic.json)保留5个实际APK hash与[原生输出](evidence/software-api30/)，不隐藏失败。
+另外尝试了云端API30软件TCG（无KVM，2核/2GiB，AOSP WebView83）：实际启动294.92秒并运行39项，28PASS/11FAIL。promotion10/10；store17/18，其并发quota Future.get超时（同18项在加速CI86四API通过）；UI1/7、capture0/4为可见性/夹具等待失败，原因不作未经证实的归因。这个失败诊断通道与加速CI/真机分开，不算正式矩阵通过；[摘要](evidence/xs16-api30-software-diagnostic.json)保留5个安装前宿主APK hash（不等于独立核验的guest安装字节）与[原生输出](evidence/software-api30/)，不隐藏失败。
+
+软件诊断来源更正：脚本只在启动前读取HEAD=f813，未绑定clean tree/build；每次安装前即时计算可变项目输出hash，但无不可变快照/锁定，亦未从guest拉取已安装APK复验，存在hash→ADB读取窗口。因此它只有**启动时声明的源码上下文、安装前宿主hash和安装成功**，不能称独立验证的已安装f813字节。其28个通过也不纳入可追溯来源验收；正式GitHub CI的artifact下载字节、源码merge/tree及aapt/apksigner独立核验仍分开记录。
