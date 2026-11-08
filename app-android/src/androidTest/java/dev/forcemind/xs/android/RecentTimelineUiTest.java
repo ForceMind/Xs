@@ -169,7 +169,9 @@ public final class RecentTimelineUiTest {
         buffer.clear(library,ok->{clearedSuccessfully.set(ok);cleared.countDown();});
         assertTrue(cleared.await(15,TimeUnit.SECONDS));assertEquals(Boolean.TRUE,clearedSuccessfully.get());
         await(()->!hasText("Local temporary preview","本机临时预览"),"A preview of an externally cleared card was dismissed");awaitCount(0);
-        assertFalse(hasText("expiringpreviewneedle","clearpreviewneedle"));
+        await(()->!hasVisibleBodyText("expiringpreviewneedle","clearpreviewneedle"),"Cleared card bodies disappear from visible noneditable text after the actual render frame");
+        String[] preservedQuery={""};instrumentation.runOnMainSync(()->preservedQuery[0]=((EditText)screen.findViewById(XsRecentTimelineActivity.ID_QUERY)).getText().toString());
+        assertEquals("Clearing temporary cards does not erase the user's search input","clearpreviewneedle",preservedQuery[0]);
         assertEquals(0,archive.historyStats(library).openEventCount);assertEquals(0,archive.historyStats(library).postCount);
     }
 
@@ -251,6 +253,10 @@ public final class RecentTimelineUiTest {
         try(Cursor row=buffer.getReadableDatabase().rawQuery("SELECT id FROM timeline_appearances WHERE library_id=? AND post_id=?",new String[]{library,post})){
             return row.moveToFirst()?row.getLong(0):-1;
         }
+    }
+    private boolean hasVisibleBodyText(String en,String zh){
+        return collect(instrumentation.getUiAutomation().getRootInActiveWindow(),n->n.isVisibleToUser()&&!n.isEditable()&&
+            n.getClassName()!=null&&n.getClassName().toString().endsWith("TextView")&&contains(n,en,zh),new int[]{0})!=null;
     }
     private boolean hasText(String en,String zh){return collect(instrumentation.getUiAutomation().getRootInActiveWindow(),n->n.isVisibleToUser()&&contains(n,en,zh),new int[]{0})!=null;}
 

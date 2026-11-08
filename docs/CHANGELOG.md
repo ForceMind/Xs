@@ -1,3 +1,7 @@
+## XS-16 CI86 后的测试同步修复
+
+四API实际792主项/7失败全部留证；PRAGMA问题已实证修复。三个测试修复分别限定预览正文查找、按新曝光身份等待来源、兼容API26/27真实SAF延迟重建并从新实例核验完成；没有跳过断言或修改生产语义。4个旧包driver通过，后16driver待新CI。额外软件TCG诊断39项/11失败独立保留。
+
 ## XS-16 原生失败后的边界修复
 
 CI85 API36保留191项/34失败原证据：busy_timeout PRAGMA必须由Android rawQuery消费，已修源码。另补预览TTL/生命周期、明确确认的临时时间域重置、JS读取前票据绑定和实际进程commit→ack中断探针。执行范围见[当前证据](XS16_IMPLEMENTATION_EVIDENCE.zh-CN.md)，不能以CI85/旧CI通过替代新源码验收。

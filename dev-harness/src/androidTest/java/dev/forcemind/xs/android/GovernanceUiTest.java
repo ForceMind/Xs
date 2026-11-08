@@ -63,6 +63,7 @@ public final class GovernanceUiTest {
     private String first,second,defaultLibrary;
     private final Set<String> owned=new LinkedHashSet<>();
     private boolean providerReady,testBodyCompleted;
+    private BackupRecreation pendingRecreation;
 
     @Before public void setUp()throws Exception {
         instrumentation=InstrumentationRegistry.getInstrumentation();app=instrumentation.getTargetContext();
@@ -85,6 +86,7 @@ public final class GovernanceUiTest {
                 instrumentation.getUiAutomation().performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK);
                 SystemClock.sleep(150);
             }
+            if(pendingRecreation!=null)awaitBackupRecreation();
             if(screen!=null){instrumentation.runOnMainSync(screen::finish);instrumentation.waitForIdleSync();}
             for(String library:owned) {
                 if(XsLibraryWrites.isDeleted(library))continue;
@@ -93,6 +95,7 @@ public final class GovernanceUiTest {
             }
         }catch(Throwable failure){cleanupFailure=failure;}
         finally {
+            if(pendingRecreation!=null){pendingRecreation.close();pendingRecreation=null;}
             try{if(archive!=null)archive.close();}catch(Throwable failure){if(cleanupFailure==null)cleanupFailure=failure;}
             try{if(providerReady)assertTrue(admin("xs_fixture_reset",null).getBoolean("ok"));}catch(Throwable failure){if(cleanupFailure==null)cleanupFailure=failure;}
         }
@@ -141,15 +144,18 @@ public final class GovernanceUiTest {
     @Test public void pendingMetadataSafRequestsSurviveRecreationAndCancellation()throws Exception {
         Set<String> before=libraries();openBackup();
         clickText("Export plain metadata","导出明文元数据");recreateBackupBehindPicker();saveInFixtureRoot();
-        awaitText("Metadata exported","元数据备份已导出");
+        awaitNativeBackupStatus("Metadata exported","元数据备份已导出");
         assertEquals("Governance fixture A",XsLibraryBackup.inspect(new ByteArrayInputStream(document(METADATA))).label());
         clickText("Choose plain metadata & preview","选择明文元数据并预览");recreateBackupBehindPicker();
         assertTrue(instrumentation.getUiAutomation().performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK));
-        await(()->!documentsUiActive(),"The actual metadata picker was canceled");assertEquals(before,libraries());
+        await(()->!documentsUiActive(),"The actual metadata picker was canceled");awaitBackupRecreation();assertEquals(before,libraries());
         // A canceled retained request must not consume the next real selection.
         clickText("Choose plain metadata & preview","选择明文元数据并预览");recreateBackupBehindPicker();openFixtureFile(METADATA);
-        awaitText("Restore into a new library?","恢复到新的资料空间？");clickText("Create separate library","创建独立资料空间");
-        String restored=awaitNewLibrary(before);assertSearchable(restored,"alpha");assertSearchable(first,"alpha");
+        awaitText("Restore into a new library?","恢复到新的资料空间？");
+        awaitNativeBackupStatus("File validated; waiting for your choice.","文件已验证，等待你的选择。");
+        clickText("Create separate library","创建独立资料空间");
+        String restored=awaitNewLibrary(before);awaitNativeBackupStatus("Restored separately; your default library is unchanged.","已恢复到独立资料空间，默认库保持原样。");
+        assertSearchable(restored,"alpha");assertSearchable(first,"alpha");
         assertEquals(defaultLibrary,XsLocalSpaces.current(app));testBodyCompleted=true;
     }
 
@@ -167,12 +173,14 @@ public final class GovernanceUiTest {
         byte[] image=seedImage(first);Set<String> before=libraries();openBackup();
         clickText("Export encrypted full backup","导出加密完整备份");awaitText("Backup password","备份口令");
         setEditor(0,PASSWORD);setEditor(1,PASSWORD);clickText("OK","确定");
-        recreateBackupBehindPicker();saveInFixtureRoot();awaitText("Encrypted full backup exported","加密完整备份已导出");
+        recreateBackupBehindPicker();saveInFixtureRoot();awaitNativeBackupStatus("Encrypted full backup exported","加密完整备份已导出");
         assertTrue(document(FULL).length>56);
         clickText("Restore encrypted full backup","恢复加密完整备份");awaitText("Backup password","备份口令");
         setEditor(0,PASSWORD);clickText("OK","确定");recreateBackupBehindPicker();openFixtureFile(FULL);
-        awaitText("Restore encrypted full backup?","恢复加密完整备份？");clickText("Create separate library","创建独立资料空间");
-        String restored=awaitNewLibrary(before);assertSearchable(restored,"alpha");
+        awaitText("Restore encrypted full backup?","恢复加密完整备份？");
+        awaitNativeBackupStatus("Full backup validated; waiting for your confirmation.","完整备份已验证，等待你的确认。");
+        clickText("Create separate library","创建独立资料空间");
+        String restored=awaitNewLibrary(before);awaitNativeBackupStatus("Full library restored separately; your default is unchanged.","完整资料已恢复到独立空间，默认库保持原样。");assertSearchable(restored,"alpha");
         List<XsMediaRepository.CompletedAsset> files=XsMediaRepository.get(app).snapshotCompleted(restored);
         assertEquals(1,files.size());assertArrayEquals(image,Files.readAllBytes(files.get(0).file.toPath()));
         assertEquals(defaultLibrary,XsLocalSpaces.current(app));testBodyCompleted=true;
@@ -249,25 +257,47 @@ public final class GovernanceUiTest {
     private void openBackup(){screen=instrumentation.startActivitySync(XsBackupActivity.intent(app,first).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK));awaitText("Xs library backup & restore","Xs 资料备份与恢复");}
     private void recreateBackupBehindPicker()throws Exception {
         await(this::documentsUiActive,"A real SAF request is pending before recreation");
-        Activity previous=screen;AtomicReference<Activity> replacement=new AtomicReference<>();
-        android.app.Application application=(android.app.Application)app.getApplicationContext();
-        android.app.Application.ActivityLifecycleCallbacks observer=new android.app.Application.ActivityLifecycleCallbacks(){
-            public void onActivityCreated(Activity activity,Bundle state){if(activity instanceof XsBackupActivity&&activity!=previous)replacement.set(activity);}
-            public void onActivityStarted(Activity activity){}public void onActivityResumed(Activity activity){}
-            public void onActivityPaused(Activity activity){}public void onActivityStopped(Activity activity){}
-            public void onActivitySaveInstanceState(Activity activity,Bundle state){
-                // A password cannot enter framework saved state even while the picker is active.
-                assertSavedStateHasNoPassword(state);
-            }
-            public void onActivityDestroyed(Activity activity){}
-        };
-        application.registerActivityLifecycleCallbacks(observer);
+        assertNull("A previous recreation must finish before requesting the next",pendingRecreation);
+        assertTrue("The current backup owner is real and not destroyed",screen instanceof XsBackupActivity&&!screen.isDestroyed());
+        pendingRecreation=new BackupRecreation(screen);
+        instrumentation.runOnMainSync(screen::recreate);
+        assertTrue("The recreation was requested while the actual system picker owned selection",documentsUiActive());
+        // API26/27 may defer a stopped Activity's relaunch until SAF returns. Keep this
+        // observer through the real result/cancel; never count an unchanged owner as a pass.
+    }
+    private final class BackupRecreation implements android.app.Application.ActivityLifecycleCallbacks {
+        final Activity previous;final AtomicReference<Activity> replacement=new AtomicReference<>();
+        final android.app.Application application=(android.app.Application)app.getApplicationContext();
+        BackupRecreation(Activity previous){this.previous=previous;application.registerActivityLifecycleCallbacks(this);}
+        public void onActivityCreated(Activity activity,Bundle state){if(activity instanceof XsBackupActivity&&activity!=previous){screen=activity;replacement.set(activity);}}
+        public void onActivityStarted(Activity activity){}public void onActivityResumed(Activity activity){}
+        public void onActivityPaused(Activity activity){}public void onActivityStopped(Activity activity){}
+        public void onActivitySaveInstanceState(Activity activity,Bundle state){assertSavedStateHasNoPassword(state);}
+        public void onActivityDestroyed(Activity activity){}
+        void close(){application.unregisterActivityLifecycleCallbacks(this);}
+    }
+    private void awaitBackupRecreation(){
+        BackupRecreation pending=pendingRecreation;if(pending==null)return;
         try {
-            instrumentation.runOnMainSync(previous::recreate);
-            await(()->replacement.get()!=null&&previous.isDestroyed(),"The backup Activity was actually replaced while SAF stayed open");
-            screen=replacement.get();assertNotSame(previous,screen);
-            assertTrue("The system picker still owns the selection",documentsUiActive());
-        }finally{application.unregisterActivityLifecycleCallbacks(observer);}
+            await(()->pending.replacement.get()!=null&&pending.previous.isDestroyed(),
+                "The requested recreation produced an actual new backup owner before result verification");
+            screen=pending.replacement.get();assertNotSame(pending.previous,screen);
+            assertTrue("The old backup owner was actually destroyed",pending.previous.isDestroyed());
+            assertFalse("The replacement backup owner is live",screen.isDestroyed());
+        }finally{pending.close();pendingRecreation=null;}
+    }
+    private void awaitNativeBackupStatus(String en,String zh){
+        await(()->{
+            boolean[] shown={false};instrumentation.runOnMainSync(()->{
+                assertTrue("Picker completion is verified on the actual replacement owner",screen instanceof XsBackupActivity&&!screen.isDestroyed());
+                shown[0]=nativeBackupText(screen.getWindow().getDecorView(),en,zh);
+            });return shown[0];
+        },"The replacement backup Activity displays its own operation completion/preview status");
+    }
+    private boolean nativeBackupText(android.view.View view,String en,String zh){
+        if(view instanceof android.widget.TextView){String value=((android.widget.TextView)view).getText().toString();if(value.contains(en)||value.contains(zh))return true;}
+        if(view instanceof android.view.ViewGroup){android.view.ViewGroup group=(android.view.ViewGroup)view;for(int i=0;i<group.getChildCount();i++)if(nativeBackupText(group.getChildAt(i),en,zh))return true;}
+        return false;
     }
     private static void assertSavedStateHasNoPassword(Object value) {
         if(value instanceof Bundle) {
@@ -459,7 +489,7 @@ public final class GovernanceUiTest {
                 "The keyboard closes while the same synthetic save form remains active");
         }
         awaitNode(n->fixtureSaveButton(n)&&n.isVisibleToUser());
-        clickText("Save","保存");await(()->!documentsUiActive(),"SAF returned the saved document");
+        clickText("Save","保存");await(()->!documentsUiActive(),"SAF returned the saved document");awaitBackupRecreation();
     }
     private boolean fixtureSaveButton(AccessibilityNodeInfo node){
         return documentSaveFormNode(node)&&"android:id/button1".equals(node.getViewIdResourceName())&&node.isClickable()&&
@@ -489,7 +519,7 @@ public final class GovernanceUiTest {
         // A RecyclerView ancestor may report ACTION_CLICK success without activating its
         // child document. The user's file-title tap goes through SAF's gesture handler.
         touchSystemDocument(awaitNode(n->systemDocumentNode(n)&&!isEditor(n)&&name.equals(text(n))));
-        await(()->!documentsUiActive(),"SAF returned the selected document");
+        await(()->!documentsUiActive(),"SAF returned the selected document");awaitBackupRecreation();
     }
     private void useFixtureListView(){
         assertTrue("Only the confirmed fixture directory changes presentation",confirmedFixtureDirectory());

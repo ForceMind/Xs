@@ -73,3 +73,17 @@
 - 外部ProcessRecoveryProbe故意提交Archive后不ack，再让实际force-stop/guest/debug升级驱动跨进程重试；只在新CI执行后可记实际commit→ack中断证据。增加取消收藏后同出现记录再次收藏的回归（原生产逻辑已支持）。
 
 以上后续源码和新测试不得用CI85覆盖；等待新提交的四API/20driver执行。真实X/T14/live/正式发布边界不变。
+
+## CI86 完整主矩阵与测试夹具修复
+
+`f813e9d0a849521b41a36621bbebc07331a0131a` / tested merge `102d0949954c1c964e1e7a8f15d4695d52866d08` / tree `276fc91f89496514b3285894c27b298092ad66eb`：core/build PASS。四API主XML全部完成，每API133客户端+65宿主，合计792项，**7失败、0error/skip**。API26三失败、27两失败、30一失败、36一失败；4个固定旧APK升级driver PASS，后16个driver NOT RUN。全部报告与实际APK校验见[CI86账本](evidence/xs16-ci86-failure-ledger.json)。PRAGMA初始化问题在实际四API已修，全部18×4存储子项通过，但不得据此把整套CI记PASS。
+
+七个失败归于三个测试夹具问题，后续提交仅改测试与证据，生产运行时代码保持f813逐字节相同：
+
+1. 四API预览测试最后的全局AX文本查找匹配了合法保留的搜索输入。此前“弹窗消失/列表0”均已通过。改为有界等待可见非编辑正文消失，另明确断言搜索输入保留。
+2. API26 SEARCH等待被上个HOME曝光的导航末尾时长补写提前释放（实际JVM复现）。改为按新帖已落库曝光、唯一event key和持续时间等待，再严格断言来源；Explore/未知仍无曝光。普通writer完成latch也在事件提交时绑定。
+3. API26/27会推迟后台Activity重建，直到真实SAF返回；旧helper先等替换才允许选择，导致60秒超时。新helper让lifecycle观察器覆盖“选择器已打开时请求重建→真实选择/保存/取消返回”，之后仍严格要求新实例、旧实例销毁，并从新实例自己的原生view核对导出/导入预览/恢复完成。密码Bundle检查覆盖整个延迟保存过程；没有跳过API或伪造结果，API26/27不宣称在SAF持续可见时完成替换。
+
+新夹具源码本地完整构建/测试APK/双Lint及1406 JVM/SQLite/DOM/host回归通过；实际四API/后16driver等待新提交CI，不能引用CI86冒充新测试全过。
+
+另外尝试了云端API30软件TCG（无KVM，2核/2GiB，AOSP WebView83）：实际启动294.92秒并运行39项，28PASS/11FAIL。promotion10/10；store17/18，其并发quota Future.get超时（同18项在加速CI86四API通过）；UI1/7、capture0/4为可见性/夹具等待失败，原因不作未经证实的归因。这个失败诊断通道与加速CI/真机分开，不算正式矩阵通过；[摘要](evidence/xs16-api30-software-diagnostic.json)保留5个实际APK hash与[原生输出](evidence/software-api30/)，不隐藏失败。

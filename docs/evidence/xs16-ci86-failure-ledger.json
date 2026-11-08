@@ -1,0 +1,1004 @@
+{
+  "schema_version": 1,
+  "run_id": 42461704468,
+  "run_number": 86,
+  "attempt": 1,
+  "run_url": "https://github.com/ForceMind/Xs/actions/runs/42461704468",
+  "head_commit": "f813e9d0a849521b41a36621bbebc07331a0131a",
+  "tested_merge": "102d0949954c1c964e1e7a8f15d4695d52866d08",
+  "tested_tree": "276fc91f89496514b3285894c27b298092ad66eb",
+  "scope": "Synthetic emulator fixtures; no real-X, physical-device, recipient-app or release acceptance.",
+  "result": "FAIL; all four API jobs completed, no rerun or cancellation.",
+  "apis": {
+    "26": {
+      "job_url": "https://github.com/ForceMind/Xs/actions/runs/42461704468/job/128674063976",
+      "job_result": "FAIL",
+      "raw_artifact_url": "https://github.com/ForceMind/Xs/actions/runs/42461704468/artifacts/13610079342",
+      "artifact_id": 13610079342,
+      "zip": {
+        "bytes": 2907281,
+        "sha256": "58ea7227b62070a8eff2575b5f99c593941b07f7db5a937827d4e05c5894a639"
+      },
+      "main_counts": {
+        "tests": 198,
+        "failures": 3,
+        "errors": 0,
+        "skipped": 0
+      },
+      "modules": [
+        {
+          "path": "app-android/build/outputs/androidTest-results/connected/debug/TEST-emulator-5554 - 8.0.0-_app-android-.xml",
+          "counts": {
+            "tests": 133,
+            "failures": 2,
+            "errors": 0,
+            "skipped": 0
+          },
+          "classes": {
+            "dev.forcemind.xs.android.AssetLibraryUiTest": {
+              "tests": 4,
+              "failures": 0
+            },
+            "dev.forcemind.xs.android.CrossUidSharingTest": {
+              "tests": 5,
+              "failures": 0
+            },
+            "dev.forcemind.xs.android.FtsCompatibilityIntegrationTest": {
+              "tests": 1,
+              "failures": 0
+            },
+            "dev.forcemind.xs.android.FullBackupIntegrationTest": {
+              "tests": 11,
+              "failures": 0
+            },
+            "dev.forcemind.xs.android.LegacyUpgradeProbe": {
+              "tests": 1,
+              "failures": 0
+            },
+            "dev.forcemind.xs.android.MediaDownloadEngineTest": {
+              "tests": 4,
+              "failures": 0
+            },
+            "dev.forcemind.xs.android.MediaDurabilityTest": {
+              "tests": 10,
+              "failures": 0
+            },
+            "dev.forcemind.xs.android.MediaQuotaIntegrationTest": {
+              "tests": 7,
+              "failures": 0
+            },
+            "dev.forcemind.xs.android.ProcessRecoveryProbe": {
+              "tests": 1,
+              "failures": 0
+            },
+            "dev.forcemind.xs.android.RecentTimelineUiTest": {
+              "tests": 7,
+              "failures": 1
+            },
+            "dev.forcemind.xs.android.RetentionIntegrationTest": {
+              "tests": 10,
+              "failures": 0
+            },
+            "dev.forcemind.xs.android.StorageGovernanceUiTest": {
+              "tests": 3,
+              "failures": 0
+            },
+            "dev.forcemind.xs.android.TimelineBufferIntegrationTest": {
+              "tests": 18,
+              "failures": 0
+            },
+            "dev.forcemind.xs.android.VideoDownloadEngineTest": {
+              "tests": 6,
+              "failures": 0
+            },
+            "dev.forcemind.xs.browser.BrowserContainerTest": {
+              "tests": 8,
+              "failures": 0
+            },
+            "dev.forcemind.xs.browser.BrowserInteractionIntegrationTest": {
+              "tests": 6,
+              "failures": 0
+            },
+            "dev.forcemind.xs.browser.BrowserPrivacyIntegrationTest": {
+              "tests": 3,
+              "failures": 0
+            },
+            "dev.forcemind.xs.browser.MediaSharingTest": {
+              "tests": 6,
+              "failures": 0
+            },
+            "dev.forcemind.xs.browser.NativeCaptureIntegrationTest": {
+              "tests": 11,
+              "failures": 1
+            },
+            "dev.forcemind.xs.browser.ObservationParserTest": {
+              "tests": 3,
+              "failures": 0
+            },
+            "dev.forcemind.xs.browser.PageCleanupIntegrationTest": {
+              "tests": 4,
+              "failures": 0
+            },
+            "dev.forcemind.xs.browser.PostImageSelectionTest": {
+              "tests": 2,
+              "failures": 0
+            },
+            "dev.forcemind.xs.browser.PostVideoSelectionTest": {
+              "tests": 2,
+              "failures": 0
+            }
+          }
+        },
+        {
+          "path": "dev-harness/build/outputs/androidTest-results/connected/debug/TEST-emulator-5554 - 8.0.0-_dev-harness-.xml",
+          "counts": {
+            "tests": 65,
+            "failures": 1,
+            "errors": 0,
+            "skipped": 0
+          },
+          "classes": {
+            "dev.forcemind.xs.android.GovernanceUiTest": {
+              "tests": 7,
+              "failures": 1
+            },
+            "dev.forcemind.xs.android.LibraryBackupIntegrationTest": {
+              "tests": 7,
+              "failures": 0
+            },
+            "dev.forcemind.xs.android.LibraryConsolidationIntegrationTest": {
+              "tests": 9,
+              "failures": 0
+            },
+            "dev.forcemind.xs.android.TimelinePromotionIntegrationTest": {
+              "tests": 10,
+              "failures": 0
+            },
+            "dev.forcemind.xs.harness.ArchiveIntegrationTest": {
+              "tests": 16,
+              "failures": 0
+            },
+            "dev.forcemind.xs.harness.LibraryUiTest": {
+              "tests": 9,
+              "failures": 0
+            },
+            "dev.forcemind.xs.harness.SnapshotVersionIntegrationTest": {
+              "tests": 7,
+              "failures": 0
+            }
+          }
+        }
+      ],
+      "failed_cases": [
+        {
+          "class": "dev.forcemind.xs.android.RecentTimelineUiTest",
+          "name": "alreadyOpenTemporaryPreviewExpiresAndExternalClearDismissesItWithoutTap",
+          "seconds": "3.845",
+          "failure": [
+            {
+              "type": "failure",
+              "message": null,
+              "text": "java.lang.AssertionError\nat org.junit.Assert.fail(Assert.java:87)\nat org.junit.Assert.assertTrue(Assert.java:42)\nat org.junit.Assert.assertFalse(Assert.java:65)\nat org.junit.Assert.assertFalse(Assert.java:75)\nat dev.forcemind.xs.android.RecentTimelineUiTest.alreadyOpenTemporaryPreviewExpiresAndExternalClearDismissesItWithoutTap(RecentTimelineUiTest.java:172)\n"
+            }
+          ]
+        },
+        {
+          "class": "dev.forcemind.xs.browser.NativeCaptureIntegrationTest",
+          "name": "actualFeedRoutesAndNativeContextsDetermineExposureSource",
+          "seconds": "2.611",
+          "failure": [
+            {
+              "type": "failure",
+              "message": null,
+              "text": "org.junit.ComparisonFailure: expected:<[search_results]> but was:<[home_following]>\nat org.junit.Assert.assertEquals(Assert.java:117)\nat org.junit.Assert.assertEquals(Assert.java:146)\nat dev.forcemind.xs.browser.NativeCaptureIntegrationTest.actualFeedRoutesAndNativeContextsDetermineExposureSource(NativeCaptureIntegrationTest.java:217)\n"
+            }
+          ]
+        },
+        {
+          "class": "dev.forcemind.xs.android.GovernanceUiTest",
+          "name": "pendingEncryptedSafRequestsRetainPasswordOnlyInMemoryAcrossRecreation",
+          "seconds": "63.393",
+          "failure": [
+            {
+              "type": "failure",
+              "message": null,
+              "text": "java.lang.AssertionError: The backup Activity was actually replaced while SAF stayed open\n\n\n\n\n\n\n\n\nXs fixture documents\n\n\n\n\n\n\nName\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nxs-library-encrypted.xsbackup\n2.20 kB\n8:28 AM\n\n\n\n\n\nat dev.forcemind.xs.android.GovernanceUiTest.await(GovernanceUiTest.java:573)\nat dev.forcemind.xs.android.GovernanceUiTest.recreateBackupBehindPicker(GovernanceUiTest.java:267)\nat dev.forcemind.xs.android.GovernanceUiTest.pendingEncryptedSafRequestsRetainPasswordOnlyInMemoryAcrossRecreation(GovernanceUiTest.java:173)\n"
+            }
+          ]
+        }
+      ],
+      "device": {
+        "source-commit.txt": "102d0949954c1c964e1e7a8f15d4695d52866d08\n",
+        "android-api.txt": "26\n",
+        "android-release.txt": "8.0.0\n",
+        "primary-abi.txt": "x86_64\n",
+        "supported-abis.txt": "x86_64,x86\n",
+        "locale.txt": "\n",
+        "night-mode.txt": "Night mode: no\n",
+        "device-configuration.txt": "config: mcc310-mnc260-en-rUS-ldltr-sw320dp-w320dp-h616dp-normal-long-notround-lowdr-nowidecg-port-notnight-mdpi-finger-keysexposed-nokeys-navexposed-trackball-v26\nabi: x86_64,x86\n",
+        "webview-provider.txt": "Current WebView Update Service state\n  Fallback logic enabled: true\n  Current WebView package (name, version): (com.android.chrome, 69.0.3497.100)\n  Minimum WebView version code: 349710067\n  Number of relros started: 2\n  Number of relros finished: 2\n  WebView package dirty: false\n  Any WebView package installed: true\n  Preferred WebView package (name, version): (com.android.chrome, 69.0.3497.100)\n  WebView packages:\n    Valid package com.android.chrome (versionName: 69.0.3497.100, versionCode: 349710067, targetSdkVersion: 28) is  installed/enabled for all users\n    Valid package com.google.android.webview (versionName: 69.0.3497.100, versionCode: 349710065, targetSdkVersion: 28) is NOT installed/enabled for all users\n"
+      },
+      "source": {
+        "head_commit": "102d0949954c1c964e1e7a8f15d4695d52866d08",
+        "head_tree": "276fc91f89496514b3285894c27b298092ad66eb",
+        "working_tree_clean": true,
+        "working_tree_status": []
+      },
+      "drivers": {
+        "legacy_schema2_to6": "PASS",
+        "force_stop": "NOT RUN",
+        "same_source_debug_upgrade": "NOT RUN",
+        "guest_reboot": "NOT RUN",
+        "low_space": "NOT RUN"
+      },
+      "actual_downloaded_apks": [
+        {
+          "path": "app-android/build/compatibility/legacy-upgrade/current-instrumentation.apk",
+          "bytes": 1866367,
+          "sha256": "90905afd0b2ee1927f7694ac374203e9648d9f2a1ba9f5059785323bb9ce9709",
+          "signature_exit": 0,
+          "aapt_exit": 0,
+          "certificate_sha256": "8e420bd342ee28f6cd1afc6477a245893f4a250d6833d43ade8cd0eeb09e8f3e",
+          "package": null,
+          "version_code": null,
+          "version_name": null
+        },
+        {
+          "path": "app-android/build/compatibility/legacy-upgrade/current-main-v3.apk",
+          "bytes": 391083,
+          "sha256": "d8ce4f5784102e308f9dae730997e1a500defef20062c8b4be70e7a555b7c270",
+          "signature_exit": 0,
+          "aapt_exit": 0,
+          "certificate_sha256": "8e420bd342ee28f6cd1afc6477a245893f4a250d6833d43ade8cd0eeb09e8f3e",
+          "package": "dev.forcemind.xs",
+          "version_code": "3",
+          "version_name": "0.3-reliability-poc"
+        },
+        {
+          "path": "app-android/build/compatibility/legacy-upgrade/old-main-v1.apk",
+          "bytes": 84446,
+          "sha256": "43e200e219dc14d057a1643c4212a1231bc0ff2ff63109ff8e8d0cb958d4504a",
+          "signature_exit": 0,
+          "aapt_exit": 0,
+          "certificate_sha256": "8e420bd342ee28f6cd1afc6477a245893f4a250d6833d43ade8cd0eeb09e8f3e",
+          "package": "dev.forcemind.xs",
+          "version_code": "1",
+          "version_name": "0.1-w0-poc"
+        }
+      ]
+    },
+    "30": {
+      "job_url": "https://github.com/ForceMind/Xs/actions/runs/42461704468/job/128674063919",
+      "job_result": "FAIL",
+      "raw_artifact_url": "https://github.com/ForceMind/Xs/actions/runs/42461704468/artifacts/13610566316",
+      "artifact_id": 13610566316,
+      "zip": {
+        "bytes": 2929585,
+        "sha256": "65030567b18f671eabdb834b5eb75fdd894d301e8f97e1fe752dce555f6d925f"
+      },
+      "main_counts": {
+        "tests": 198,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0
+      },
+      "modules": [
+        {
+          "path": "app-android/build/outputs/androidTest-results/connected/debug/TEST-emulator-5554 - 11-_app-android-.xml",
+          "counts": {
+            "tests": 133,
+            "failures": 1,
+            "errors": 0,
+            "skipped": 0
+          },
+          "classes": {
+            "dev.forcemind.xs.android.AssetLibraryUiTest": {
+              "tests": 4,
+              "failures": 0
+            },
+            "dev.forcemind.xs.android.CrossUidSharingTest": {
+              "tests": 5,
+              "failures": 0
+            },
+            "dev.forcemind.xs.android.FtsCompatibilityIntegrationTest": {
+              "tests": 1,
+              "failures": 0
+            },
+            "dev.forcemind.xs.android.FullBackupIntegrationTest": {
+              "tests": 11,
+              "failures": 0
+            },
+            "dev.forcemind.xs.android.LegacyUpgradeProbe": {
+              "tests": 1,
+              "failures": 0
+            },
+            "dev.forcemind.xs.android.MediaDownloadEngineTest": {
+              "tests": 4,
+              "failures": 0
+            },
+            "dev.forcemind.xs.android.MediaDurabilityTest": {
+              "tests": 10,
+              "failures": 0
+            },
+            "dev.forcemind.xs.android.MediaQuotaIntegrationTest": {
+              "tests": 7,
+              "failures": 0
+            },
+            "dev.forcemind.xs.android.ProcessRecoveryProbe": {
+              "tests": 1,
+              "failures": 0
+            },
+            "dev.forcemind.xs.android.RecentTimelineUiTest": {
+              "tests": 7,
+              "failures": 1
+            },
+            "dev.forcemind.xs.android.RetentionIntegrationTest": {
+              "tests": 10,
+              "failures": 0
+            },
+            "dev.forcemind.xs.android.StorageGovernanceUiTest": {
+              "tests": 3,
+              "failures": 0
+            },
+            "dev.forcemind.xs.android.TimelineBufferIntegrationTest": {
+              "tests": 18,
+              "failures": 0
+            },
+            "dev.forcemind.xs.android.VideoDownloadEngineTest": {
+              "tests": 6,
+              "failures": 0
+            },
+            "dev.forcemind.xs.browser.BrowserContainerTest": {
+              "tests": 8,
+              "failures": 0
+            },
+            "dev.forcemind.xs.browser.BrowserInteractionIntegrationTest": {
+              "tests": 6,
+              "failures": 0
+            },
+            "dev.forcemind.xs.browser.BrowserPrivacyIntegrationTest": {
+              "tests": 3,
+              "failures": 0
+            },
+            "dev.forcemind.xs.browser.MediaSharingTest": {
+              "tests": 6,
+              "failures": 0
+            },
+            "dev.forcemind.xs.browser.NativeCaptureIntegrationTest": {
+              "tests": 11,
+              "failures": 0
+            },
+            "dev.forcemind.xs.browser.ObservationParserTest": {
+              "tests": 3,
+              "failures": 0
+            },
+            "dev.forcemind.xs.browser.PageCleanupIntegrationTest": {
+              "tests": 4,
+              "failures": 0
+            },
+            "dev.forcemind.xs.browser.PostImageSelectionTest": {
+              "tests": 2,
+              "failures": 0
+            },
+            "dev.forcemind.xs.browser.PostVideoSelectionTest": {
+              "tests": 2,
+              "failures": 0
+            }
+          }
+        },
+        {
+          "path": "dev-harness/build/outputs/androidTest-results/connected/debug/TEST-emulator-5554 - 11-_dev-harness-.xml",
+          "counts": {
+            "tests": 65,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          "classes": {
+            "dev.forcemind.xs.android.GovernanceUiTest": {
+              "tests": 7,
+              "failures": 0
+            },
+            "dev.forcemind.xs.android.LibraryBackupIntegrationTest": {
+              "tests": 7,
+              "failures": 0
+            },
+            "dev.forcemind.xs.android.LibraryConsolidationIntegrationTest": {
+              "tests": 9,
+              "failures": 0
+            },
+            "dev.forcemind.xs.android.TimelinePromotionIntegrationTest": {
+              "tests": 10,
+              "failures": 0
+            },
+            "dev.forcemind.xs.harness.ArchiveIntegrationTest": {
+              "tests": 16,
+              "failures": 0
+            },
+            "dev.forcemind.xs.harness.LibraryUiTest": {
+              "tests": 9,
+              "failures": 0
+            },
+            "dev.forcemind.xs.harness.SnapshotVersionIntegrationTest": {
+              "tests": 7,
+              "failures": 0
+            }
+          }
+        }
+      ],
+      "failed_cases": [
+        {
+          "class": "dev.forcemind.xs.android.RecentTimelineUiTest",
+          "name": "alreadyOpenTemporaryPreviewExpiresAndExternalClearDismissesItWithoutTap",
+          "seconds": "3.642",
+          "failure": [
+            {
+              "type": "failure",
+              "message": null,
+              "text": "java.lang.AssertionError\nat org.junit.Assert.fail(Assert.java:87)\nat org.junit.Assert.assertTrue(Assert.java:42)\nat org.junit.Assert.assertFalse(Assert.java:65)\nat org.junit.Assert.assertFalse(Assert.java:75)\nat dev.forcemind.xs.android.RecentTimelineUiTest.alreadyOpenTemporaryPreviewExpiresAndExternalClearDismissesItWithoutTap(RecentTimelineUiTest.java:172)\n"
+            }
+          ]
+        }
+      ],
+      "device": {
+        "source-commit.txt": "102d0949954c1c964e1e7a8f15d4695d52866d08\n",
+        "android-api.txt": "30\n",
+        "android-release.txt": "11\n",
+        "primary-abi.txt": "x86_64\n",
+        "supported-abis.txt": "x86_64,x86,arm64-v8a,armeabi-v7a,armeabi\n",
+        "locale.txt": "\n",
+        "night-mode.txt": "Night mode: no\n",
+        "device-configuration.txt": "config: mcc310-mnc260-en-rUS-ldltr-sw320dp-w320dp-h616dp-normal-long-notround-nowidecg-lowdr-port-notnight-mdpi-finger-keysexposed-qwerty-navhidden-nonav-640x320-v30\nabi: x86_64,x86,arm64-v8a,armeabi-v7a,armeabi\n",
+        "webview-provider.txt": "Current WebView Update Service state\n  Fallback logic enabled: false\n  Multiprocess enabled: true\n  Current WebView package (name, version): (com.google.android.webview, 83.0.4103.106)\n  Minimum targetSdkVersion: 30\n  Minimum WebView version code: 410410686\n  Number of relros started: 2\n  Number of relros finished: 2\n  WebView package dirty: false\n  Any WebView package installed: true\n  Preferred WebView package (name, version): (com.google.android.webview, 83.0.4103.106)\n  WebView packages:\n    Valid package com.google.android.webview (versionName: 83.0.4103.106, versionCode: 410410686, targetSdkVersion: 30) is  installed/enabled for all users\n    com.google.android.webview.beta is NOT installed.\n    com.google.android.webview.dev is NOT installed.\n    com.google.android.webview.canary is NOT installed.\n    com.google.android.webview.debug is NOT installed.\n    com.android.webview is NOT installed.\n"
+      },
+      "source": {
+        "head_commit": "102d0949954c1c964e1e7a8f15d4695d52866d08",
+        "head_tree": "276fc91f89496514b3285894c27b298092ad66eb",
+        "working_tree_clean": true,
+        "working_tree_status": []
+      },
+      "drivers": {
+        "legacy_schema2_to6": "PASS",
+        "force_stop": "NOT RUN",
+        "same_source_debug_upgrade": "NOT RUN",
+        "guest_reboot": "NOT RUN",
+        "low_space": "NOT RUN"
+      },
+      "actual_downloaded_apks": [
+        {
+          "path": "app-android/build/compatibility/legacy-upgrade/current-instrumentation.apk",
+          "bytes": 1866367,
+          "sha256": "3f4de68d85918fae361e05c99936dbcdec00c33f8c25b8a2af83088cf89f49e4",
+          "signature_exit": 0,
+          "aapt_exit": 0,
+          "certificate_sha256": "023e2db98f7468a4e524dd3fa155097b7eca217d17ed8cc4b60f8c7246f353d6",
+          "package": null,
+          "version_code": null,
+          "version_name": null
+        },
+        {
+          "path": "app-android/build/compatibility/legacy-upgrade/current-main-v3.apk",
+          "bytes": 391083,
+          "sha256": "40ae21771b2eabba6e0513607595c57c67121350667a1f260153f756d0cc2b3d",
+          "signature_exit": 0,
+          "aapt_exit": 0,
+          "certificate_sha256": "023e2db98f7468a4e524dd3fa155097b7eca217d17ed8cc4b60f8c7246f353d6",
+          "package": "dev.forcemind.xs",
+          "version_code": "3",
+          "version_name": "0.3-reliability-poc"
+        },
+        {
+          "path": "app-android/build/compatibility/legacy-upgrade/old-main-v1.apk",
+          "bytes": 84446,
+          "sha256": "28f33131d6b67c5a2134f8f83c24fdf55546b288c06094ab4438333a7c977fe2",
+          "signature_exit": 0,
+          "aapt_exit": 0,
+          "certificate_sha256": "023e2db98f7468a4e524dd3fa155097b7eca217d17ed8cc4b60f8c7246f353d6",
+          "package": "dev.forcemind.xs",
+          "version_code": "1",
+          "version_name": "0.1-w0-poc"
+        }
+      ]
+    },
+    "36": {
+      "job_url": "https://github.com/ForceMind/Xs/actions/runs/42461704468/job/128674063921",
+      "job_result": "FAIL",
+      "raw_artifact_url": "https://github.com/ForceMind/Xs/actions/runs/42461704468/artifacts/13610617321",
+      "artifact_id": 13610617321,
+      "zip": {
+        "bytes": 3421131,
+        "sha256": "f882e75f7dd67b72c770c84183d71575406b86e728feddee9cb487eadbad76be"
+      },
+      "main_counts": {
+        "tests": 198,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0
+      },
+      "modules": [
+        {
+          "path": "app-android/build/outputs/androidTest-results/connected/debug/TEST-emulator-5554 - 16-_app-android-.xml",
+          "counts": {
+            "tests": 133,
+            "failures": 1,
+            "errors": 0,
+            "skipped": 0
+          },
+          "classes": {
+            "dev.forcemind.xs.android.AssetLibraryUiTest": {
+              "tests": 4,
+              "failures": 0
+            },
+            "dev.forcemind.xs.android.CrossUidSharingTest": {
+              "tests": 5,
+              "failures": 0
+            },
+            "dev.forcemind.xs.android.FtsCompatibilityIntegrationTest": {
+              "tests": 1,
+              "failures": 0
+            },
+            "dev.forcemind.xs.android.FullBackupIntegrationTest": {
+              "tests": 11,
+              "failures": 0
+            },
+            "dev.forcemind.xs.android.LegacyUpgradeProbe": {
+              "tests": 1,
+              "failures": 0
+            },
+            "dev.forcemind.xs.android.MediaDownloadEngineTest": {
+              "tests": 4,
+              "failures": 0
+            },
+            "dev.forcemind.xs.android.MediaDurabilityTest": {
+              "tests": 10,
+              "failures": 0
+            },
+            "dev.forcemind.xs.android.MediaQuotaIntegrationTest": {
+              "tests": 7,
+              "failures": 0
+            },
+            "dev.forcemind.xs.android.ProcessRecoveryProbe": {
+              "tests": 1,
+              "failures": 0
+            },
+            "dev.forcemind.xs.android.RecentTimelineUiTest": {
+              "tests": 7,
+              "failures": 1
+            },
+            "dev.forcemind.xs.android.RetentionIntegrationTest": {
+              "tests": 10,
+              "failures": 0
+            },
+            "dev.forcemind.xs.android.StorageGovernanceUiTest": {
+              "tests": 3,
+              "failures": 0
+            },
+            "dev.forcemind.xs.android.TimelineBufferIntegrationTest": {
+              "tests": 18,
+              "failures": 0
+            },
+            "dev.forcemind.xs.android.VideoDownloadEngineTest": {
+              "tests": 6,
+              "failures": 0
+            },
+            "dev.forcemind.xs.browser.BrowserContainerTest": {
+              "tests": 8,
+              "failures": 0
+            },
+            "dev.forcemind.xs.browser.BrowserInteractionIntegrationTest": {
+              "tests": 6,
+              "failures": 0
+            },
+            "dev.forcemind.xs.browser.BrowserPrivacyIntegrationTest": {
+              "tests": 3,
+              "failures": 0
+            },
+            "dev.forcemind.xs.browser.MediaSharingTest": {
+              "tests": 6,
+              "failures": 0
+            },
+            "dev.forcemind.xs.browser.NativeCaptureIntegrationTest": {
+              "tests": 11,
+              "failures": 0
+            },
+            "dev.forcemind.xs.browser.ObservationParserTest": {
+              "tests": 3,
+              "failures": 0
+            },
+            "dev.forcemind.xs.browser.PageCleanupIntegrationTest": {
+              "tests": 4,
+              "failures": 0
+            },
+            "dev.forcemind.xs.browser.PostImageSelectionTest": {
+              "tests": 2,
+              "failures": 0
+            },
+            "dev.forcemind.xs.browser.PostVideoSelectionTest": {
+              "tests": 2,
+              "failures": 0
+            }
+          }
+        },
+        {
+          "path": "dev-harness/build/outputs/androidTest-results/connected/debug/TEST-emulator-5554 - 16-_dev-harness-.xml",
+          "counts": {
+            "tests": 65,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          "classes": {
+            "dev.forcemind.xs.android.GovernanceUiTest": {
+              "tests": 7,
+              "failures": 0
+            },
+            "dev.forcemind.xs.android.LibraryBackupIntegrationTest": {
+              "tests": 7,
+              "failures": 0
+            },
+            "dev.forcemind.xs.android.LibraryConsolidationIntegrationTest": {
+              "tests": 9,
+              "failures": 0
+            },
+            "dev.forcemind.xs.android.TimelinePromotionIntegrationTest": {
+              "tests": 10,
+              "failures": 0
+            },
+            "dev.forcemind.xs.harness.ArchiveIntegrationTest": {
+              "tests": 16,
+              "failures": 0
+            },
+            "dev.forcemind.xs.harness.LibraryUiTest": {
+              "tests": 9,
+              "failures": 0
+            },
+            "dev.forcemind.xs.harness.SnapshotVersionIntegrationTest": {
+              "tests": 7,
+              "failures": 0
+            }
+          }
+        }
+      ],
+      "failed_cases": [
+        {
+          "class": "dev.forcemind.xs.android.RecentTimelineUiTest",
+          "name": "alreadyOpenTemporaryPreviewExpiresAndExternalClearDismissesItWithoutTap",
+          "seconds": "3.527",
+          "failure": [
+            {
+              "type": "failure",
+              "message": null,
+              "text": "java.lang.AssertionError\nat org.junit.Assert.fail(Assert.java:87)\nat org.junit.Assert.assertTrue(Assert.java:42)\nat org.junit.Assert.assertFalse(Assert.java:65)\nat org.junit.Assert.assertFalse(Assert.java:75)\nat dev.forcemind.xs.android.RecentTimelineUiTest.alreadyOpenTemporaryPreviewExpiresAndExternalClearDismissesItWithoutTap(RecentTimelineUiTest.java:172)\n"
+            }
+          ]
+        }
+      ],
+      "device": {
+        "source-commit.txt": "102d0949954c1c964e1e7a8f15d4695d52866d08\n",
+        "android-api.txt": "36\n",
+        "android-release.txt": "16\n",
+        "primary-abi.txt": "x86_64\n",
+        "supported-abis.txt": "x86_64,arm64-v8a\n",
+        "locale.txt": "\n",
+        "night-mode.txt": "Night mode: no\n",
+        "device-configuration.txt": "config: mcc310-mnc260-en-rUS-ldltr-sw320dp-w320dp-h640dp-normal-long-notround-nowidecg-lowdr-port-notnight-mdpi-finger-keysexposed-qwerty-navhidden-nonav-640x320-v36\nabi: x86_64,arm64-v8a\n",
+        "webview-provider.txt": "Current WebView Update Service state\n  Current WebView package (name, version): (com.google.android.webview, 133.0.6943.137)\n  Minimum targetSdkVersion: 33\n  Minimum WebView version code: 694313738\n  Number of relros started: 1\n  Number of relros finished: 1\n  WebView package dirty: false\n  Any WebView package installed: true\n  Preferred WebView package (name, version): (com.google.android.webview, 133.0.6943.137)\n  WebView packages:\n    Valid package com.google.android.webview (versionName: 133.0.6943.137, versionCode: 694313738, targetSdkVersion: 34) is  installed/enabled for all users\n    com.google.android.webview.beta is NOT installed.\n    com.google.android.webview.dev is NOT installed.\n    com.google.android.webview.canary is NOT installed.\n    com.google.android.webview.debug is NOT installed.\n    com.android.webview is NOT installed.\n"
+      },
+      "source": {
+        "head_commit": "102d0949954c1c964e1e7a8f15d4695d52866d08",
+        "head_tree": "276fc91f89496514b3285894c27b298092ad66eb",
+        "working_tree_clean": true,
+        "working_tree_status": []
+      },
+      "drivers": {
+        "legacy_schema2_to6": "PASS",
+        "force_stop": "NOT RUN",
+        "same_source_debug_upgrade": "NOT RUN",
+        "guest_reboot": "NOT RUN",
+        "low_space": "NOT RUN"
+      },
+      "actual_downloaded_apks": [
+        {
+          "path": "app-android/build/compatibility/legacy-upgrade/current-instrumentation.apk",
+          "bytes": 1866367,
+          "sha256": "45b0daca18ab3db9251ed3231e5379f6e470eabdc962b17f43571f6fcabcb423",
+          "signature_exit": 0,
+          "aapt_exit": 0,
+          "certificate_sha256": "20ec97c495610ac5e1bae3388d889be1133e71112435b8489a9eba4e9989e5a2",
+          "package": null,
+          "version_code": null,
+          "version_name": null
+        },
+        {
+          "path": "app-android/build/compatibility/legacy-upgrade/current-main-v3.apk",
+          "bytes": 391083,
+          "sha256": "1727af5618249021b7b0dace91c3605542da1a725b66eb7299bbcf4e00d6dbe9",
+          "signature_exit": 0,
+          "aapt_exit": 0,
+          "certificate_sha256": "20ec97c495610ac5e1bae3388d889be1133e71112435b8489a9eba4e9989e5a2",
+          "package": "dev.forcemind.xs",
+          "version_code": "3",
+          "version_name": "0.3-reliability-poc"
+        },
+        {
+          "path": "app-android/build/compatibility/legacy-upgrade/old-main-v1.apk",
+          "bytes": 84446,
+          "sha256": "4353b579d7a98175b5fecdc80c6a5eca876ae154456743b64faef1b5b7736d28",
+          "signature_exit": 0,
+          "aapt_exit": 0,
+          "certificate_sha256": "20ec97c495610ac5e1bae3388d889be1133e71112435b8489a9eba4e9989e5a2",
+          "package": "dev.forcemind.xs",
+          "version_code": "1",
+          "version_name": "0.1-w0-poc"
+        }
+      ]
+    },
+    "27": {
+      "job_url": "https://github.com/ForceMind/Xs/actions/runs/42461704468/job/128674064098",
+      "job_result": "FAIL",
+      "raw_artifact_url": "https://github.com/ForceMind/Xs/actions/runs/42461704468/artifacts/13610707112",
+      "artifact_id": 13610707112,
+      "zip": {
+        "bytes": 3020976,
+        "sha256": "2700187d25a4b117a349f93079372df728c852de7dcd603e82e596ede8dee52e"
+      },
+      "main_counts": {
+        "tests": 198,
+        "failures": 2,
+        "errors": 0,
+        "skipped": 0
+      },
+      "modules": [
+        {
+          "path": "app-android/build/outputs/androidTest-results/connected/debug/TEST-emulator-5554 - 8.1.0-_app-android-.xml",
+          "counts": {
+            "tests": 133,
+            "failures": 1,
+            "errors": 0,
+            "skipped": 0
+          },
+          "classes": {
+            "dev.forcemind.xs.android.AssetLibraryUiTest": {
+              "tests": 4,
+              "failures": 0
+            },
+            "dev.forcemind.xs.android.CrossUidSharingTest": {
+              "tests": 5,
+              "failures": 0
+            },
+            "dev.forcemind.xs.android.FtsCompatibilityIntegrationTest": {
+              "tests": 1,
+              "failures": 0
+            },
+            "dev.forcemind.xs.android.FullBackupIntegrationTest": {
+              "tests": 11,
+              "failures": 0
+            },
+            "dev.forcemind.xs.android.LegacyUpgradeProbe": {
+              "tests": 1,
+              "failures": 0
+            },
+            "dev.forcemind.xs.android.MediaDownloadEngineTest": {
+              "tests": 4,
+              "failures": 0
+            },
+            "dev.forcemind.xs.android.MediaDurabilityTest": {
+              "tests": 10,
+              "failures": 0
+            },
+            "dev.forcemind.xs.android.MediaQuotaIntegrationTest": {
+              "tests": 7,
+              "failures": 0
+            },
+            "dev.forcemind.xs.android.ProcessRecoveryProbe": {
+              "tests": 1,
+              "failures": 0
+            },
+            "dev.forcemind.xs.android.RecentTimelineUiTest": {
+              "tests": 7,
+              "failures": 1
+            },
+            "dev.forcemind.xs.android.RetentionIntegrationTest": {
+              "tests": 10,
+              "failures": 0
+            },
+            "dev.forcemind.xs.android.StorageGovernanceUiTest": {
+              "tests": 3,
+              "failures": 0
+            },
+            "dev.forcemind.xs.android.TimelineBufferIntegrationTest": {
+              "tests": 18,
+              "failures": 0
+            },
+            "dev.forcemind.xs.android.VideoDownloadEngineTest": {
+              "tests": 6,
+              "failures": 0
+            },
+            "dev.forcemind.xs.browser.BrowserContainerTest": {
+              "tests": 8,
+              "failures": 0
+            },
+            "dev.forcemind.xs.browser.BrowserInteractionIntegrationTest": {
+              "tests": 6,
+              "failures": 0
+            },
+            "dev.forcemind.xs.browser.BrowserPrivacyIntegrationTest": {
+              "tests": 3,
+              "failures": 0
+            },
+            "dev.forcemind.xs.browser.MediaSharingTest": {
+              "tests": 6,
+              "failures": 0
+            },
+            "dev.forcemind.xs.browser.NativeCaptureIntegrationTest": {
+              "tests": 11,
+              "failures": 0
+            },
+            "dev.forcemind.xs.browser.ObservationParserTest": {
+              "tests": 3,
+              "failures": 0
+            },
+            "dev.forcemind.xs.browser.PageCleanupIntegrationTest": {
+              "tests": 4,
+              "failures": 0
+            },
+            "dev.forcemind.xs.browser.PostImageSelectionTest": {
+              "tests": 2,
+              "failures": 0
+            },
+            "dev.forcemind.xs.browser.PostVideoSelectionTest": {
+              "tests": 2,
+              "failures": 0
+            }
+          }
+        },
+        {
+          "path": "dev-harness/build/outputs/androidTest-results/connected/debug/TEST-emulator-5554 - 8.1.0-_dev-harness-.xml",
+          "counts": {
+            "tests": 65,
+            "failures": 1,
+            "errors": 0,
+            "skipped": 0
+          },
+          "classes": {
+            "dev.forcemind.xs.android.GovernanceUiTest": {
+              "tests": 7,
+              "failures": 1
+            },
+            "dev.forcemind.xs.android.LibraryBackupIntegrationTest": {
+              "tests": 7,
+              "failures": 0
+            },
+            "dev.forcemind.xs.android.LibraryConsolidationIntegrationTest": {
+              "tests": 9,
+              "failures": 0
+            },
+            "dev.forcemind.xs.android.TimelinePromotionIntegrationTest": {
+              "tests": 10,
+              "failures": 0
+            },
+            "dev.forcemind.xs.harness.ArchiveIntegrationTest": {
+              "tests": 16,
+              "failures": 0
+            },
+            "dev.forcemind.xs.harness.LibraryUiTest": {
+              "tests": 9,
+              "failures": 0
+            },
+            "dev.forcemind.xs.harness.SnapshotVersionIntegrationTest": {
+              "tests": 7,
+              "failures": 0
+            }
+          }
+        }
+      ],
+      "failed_cases": [
+        {
+          "class": "dev.forcemind.xs.android.RecentTimelineUiTest",
+          "name": "alreadyOpenTemporaryPreviewExpiresAndExternalClearDismissesItWithoutTap",
+          "seconds": "4.023",
+          "failure": [
+            {
+              "type": "failure",
+              "message": null,
+              "text": "java.lang.AssertionError\nat org.junit.Assert.fail(Assert.java:87)\nat org.junit.Assert.assertTrue(Assert.java:42)\nat org.junit.Assert.assertFalse(Assert.java:65)\nat org.junit.Assert.assertFalse(Assert.java:75)\nat dev.forcemind.xs.android.RecentTimelineUiTest.alreadyOpenTemporaryPreviewExpiresAndExternalClearDismissesItWithoutTap(RecentTimelineUiTest.java:172)\n"
+            }
+          ]
+        },
+        {
+          "class": "dev.forcemind.xs.android.GovernanceUiTest",
+          "name": "pendingMetadataSafRequestsSurviveRecreationAndCancellation",
+          "seconds": "61.57",
+          "failure": [
+            {
+              "type": "failure",
+              "message": null,
+              "text": "java.lang.AssertionError: The backup Activity was actually replaced while SAF stayed open\n\n\n\n\n\n\n\n\nDownloads\n\n\n\n\n\n\nModified\n\n\n\n\n\n\n\n\nNo items\n\n\n\n\nxs-library-metadata.xsmeta\n\nSAVE\n\n\n\nat dev.forcemind.xs.android.GovernanceUiTest.await(GovernanceUiTest.java:573)\nat dev.forcemind.xs.android.GovernanceUiTest.recreateBackupBehindPicker(GovernanceUiTest.java:267)\nat dev.forcemind.xs.android.GovernanceUiTest.pendingMetadataSafRequestsSurviveRecreationAndCancellation(GovernanceUiTest.java:143)\n"
+            }
+          ]
+        }
+      ],
+      "device": {
+        "source-commit.txt": "102d0949954c1c964e1e7a8f15d4695d52866d08\n",
+        "android-api.txt": "27\n",
+        "android-release.txt": "8.1.0\n",
+        "primary-abi.txt": "x86\n",
+        "supported-abis.txt": "x86\n",
+        "locale.txt": "\n",
+        "night-mode.txt": "Night mode: no\n",
+        "device-configuration.txt": "config: mcc310-mnc260-en-rUS-ldltr-sw320dp-w320dp-h616dp-normal-long-notround-lowdr-nowidecg-port-notnight-mdpi-finger-keysexposed-nokeys-navexposed-trackball-v27\nabi: x86\nrecentConfigs:\n  config: mcc310-mnc260-en-rUS-ldltr-sw320dp-w320dp-h616dp-normal-long-notround-lowdr-nowidecg-port-notnight-mdpi-finger-keyshidden-nokeys-navexposed-trackball-v27\n  config: en-rUS-ldltr-sw320dp-w320dp-h616dp-normal-long-notround-lowdr-nowidecg-port-mdpi-notouch-keyshidden-nokeys-navhidden-nonav-v27\n  config: en-rUS-ldltr-sw320dp-w320dp-h640dp-normal-long-notround-lowdr-nowidecg-port-mdpi-notouch-keyshidden-nokeys-navhidden-nonav-v27\n  config: en-rUS-ldltr-sw320dp-w320dp-h616dp-normal-long-notround-lowdr-nowidecg-port-notnight-mdpi-finger-keyshidden-nokeys-navexposed-trackball-v27\n  config: mcc310-mnc260-en-rUS-ldltr-sw320dp-w320dp-h616dp-normal-long-notround-lowdr-nowidecg-port-notnight-mdpi-finger-keysexposed-nokeys-navexposed-trackball-v27\n  config: en-rUS-ldltr-sw320dp-w320dp-h616dp-normal-long-notround-lowdr-nowidecg-port-notnight-mdpi-notouch-keyshidden-nokeys-navhidden-nonav-v27\n",
+        "webview-provider.txt": "Current WebView Update Service state\n  Fallback logic enabled: true\n  Multiprocess enabled: true\n  Current WebView package (name, version): (com.android.chrome, 69.0.3497.100)\n  Minimum WebView version code: 349710017\n  Number of relros started: 1\n  Number of relros finished: 1\n  WebView package dirty: false\n  Any WebView package installed: true\n  Preferred WebView package (name, version): (com.android.chrome, 69.0.3497.100)\n  WebView packages:\n    Valid package com.android.chrome (versionName: 69.0.3497.100, versionCode: 349710017, targetSdkVersion: 28) is  installed/enabled for all users\n    Valid package com.google.android.webview (versionName: 69.0.3497.100, versionCode: 349710065, targetSdkVersion: 28) is NOT installed/enabled for all users\n"
+      },
+      "source": {
+        "head_commit": "102d0949954c1c964e1e7a8f15d4695d52866d08",
+        "head_tree": "276fc91f89496514b3285894c27b298092ad66eb",
+        "working_tree_clean": true,
+        "working_tree_status": []
+      },
+      "drivers": {
+        "legacy_schema2_to6": "PASS",
+        "force_stop": "NOT RUN",
+        "same_source_debug_upgrade": "NOT RUN",
+        "guest_reboot": "NOT RUN",
+        "low_space": "NOT RUN"
+      },
+      "actual_downloaded_apks": [
+        {
+          "path": "app-android/build/compatibility/legacy-upgrade/current-instrumentation.apk",
+          "bytes": 1866367,
+          "sha256": "662f8f6353a2f85c6dc5f71dfadb7a5d753e167144f79385fec6fc10f8ed4d93",
+          "signature_exit": 0,
+          "aapt_exit": 0,
+          "certificate_sha256": "6f3105d1a5b8853ab184f3fee582b9a1f957961ba50560105c19db58ba52ba0f",
+          "package": null,
+          "version_code": null,
+          "version_name": null
+        },
+        {
+          "path": "app-android/build/compatibility/legacy-upgrade/current-main-v3.apk",
+          "bytes": 391083,
+          "sha256": "a09650d797bd350402787509be7b3284280e5ca3450820f0d6f8faf5deec6e22",
+          "signature_exit": 0,
+          "aapt_exit": 0,
+          "certificate_sha256": "6f3105d1a5b8853ab184f3fee582b9a1f957961ba50560105c19db58ba52ba0f",
+          "package": "dev.forcemind.xs",
+          "version_code": "3",
+          "version_name": "0.3-reliability-poc"
+        },
+        {
+          "path": "app-android/build/compatibility/legacy-upgrade/old-main-v1.apk",
+          "bytes": 84446,
+          "sha256": "327d38f798ec68cc85139c33c82d832d8e46d5ec66f787b5cff3b302a523150f",
+          "signature_exit": 0,
+          "aapt_exit": 0,
+          "certificate_sha256": "6f3105d1a5b8853ab184f3fee582b9a1f957961ba50560105c19db58ba52ba0f",
+          "package": "dev.forcemind.xs",
+          "version_code": "1",
+          "version_name": "0.1-w0-poc"
+        }
+      ]
+    }
+  },
+  "confirmed_preview_locator_failure": {
+    "case": "dev.forcemind.xs.android.RecentTimelineUiTest#alreadyOpenTemporaryPreviewExpiresAndExternalClearDismissesItWithoutTap",
+    "source_line": 172,
+    "actual": "After title disappearance and native list count0 succeeded, assertFalse(hasText(expiringpreviewneedle,clearpreviewneedle)) failed.",
+    "proof": "The same test line166 deliberately set the still-visible Search EditText to clearpreviewneedle. hasText matches any AX text including editable query controls. Removing a temporary preview must preserve the user-entered search term.",
+    "next_test_fix": "Restrict stale-body lookup to non-editable content and independently assert the search term remains; preserve actual dialog/list expiry assertions."
+  },
+  "other_actual_api26_failures": {
+    "feed_source": "ComparisonFailure at NativeCaptureIntegrationTest:217; expected search_results, observed home_following. Owner reproduced the previous HOME exposure finalization releasing the newly installed SEARCH latch; next fixture fences the specific new post/exposure/persisted row.",
+    "encrypted_picker_recreation": "GovernanceUiTest:267 called from encrypted import line173; timeout waiting actual replacement Activity and previous destruction. Export recreation passed; native lifecycle logs show second destruction/recreation near timeout. Investigation remains separate from production evidence. API27 also failed the same helper for its first metadata EXPORT picker (test143); original export/replacement had not yet completed in that case. No production conclusion is inferred from the helper timeout."
+  },
+  "final_main_counts": {
+    "tests": 792,
+    "failures": 7,
+    "errors": 0,
+    "skipped": 0
+  },
+  "external_driver_counts": {
+    "attempted": 4,
+    "passed": 4,
+    "not_run": 16
+  }
+}

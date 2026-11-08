@@ -56,10 +56,10 @@ public class NativeCaptureIntegrationTest {
             WebView web=activity.findViewById(R.id.browser_view);
             NativePageCaptureController capture=new NativePageCaptureController(web,LIBRARY,new CaptureSession.Sink(){
                 private void write(CaptureSession.Event e,Runnable operation,AtomicReference<CountDownLatch> done){
-                    XsLibraryWrites.Ticket ticket=XsLibraryWrites.ticket(LIBRARY);
+                    XsLibraryWrites.Ticket ticket=XsLibraryWrites.ticket(LIBRARY);final CountDownLatch completion=done.get();
                     XsLibraryWrites.submit(ticket,()->{
                         if(controller.get().isCurrent(e)) {
-                            operation.run();CountDownLatch latch=done.get();if(latch!=null)latch.countDown();
+                            operation.run();if(completion!=null)completion.countDown();
                         }
                     });
                 }
@@ -207,22 +207,47 @@ public class NativeCaptureIntegrationTest {
         try(Cursor c=db.search(LIBRARY,q)){assertEquals(1,c.getCount());}
         try(Cursor c=db.timeline(LIBRARY,null,10,"OPEN_POST")){assertEquals(1,c.getCount());}
     }
+    /** Fence by the new post's persisted native exposure, not a shared latch that departure can release. */
+    private String[] awaitPersistedFeed(String postId)throws Exception {
+        long until=SystemClock.elapsedRealtime()+8000;
+        do{
+            try(Cursor c=db.getReadableDatabase().rawQuery("SELECT source,event_key,duration_ms,threshold_ms FROM history_events WHERE account_id=? AND post_id=? AND event_type='FEED_VISIBLE'",new String[]{LIBRARY,postId})){
+                if(c.moveToFirst()){
+                    assertEquals("One native exposure for fixture post "+postId,1,c.getCount());
+                    assertNotNull(c.getString(1));assertTrue(c.getLong(2)>=1200);assertEquals(1200,c.getLong(3));
+                    return new String[]{c.getString(0),c.getString(1)};
+                }
+            }
+            SystemClock.sleep(30);
+        }while(SystemClock.elapsedRealtime()<until);
+        CaptureSession.Event observed=lastFeed.get();
+        throw new AssertionError("No qualified persisted exposure for post "+postId+"; last native post="+(observed==null?"none":dev.forcemind.xs.core.PostUrls.extractPostId(observed.url))+" source="+(observed==null?"none":observed.source));
+    }
+    private void assertNoPersistedFeedDuring(String postId,long durationMs)throws Exception {
+        long until=SystemClock.elapsedRealtime()+durationMs;
+        do{
+            try(Cursor c=db.getReadableDatabase().rawQuery("SELECT source FROM history_events WHERE account_id=? AND post_id=? AND event_type='FEED_VISIBLE'",new String[]{LIBRARY,postId})){
+                if(c.moveToFirst())fail("Unsupported fixture post "+postId+" acquired source "+c.getString(0));
+            }
+            SystemClock.sleep(30);
+        }while(SystemClock.elapsedRealtime()<until);
+    }
     @Test public void actualFeedRoutesAndNativeContextsDetermineExposureSource()throws Exception {
         scenario.onActivity(activity->{controller.get().setConsent(false,true,1200);controller.get().setFeedContext("home_following");});
-        feedSaved.set(new CountDownLatch(1));
         load("https://x.com/home?next=/search","native-source-home",false,page(card("126","home query")));
-        assertTrue(feedSaved.get().await(8,TimeUnit.SECONDS));assertEquals("home_following",lastFeed.get().source);
-        feedSaved.set(new CountDownLatch(1));
+        String[] home=awaitPersistedFeed("126");assertEquals("home_following",home[0]);
         load("https://x.com/search?q=/home","native-source-search",false,page(card("127","search route")));
-        assertTrue(feedSaved.get().await(8,TimeUnit.SECONDS));assertEquals("search_results",lastFeed.get().source);
-        feedSaved.set(new CountDownLatch(1));
+        String[] search=awaitPersistedFeed("127");assertEquals("search_results",search[0]);
+        assertNotEquals("Search must qualify a different native exposure",home[1],search[1]);
         load("https://x.com/explore","native-source-explore",false,page(card("128","unsupported explore source")));
-        assertFalse("Explore never falls back to For You",feedSaved.get().await(1800,TimeUnit.MILLISECONDS));
+        assertNoPersistedFeedDuring("128",1800);
         scenario.onActivity(activity->controller.get().setFeedContext(null));
         load("https://x.com/home","native-source-unknown",false,page(card("129","unknown home source")));
-        assertFalse("Unverified home context has no dwell provenance",feedSaved.get().await(1800,TimeUnit.MILLISECONDS));
+        assertNoPersistedFeedDuring("129",1800);
+        CountDownLatch drained=new CountDownLatch(1);XsLibraryWrites.submit(LIBRARY,drained::countDown);assertTrue(drained.await(5,TimeUnit.SECONDS));
         try(Cursor c=db.timeline(LIBRARY,null,10,"FEED_VISIBLE")){assertEquals(2,c.getCount());}
     }
+
     @Test public void noClickDwellIsMeasuredAndOfflineNeverOpenedSearchWorks()throws Exception {
         timeline=XsTimelineBuffer.get(app);timeline.configure(true,48,100);
         scenario.onActivity(activity->{controller.get().setBufferStore(timeline);controller.get().setBufferConsent(true);});
