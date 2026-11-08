@@ -1,3 +1,7 @@
+## XS-16 临时库 SQLITE_FULL 拒收诊断
+
+临时缓冲写入新增专门的SQLiteFullException边界：事务结束后返回false，保留共享writer和其它库/媒体票据；只保存固定SQLITE_FULL原因与拒收计数，不保留候选正文、异常消息或自动重试。诊断写入也失败时只保留有界进程内计数，进程重启可能丢失该部分下界。成功接受新观察后清除暂停原因。新增真实SQLite页面上限的原生回滚/恢复测试，以及计数写入失败的独立注入测试。编译、双Lint与JVM/SQLite/DOM本地检查通过；该增量的原生与四API结果由后续证据记录，CI87仅是修改前基线。
+
 ## XS-16 本轮云端验收完成
 
 源5b5f9e33e72068269408a60d74db5af5c7812772 / CI87六作业成功；实际四API792/792主项、20/20独立driver、44/44外部nativephase，0失败/error/skip。1406JVM/SQLite/DOM/容量、构建/双Lint通过。精确源码、包/ZIP摘要、原失败及T14边界见[最终证据](XS16_CI87_EVIDENCE.zh-CN.md)。此后只提交文档证据，不改已测生产/测试/workflow源码。

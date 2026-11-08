@@ -7,6 +7,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteFullException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.os.Handler;
 import android.os.Looper;
@@ -35,6 +36,10 @@ public final class XsTimelineBuffer extends SQLiteOpenHelper {
     private final Context app;
     private final File file;
     private String reclaimReason="";
+    // Fixed, process-local diagnostics when even the counter cannot be persisted.
+    // Never retain the rejected candidate or exception text for a retry.
+    private long unpersistedDrops;
+    private String transientPauseReason="";
     private final Clock clock;
 
     /** Injectable native clock for deterministic SQLite boundary/fault tests. */
@@ -160,6 +165,7 @@ public final class XsTimelineBuffer extends SQLiteOpenHelper {
                         db.execSQL("UPDATE timeline_state SET enabled=0,consent_generation=consent_generation+1,policy_version=policy_version+1,logical_now_ms=?,wall_ms=?,elapsed_ms=?,boot_id=?,clock_paused=0,pause_reason='',dropped_count=0 WHERE id=1",new Object[]{wall,wall,elapsed,boot});
                         db.setTransactionSuccessful();
                     }finally{db.endTransaction();}
+                    unpersistedDrops=0;transientPauseReason="";
                     committed=true;
                     reclaim(db,readSettings(db).budgetMiB*1048576L);
                 }
@@ -220,6 +226,20 @@ public final class XsTimelineBuffer extends SQLiteOpenHelper {
     private static boolean validReason(String reason){return "native_navigation".equals(reason)||"native_refresh".equals(reason)||"native_stream_change".equals(reason)||"native_stream_switch".equals(reason)||"suspected_refresh".equals(reason)||"native_session".equals(reason);}
     /** Run from the owning shared writer. The queued immutable candidate retains its native capture time. */
     public synchronized boolean append(Ticket ticket,Batch batch,Candidate candidate){
+        try{
+            boolean accepted=appendChecked(ticket,batch,candidate);
+            if(accepted)transientPauseReason="";
+            return accepted;
+        }catch(SQLiteFullException full){
+            // appendChecked's finally rolls the capture transaction back before diagnostics.
+            // The shared writer and unrelated Archive/media tickets remain usable.
+            try{drop(getWritableDatabase(),"SQLITE_FULL");}
+            catch(RuntimeException unavailable){unpersistedDrops=Math.min(2147483647L,unpersistedDrops+1);}
+            transientPauseReason="SQLITE_FULL";
+            return false;
+        }
+    }
+    private boolean appendChecked(Ticket ticket,Batch batch,Candidate candidate){
         if(!valid(batch,candidate)||!isCurrent(ticket))return false;
         SQLiteDatabase db=getWritableDatabase();Settings settings=readSettings(db);
         TimelineBufferPolicy.ClockResult time=now(db);
@@ -407,7 +427,7 @@ public final class XsTimelineBuffer extends SQLiteOpenHelper {
         requireLibrary(library);SQLiteDatabase db=getWritableDatabase();long now=now(db).nowMs;long count=0,oldest=0,latest=0,dropped=0;String pause="";
         try(Cursor c=db.rawQuery("SELECT COUNT(*),MIN(first_at_ms),MAX(first_at_ms) FROM timeline_appearances WHERE library_id=? AND expires_at_ms>?",new String[]{library,Long.toString(now)})){if(c.moveToFirst()&&scalar(db,"SELECT pending_clear FROM timeline_scopes WHERE library_id=?",library)==0){count=c.getLong(0);oldest=c.getLong(1);latest=c.getLong(2);}}
         try(Cursor c=db.rawQuery("SELECT dropped_count,pause_reason FROM timeline_state WHERE id=1",null)){if(c.moveToFirst()){dropped=c.getLong(0);pause=c.getString(1);}}
-        return new Stats(count,oldest,latest,actualBytes(),dropped,pause,reclaimReason);
+        return new Stats(count,oldest,latest,actualBytes(),Math.min(2147483647L,dropped+unpersistedDrops),transientPauseReason.isEmpty()?pause:transientPauseReason,reclaimReason);
     }
     public synchronized boolean acknowledgePromotion(String library,long appearanceId,String promotionId,boolean favorite,long savedAt){
         requireLibrary(library);if(savedAt<=0||promotionId==null)return false;SQLiteDatabase db=getWritableDatabase();long now=now(db).nowMs;

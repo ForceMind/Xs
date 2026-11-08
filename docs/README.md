@@ -9,7 +9,7 @@
 当前已实现独立临时SQLite/FTS、TTL/配额/回收、合成观察器原生缓冲批次、原生查找/设置与Archive v6幂等晋升源码。三项P2已补修复与回归源码。实际构建、四API/driver结果和残留失败统一见[当前证据](XS16_IMPLEMENTATION_EVIDENCE.zh-CN.md)，不以旧CI83替代新功能验证。跟踪[Issue #6](https://github.com/ForceMind/Xs/issues/6)，真实X/真机T14保持独立。
 
 
-复查review和当前源码另确认两项应先复现修复：规范i/web/status链接在JS观察器匹配中缺失（r4500601373）；备份选择器Activity重建丢实例requestTicket（r4501080305虽outdated，当前仍无保留/恢复且manifest无configChanges）。新对话补DOM/WebView和实际SAF重建回归，密码不得持久保存。其它outdated评论须以当前源码/证据确认，不能自动当已解决。本轮仅记录，未修runtime。
+交接时记录的规范i/web/status正文观察、时间线来源和SAF请求重建三项P2，已在CI87对应源码上实际修复并通过四API回归，见上述证据。历史outdated状态本身不算修复证明；后续审阅仍须核对当前源码与执行结果。密码只在进程内保留，不进入saved state或持久存储。
 
 本轮E验证源码 `2c667517e5a812232a8b41e7a3f99166855963e6` / tested tree `e52dfdd3f5f7b51751154bf1cf2601554786ef33` 的[CI82](https://github.com/ForceMind/Xs/actions/runs/42419306946)已通过：1287项JVM、23项host检查、Android构建/双Lint，以及API26/27/30/36共624/624主用例（0失败/错误/跳过）。BrowserInteraction24/24、真实旧APK升级4/4通过；另有20/20独立driver、44次native phase通过，内部重复probe不计入主XML；均为本轮同源fresh attempt1。源码/merge/包摘要与CI76～81真实失败见[本轮E证据](ROUND_E_EVIDENCE.zh-CN.md)；D/CI75仅作历史基线。
 

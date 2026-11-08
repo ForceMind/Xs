@@ -149,7 +149,8 @@ public final class XsRecentTimelineActivity extends Activity {
         return value;
     }
     private String reason(String value){
-        switch(value){case "SPACE_BUDGET":case "CAPACITY_EVICTION":case "quota":case "quota_exceeded":return tr("临时空间预算不足","temporary space budget reached");
+        switch(value){case "SQLITE_FULL":return tr("临时数据库空间不足，已拒绝本次写入","temporary database full; capture rejected");
+            case "SPACE_BUDGET":case "CAPACITY_EVICTION":case "quota":case "quota_exceeded":return tr("临时空间预算不足","temporary space budget reached");
             case "low_space":return tr("设备可用空间不足","device storage low");
             case "CLOCK_CHANGED":case "clock_jump":case "clock":return tr("设备时间发生跳变，请检查时间设置","device clock changed; check time settings");
             case "READERS_BUSY":case "busy":case "checkpoint_busy":return tr("数据库正在使用，稍后重试","database in use; retry later");
