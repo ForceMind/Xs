@@ -9,6 +9,7 @@ import android.os.Process;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 import dev.forcemind.xs.core.ArchiveSearch;
+import dev.forcemind.xs.core.SnapshotPolicy;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.nio.file.Files;
@@ -29,6 +30,8 @@ import static org.junit.Assert.*;
 public final class ProcessRecoveryProbe {
     private static final String PREFS="xs_process_recovery_fixture";
     private static final String POST="https://x.com/i/web/status/991231";
+    private static final String TEMP_POST="https://x.com/i/web/status/991232";
+    private static final String SAVED_POST="https://x.com/i/web/status/991233";
     private Context app(){return InstrumentationRegistry.getInstrumentation().getTargetContext();}
     @Test public void nativeStateAndRecoveryAcrossProcessBoundary()throws Exception {
         String phase=InstrumentationRegistry.getArguments().getString("xs_phase","");
@@ -66,6 +69,22 @@ public final class ProcessRecoveryProbe {
             });
             write(deleted,()->{archive.ensureLibrary(deleted,"Process fixture pending deletion");assertTrue(archive.favorite(deleted,POST,"fixture","Delete only this scope",null,System.currentTimeMillis()));});
         } finally {assertTrue(image.delete());}
+        XsTimelineBuffer timeline=XsTimelineBuffer.get(context);XsTimelineBuffer.Settings previous=timeline.settings();
+        timeline.configure(true,48,100);
+        String batch="process-buffer:"+UUID.randomUUID();
+        write(survivor,()->{
+            long now=System.currentTimeMillis();XsTimelineBuffer.Ticket ticket=timeline.ticket(survivor);
+            XsTimelineBuffer.Batch nativeBatch=new XsTimelineBuffer.Batch(batch,"native_navigation","home_following");
+            assertTrue(timeline.append(ticket,nativeBatch,new XsTimelineBuffer.Candidate(TEMP_POST,"fixture","Temporary process boundary canary",null,SnapshotPolicy.Quality.PARTIAL,now,1)));
+            assertTrue(timeline.append(ticket,nativeBatch,new XsTimelineBuffer.Candidate(SAVED_POST,"fixture","Durably saved process buffer canary",null,SnapshotPolicy.Quality.PARTIAL,now,2)));
+            XsTimelineBuffer.Entry saved=timeline.list(survivor,"Durably saved process",batch,10,0).get(0);
+            assertTrue(XsTimelinePromotion.promote(context,timeline,ticket,saved.appearanceId,false,now+1).committed);
+        });
+        write(deleted,()->{
+            long now=System.currentTimeMillis();assertTrue(timeline.append(timeline.ticket(deleted),new XsTimelineBuffer.Batch("pending-delete:"+UUID.randomUUID(),"native_navigation","unknown"),
+                new XsTimelineBuffer.Candidate(TEMP_POST,"fixture","Deleted temporary canary",null,SnapshotPolicy.Quality.PARTIAL,now,1)));
+        });
+        assertTrue(prefs.edit().putBoolean("timeline_previous_enabled",previous.enabled).putInt("timeline_previous_hours",previous.hours).putInt("timeline_previous_budget",previous.budgetMiB).commit());
         XsMediaRepository.Lease lease=media.lease(survivor,media.list(survivor).get(0).id);
         // These rows model the exact durable state of an interrupted transfer. No real
         // network request is scheduled; recovery must not silently initiate a new one.
@@ -106,6 +125,24 @@ public final class ProcessRecoveryProbe {
             try(Cursor c=archive.search(survivor,filter)){assertEquals(1,c.getCount());assertTrue(c.moveToFirst());assertEquals(1,c.getInt(c.getColumnIndexOrThrow("opened_count")));}
             try(Cursor c=archive.getReadableDatabase().rawQuery("SELECT COUNT(*) FROM posts WHERE account_id=?",new String[]{deleted})){assertTrue(c.moveToFirst());assertEquals(0,c.getInt(0));}
         }
+        XsTimelineBuffer timeline=XsTimelineBuffer.get(context);
+        assertEquals("The temporary DB survives the actual process/boot/upgrade boundary",2,timeline.list(survivor,"process",null,10,0).size());
+        XsTimelineBuffer.Entry temporary=timeline.list(survivor,"Temporary process boundary",null,10,0).get(0);
+        assertEquals("991232",temporary.postId);assertEquals("Temporary process boundary canary",temporary.body);
+        assertEquals("home_following",temporary.source);assertEquals(SnapshotPolicy.Quality.PARTIAL,temporary.quality);
+        XsTimelineBuffer.Entry saved=timeline.list(survivor,"Durably saved process",null,10,0).get(0);
+        assertTrue(saved.savedAt>0);assertEquals(0,saved.favoritedAt);
+        // Retrying after a different OS process must find the persistent archive ledger.
+        write(survivor,()->assertTrue(XsTimelinePromotion.promote(context,timeline,timeline.ticket(survivor),saved.appearanceId,false,System.currentTimeMillis()).committed));
+        try(XsArchiveDatabase archive=new XsArchiveDatabase(context)){
+            try(Cursor c=archive.getReadableDatabase().rawQuery("SELECT post_id,opened_count FROM posts WHERE account_id=? ORDER BY post_id",new String[]{survivor})){
+                assertEquals("Buffer-only cards do not enter the durable library",2,c.getCount());assertTrue(c.moveToFirst());
+                assertEquals("991231",c.getString(0));assertEquals(1,c.getInt(1));assertTrue(c.moveToNext());assertEquals("991233",c.getString(0));assertEquals(0,c.getInt(1));
+            }
+            try(Cursor c=archive.getReadableDatabase().rawQuery("SELECT COUNT(*) FROM timeline_promotions WHERE account_id=?",new String[]{survivor})){assertTrue(c.moveToFirst());assertEquals(1,c.getInt(0));}
+        }
+        try(Cursor c=timeline.getReadableDatabase().rawQuery("SELECT COUNT(*) FROM timeline_appearances WHERE library_id=?",new String[]{deleted})){assertTrue(c.moveToFirst());assertEquals(0,c.getInt(0));}
+        android.os.Bundle timelineStatus=new android.os.Bundle();timelineStatus.putString("xs_timeline_buffer_entries","2");timelineStatus.putString("xs_timeline_saved_promotions","1");InstrumentationRegistry.getInstrumentation().sendStatus(0,timelineStatus);
         assertEquals(prefs.getString("default",null),XsLocalSpaces.defaultLibrary(context));
         XsMediaRepository.Asset task=media.find(survivor,id);assertNotNull(task);assertEquals("PAUSED",task.state);
         if(separateProcess){assertEquals(0,task.bytes);assertFalse(new File(new File(context.getFilesDir(),"xs-saved-media"),prefs.getString("part","")).exists());}
@@ -130,9 +167,10 @@ public final class ProcessRecoveryProbe {
     private void cleanup()throws Exception {
         Context context=app();SharedPreferences prefs=context.getSharedPreferences(PREFS,Context.MODE_PRIVATE);XsMediaRepository media=XsMediaRepository.get(context);
         for(String key:new String[]{"survivor","deleted"}){String scope=prefs.getString(key,null);if(scope==null)continue;CountDownLatch done=new CountDownLatch(1);AtomicReference<Throwable> failure=new AtomicReference<>();
-            Runnable erase=()->{try(XsArchiveDatabase archive=new XsArchiveDatabase(context)){media.eraseLibrary(scope);archive.deleteLibraryScope(scope);}catch(Throwable problem){failure.set(problem);}finally{done.countDown();}};
+            Runnable erase=()->{try(XsArchiveDatabase archive=new XsArchiveDatabase(context)){media.eraseLibrary(scope);XsTimelineBuffer.get(context).eraseLibrary(scope);archive.deleteLibraryScope(scope);}catch(Throwable problem){failure.set(problem);}finally{done.countDown();}};
             assertTrue(XsLibraryWrites.isDeleted(scope)?XsLibraryWrites.submitDeletion(scope,erase):XsLibraryWrites.invalidateAndSubmit(scope,erase));assertTrue(done.await(15,TimeUnit.SECONDS));if(failure.get()!=null)throw new AssertionError(failure.get());}
         if(prefs.contains("lease_token"))media.discardLease(media.resolveLease(prefs.getString("lease_token",null),prefs.getString("lease_filename",null)));
+        if(prefs.contains("timeline_previous_hours"))XsTimelineBuffer.get(context).configure(prefs.getBoolean("timeline_previous_enabled",false),prefs.getInt("timeline_previous_hours",48),prefs.getInt("timeline_previous_budget",100));
         assertTrue(prefs.edit().clear().commit());
     }
     private interface Operation{void run()throws Exception;}

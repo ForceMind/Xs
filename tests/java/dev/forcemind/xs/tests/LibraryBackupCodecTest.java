@@ -23,7 +23,7 @@ public final class LibraryBackupCodecTest {
         String raw=new String(backup,StandardCharsets.UTF_8);
         reject(raw.replace("中文","损坏").getBytes(StandardCharsets.UTF_8));
         reject(raw.replace("\"version\":1","\"version\":2").getBytes(StandardCharsets.UTF_8));
-        reject(raw.replace("\"schema\":4","\"schema\":6").getBytes(StandardCharsets.UTF_8));
+        reject(raw.replace("\"schema\":4","\"schema\":7").getBytes(StandardCharsets.UTF_8));
         reject(raw.replace("\"schema\":4","\"schema\":4294967300").getBytes(StandardCharsets.UTF_8));
         reject(raw.replace("\"version\":1","\"version\":1.0").getBytes(StandardCharsets.UTF_8));
         reject(raw.replace("\"version\":1","\"version\":1,\"version\":1").getBytes(StandardCharsets.UTF_8));
@@ -46,6 +46,9 @@ public final class LibraryBackupCodecTest {
         LibraryBackupCodec.read(input);yes(!closed[0]);ByteArrayOutputStream output=new ByteArrayOutputStream(){@Override public void close(){closed[0]=true;}};
         LibraryBackupCodec.write(output,header,records);yes(!closed[0]);
         LibraryBackupCodec.write(new Discard(),new LibraryBackupCodec.Header(3,1,"v3"),Collections.emptyList());checks++;
+        ByteArrayOutputStream v6=new ByteArrayOutputStream();
+        LibraryBackupCodec.write(v6,new LibraryBackupCodec.Header(6,1,"v6"),Collections.emptyList());
+        yes(LibraryBackupCodec.read(new ByteArrayInputStream(v6.toByteArray())).header().schemaVersion==6);
         System.out.println("PASS "+checks+" bounded backup codec assertions");
     }
     /** Exercise the exact completed-resource descriptor shape used by the native full-backup path. */

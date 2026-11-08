@@ -1,3 +1,11 @@
+# 当前增量：XS-16 与三项审阅修复
+
+- 规范 `/i/web/status/` 正文观察、解析后的来源/原生home上下文、备份SAF重建的进程内请求保留。
+- 独立临时SQLite schema1/FTS、默认OFF/48h/应用100MiB，原生有界可见卡片admission/刷新批次、原生搜索/预览/分页/设置、保存与收藏。
+- 实际字节预算、TTL/时钟高水位、独立clear代次/持久pending clear、tombstone删除、可延迟后台回收。
+- Archive v6保留性晋升账本/source迁移及backup/merge/旧APK兼容；不制造打开/合格停留，临时内容不进备份。
+- CI84失败保留；SAF侧栏重取精确可点击项，重启驱动补真实失败诊断。实际执行、源码范围和现场限制见[本轮证据](XS16_IMPLEMENTATION_EVIDENCE.zh-CN.md)。
+
 # Xs 方案与工程变更记录
 
 本文件记录决策变化，不把文档提交计作功能完成。代码执行与测试结果保留在各执行记录和 CI 中。

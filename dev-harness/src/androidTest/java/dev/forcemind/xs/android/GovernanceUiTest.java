@@ -138,6 +138,46 @@ public final class GovernanceUiTest {
         testBodyCompleted=true;
     }
 
+    @Test public void pendingMetadataSafRequestsSurviveRecreationAndCancellation()throws Exception {
+        Set<String> before=libraries();openBackup();
+        clickText("Export plain metadata","导出明文元数据");recreateBackupBehindPicker();saveInFixtureRoot();
+        awaitText("Metadata exported","元数据备份已导出");
+        assertEquals("Governance fixture A",XsLibraryBackup.inspect(new ByteArrayInputStream(document(METADATA))).label());
+        clickText("Choose plain metadata & preview","选择明文元数据并预览");recreateBackupBehindPicker();
+        assertTrue(instrumentation.getUiAutomation().performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK));
+        await(()->!documentsUiActive(),"The actual metadata picker was canceled");assertEquals(before,libraries());
+        // A canceled retained request must not consume the next real selection.
+        clickText("Choose plain metadata & preview","选择明文元数据并预览");recreateBackupBehindPicker();openFixtureFile(METADATA);
+        awaitText("Restore into a new library?","恢复到新的资料空间？");clickText("Create separate library","创建独立资料空间");
+        String restored=awaitNewLibrary(before);assertSearchable(restored,"alpha");assertSearchable(first,"alpha");
+        assertEquals(defaultLibrary,XsLocalSpaces.current(app));testBodyCompleted=true;
+    }
+
+    @Test public void pendingStaleMetadataPickerCannotWriteAfterLibraryBarrier()throws Exception {
+        Set<String> before=libraries();openBackup();
+        clickText("Export plain metadata","导出明文元数据");recreateBackupBehindPicker();
+        XsLibraryWrites.invalidate(first);saveInFixtureRoot();
+        instrumentation.waitForIdleSync();
+        assertEquals("An invalidated picker must not write metadata",0L,admin("xs_fixture_read",METADATA).getLong("bytes"));
+        assertEquals(before,libraries());assertSearchable(first,"alpha");assertSearchable(second,"beta");
+        testBodyCompleted=true;
+    }
+
+    @Test public void pendingEncryptedSafRequestsRetainPasswordOnlyInMemoryAcrossRecreation()throws Exception {
+        byte[] image=seedImage(first);Set<String> before=libraries();openBackup();
+        clickText("Export encrypted full backup","导出加密完整备份");awaitText("Backup password","备份口令");
+        setEditor(0,PASSWORD);setEditor(1,PASSWORD);clickText("OK","确定");
+        recreateBackupBehindPicker();saveInFixtureRoot();awaitText("Encrypted full backup exported","加密完整备份已导出");
+        assertTrue(document(FULL).length>56);
+        clickText("Restore encrypted full backup","恢复加密完整备份");awaitText("Backup password","备份口令");
+        setEditor(0,PASSWORD);clickText("OK","确定");recreateBackupBehindPicker();openFixtureFile(FULL);
+        awaitText("Restore encrypted full backup?","恢复加密完整备份？");clickText("Create separate library","创建独立资料空间");
+        String restored=awaitNewLibrary(before);assertSearchable(restored,"alpha");
+        List<XsMediaRepository.CompletedAsset> files=XsMediaRepository.get(app).snapshotCompleted(restored);
+        assertEquals(1,files.size());assertArrayEquals(image,Files.readAllBytes(files.get(0).file.toPath()));
+        assertEquals(defaultLibrary,XsLocalSpaces.current(app));testBodyCompleted=true;
+    }
+
     @Test public void consolidationNativePreviewCancelConfirmAndUndoPreserveSourcesAndDefault()throws Exception {
         Set<String> before=libraries();
         screen=instrumentation.startActivitySync(XsLibrariesActivity.intent(app).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK));
@@ -207,6 +247,40 @@ public final class GovernanceUiTest {
         }finally{for(File stage:stages)stage.delete();}return originals;
     }
     private void openBackup(){screen=instrumentation.startActivitySync(XsBackupActivity.intent(app,first).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK));awaitText("Xs library backup & restore","Xs 资料备份与恢复");}
+    private void recreateBackupBehindPicker()throws Exception {
+        await(this::documentsUiActive,"A real SAF request is pending before recreation");
+        Activity previous=screen;AtomicReference<Activity> replacement=new AtomicReference<>();
+        android.app.Application application=(android.app.Application)app.getApplicationContext();
+        android.app.Application.ActivityLifecycleCallbacks observer=new android.app.Application.ActivityLifecycleCallbacks(){
+            public void onActivityCreated(Activity activity,Bundle state){if(activity instanceof XsBackupActivity&&activity!=previous)replacement.set(activity);}
+            public void onActivityStarted(Activity activity){}public void onActivityResumed(Activity activity){}
+            public void onActivityPaused(Activity activity){}public void onActivityStopped(Activity activity){}
+            public void onActivitySaveInstanceState(Activity activity,Bundle state){
+                // A password cannot enter framework saved state even while the picker is active.
+                assertSavedStateHasNoPassword(state);
+            }
+            public void onActivityDestroyed(Activity activity){}
+        };
+        application.registerActivityLifecycleCallbacks(observer);
+        try {
+            instrumentation.runOnMainSync(previous::recreate);
+            await(()->replacement.get()!=null&&previous.isDestroyed(),"The backup Activity was actually replaced while SAF stayed open");
+            screen=replacement.get();assertNotSame(previous,screen);
+            assertTrue("The system picker still owns the selection",documentsUiActive());
+        }finally{application.unregisterActivityLifecycleCallbacks(observer);}
+    }
+    private static void assertSavedStateHasNoPassword(Object value) {
+        if(value instanceof Bundle) {
+            Bundle state=(Bundle)value;for(String key:state.keySet()){assertFalse(key.contains(PASSWORD));assertSavedStateHasNoPassword(state.get(key));}
+        }else if(value instanceof android.util.SparseArray) {
+            android.util.SparseArray<?> state=(android.util.SparseArray<?>)value;
+            for(int i=0;i<state.size();i++)assertSavedStateHasNoPassword(state.valueAt(i));
+        }else if(value instanceof Object[]) {
+            for(Object child:(Object[])value)assertSavedStateHasNoPassword(child);
+        }else if(value instanceof char[]) {
+            assertFalse(new String((char[])value).contains(PASSWORD));
+        }else if(value instanceof CharSequence)assertFalse(value.toString().contains(PASSWORD));
+    }
     private Set<String> libraries(){Set<String> result=new LinkedHashSet<>();try(Cursor c=archive.libraries()){while(c.moveToNext())result.add(c.getString(3));}return result;}
     private String awaitNewLibrary(Set<String> before)throws Exception {
         await(()->libraries().size()==before.size()+1,"A concrete new library was committed");Set<String> added=libraries();added.removeAll(before);assertEquals(1,added.size());String id=added.iterator().next();owned.add(id);return id;
@@ -332,7 +406,10 @@ public final class GovernanceUiTest {
             if(!Arrays.asList("metadataSafExportPreviewCancelAndConfirmUseActualDocumentBytes",
                     "encryptedFullSafRoundTripValidatesPasswordAndRestoresActualImage",
                     "consolidationNativePreviewCancelConfirmAndUndoPreserveSourcesAndDefault",
-                    "assetsMultiSelectSafZipContainsEverySelectedOriginalFile").contains(name))return;
+                    "assetsMultiSelectSafZipContainsEverySelectedOriginalFile",
+                    "pendingMetadataSafRequestsSurviveRecreationAndCancellation",
+                    "pendingStaleMetadataPickerCannotWriteAfterLibraryBarrier",
+                    "pendingEncryptedSafRequestsRetainPasswordOnlyInMemoryAcrossRecreation").contains(name))return;
             File directory=app.getExternalFilesDir("xs-governance-ui");if(directory==null||(!directory.isDirectory()&&!directory.mkdirs()))return;
             StringBuilder ax=new StringBuilder();
             for(android.view.accessibility.AccessibilityWindowInfo window:instrumentation.getUiAutomation().getWindows()) {

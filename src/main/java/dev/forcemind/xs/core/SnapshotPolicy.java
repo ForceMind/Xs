@@ -10,7 +10,7 @@ public final class SnapshotPolicy {
     public enum Quality { LINK_ONLY, PARTIAL, COMPLETE, LEGACY_UNKNOWN }
     public enum Source {
         POST_DETAIL("native_post_detail"), FEED_VISIBLE("native_feed_visible"),
-        FAVORITE("native_favorite"), OWN_ACTION("native_fixture_action"),
+        FAVORITE("native_favorite"), TIMELINE_BUFFER("native_timeline_buffer"), OWN_ACTION("native_fixture_action"),
         ARCHIVE("local_x_archive"), LEGACY_API("legacy_api"), MIGRATION("legacy_migration");
         public final String value;
         Source(String value){this.value=value;}

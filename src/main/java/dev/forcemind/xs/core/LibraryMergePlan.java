@@ -19,7 +19,7 @@ public final class LibraryMergePlan {
     public static final long MAX_TEXT_BYTES=8L*1024*1024;
     public static final List<String> TABLES=Collections.unmodifiableList(Arrays.asList(
         "posts","history_events","user_actions","categories","post_categories",
-        "favorites","post_tags","own_actions","own_action_events","snapshot_versions"));
+        "favorites","post_tags","own_actions","own_action_events","snapshot_versions","timeline_promotions"));
     public static final class Input {
         public final String scope,label;
         private final Map<String,List<Map<String,Object>>> tables;
@@ -158,6 +158,11 @@ public final class LibraryMergePlan {
             for(Map<String,Object> original:rows(input,"post_tags")) {
                 String identity=text(original,"post_id")+"\n"+text(original,"tag");
                 if(tags.add(identity))out.get("post_tags").add(copy(original));
+            }
+            for(Map<String,Object> original:rows(input,"timeline_promotions")) {
+                Map<String,Object> row=copy(original);
+                row.put("promotion_id",key("timeline-promotion",input.scope,text(row,"promotion_id")));
+                out.get("timeline_promotions").add(row);
             }
             for(Map<String,Object> original:rows(input,"own_actions")) {
                 Map<String,Object> row=copy(original);row.put("action_key",key("own",input.scope,text(row,"action_key")));

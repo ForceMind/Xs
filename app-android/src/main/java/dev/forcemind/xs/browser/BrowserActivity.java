@@ -40,6 +40,7 @@ import dev.forcemind.xs.core.PostUrls;
 import dev.forcemind.xs.android.XsArchiveDatabase;
 import dev.forcemind.xs.android.XsLocalSpaces;
 import dev.forcemind.xs.android.XsHistoryActivity;
+import dev.forcemind.xs.android.XsRecentTimelineActivity;
 import dev.forcemind.xs.android.XsLibraryWrites;
 import dev.forcemind.xs.android.XsAssetsActivity;
 import dev.forcemind.xs.android.XsShareCoordinator;
@@ -713,6 +714,10 @@ public final class BrowserActivity extends Activity {
         }
         menu.getMenu().add(R.string.local_archive).setOnMenuItemClickListener(item -> {
             showManualArchive(); return true;
+        });
+        menu.getMenu().add(R.string.recent_timeline).setOnMenuItemClickListener(item -> {
+            withLocalSpace(()->startActivity(XsRecentTimelineActivity.intent(this,XsLocalSpaces.current(this))));
+            return true;
         });
         menu.getMenu().add(R.string.assets).setOnMenuItemClickListener(item -> {
             withLocalSpace(()->startActivity(XsAssetsActivity.intent(this,XsLocalSpaces.current(this))));

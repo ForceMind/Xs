@@ -68,6 +68,7 @@ public final class XsHistoryActivity extends Activity {
     public static final int ID_CLEAR_HISTORY = 0x8109;
     public static final int ID_OWN_ACTIONS = 0x810a;
     public static final int ID_BACKUP = 0x810b;
+    public static final int ID_RECENT_TIMELINE = 0x810c;
 
     private static final class Row {
         final String id, headline, detail, author, body, note, tags;
@@ -257,6 +258,8 @@ public final class XsHistoryActivity extends Activity {
         Button manage=button(tr("管理", "Manage")); manage.setId(ID_MANAGE);
         manage.setOnClickListener(v -> startActivity(XsLibraryManagementActivity.intent(this,library)));
         indexControls.addView(manage,weighted()); root.addView(indexControls);
+        Button recent=button(tr("最近时间线 · 临时缓冲", "Recent timeline · temporary"));recent.setId(ID_RECENT_TIMELINE);
+        recent.setOnClickListener(v -> startActivity(XsRecentTimelineActivity.intent(this,library)));root.addView(recent);
         setMode(Mode.HISTORY);
     }
 

@@ -14,6 +14,8 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import dev.forcemind.xs.android.NativePageCaptureController;
 import dev.forcemind.xs.android.XsArchiveDatabase;
 import dev.forcemind.xs.android.XsLibraryWrites;
+import dev.forcemind.xs.android.XsTimelineBuffer;
+import dev.forcemind.xs.core.TimelineCaptureSession;
 import dev.forcemind.xs.core.ArchiveSearch;
 import dev.forcemind.xs.core.CaptureSession;
 import dev.forcemind.xs.core.SnapshotPolicy;
@@ -43,6 +45,7 @@ public class NativeCaptureIntegrationTest {
     private final AtomicReference<String> html=new AtomicReference<>("");
     private final AtomicReference<String> navId=new AtomicReference<>("");
     private volatile boolean deliberate;
+    private XsTimelineBuffer timeline;
     private final AtomicReference<CaptureSession.Event> lastOpen=new AtomicReference<>(),lastFeed=new AtomicReference<>();
 
     @Before public void setup() {
@@ -65,7 +68,7 @@ public class NativeCaptureIntegrationTest {
                 public void enriched(CaptureSession.Event e){write(e,()->db.recordSnapshot(LIBRARY,e.url,e.author,e.body,e.publishedAtMs,e.capturedAtMs,SnapshotPolicy.Source.POST_DETAIL,e.snapshotQuality),bodySaved);}
                 public void feed(CaptureSession.Event e){lastFeed.set(e);write(e,()->{db.recordMeasuredFeed(LIBRARY,e.url,e.source,e.author,null,e.publishedAtMs,e.wallTimeMs,e.exposureId,e.durationMs,e.thresholdMs);db.recordSnapshot(LIBRARY,e.url,e.author,e.body,e.publishedAtMs,e.capturedAtMs,SnapshotPolicy.Source.FEED_VISIBLE,SnapshotPolicy.Quality.PARTIAL);},feedSaved);}
             });
-            controller.set(capture);capture.setConsent(true,true,3000);capture.resume();
+            controller.set(capture);capture.setFeedContext("home_for_you");capture.setConsent(true,true,3000);capture.resume();
             web.setWebViewClient(activity.new Client(){
                 @Override public WebResourceResponse shouldInterceptRequest(WebView view,WebResourceRequest req){
                     return new WebResourceResponse("text/html","UTF-8",new ByteArrayInputStream(html.get().getBytes(StandardCharsets.UTF_8)));
@@ -80,7 +83,9 @@ public class NativeCaptureIntegrationTest {
     @After public void teardown()throws Exception {
         if(scenario!=null){scenario.onActivity(activity->controller.get().destroy());scenario.close();}
         CountDownLatch drained=new CountDownLatch(1);XsLibraryWrites.invalidateAndSubmit(LIBRARY,drained::countDown);
-        assertTrue(drained.await(10,TimeUnit.SECONDS));db.close();app.deleteDatabase("xs-local-history.db");
+        assertTrue(drained.await(10,TimeUnit.SECONDS));
+        if(timeline!=null){CountDownLatch clear=new CountDownLatch(1);timeline.clear(LIBRARY,ok->clear.countDown());assertTrue(clear.await(10,TimeUnit.SECONDS));timeline.configure(false,48,100);}
+        db.close();app.deleteDatabase("xs-local-history.db");
     }
     private void load(String url,String nativeId,boolean userNavigation,String content)throws Exception {
         html.set(content);navId.set(nativeId);deliberate=userNavigation;
@@ -108,6 +113,56 @@ public class NativeCaptureIntegrationTest {
     private static String page(String body){return "<!doctype html><meta name='viewport' content='width=device-width,initial-scale=1'>"+
         "<style>body{margin:0}article{box-sizing:border-box;width:100vw;height:65vh;padding:20px;background:#fff}a{display:block}</style>"+body;}
     private static String card(String id,String text){return "<article data-testid='tweet' id='p"+id+"'><a href='https://x.com/alice/status/"+id+"'><time datetime='2026-11-01T00:00:00Z'>date</time></a><div data-testid='tweetText'>"+text+"</div></article>";}
+    @Test public void independentBufferFindsQuickPartialCardsAndPriorRefreshBatchesWithoutHistory()throws Exception {
+        timeline=XsTimelineBuffer.get(app);timeline.configure(true,48,100);
+        AtomicReference<CountDownLatch> saved=new AtomicReference<>(new CountDownLatch(1));
+        AtomicReference<TimelineCaptureSession.Event> observed=new AtomicReference<>();
+        scenario.onActivity(activity->{
+            NativePageCaptureController capture=controller.get();capture.setConsent(false,false,3000);
+            capture.setBufferSink(event->{
+                observed.set(event);XsTimelineBuffer.Ticket ticket=timeline.ticket(LIBRARY);
+                timeline.queue(ticket,new XsTimelineBuffer.Batch(event.batchId,event.batchReason,event.source),
+                    new XsTimelineBuffer.Candidate(event.url,event.author,event.body,event.publishedAtMs,event.quality,event.observedAtMs,event.sequence),
+                    ()->capture.isCurrent(event),ok->{if(ok)saved.get().countDown();});
+            });
+            capture.setBufferConsent(true);
+        });
+        String partial=card("140","quick partial offline body").replace("<article ","<article style='height:100vh;transform:translateY(50vh)' ");
+        load("https://x.com/home","buffer-first-document",false,page("<main>"+partial+"</main>"));
+        assertTrue("Partial intersection needs no qualified dwell",saved.get().await(8,TimeUnit.SECONDS));
+        TimelineCaptureSession.Event first=observed.get();assertNotNull(first);assertEquals(SnapshotPolicy.Quality.PARTIAL,first.quality);
+        assertEquals("quick partial offline body",first.body);
+        evaluate("document.querySelector('article').style.display='none'");
+        assertEquals(1,timeline.list(LIBRARY,"offline",null,20,0).size());
+        assertEquals(1,timeline.batches(LIBRARY).size());
+        saved.set(new CountDownLatch(1));
+        scenario.onActivity(activity->controller.get().refreshed());
+        evaluate("document.querySelector('main').innerHTML="+org.json.JSONObject.quote(card("141","after refresh offline body")));
+        assertTrue(saved.get().await(8,TimeUnit.SECONDS));
+        assertEquals("native_refresh",observed.get().batchReason);
+        assertEquals(2,timeline.batches(LIBRARY).size());
+        assertEquals("140",timeline.list(LIBRARY,"quick partial",first.batchId,20,0).get(0).postId);
+        saved.set(new CountDownLatch(1));
+        evaluate("document.querySelector('main').outerHTML="+org.json.JSONObject.quote("<main>"+card("142","suspected structural refresh")+"</main>"));
+        assertTrue(saved.get().await(8,TimeUnit.SECONDS));
+        assertEquals("suspected_refresh",observed.get().batchReason);
+        TimelineCaptureSession.Event old=observed.get();
+        scenario.onActivity(activity->{controller.get().setBufferConsent(false);controller.get().setBufferConsent(true);});
+        assertFalse("Revoked accepted work does not revive",controller.get().isCurrent(old));
+        long dropped=timeline.stats(LIBRARY).dropped;
+        scenario.onActivity(activity->{
+            controller.get().setBufferStore(timeline);
+            for(int i=0;i<512;i++)controller.get().refreshed();
+        });
+        long until=SystemClock.elapsedRealtime()+5000;
+        while(timeline.stats(LIBRARY).dropped==dropped&&SystemClock.elapsedRealtime()<until)SystemClock.sleep(30);
+        assertTrue("Native admission limits reach the coverage UI's persistent counter",timeline.stats(LIBRARY).dropped>dropped);
+        scenario.onActivity(activity->controller.get().pause());
+        CountDownLatch drained=new CountDownLatch(1);XsLibraryWrites.submit(LIBRARY,drained::countDown);assertTrue(drained.await(5,TimeUnit.SECONDS));
+        try(Cursor c=db.timeline(LIBRARY,null,10,"OPEN_POST")){assertEquals(0,c.getCount());}
+        try(Cursor c=db.timeline(LIBRARY,null,10,"FEED_VISIBLE")){assertEquals(0,c.getCount());}
+    }
+
     @Test public void immediateOpenLateBodyReloadAndQuickReturn()throws Exception {
         openSaved.set(new CountDownLatch(1));
         load("https://x.com/alice/status/123","native-open-1",true,page("<div id='pending'></div>"));
@@ -128,7 +183,36 @@ public class NativeCaptureIntegrationTest {
         assertTrue(openSaved.get().await(5,TimeUnit.SECONDS));
         try(Cursor c=db.timeline(LIBRARY,null,10,"OPEN_POST")){assertEquals(2,c.getCount());}
     }
+    @Test public void canonicalDetailsEnrichDelayedBodiesWithoutAnotherOpen()throws Exception {
+        openSaved.set(new CountDownLatch(1));
+        load("https://x.com/i/web/status/125","native-canonical",true,page("<div id='pending'></div>"));
+        assertTrue(openSaved.get().await(5,TimeUnit.SECONDS));
+        bodySaved.set(new CountDownLatch(1));
+        evaluate("document.getElementById('pending').innerHTML="+org.json.JSONObject.quote(card("125","规范链接正文").replace("/alice/status/","/i/web/status/")));
+        assertTrue("Canonical detail enriches its original open",bodySaved.get().await(10,TimeUnit.SECONDS));
+        ArchiveSearch.Filter q=new ArchiveSearch.Filter();q.keyword="规范链接正文";
+        try(Cursor c=db.search(LIBRARY,q)){assertEquals(1,c.getCount());}
+        try(Cursor c=db.timeline(LIBRARY,null,10,"OPEN_POST")){assertEquals(1,c.getCount());}
+    }
+    @Test public void actualFeedRoutesAndNativeContextsDetermineExposureSource()throws Exception {
+        scenario.onActivity(activity->{controller.get().setConsent(false,true,1200);controller.get().setFeedContext("home_following");});
+        feedSaved.set(new CountDownLatch(1));
+        load("https://x.com/home?next=/search","native-source-home",false,page(card("126","home query")));
+        assertTrue(feedSaved.get().await(8,TimeUnit.SECONDS));assertEquals("home_following",lastFeed.get().source);
+        feedSaved.set(new CountDownLatch(1));
+        load("https://x.com/search?q=/home","native-source-search",false,page(card("127","search route")));
+        assertTrue(feedSaved.get().await(8,TimeUnit.SECONDS));assertEquals("search_results",lastFeed.get().source);
+        feedSaved.set(new CountDownLatch(1));
+        load("https://x.com/explore","native-source-explore",false,page(card("128","unsupported explore source")));
+        assertFalse("Explore never falls back to For You",feedSaved.get().await(1800,TimeUnit.MILLISECONDS));
+        scenario.onActivity(activity->controller.get().setFeedContext(null));
+        load("https://x.com/home","native-source-unknown",false,page(card("129","unknown home source")));
+        assertFalse("Unverified home context has no dwell provenance",feedSaved.get().await(1800,TimeUnit.MILLISECONDS));
+        try(Cursor c=db.timeline(LIBRARY,null,10,"FEED_VISIBLE")){assertEquals(2,c.getCount());}
+    }
     @Test public void noClickDwellIsMeasuredAndOfflineNeverOpenedSearchWorks()throws Exception {
+        timeline=XsTimelineBuffer.get(app);timeline.configure(true,48,100);
+        scenario.onActivity(activity->{controller.get().setBufferStore(timeline);controller.get().setBufferConsent(true);});
         feedSaved.set(new CountDownLatch(1));
         load("https://x.com/home","native-feed",false,page(card("456","停留正文 target")+"<div id='short' style='display:none'>"+card("789","一秒正文 skipped")+"</div>"));
         assertTrue("Default three-second continuous dwell",feedSaved.get().await(12,TimeUnit.SECONDS));
@@ -143,6 +227,8 @@ public class NativeCaptureIntegrationTest {
         try(Cursor c=db.timeline(LIBRARY,null,10,"FEED_VISIBLE")){assertEquals(1,c.getCount());assertTrue(c.moveToFirst());assertTrue(c.getLong(c.getColumnIndexOrThrow("duration_ms"))>=3000);}
         q.keyword="一秒正文";q.minDwellMs=null;
         try(Cursor c=db.search(LIBRARY,q)){assertEquals(0,c.getCount());}
+        assertEquals("Both consents enabled: the sustained card enters temporary buffer too",1,timeline.list(LIBRARY,"停留正文",null,10,0).size());
+        assertEquals("Both consents enabled: the one-second card enters only temporary buffer",1,timeline.list(LIBRARY,"一秒正文",null,10,0).size());
         try(Cursor c=db.timeline(LIBRARY,null,10,"OPEN_POST")){assertEquals(0,c.getCount());}
     }
     @Test public void overlayAndBackgroundBreakContinuousIntervals()throws Exception {

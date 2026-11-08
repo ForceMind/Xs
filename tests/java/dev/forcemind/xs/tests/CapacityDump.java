@@ -18,6 +18,7 @@ public final class CapacityDump {
         for(String ddl:ArchiveSchema.MIGRATE_2_TO_3)line("M3",ddl);
         for(String ddl:ArchiveSchema.MIGRATE_3_TO_4)line("M4",ddl);
         for(String ddl:ArchiveSchema.MIGRATE_4_TO_5)line("M5",ddl);
+        for(String ddl:ArchiveSchema.MIGRATE_5_TO_6)line("M6",ddl);
         query("RECENT",new ArchiveSearch.Filter());
         ArchiveSearch.Filter f=new ArchiveSearch.Filter();f.keyword="needle";query("LATIN",f);
         f=new ArchiveSearch.Filter();f.keyword="容量";query("CJK",f);

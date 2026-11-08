@@ -10,10 +10,12 @@
             android:exported="false"
             android:label="Xs Local Archive" />
         <activity android:name="dev.forcemind.xs.android.XsAssetsActivity" android:exported="false" android:label="Xs Assets" />
+        <activity android:name="dev.forcemind.xs.android.XsRecentTimelineActivity" android:exported="false" android:label="Xs Recent Timeline" />
         <activity android:name="dev.forcemind.xs.android.XsBackupActivity" android:exported="false" android:label="Xs Metadata Backup" />
         <activity android:name="dev.forcemind.xs.android.XsLibrariesActivity" android:exported="false" android:label="Xs Libraries" />
         <activity android:name="dev.forcemind.xs.android.XsLibraryManagementActivity" android:exported="false" android:label="Xs Library Management" />
         <service android:name="dev.forcemind.xs.android.XsDownloadJobService" android:exported="false" android:permission="android.permission.BIND_JOB_SERVICE" />
+        <service android:name="dev.forcemind.xs.android.XsTimelineMaintenanceJobService" android:exported="false" android:permission="android.permission.BIND_JOB_SERVICE" />
         <provider android:name="dev.forcemind.xs.android.XsRuntimeInitializer"
             android:authorities="${applicationId}.xs.runtime" android:exported="false"
             android:initOrder="100" />

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Real SQLite/FTS capacity and preserving v1->v5 migration, using evaluated runtime SQL.
+"""Real SQLite/FTS capacity and preserving v1->v6 migration, using evaluated runtime SQL.
 
 Run with a JDK on PATH:
   python3 tests/sqlite_capacity_benchmark.py --sizes 10000 100000 --output /tmp/xs-capacity.json
@@ -78,7 +78,7 @@ def benchmark(count, groups, directory, compare_legacy):
     if compare_legacy and count <= 10000:
         _, legacy_ms = measure(lambda: con.execute("SELECT (SELECT MAX(e.event_at_ms) FROM history_events e WHERE e.account_id=p.account_id AND e.post_id=p.post_id AND e.event_type='OPEN_POST') FROM posts p WHERE p.account_id=?",(LIBRARY,)).fetchall())
     migration_ms = {}
-    for version in range(2,6):
+    for version in range(2,7):
         def migrate():
             with con:
                 for ddl in groups[f"M{version}"]:

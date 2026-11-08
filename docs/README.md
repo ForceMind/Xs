@@ -4,7 +4,7 @@
 
 用户已确认增加独立临时缓冲：默认关闭、48小时/应用级100MiB可调、只保存允许时间线已呈现且被观察到的帖子字段与本地批次。0.5–1秒快划可暂存，但不因此产生合格停留、打开、收藏或已读；原1.2/3/5秒和60%可读FEED规则不变。接口预取/未呈现/未采样项目不承诺覆盖。临时正文和FTS必须真正可回收，不直接复用只清历史事件的retention。
 
-当前只完成规范与新对话交接，F1–F5源码/运行验收均未完成；基线edf7906的CI83不验证新功能。跟踪[Issue #6](https://github.com/ForceMind/Xs/issues/6)，读[专项方案](TIMELINE_BUFFER_PLAN.zh-CN.md)、[ADR-0005](adr/0005-timeline-buffer.md)、[接续指令](WORK_HANDOFF_PROMPT.zh-CN.md)。先修[来源误分类P2](https://github.com/ForceMind/Xs/pull/5#discussion_r4504042361)，再实施F1策略/临时SQLite/TTL/配额，连续进入F2观察器、F3原生查找/持久提升、F4回收与F5真实回归；不要重新实现已验收的E工作代替新任务。
+当前已实现独立临时SQLite/FTS、TTL/配额/回收、合成观察器原生缓冲批次、原生查找/设置与Archive v6幂等晋升源码。三项P2已补修复与回归源码。实际构建、四API/driver结果和残留失败统一见[当前证据](XS16_IMPLEMENTATION_EVIDENCE.zh-CN.md)，不以旧CI83替代新功能验证。跟踪[Issue #6](https://github.com/ForceMind/Xs/issues/6)，真实X/真机T14保持独立。
 
 
 复查review和当前源码另确认两项应先复现修复：规范i/web/status链接在JS观察器匹配中缺失（r4500601373）；备份选择器Activity重建丢实例requestTicket（r4501080305虽outdated，当前仍无保留/恢复且manifest无configChanges）。新对话补DOM/WebView和实际SAF重建回归，密码不得持久保存。其它outdated评论须以当前源码/证据确认，不能自动当已解决。本轮仅记录，未修runtime。

@@ -216,25 +216,33 @@ public final class BrowserInteractionIntegrationTest {
             (label.contentEquals(node.getText()==null?"":node.getText())||label.contentEquals(node.getContentDescription()==null?"":node.getContentDescription()));
     }
     private void activateFixtureSidebarRow(){
-        AccessibilityNodeInfo title=awaitNode(this::fixtureSidebarRoot);
-        for(int depth=0;title!=null&&depth<12;depth++) {
-            AccessibilityNodeInfo parent=title.getParent();if(parent==null)break;
-            String id=parent.getViewIdResourceName();CharSequence type=parent.getClassName();
-            boolean rootList=(id!=null&&(id.equals("android:id/list")||id.endsWith(":id/roots_list")))||
-                (type!=null&&type.toString().equals("android.widget.ListView"));
-            if(rootList) {
-                assertTrue("Only the actual clickable system sidebar item is activated",title.refresh()&&systemDocumentNode(title)&&title.isClickable());
-                assertNotNull("The refreshed direct item still contains this exact fixture title",visit(title,
-                    n->systemDocumentNode(n)&&BrowserDocumentsProvider.TITLE.contentEquals(n.getText()==null?"":n.getText()),new int[]{0}));
-                AccessibilityNodeInfo active=instrumentation.getUiAutomation().getRootInActiveWindow();
-                assertTrue("The system picker remains active",active!=null&&systemDocumentNode(active));
-                Rect row=new Rect(),window=new Rect();title.getBoundsInScreen(row);active.getBoundsInScreen(window);
-                assertTrue("The direct fixture item is clipped inside the active picker",row.intersect(window)&&!row.isEmpty());
-                assertTrue("Activate the exact actual roots-list item",title.performAction(AccessibilityNodeInfo.ACTION_CLICK));return;
+        // DocumentsUI can replace/rebind a roots item while opening its drawer.
+        // A previously found title/ancestor is therefore not an operation identity.
+        // Reacquire the exact fixture title and its clickable ancestor together;
+        // never fall back to a different provider or the whole roots container.
+        long deadline=SystemClock.elapsedRealtime()+20000;
+        while(SystemClock.elapsedRealtime()<deadline) {
+            AccessibilityNodeInfo title=find(this::fixtureSidebarRoot),clickable=null,item=null;
+            for(int depth=0;title!=null&&depth<12;depth++) {
+                if(clickable==null&&systemDocumentNode(title)&&title.isClickable())clickable=title;
+                AccessibilityNodeInfo parent=title.getParent();if(parent==null)break;
+                String id=parent.getViewIdResourceName();CharSequence type=parent.getClassName();
+                boolean rootList=(id!=null&&(id.equals("android:id/list")||id.endsWith(":id/roots_list")))||
+                    (type!=null&&type.toString().equals("android.widget.ListView"));
+                if(rootList){item=title;break;}
+                title=parent;
             }
-            title=parent;
+            AccessibilityNodeInfo active=instrumentation.getUiAutomation().getRootInActiveWindow();
+            if(item!=null&&clickable!=null&&item.refresh()&&clickable.refresh()&&
+                systemDocumentNode(item)&&systemDocumentNode(clickable)&&clickable.isClickable()&&
+                active!=null&&systemDocumentNode(active)&&visit(clickable,
+                    n->systemDocumentNode(n)&&BrowserDocumentsProvider.TITLE.contentEquals(n.getText()==null?"":n.getText()),new int[]{0})!=null) {
+                Rect row=new Rect(),window=new Rect();clickable.getBoundsInScreen(row);active.getBoundsInScreen(window);
+                if(row.intersect(window)&&!row.isEmpty()&&clickable.performAction(AccessibilityNodeInfo.ACTION_CLICK))return;
+            }
+            SystemClock.sleep(50);
         }
-        throw new AssertionError("The exact fixture title has no direct system roots-list item");
+        throw new AssertionError("The exact fixture title has no current clickable system roots-list item");
     }
     private boolean confirmedFixtureDirectoryActive(){
         return fixtureDirectoryConfirmed&&isDocumentsUi()&&find(this::fixtureSidebarRoot)==null;

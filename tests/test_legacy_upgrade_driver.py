@@ -106,7 +106,7 @@ class Fixture:
                 elif phase == "cleanup":
                     output = "OK (1 test)\n"
                 else:
-                    values = {"schema": 2 if phase == "seed" else 5, "uid": 10082,
+                    values = {"schema": 2 if phase == "seed" else 6, "uid": 10082,
                               "pid": 1001 if phase == "seed" else 1003,
                               "db_path": DB_PATH, "scope": SCOPE}
                     if self.scenario == "wrong-seed-schema" and phase == "seed": values["schema"] = 5
@@ -189,7 +189,7 @@ class LegacyUpgradeDriverTests(unittest.TestCase):
         installs = [x for x in fixture.commands if x[:2] == ["adb", "install"]]
         self.assertEqual(3, len(installs))
         self.assertTrue(all(x[2:4] == ["-r", "-t"] for x in installs))
-        self.assertEqual([2, 5], [report["seed"]["schema"], report["verify"]["schema"]])
+        self.assertEqual([2, 6], [report["seed"]["schema"], report["verify"]["schema"]])
         self.assertEqual(10082, report["installed_current"]["uid"])
         self.assertTrue(report["current_build_outputs_preserved"])
         self.assertIsNone(report["apk_artifacts"][2]["version_code"])
@@ -211,7 +211,7 @@ class LegacyUpgradeDriverTests(unittest.TestCase):
                     with self.subTest(phase=phase, first=key, framing=framing):
                         fixture, report, _ = self.exercise("runner-prefix:" + phase + ":" + key + ":" + framing, expected_failure=False)
                         self.assertEqual(["seed", "verify", "cleanup"], fixture.phases())
-                        self.assertEqual([2, 5], [report["seed"]["schema"], report["verify"]["schema"]])
+                        self.assertEqual([2, 6], [report["seed"]["schema"], report["verify"]["schema"]])
 
     def test_duplicate_plain_or_exact_prefixed_status_remains_rejected(self):
         for phase in ("seed", "verify"):
@@ -257,7 +257,7 @@ class LegacyUpgradeDriverTests(unittest.TestCase):
             with self.subTest(scenario=scenario):
                 fixture, report, _ = self.exercise(scenario)
                 self.assertEqual(["seed", "verify"], fixture.phases())
-                self.assertEqual("native_schema5_verification", report["failure_stage"])
+                self.assertEqual("native_schema6_verification", report["failure_stage"])
 
     def test_native_cleanup_failure_cannot_report_pass(self):
         fixture, report, _ = self.exercise("cleanup-failure")

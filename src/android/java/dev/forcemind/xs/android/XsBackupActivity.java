@@ -32,7 +32,7 @@ public final class XsBackupActivity extends Activity {
     private static final int EXPORT=901,IMPORT=902,EXPORT_FULL=903,IMPORT_FULL=904;
     private final ThreadPoolExecutor reader=new ThreadPoolExecutor(1,1,0,TimeUnit.MILLISECONDS,new ArrayBlockingQueue<>(2));
     private String library;private TextView status;private boolean busy;private volatile boolean destroyed;
-    private XsLibraryWrites.Ticket requestTicket;
+    private XsBackupRequest pendingRequest;
     private char[] pendingPassword;private volatile char[] processingPassword;
     private XsFullBackup.Prepared fullPreview;
     private AlertDialog passwordDialog;
@@ -40,7 +40,16 @@ public final class XsBackupActivity extends Activity {
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
         library=getIntent().getStringExtra(EXTRA_LIBRARY);
-        if(library==null||library.isEmpty()||library.length()>256){finish();return;}
+        Object retained=getLastNonConfigurationInstance();
+        if(library==null||library.isEmpty()||library.length()>256){
+            if(retained instanceof XsBackupRequest)((XsBackupRequest)retained).close();
+            finish();return;
+        }
+        if(retained instanceof XsBackupRequest) {
+            XsBackupRequest request=(XsBackupRequest)retained;
+            if(request.isCurrent(library)){pendingRequest=request;busy=true;}
+            else request.close();
+        }
         LinearLayout root=new LinearLayout(this);root.setOrientation(LinearLayout.VERTICAL);root.setPadding(24,16,24,16);
         TextView title=new TextView(this);title.setText(tr("Xs 资料备份与恢复","Xs library backup & restore"));title.setTextSize(22);root.addView(title);
         TextView scope=new TextView(this);scope.setText(tr(
@@ -60,14 +69,16 @@ public final class XsBackupActivity extends Activity {
     }
     private void picker(int mode) {
         try {
-            requestTicket=XsLibraryWrites.ticket(library);
+            if(pendingRequest!=null)return;
+            XsBackupRequest request=new XsBackupRequest(library,mode,pendingPassword);
+            pendingPassword=null;pendingRequest=request;busy=true;
             boolean exporting=mode==EXPORT||mode==EXPORT_FULL;
             Intent pick=new Intent(exporting?Intent.ACTION_CREATE_DOCUMENT:Intent.ACTION_OPEN_DOCUMENT)
                 .addCategory(Intent.CATEGORY_OPENABLE).setType(exporting?"application/octet-stream":"*/*");
             if(exporting)pick.putExtra(Intent.EXTRA_TITLE,mode==EXPORT_FULL?"xs-library-encrypted.xsbackup":"xs-library-metadata.xsmeta");
-            startActivityForResult(pick,mode);
-        }catch(ActivityNotFoundException failure){wipePassword();toast(tr("没有可用的文件选择器","No document picker available"));}
-        catch(RuntimeException failure){wipePassword();toast(tr("资料任务繁忙，请重试","Library tasks busy; retry"));}
+            startActivityForResult(pick,request.requestCode);
+        }catch(ActivityNotFoundException failure){clearRequest();wipePassword();busy=false;toast(tr("没有可用的文件选择器","No document picker available"));}
+        catch(RuntimeException failure){clearRequest();wipePassword();busy=false;toast(tr("资料任务繁忙，请重试","Library tasks busy; retry"));}
     }
     private void password(int mode) {
         busy=true;LinearLayout fields=new LinearLayout(this);fields.setOrientation(LinearLayout.VERTICAL);fields.setPadding(32,8,32,8);
@@ -93,15 +104,20 @@ public final class XsBackupActivity extends Activity {
     private void wipePassword(){if(pendingPassword!=null){Arrays.fill(pendingPassword,'\0');pendingPassword=null;}}
     @Override protected void onActivityResult(int request,int result,Intent data) {
         super.onActivityResult(request,result,data);
-        if(request!=EXPORT&&request!=IMPORT&&request!=EXPORT_FULL&&request!=IMPORT_FULL)return;
-        if(result!=RESULT_OK||data==null||data.getData()==null){requestTicket=null;wipePassword();busy=false;return;}
-        Uri uri=data.getData();final XsLibraryWrites.Ticket ticket=requestTicket;requestTicket=null;
-        if(ticket==null||!XsLibraryWrites.isCurrent(ticket)||!"content".equals(uri.getScheme())) {
-            wipePassword();toast(tr("资料状态已改变，请重新选择文件","Library state changed; choose the file again"));return;
+        // A late or duplicate result must not cancel/consume another pending operation.
+        XsBackupRequest selected=pendingRequest;
+        if(selected==null||!selected.matches(request))return;
+        pendingRequest=null;
+        if(result!=RESULT_OK||data==null||data.getData()==null){selected.close();wipePassword();busy=false;return;}
+        Uri uri=data.getData();final XsLibraryWrites.Ticket ticket=selected.ticket;final int mode=selected.mode;
+        if(!selected.isCurrent(library)||!"content".equals(uri.getScheme())) {
+            selected.close();wipePassword();busy=false;toast(tr("资料状态已改变，请重新选择文件","Library state changed; choose the file again"));return;
         }
+        char[] password=selected.takePassword();selected.close();
         busy=true;status.setText(tr("正在处理所选文件…","Processing the selected file…"));
-        if(request==EXPORT_FULL||request==IMPORT_FULL){fullFile(request,uri,ticket);return;}
-        if(request==EXPORT) {
+        if(mode==EXPORT_FULL||mode==IMPORT_FULL){fullFile(mode,uri,ticket,password);return;}
+        if(password!=null)Arrays.fill(password,'\0');
+        if(mode==EXPORT) {
             boolean accepted=XsLibraryWrites.submit(ticket,()-> {
                 boolean success=false;
                 try(OutputStream out=getContentResolver().openOutputStream(uri,"w")) {
@@ -128,8 +144,7 @@ public final class XsBackupActivity extends Activity {
             }); }catch(RuntimeException busyQueue){done(tr("任务繁忙，请重试","Tasks busy; retry"));}
         }
     }
-    private void fullFile(int mode,Uri uri,XsLibraryWrites.Ticket ticket) {
-        final char[] password=pendingPassword;pendingPassword=null;
+    private void fullFile(int mode,Uri uri,XsLibraryWrites.Ticket ticket,final char[] password) {
         if(password==null){done(tr("请重新输入备份口令并选择文件。","Enter the backup password and choose the file again."));return;}
         processingPassword=password;
         try {reader.execute(()-> {
@@ -215,9 +230,15 @@ public final class XsBackupActivity extends Activity {
             case "favorites":return tr("收藏","Favorites");case "post_categories":return tr("分类关联","Folder links");case "post_tags":return tr("标签","Tags");
             case "own_actions":return tr("本人行为记录","Own-action records");default:return tr("行为事件","Action events");}
     }
+    private void clearRequest(){if(pendingRequest!=null){pendingRequest.close();pendingRequest=null;}}
+    @Override public Object onRetainNonConfigurationInstance() {
+        // The old Activity detaches before destruction. Framework saved state never sees
+        // the ticket or password; a killed process cannot reconstruct this authorization.
+        XsBackupRequest retained=pendingRequest;pendingRequest=null;return retained;
+    }
     private void done(String message){if(destroyed)return;busy=false;status.setText(message);toast(message);}
     private void toast(String message){if(!destroyed)Toast.makeText(this,message,Toast.LENGTH_LONG).show();}
     private void add(LinearLayout root,String title,Runnable action){Button button=new Button(this);button.setAllCaps(false);button.setText(title);button.setOnClickListener(v->action.run());root.addView(button);}
     private String tr(String chinese,String english){return getResources().getConfiguration().getLocales().get(0).getLanguage().equals("zh")?chinese:english;}
-    @Override protected void onDestroy(){destroyed=true;wipePassword();char[] active=processingPassword;if(active!=null)Arrays.fill(active,'\0');if(passwordDialog!=null)passwordDialog.dismiss();if(fullPreview!=null)closeFull(fullPreview);reader.shutdownNow();super.onDestroy();}
+    @Override protected void onDestroy(){destroyed=true;clearRequest();wipePassword();char[] active=processingPassword;if(active!=null)Arrays.fill(active,'\0');if(passwordDialog!=null)passwordDialog.dismiss();if(fullPreview!=null)closeFull(fullPreview);reader.shutdownNow();super.onDestroy();}
 }

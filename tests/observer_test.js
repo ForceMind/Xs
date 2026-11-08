@@ -2,7 +2,7 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
-let cards = [], occluded = false, dialog = false;
+let cards = [], occluded = false, dialog = false, mutation;
 const location = {origin:'https://x.com', pathname:'/home', href:'https://x.com/home'};
 const document = {
   visibilityState:'visible', documentElement:{},
@@ -20,7 +20,7 @@ function card(id,rect,body='可见正文') {
 }
 const sandbox={location,document,URL,Map,Set,Number,Date,Math,innerWidth:400,innerHeight:800,
   getComputedStyle:()=>({display:'block',visibility:'visible',opacity:'1'}),
-  MutationObserver:class{observe(){}disconnect(){}},
+  MutationObserver:class{constructor(fn){mutation=fn;}observe(){}disconnect(){}},
   setInterval:()=>1,clearInterval(){},addEventListener(){},removeEventListener(){},
   requestAnimationFrame:fn=>fn()};
 sandbox.window=sandbox;
@@ -35,6 +35,8 @@ occluded=true;assert.equal(read().cards.length,0);occluded=false;
 assert.notEqual(read().cards[0].run,run,'Real interruption creates another interval');
 cards=[card('124',{left:0,top:328,right:400,bottom:1128,width:400,height:800})];
 assert.equal(read().cards.length,0,'59% long-card overlap is ineligible');
+assert.equal(sandbox.__xsObserver.read(true).cards.length,1,'Independent buffer admits observed partial intersection');
+assert.equal(read().cards.length,0,'Buffer admission never lowers the FEED threshold');
 cards=[card('125',{left:0,top:320,right:400,bottom:1120,width:400,height:800})];
 assert.equal(read().cards.length,1,'60% is eligible');
 dialog=true;assert.equal(read().cards.length,0);dialog=false;
@@ -54,8 +56,16 @@ sandbox.getComputedStyle=()=>({display:'block',visibility:'visible',opacity:'1',
 cards=[completeCard];let evidence=read().cards[0].textEvidence;
 assert.equal(evidence.rawLength,textNode.innerText.length);assert.equal(evidence.textVisible,true);
 assert.equal(evidence.hasMore,false);assert.equal(evidence.lineClamp,0);
-textNode.innerText='x'.repeat(2047)+'😀';
+textNode.innerText='x'.repeat(2047)+'😀';mutation([]);
 const split=read().cards[0];assert.equal(split.body.length,2047,'UTF16 budget never splits an emoji');
 assert.equal(split.textEvidence.textVisible,false,'truncation cannot be complete evidence');
+// Regression r4500601373: native canonical links must retain delayed visible text.
+location.pathname='/i/web/status/128';location.href='https://x.com/i/web/status/128';
+assert.equal(read().cards.length,1,'Canonical detail URL can enrich the native immediate open');
+completeCard.querySelectorAll=()=>[{href:'https://x.com/i/web/status/128',closest:()=>completeCard,querySelector:()=>({})}];
+assert.equal(read().cards[0].url,'https://x.com/i/web/status/128','Canonical timestamp links identify their own card');
+location.pathname='/messages';location.href='https://x.com/messages';
+assert.equal(read().cards.length,0,'Canonical support never admits private routes');
+assert.equal(sandbox.__xsObserver.read(true).cards.length,0,'Buffer also rejects private routes');
 sandbox.__xsObserver.stop();assert.equal(read().cards.length,0);
 console.log('PASS packaged DOM observer: long-card geometry, 59/60%, overlays, sensitive routes, rebind/reentry, bounded escaped payload');

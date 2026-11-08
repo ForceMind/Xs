@@ -25,7 +25,7 @@ public final class LibraryBackupCodec {
     public static final class Header {
         public final int schemaVersion; public final long createdAtMs; public final String label;
         public Header(int schemaVersion,long createdAtMs,String label) {
-            if((schemaVersion!=3&&schemaVersion!=4&&schemaVersion!=5)||createdAtMs<=0||label==null||label.length()>120)
+            if((schemaVersion!=3&&schemaVersion!=4&&schemaVersion!=5&&schemaVersion!=6)||createdAtMs<=0||label==null||label.length()>120)
                 throw invalid();
             unicode(label);this.schemaVersion=schemaVersion;this.createdAtMs=createdAtMs;this.label=label;
         }

@@ -67,6 +67,10 @@ public final class XsArchiveDatabase extends SQLiteOpenHelper {
             for (String sql : ArchiveSchema.MIGRATE_4_TO_5) db.execSQL(sql);
             version = 5;
         }
+        if (version == 5 && newVersion >= 6) {
+            for (String sql : ArchiveSchema.MIGRATE_5_TO_6) db.execSQL(sql);
+            version = 6;
+        }
         if (version == newVersion) return;
         // Fail safely rather than deleting existing history for an unsupported version.
         throw new IllegalStateException("Xs migration required: " +
@@ -608,6 +612,68 @@ public final class XsArchiveDatabase extends SQLiteOpenHelper {
             db.setTransactionSuccessful();
             return true;
         } finally { db.endTransaction(); }
+    }
+
+    /**
+     * Archive-first half of explicit timeline promotion. Caller owns the shared writer ticket.
+     * The ledger keeps save facts idempotent while allowing later accepted body enrichment.
+     */
+    boolean promoteTimeline(String libraryId,dev.forcemind.xs.core.TimelinePromotionData item,
+                            boolean favorite,long savedAtMs,java.util.function.BooleanSupplier current) {
+        if(!valid(libraryId)||item==null||savedAtMs<=0||current==null)return false;
+        SQLiteDatabase db=getWritableDatabase();db.beginTransaction();
+        try {
+            if(XsLibraryWrites.isDeleted(libraryId)||!current.getAsBoolean())return false;
+            boolean exists=false,alreadyFavorited=false;
+            try(Cursor ledger=db.rawQuery("SELECT post_id,favorited_at_ms FROM timeline_promotions WHERE account_id=? AND promotion_id=?",
+                    new String[]{libraryId,item.promotionId})) {
+                if(ledger.moveToFirst()) {
+                    if(!item.postId.equals(ledger.getString(0)))return false;
+                    exists=true;alreadyFavorited=!ledger.isNull(1);
+                }
+            }
+            if(!exists) {
+                insertPostIfMissing(db,libraryId,item.postId,item.author,null,item.publishedAt,item.capturedAt);
+                // LOCAL_SAVE is an explicit permanent-save fact, not a visit or a social action.
+                try(Cursor saved=db.rawQuery("SELECT 1 FROM user_actions WHERE account_id=? AND post_id=? AND action_type='LOCAL_SAVE' LIMIT 1",
+                        new String[]{libraryId,item.postId})) {
+                    if(!saved.moveToFirst()) {
+                        ContentValues action=new ContentValues();action.put("account_id",libraryId);action.put("post_id",item.postId);
+                        action.put("action_type","LOCAL_SAVE");action.put("action_at_ms",savedAtMs);action.put("source","native_user_save");
+                        db.insertOrThrow("user_actions",null,action);
+                    }
+                }
+                ContentValues ledger=new ContentValues();ledger.put("account_id",libraryId);ledger.put("promotion_id",item.promotionId);
+                ledger.put("post_id",item.postId);ledger.put("captured_at_ms",item.capturedAt);ledger.put("snapshot_captured_at_ms",item.snapshotCapturedAt);ledger.put("saved_at_ms",savedAtMs);
+                ledger.put("timeline_source",item.source);ledger.put("batch_id",item.batchId);ledger.put("batch_reason",item.batchReason);
+                ledger.put("provenance",item.provenance);ledger.put("quality",item.quality.name());ledger.put("author_handle",item.author);
+                if(item.publishedAt==null)ledger.putNull("published_at_ms");else ledger.put("published_at_ms",item.publishedAt);
+                if(!item.body.isEmpty())ledger.put("content_hash",SnapshotPolicy.hash(item.body));
+                db.insertOrThrow("timeline_promotions",null,ledger);
+            }
+            // An appearance may be saved before its visible body arrives. A later explicit
+            // save enriches the same permanent post; the ledger/save time and visit facts stay stable.
+            updateKnownMetadata(db,libraryId,item.postId,item.author,item.body,item.publishedAt,item.snapshotCapturedAt,
+                SnapshotPolicy.Source.TIMELINE_BUFFER,item.quality);
+            if(exists&&!item.body.isEmpty()) {
+                ContentValues projection=new ContentValues();projection.put("snapshot_captured_at_ms",item.snapshotCapturedAt);
+                projection.put("quality",item.quality.name());projection.put("content_hash",SnapshotPolicy.hash(item.body));
+                projection.put("author_handle",item.author);
+                if(item.publishedAt==null)projection.putNull("published_at_ms");else projection.put("published_at_ms",item.publishedAt);
+                projection.put("provenance",item.provenance);
+                db.update("timeline_promotions",projection,"account_id=? AND promotion_id=?",new String[]{libraryId,item.promotionId});
+            }
+            if(favorite) {
+                ContentValues fav=new ContentValues();fav.put("account_id",libraryId);fav.put("post_id",item.postId);fav.put("favorited_at_ms",savedAtMs);
+                db.insertWithOnConflict("favorites",null,fav,SQLiteDatabase.CONFLICT_IGNORE);
+                if(!alreadyFavorited) {
+                    ContentValues ack=new ContentValues();ack.put("favorited_at_ms",savedAtMs);
+                    db.update("timeline_promotions",ack,"account_id=? AND promotion_id=?",new String[]{libraryId,item.promotionId});
+                }
+            }
+            if(XsLibraryWrites.isDeleted(libraryId)||!current.getAsBoolean())return false;
+            db.setTransactionSuccessful();return true;
+        }finally{db.endTransaction();}
     }
 
     private static boolean validOwnAction(String type) {

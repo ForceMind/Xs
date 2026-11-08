@@ -111,7 +111,7 @@ public final class CoreSmokeTest {
         gate.reset();
         yes(gate.shouldSave("a", "42", "home_for_you", true, 0.8, 1400, now + 500));
 
-        yes(ArchiveSchema.VERSION == 5);
+        yes(ArchiveSchema.VERSION == 6);
         yes(ArchiveSchema.CREATE.length >= 10);
         yes(ArchiveSchema.MIGRATE_1_TO_2.length > 1);
         boolean fts = false, cascade = false;

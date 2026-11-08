@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Disposable CI emulator: actual old-main APK/schema2 -> current APK/schema5.
+"""Disposable CI emulator: actual old-main APK/schema2 -> current APK/schema6.
 
 Both APKs are built from their real source trees with the same job-local debug key.
 The old target is populated through its native API by a reflection-only test probe.
@@ -135,7 +135,7 @@ class LegacyUpgradeDriver:
 
     def execute(self):
         self.output.mkdir(parents=True, exist_ok=True)
-        report = {"status": "FAIL", "scope": "Actual fixed old-main source APK/schema2 to current source APK/schema5, "
+        report = {"status": "FAIL", "scope": "Actual fixed old-main source APK/schema2 to current source APK/schema6, "
                   "using one job-local debug signer on a disposable CI emulator. Synthetic native records only; "
                   "not production-key, physical-device or live-X acceptance.", "phases": [],
                   "old_independent_favorites": "NOT APPLICABLE: absent in this old main",
@@ -231,19 +231,19 @@ class LegacyUpgradeDriver:
             if new_installed["uid"] != old_installed["uid"]:
                 raise RuntimeError("In-place upgrade changed the target UID")
             report["installed_current"] = new_installed
-            self.stage = "native_schema5_verification"
+            self.stage = "native_schema6_verification"
             verified = self.instrument("verify", {"stopped_pid": foreground, "expected_uid": seed["uid"],
                 "expected_path": seed["db_path"], "expected_scope": seed["scope"]})
-            if verified["schema"] != 5 or verified["uid"] != seed["uid"] or verified["pid"] in (seed["pid"], int(foreground)) or verified["db_path"] != seed["db_path"] or verified["scope"] != seed["scope"]:
+            if verified["schema"] != 6 or verified["uid"] != seed["uid"] or verified["pid"] in (seed["pid"], int(foreground)) or verified["db_path"] != seed["db_path"] or verified["scope"] != seed["scope"]:
                 raise RuntimeError("Cross-source/schema process, UID, fixed path or scope preservation not proven")
             report["verify"] = verified
-            report["phases"].append("current_source_apk_schema5_native_verification_pass")
+            report["phases"].append("current_source_apk_schema6_native_verification_pass")
             self.stage = "owned_fixture_cleanup"
             self.instrument("cleanup")
             if sha256(current) != original_current_hash or sha256(test) != original_test_hash:
                 raise RuntimeError("Current APK outputs changed during the legacy fixture")
             report["phases"].append("only_owned_synthetic_fixtures_cleaned")
-            report.update(status="PASS", source_schema_version=2, target_schema_version=5,
+            report.update(status="PASS", source_schema_version=2, target_schema_version=6,
                           external_native_probe_invocations=3)
             self.stage = "complete"
         except Exception as failure:
@@ -266,7 +266,7 @@ class LegacyUpgradeDriver:
             (self.output / "summary.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
         if original_failure is not None:
             raise original_failure
-        print("PASS actual old-main schema2 to current schema5 APK upgrade; synthetic CI debug signer only")
+        print("PASS actual old-main schema2 to current schema6 APK upgrade; synthetic CI debug signer only")
         return report
 
 

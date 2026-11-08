@@ -1,7 +1,7 @@
 # XS-16｜最近时间线：滚动缓冲与刷新找回
 
 日期：2026-11-07。范围已由用户确认，跟踪 [Issue #6](https://github.com/ForceMind/Xs/issues/6)，决策见 [ADR-0005](adr/0005-timeline-buffer.md)。
-**当前仅 F0 规范与交接；F1–F5 均未实现、未验收，live 采集保持关闭。**
+**F1–F4 已有运行时源码与回归；实际执行状态见[本轮证据](XS16_IMPLEMENTATION_EVIDENCE.zh-CN.md)，live采集保持关闭。**
 接续 PR #5 基线 `edf7906eee3c034d26631531feca822d15437ccc` / tree `7e5e8e6560fd766a51bb2d4c621d53ecab97fe64`。
 [CI83](https://github.com/ForceMind/Xs/actions/runs/42420707113) 的 1287 项 JVM 断言、23 项 host 检查、624/624 主仪器及 20/20 独立 driver 是已有 E 基线证据，不验证 XS-16。
 
@@ -89,7 +89,7 @@ GC 不因待晋升标记永久钉住临时数据；Archive 成功后临时删除
 先做 F1 源码/测试，再 F2–F4 连续推进；不可再以文档组件名宣称这些切片已经实现。
 每片提交记录 source/tree、实际命令、case、产物/系统/WebView身份；失败保留原证据，修复后重跑相关及最终回归。
 
-## 6. 验收 T01–T14（新增，当前全部 NOT RUN）
+## 6. 验收 T01–T14（执行状态见本轮证据）
 
 | 编号 | 可执行场景与必须观察的结果 |
 | --- | --- |
@@ -110,3 +110,5 @@ GC 不因待晋升标记永久钉住临时数据；Archive 成功后临时删除
 
 F5 运行仓库 AGENTS 所列 Java/SQLite/DOM/容量检查、Android构建双Lint、API26/27/30/36完整仪器及既有20个driver和新增用例；记录源SHA与实际APK，而非引用 CI83 冒充新代码验证。
 T14 由现场证据支持的限定适配单独启用；本轮不发布正式版，不借 Cookie/令牌导出或浏览器伪装解决兼容。
+
+实施修订：长期晋升需要明确来源与跨进程幂等，已采用保留性Archive v5→v6 additive ledger/source迁移；临时DB保持schema1，不改旧快照质量和浏览计数。新增原生会话最多1小时轮换一次批次，属于本地会话边界而非服务器响应；同批无正文收录凭据最长168小时防止过期/淘汰后重绑续命，凭据有界并计入总空间。

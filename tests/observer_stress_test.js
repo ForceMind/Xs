@@ -58,6 +58,10 @@ assert.ok(maxPayload < 65536);
 const beforeBody = bodyReads;
 for (let i = 0; i < 1000; i++) tick();
 assert.equal(bodyReads,beforeBody,'periodic geometry checks never materialize text');
+for (let i = 0; i < 1000; i++) read();
+assert.equal(bodyReads,beforeBody,'unchanged native polls reuse rendered text snapshots');
+mutation.fn([{target:nodes[0]}]);read();
+assert.equal(bodyReads,beforeBody+4,'unknown synthetic mutation invalidates the bounded viewport cache');
 for (let i = 0; i < 1000; i++) {
   blocked = true; mutation.fn([]); tick(); assert.equal(read().cards.length,0);
   blocked = false; assert.notEqual(read().cards[0].run,lastRun); lastRun = read().cards[0].run;

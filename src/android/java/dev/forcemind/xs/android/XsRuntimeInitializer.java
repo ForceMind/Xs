@@ -22,6 +22,13 @@ public final class XsRuntimeInitializer extends ContentProvider {
             try { if(app.getDatabasePath("xs-media.db").isFile())XsMediaRepository.recoverScheduled(app); }
             catch(Exception failure) { complete=false; }
             try { XsLibraryDeletion.retryPending(app); } catch(Exception failure) { complete=false; }
+            try {
+                if(app.getDatabasePath(XsTimelineBuffer.DATABASE_NAME).isFile()) {
+                    // Includes interrupted buffer-only clear barriers and tombstoned scopes.
+                    XsTimelineBuffer.get(app).maintainAsync(()->true,null);
+                    XsTimelineBuffer.scheduleMaintenance(app);
+                }
+            } catch(Exception failure) { complete=false; }
             // Only a fixed status bit: never exception messages, paths, URLs, passphrases or keys.
             app.getSharedPreferences("xs_runtime_recovery",Context.MODE_PRIVATE).edit().putBoolean("startup_dispatch_complete",complete).apply();
         });

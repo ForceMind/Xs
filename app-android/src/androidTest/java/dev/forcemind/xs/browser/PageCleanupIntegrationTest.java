@@ -162,7 +162,7 @@ public final class PageCleanupIntegrationTest {
             });
             // Open consent permits a DOM fixture read, while feed consent stays OFF until
             // hidden-card exclusion is proven. A feed route never produces an OPEN event.
-            capture.set(observer);observer.setConsent(true,false,1200);observer.resume();observer.navigation(HOME,"fixture-feed",false);observer.pageReady();
+            capture.set(observer);observer.setFeedContext("home_for_you");observer.setConsent(true,false,1200);observer.resume();observer.navigation(HOME,"fixture-feed",false);observer.pageReady();
         });
         awaitJs("window.__xsObserver&&window.__xsObserver.read().cards.length===2");
         options(true,false,false);awaitJs("document.getElementById('ad').style.getPropertyValue('display')==='none'");

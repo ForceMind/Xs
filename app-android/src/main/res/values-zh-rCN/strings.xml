@@ -25,6 +25,7 @@
     <string name="about">构建与兼容性</string>
     <string name="about_body">Xs %1$s\nAndroid %2$s（API %3$d）\nWebView %4$s\n\n内部 W0 验证版，自动采集关闭，支持手动保存帖子链接。直接登录、两步验证、Google、Apple、Passkey 均需分别验证。支持本机收藏、所选图片任务与文件分享。真实自动采集仍关闭，认证窗口需单独验证；相机、麦克风暂不支持。</string>
     <string name="local_archive">我的本机资料库</string>
+    <string name="recent_timeline">最近时间线</string>
     <string name="local_save">保存当前帖子链接</string>
     <string name="local_scope_title">创建本机资料空间？</string>
     <string name="local_scope_notice">Xs 将在本设备创建私有资料空间，用于手动保存帖子链接。这不是 X 登录身份，不会自动采集浏览记录。卸载应用可能丢失本地资料。</string>

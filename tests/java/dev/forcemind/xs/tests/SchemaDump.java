@@ -26,6 +26,9 @@ public final class SchemaDump {
         for (String migration : ArchiveSchema.MIGRATE_4_TO_5) {
             System.out.println("V5:" + Base64.getEncoder().encodeToString(migration.getBytes(StandardCharsets.UTF_8)));
         }
+        for (String migration : ArchiveSchema.MIGRATE_5_TO_6) {
+            System.out.println("V6:" + Base64.getEncoder().encodeToString(migration.getBytes(StandardCharsets.UTF_8)));
+        }
         for (String migration : ArchiveSchema.MIGRATE_1_TO_2) {
             System.out.println("MIGRATE:" + Base64.getEncoder().encodeToString(
                 migration.getBytes(StandardCharsets.UTF_8)));

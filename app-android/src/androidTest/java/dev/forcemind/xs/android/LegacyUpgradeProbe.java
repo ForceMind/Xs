@@ -109,7 +109,7 @@ public final class LegacyUpgradeProbe {
         assertTrue(browser.edit().putBoolean(NOTICE,false).commit());
         try(SQLiteOpenHelper helper=archive()) {
             SQLiteDatabase db=helper.getWritableDatabase();int schema=db.getVersion();
-            assertEquals(oldTarget?2:5,schema);assertTrue(p.edit().putInt("source_schema",schema).commit());
+            assertEquals(oldTarget?2:6,schema);assertTrue(p.edit().putInt("source_schema",schema).commit());
             write(scope,schema,()->{
                 assertTrue((Boolean)invoke(helper,"recordOpened",new Class<?>[]{String.class,String.class,String.class,String.class,Long.class,long.class},scope,url(post),p.getString("author",null),p.getString("body",null),base-1000,base+10));
                 assertTrue((Boolean)invoke(helper,"recordOpened",new Class<?>[]{String.class,String.class,String.class,String.class,Long.class,long.class},scope,url(post),p.getString("author",null),p.getString("body",null),base-1000,base+20));
@@ -149,9 +149,9 @@ public final class LegacyUpgradeProbe {
             assertEquals(args.getString("xs_legacy_expected_scope"),scope);
             assertNotEquals(p.getInt("seed_pid",-1),Process.myPid());
             int stopped=Integer.parseInt(args.getString("xs_legacy_stopped_pid","-1"));assertTrue(stopped>0);assertNotEquals(stopped,Process.myPid());
-        }else assertEquals(5,p.getInt("source_schema",-1));
+        }else assertEquals(6,p.getInt("source_schema",-1));
         try(SQLiteOpenHelper helper=archive()) {
-            SQLiteDatabase db=helper.getReadableDatabase();assertEquals(5,db.getVersion());
+            SQLiteDatabase db=helper.getReadableDatabase();assertEquals(6,db.getVersion());
             assertEquals(2,scalar(db,"SELECT COUNT(*) FROM posts WHERE account_id=? AND post_id IN (?,?)",scope,post,saved));
             if(upgraded)assertEquals(2,scalar(db,"SELECT COUNT(*) FROM posts WHERE account_id=?",scope));
             assertEquals(p.getLong("post_rowid",-1),scalar(db,"SELECT rowid FROM posts WHERE account_id=? AND post_id=?",scope,post));

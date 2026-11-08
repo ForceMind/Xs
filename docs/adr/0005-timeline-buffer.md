@@ -1,7 +1,7 @@
 # ADR-0005: Independent temporary timeline buffer
 
 Date: 2026-11-07
-Status: Accepted scope for XS-16; F0 documentation only. Runtime F1–F5 NOT IMPLEMENTED; live adapters remain OFF.
+Status: Accepted and implemented in source; execution evidence is tracked separately. Live adapters remain OFF.
 
 ## Context
 
@@ -45,3 +45,7 @@ Issue #3 real-X/W0 and physical-device checks remain an independent live-enablem
 - Save each original API response: exceeds the approved metadata/DOM boundary and captures unrelated hidden state.
 - Put temporary snapshots in Archive v5 and prune history rows: fails actual text/FTS expiry and changes persistent retention.
 - Keep an unbounded WebView/JS-only list: loses restart/offline search, native ownership, durable erasure and measurable quota control.
+
+## Implementation amendment: versioned durable promotion
+
+Archive schema6 adds only an additive `timeline_promotions` ledger and the explicit `native_timeline_buffer` snapshot source. v5 data/FTS is preserved; schema3/4/5 backup normalization, metadata consolidation and fixed old schema2 APK upgrade target6 are covered by new regressions. The ledger stores stable promotion identity, original capture time/source/batch/provenance/quality and separate explicit save/favorite times. It creates LOCAL_SAVE/favorite only; no OPEN/FEED or fabricated detail evidence. Buffer schema1 remains separate and excluded from backups. Archive commit precedes temporary acknowledgement; a missing acknowledgement never undoes a successful permanent save. See [execution evidence](../XS16_IMPLEMENTATION_EVIDENCE.zh-CN.md).

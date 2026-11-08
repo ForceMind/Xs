@@ -91,7 +91,7 @@ public final class LibraryBackupIntegrationTest {
     }
 
     @Test public void schemaThreeRestoreProjectsUnknownOwnActionsWithoutInventedTimesOrActor()throws Exception {
-        seed();Map<String,List<Map<String,Object>>> rows=mutable(inspect());rows.remove("own_actions");rows.remove("own_action_events");rows.remove("snapshot_versions");
+        seed();Map<String,List<Map<String,Object>>> rows=mutable(inspect());rows.remove("own_actions");rows.remove("own_action_events");rows.remove("snapshot_versions");rows.remove("timeline_promotions");
         for(Map<String,Object> post:rows.get("posts"))post.remove("current_snapshot_key");
         rows.get("user_actions").add(row("post_id","7101","action_type","ORIGINAL","action_at_ms",1500L,"source","local_x_archive"));
         rows.get("user_actions").add(row("post_id","7102","action_type","REPOST","action_at_ms",null,"source","legacy_fixture"));

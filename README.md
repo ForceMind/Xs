@@ -2,11 +2,11 @@
 
 [简体中文](README.md) | [English](README.en.md)
 
-**新增工作包：最近时间线（XS-16，尚未实现）。** 独立默认关闭；启用后默认48小时和应用级100MiB临时空间预算，均可调。先暂存已呈现且被观察到的帖子，意外刷新后按正文/作者/时间或批次找回；不增加打开、合格停留或收藏，不自动下载媒体，不保留任意接口原始响应。容量不足先淘汰最旧并显示实际覆盖范围，过期清临时正文/索引而保留长期资料。见[专项方案](docs/TIMELINE_BUFFER_PLAN.zh-CN.md)、[Issue #6](https://github.com/ForceMind/Xs/issues/6)和[新对话接续指令](docs/WORK_HANDOFF_PROMPT.zh-CN.md)。本次仅固化设计/交接，不计运行时通过；新对话先处理PR来源误分类P2，再执行F1。
+**最近时间线（XS-16）已进入源码实现，仍保持 live 采集关闭。** 独立默认关闭，默认48小时、全应用100MiB临时预算（1–168小时/25–500MiB可调）。独立SQLite/FTS保存实际观察到的可见卡片；原生列表支持离线正文/作者搜索、刷新批次找回、预览和长期保存/收藏。缓冲不会增加打开、合格停留或已读；到期清理不删长期资料或下载。v5→v6保留性迁移新增晋升幂等账本；临时数据不进入备份。源码、实际测试与未验证项见[本轮证据](docs/XS16_IMPLEMENTATION_EVIDENCE.zh-CN.md)、[Issue #6](https://github.com/ForceMind/Xs/issues/6)。
 
 **Xs 是独立研发、本地优先的 X 增强客户端工程。** 在应用中正常使用官方 X 网页，以应用自己的本机资料库保存打开历史、可选时间线停留、独立收藏和媒体，再通过 Android 系统分享选中的实际文件。不修改或重打包官方 X APK，不建设另一套社交后台。
 
-> **当前是内部开发 PoC，未发布正式版。** 本轮源码推进到 SQLite v5 快照版本、资料批量管理、系统下载调度、口令加密资源备份和持久整库删除；真实 X 自动采集、现场行为确认与网页精简仍关闭。新增源码、测试和限制见 [本轮可靠性与资料管理证据](docs/ROUND_D_EVIDENCE.zh-CN.md)。D轮CI74与文档checkpoint CI75已通过；本轮E已由CI82实际验证624主用例与20独立driver，真实站点与手机门槛不变。
+> **当前是内部开发 PoC，未发布正式版。** 本轮源码推进到 SQLite v6（保留 v5 快照版本）、资料批量管理、系统下载调度、口令加密资源备份和持久整库删除；真实 X 自动采集、现场行为确认与网页精简仍关闭。新增源码、测试和限制见 [本轮可靠性与资料管理证据](docs/ROUND_D_EVIDENCE.zh-CN.md)。D轮CI74与文档checkpoint CI75已通过；本轮E已由CI82实际验证624主用例与20独立driver，真实站点与手机门槛不变。
 
 
 本轮E验证源码 `2c667517e5a812232a8b41e7a3f99166855963e6` / tested tree `e52dfdd3f5f7b51751154bf1cf2601554786ef33` 的[CI82](https://github.com/ForceMind/Xs/actions/runs/42419306946)已通过：1287项JVM、23项host检查、Android构建/双Lint，以及API26/27/30/36共624/624主用例（0失败/错误/跳过）。BrowserInteraction24/24、真实旧APK升级4/4通过；另有20/20独立driver、44次native phase通过，内部重复probe不计入主XML；均为本轮同源fresh attempt1。源码/merge/包摘要与CI76～81真实失败见[本轮E证据](docs/ROUND_E_EVIDENCE.zh-CN.md)；D/CI75仅作历史基线。

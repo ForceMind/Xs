@@ -21,13 +21,13 @@ Keep this public independent repository and synchronized Chinese/English READMEs
 
 ## Next accepted work: XS-16 recent timeline
 
-Follow [Issue #6](https://github.com/ForceMind/Xs/issues/6), [TIMELINE_BUFFER_PLAN](docs/TIMELINE_BUFFER_PLAN.zh-CN.md) and [ADR-0005](docs/adr/0005-timeline-buffer.md). F0 is design/handoff only; no buffer runtime is implemented. First fix the [reviewed route/source P2](https://github.com/ForceMind/Xs/pull/5#discussion_r4504042361), then implement F1–F5 continuously. Do not use whole-URL substring matching or default unknown feeds to For You.
+Follow [Issue #6](https://github.com/ForceMind/Xs/issues/6), [TIMELINE_BUFFER_PLAN](docs/TIMELINE_BUFFER_PLAN.zh-CN.md) and [ADR-0005](docs/adr/0005-timeline-buffer.md). F1–F4 runtime source and regressions now exist; F5 execution is tracked in [current evidence](docs/XS16_IMPLEMENTATION_EVIDENCE.zh-CN.md). Preserve the three review fixes and continue from actual failing/pending checks. Do not use whole-URL substring matching or default unknown feeds to For You.
 
 The buffer is separate opt-in consent, default OFF; when enabled,48h and an app-wide100MiB temporary DB/index/WAL budget are configurable. Captured presented cards need no dwell, but create no OPEN/qualified FEED/favorite/read fact. Keep existing FEED60% and1.2/3/5s rules. Metadata only; no media prefetch, raw network packets, credentials, internal cursors or hidden content. Batch identity is native observation/refresh provenance, not an invented API response ID. Capture is bounded/best effort; unrendered and missed transient items are not guaranteed.
 
 Use separate temporary storage/FTS and query-time expiry plus physical GC; existing lifetime snapshot retention cannot serve as cache cleanup. Keep durable data and backups unchanged unless an explicit compatible schema/codec migration is needed. Stable promotion identity, archive-first commit/ack and retry idempotency must handle process death; independent SQLite files are not one atomic transaction. Buffer-clear generation must not revoke unrelated media tickets. Library tombstones/erasure/old-callback checks apply to the buffer too. Actual X/W0 and phone gates remain unchanged.
 
-复查review和当前源码另确认两项应先复现修复：规范i/web/status链接在JS观察器匹配中缺失（r4500601373）；备份选择器Activity重建丢实例requestTicket（r4501080305虽outdated，当前仍无保留/恢复且manifest无configChanges）。新对话补DOM/WebView和实际SAF重建回归，密码不得持久保存。其它outdated评论须以当前源码/证据确认，不能自动当已解决。本轮仅记录，未修runtime。
+Three carry-over review defects are fixed in current source: canonical `i/web/status` observation, parsed route/verified native feed source, and in-memory SAF request retention across Activity recreation. New DOM/JVM/WebView/real-SAF tests cover them; actual execution is recorded in [current evidence](docs/XS16_IMPLEMENTATION_EVIDENCE.zh-CN.md). No password is saved in Bundle or persistent storage. Other outdated threads still require current-source verification.
 
 ## Existing versus planned
 
@@ -112,3 +112,7 @@ Record source/APK hash, exact device/OS/WebView/recipient-app versions, MIME/siz
 The owner permits an optional custom-license switch, not a requirement to draft new terms. The current GPL remains effective; only a chosen switch requires separate rights/scope/terms confirmation. Continuing under GPL or making an internal PR reviewable does not require a new custom license. Follow docs/LICENSING.md and a per-file rights/notice inventory. Do not invent commercial restrictions, revoke historical grants, erase third-party notices or call a restrictive custom license OSI open source.
 
 Do not change the user's computer/servers, upload private content/keys, publish production binaries or deploy websites without an appropriate explicit request. Document real blockers without promising asynchronous work or inflating progress.
+
+## XS-16 implementation continuation
+
+The temporary DB is schema1 and app-global across libraries. Archive is now schema6: a preserving additive migration from v5 adds timeline_promotions and the native_timeline_buffer snapshot source for explicit promotion. Current backups support schema3/4/5 normalization to6; old fixed code1/schema2 APK upgrade must target6. Never roll back schema6 or silently drop the promotion ledger. Read [current evidence](docs/XS16_IMPLEMENTATION_EVIDENCE.zh-CN.md) before claiming test or device results. Live X capture and production publication remain disabled.

@@ -25,6 +25,19 @@ public final class ObservationRoutes {
         } catch (URISyntaxException invalid) { return false; }
     }
 
+    /** Native-verified home tab context only; query text and page-reported labels have no authority. */
+    public static String feedSource(String raw, String verifiedNativeContext) {
+        if (classify(raw) != Kind.FEED) return null;
+        try {
+            String path = new URI(raw).getRawPath();
+            if (path.endsWith("/")) path = path.substring(0, path.length() - 1);
+            if ("/search".equals(path)) return "search_results";
+            if ("/home".equals(path) && ("home_for_you".equals(verifiedNativeContext) ||
+                    "home_following".equals(verifiedNativeContext))) return verifiedNativeContext;
+            return null;
+        } catch (URISyntaxException invalid) { return null; }
+    }
+
     public static Kind classify(String raw) {
         if (raw == null || raw.length() > 8192 || raw.indexOf('\\') >= 0) return Kind.DENIED;
         for (int i = 0; i < raw.length(); i++) {

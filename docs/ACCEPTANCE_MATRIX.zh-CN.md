@@ -1,8 +1,8 @@
 # Xs 验收矩阵 v2.3
 
-## XS-16 最近时间线新增验收（全部NOT RUN）
+## XS-16 最近时间线新增验收（新原生结果待CI）
 
-[专项方案](TIMELINE_BUFFER_PLAN.zh-CN.md)与[Issue #6](https://github.com/ForceMind/Xs/issues/6)已确认设计；运行源码、数据库与新测试尚未实现，CI83不验证这些项。T01～T13先做云端/原生合成验收，T14必须真实环境；前者通过不能使后者PASS。
+[专项方案](TIMELINE_BUFFER_PLAN.zh-CN.md)与[Issue #6](https://github.com/ForceMind/Xs/issues/6)已确认范围；运行源码、独立schema1数据库与新测试已实现，实际本地/CI结果见[本轮证据](XS16_IMPLEMENTATION_EVIDENCE.zh-CN.md)，CI83不验证这些项。T01～T13先做云端/原生合成验收，T14必须真实环境；前者通过不能使后者PASS。
 
 | 编号 | 目标 | 当前状态 |
 | --- | --- | --- |
@@ -16,7 +16,7 @@
 | T08 | 长期保存/收藏幂等、跨库中断/提交后ack恢复；质量与来源保留，本地预览不计打开 | NOT RUN |
 | T09 | 清缓冲、历史、网页缓存/会话、收藏、媒体、整库和两种配额范围独立 | NOT RUN |
 | T10 | 导航/后台/切号/清理/删除tombstone与writer代次复验；旧回调不能复活 | NOT RUN |
-| T11 | 实际新进程/guest重启、临时新库/必要迁移失败保留Archive5和原文件 | NOT RUN |
+| T11 | 实际新进程/guest重启、临时新库/必要迁移失败保留长期Archive资料和原文件 | NOT RUN |
 | T12 | 原生分页和CJK检索/正文质量/覆盖范围提示；320dp1.8字号中英深浅可操作 | NOT RUN |
 | T13 | 虚拟列表和洪泛预算有界、遗漏可解释；不存rawAPI/凭据/隐藏内容、不自动下媒体 | NOT RUN |
 | T14 | 真实X/W0、同URL自动刷新/换流/虚拟卡、账号切换与真机耗电的独立现场验收 | NOT RUN |

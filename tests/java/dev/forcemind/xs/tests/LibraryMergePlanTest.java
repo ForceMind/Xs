@@ -101,6 +101,17 @@ public final class LibraryMergePlanTest {
         Map<String,List<Map<String,Object>>> missing=source(5,"text","note");missing.get("posts").get(0).put("current_snapshot_key","missing");
         try{LibraryMergePlan.merge(Arrays.asList(input("one",missing),input("two",newFull)));check(false);}
         catch(IllegalArgumentException expected){check(expected.getMessage().contains("snapshot reference"));}
+        Map<String,List<Map<String,Object>>> savedA=source(10,"saved A",""),savedB=source(20,"saved B","");
+        for(Map<String,List<Map<String,Object>>> saved:Arrays.asList(savedA,savedB)) {
+            saved.get("timeline_promotions").add(row("promotion_id","same-native-id","post_id","100", "captured_at_ms",5L,
+                "saved_at_ms",10L,"favorited_at_ms",null,"timeline_source","unknown","batch_id","native:batch",
+                "batch_reason","native_navigation","provenance","native_dom_fixture","quality","PARTIAL","content_hash",null,"author_handle","author","published_at_ms",null,"snapshot_captured_at_ms",5L));
+        }
+        LibraryMergePlan.Result promoted=LibraryMergePlan.merge(Arrays.asList(input("saved-A",savedA),input("saved-B",savedB)));
+        check(promoted.tables.get("timeline_promotions").size()==2);
+        check(!promoted.tables.get("timeline_promotions").get(0).get("promotion_id").equals(promoted.tables.get("timeline_promotions").get(1).get("promotion_id")));
+        check(promoted.tables.get("timeline_promotions").get(0).get("timeline_source").equals("unknown"));
+        check(savedA.get("timeline_promotions").get(0).get("promotion_id").equals("same-native-id"));
         System.out.println("PASS "+assertions+" explicit library merge invariants");
     }
 }

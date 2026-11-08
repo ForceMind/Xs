@@ -19,12 +19,38 @@ OUT = Path("app-android/build/compatibility/process-recovery")
 
 
 def run(arguments, name, timeout=90):
-    result = subprocess.run(["adb", *arguments], capture_output=True, text=True,
-                            encoding="utf-8", errors="replace", timeout=timeout)
+    try:
+        result = subprocess.run(["adb", *arguments], capture_output=True, text=True,
+                                encoding="utf-8", errors="replace", timeout=timeout)
+    except subprocess.TimeoutExpired as error:
+        # TimeoutExpired can carry bytes even with text=True. Retain the failed
+        # command's actual partial output; a missing file must not look unrun.
+        def decoded(value):
+            return value.decode("utf-8", errors="replace") if isinstance(value, bytes) else (value or "")
+        (OUT / (name + ".txt")).write_text(decoded(error.stdout) + decoded(error.stderr) +
+            "\nFixture command timed out after " + str(timeout) + " seconds\n", encoding="utf-8")
+        raise
     (OUT / (name + ".txt")).write_text(result.stdout + result.stderr, encoding="utf-8")
     if result.returncode:
         raise RuntimeError("Fixture command failed: " + name)
     return result.stdout
+
+
+def reboot_failure_diagnostics(serial):
+    """Read only the already guarded disposable guest, never restart it to pass.
+
+    CI81/84 lost their emulator after reboot. ADB timeout alone does not identify
+    an app failure, a guest crash or a host transport failure. Preserve bounded
+    transport/console observations and keep the actual verification FAIL/unrun.
+    """
+    for name, arguments in (("failure-adb-state", ["-s", serial, "get-state"]),
+                            ("failure-emulator-console", ["-s", serial, "emu", "avd", "name"])):
+        try:
+            run(arguments, name, 5)
+        except (RuntimeError, subprocess.TimeoutExpired, OSError) as error:
+            target = OUT / (name + ".txt")
+            if not target.exists():
+                target.write_text(type(error).__name__ + "\n", encoding="utf-8")
 
 
 def instrumentation(phase, stopped_pid=None, rebooted=False):
@@ -49,8 +75,14 @@ def main():
     if args.reboot and args.upgrade_apk:raise RuntimeError("Use independent reboot and upgrade fixtures")
     OUT.mkdir(parents=True, exist_ok=True)
     report = {"status": "FAIL", "scope": "Synthetic native fixtures; real emulator OS force-stop and new target process, not reboot/physical power loss/vendor background/live X", "phases": []}
+    if args.reboot:
+        report.update(scope="Synthetic guest reboot recovery; requires a different kernel boot ID and post-reboot native verification; not physical power loss or vendor-device behavior",
+                      reboot_requested=False, recovery_verified=False)
+    serial = None
     try:
-        if not run(["get-serialno"],"emulator-serial").strip().startswith("emulator-") or run(["shell","getprop","ro.kernel.qemu"],"emulator-qemu").strip()!="1":raise RuntimeError("Disposable Android emulator required; never operate a user phone")
+        observed_serial = run(["get-serialno"],"emulator-serial").strip()
+        if not re.fullmatch(r"emulator-\d+", observed_serial) or run(["shell","getprop","ro.kernel.qemu"],"emulator-qemu").strip()!="1":raise RuntimeError("Disposable Android emulator required; never operate a user phone")
+        serial = observed_serial
         instrumentation("seed")
         report["phases"].append("seed_pass")
         # Native first-use screen only: the seed persisted browser consent OFF.
@@ -74,6 +106,7 @@ def main():
             previous_boot=run(["shell","cat","/proc/sys/kernel/random/boot_id"],"boot-before").strip()
             if not re.fullmatch(r"[a-fA-F0-9-]{36}",previous_boot):raise RuntimeError("Initial boot ID unavailable")
             run(["reboot"],"reboot-request")
+            report["reboot_requested"] = True
             run(["wait-for-device"],"reboot-device-available",180)
             deadline=time.monotonic()+180
             while time.monotonic()<deadline:
@@ -120,7 +153,14 @@ def main():
         if not pid or (not args.reboot and int(pid[1])==int(before)):raise RuntimeError("Cold verification process not proven")
         report["verify_pid"]=int(pid[1])
         report["phases"].append("separate_process_startup_recovery_pass")
+        if args.reboot:
+            report["recovery_verified"] = True
         report["status"] = "PASS"
+    except (RuntimeError, subprocess.TimeoutExpired, OSError) as error:
+        report["failure"] = {"type": type(error).__name__, "message": str(error)}
+        if args.reboot and serial is not None:
+            reboot_failure_diagnostics(serial)
+        raise
     finally:
         (OUT / "summary.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     print("PASS live-process force-stop and cold native recovery; no physical-device claim")

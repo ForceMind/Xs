@@ -36,6 +36,7 @@ public final class XsLibraryBackup {
         COLUMNS.put("post_tags",csv("post_id,tag"));
         COLUMNS.put("own_actions",csv("action_key,post_id,related_post_id,action_type,actor_id,actor_provenance,source,action_at_ms,observed_at_ms,state,state_at_ms"));
         COLUMNS.put("own_action_events",csv("action_key,event_key,event_type,event_at_ms,observed_at_ms,source"));
+        COLUMNS.put("timeline_promotions",csv("promotion_id,post_id,captured_at_ms,saved_at_ms,favorited_at_ms,timeline_source,batch_id,batch_reason,provenance,quality,content_hash,author_handle,published_at_ms,snapshot_captured_at_ms"));
     }
     private XsLibraryBackup() {}
     public static final class ValidatedBackup {
@@ -76,7 +77,12 @@ public final class XsLibraryBackup {
         LibraryBackupCodec.Data data=LibraryBackupCodec.read(in);
         ValidatedBackup backup=validate(data.header(),data.records());
         if(backup.schemaVersion()==3&&ArchiveSchema.VERSION>=4)backup=upgradeLegacy(backup);
-        return backup.schemaVersion()<5&&ArchiveSchema.VERSION>=5?upgradeSnapshots(backup):backup;
+        if(backup.schemaVersion()<5&&ArchiveSchema.VERSION>=5)backup=upgradeSnapshots(backup);
+        if(backup.schemaVersion()==5&&ArchiveSchema.VERSION>=6) {
+            ValidatedBackup upgraded=validate(new LibraryBackupCodec.Header(6,backup.createdAtMs(),backup.label()),backup.records);
+            backup=new ValidatedBackup(upgraded.header,upgraded.records,upgraded.tables,backup.sourceSchemaVersion());
+        }
+        return backup;
     }
     /** Caller uses the selected library's shared write ticket, then writes the native snapshot. */
     public static void exportLibrary(Context context,String library,OutputStream out)throws IOException {
@@ -219,6 +225,7 @@ public final class XsLibraryBackup {
         return new ValidatedBackup(upgraded.header,upgraded.records,upgraded.tables,old.sourceSchemaVersion());
     }
     private static String[] columns(int schema,String table) {
+        if(schema<6&&"timeline_promotions".equals(table))return null;
         if(schema<5&&"snapshot_versions".equals(table))return null;
         String[] values=COLUMNS.get(table);
         return schema<5&&"posts".equals(table)?Arrays.copyOf(values,values.length-1):values;
@@ -232,7 +239,9 @@ public final class XsLibraryBackup {
             String[] columns=columns(header.schemaVersion,record.table);
             if(columns==null||(header.schemaVersion==3&&record.table.startsWith("own_"))||record.values.size()!=columns.length)throw invalid();
             for(String column:columns)if(!record.values.containsKey(column))throw invalid();
-            Map<String,Object> row=record.values;validateRow(record.table,row);
+            Map<String,Object> row=record.values;
+            if(header.schemaVersion<6&&"snapshot_versions".equals(record.table)&&"native_timeline_buffer".equals(row.get("source")))throw invalid();
+            validateRow(record.table,row);
             String key=primaryKey(record.table,row,sequence++);
             if(!keys.get(record.table).add(key))throw invalid();
             for(Map.Entry<String,Object> field:row.entrySet()){estimate+=field.getKey().length()+32;if(field.getValue() instanceof String)estimate+=((String)field.getValue()).getBytes(StandardCharsets.UTF_8).length;}
@@ -280,6 +289,14 @@ public final class XsLibraryBackup {
             Object hash=row.get("content_hash");
             if(hash!=null&&(!(hash instanceof String)||!hash.equals(SnapshotPolicy.hash((String)row.get("body")))))throw invalid();
             if(hash==null&&!"LEGACY_UNKNOWN".equals(row.get("quality")))throw invalid();
+        } else if(table.equals("timeline_promotions")) {
+            text(row,"promotion_id",256,false);positive(row,"captured_at_ms",false);positive(row,"saved_at_ms",false);positive(row,"snapshot_captured_at_ms",false);
+            positive(row,"favorited_at_ms",true);oneOf(row,"timeline_source","home_for_you","home_following","search_results","unknown");
+            text(row,"batch_id",256,false);oneOf(row,"batch_reason","native_navigation","native_refresh","native_stream_switch","native_stream_change","native_session","suspected_refresh");
+            oneOf(row,"provenance","native_dom_fixture","offline_dom_fixture");
+            oneOf(row,"quality","LINK_ONLY","PARTIAL");text(row,"author_handle",100,true,true);positive(row,"published_at_ms",true);
+            Object hash=row.get("content_hash");
+            if(hash!=null&&(!(hash instanceof String)||!((String)hash).matches("[0-9a-f]{64}")))throw invalid();
         } else if(table.equals("categories")){text(row,"category_id",256,false);text(row,"label",120,false);}
         else if(table.equals("history_events")) {
             oneOf(row,"event_type","OPEN_POST","FEED_VISIBLE");positive(row,"event_at_ms",false);text(row,"source",128,false);text(row,"event_key",256,true);
@@ -309,6 +326,7 @@ public final class XsLibraryBackup {
     private static String primaryKey(String table,Map<String,Object> row,int sequence) {
         if(table.equals("posts")||table.equals("favorites"))return(String)row.get("post_id");
         if(table.equals("snapshot_versions"))return tuple(row.get("post_id"),row.get("snapshot_key"));
+        if(table.equals("timeline_promotions"))return(String)row.get("promotion_id");
         if(table.equals("categories"))return(String)row.get("category_id");
         if(table.equals("post_categories"))return tuple(row.get("post_id"),row.get("category_id"));
         if(table.equals("post_tags"))return tuple(row.get("post_id"),row.get("tag"));

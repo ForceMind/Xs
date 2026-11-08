@@ -1,11 +1,11 @@
 package dev.forcemind.xs.core;
 
 /**
- * App-private SQLite database v5. Legacy namespace keys remain unchanged. FTS4 is supported by the Android SQLite stack.
+ * App-private SQLite database v6. Legacy namespace keys remain unchanged. FTS4 is supported by the Android SQLite stack.
  * China-language substring fallback is provided by ArchiveSearch.
  */
 public final class ArchiveSchema {
-    public static final int VERSION = 5;
+    public static final int VERSION = 6;
 
     public static final String[] CREATE_V2 = {
         "CREATE TABLE IF NOT EXISTS posts (" +
@@ -180,7 +180,19 @@ public final class ArchiveSchema {
     };
 
     public static final String[] CREATE_V4 = concatenate(CREATE_V3, MIGRATE_3_TO_4);
-    public static final String[] CREATE = concatenate(CREATE_V4, MIGRATE_4_TO_5);
+    public static final String[] CREATE_V5 = concatenate(CREATE_V4, MIGRATE_4_TO_5);
+    /** v6 records explicit permanent promotion separately from visit/dwell history. */
+    public static final String[] MIGRATE_5_TO_6 = {
+        "CREATE TABLE IF NOT EXISTS timeline_promotions (account_id TEXT NOT NULL, promotion_id TEXT NOT NULL, " +
+            "post_id TEXT NOT NULL, captured_at_ms INTEGER NOT NULL, saved_at_ms INTEGER NOT NULL, " +
+            "favorited_at_ms INTEGER, timeline_source TEXT NOT NULL, batch_id TEXT NOT NULL, batch_reason TEXT NOT NULL, " +
+            "provenance TEXT NOT NULL, quality TEXT NOT NULL CHECK(quality IN ('LINK_ONLY','PARTIAL')), content_hash TEXT, " +
+            "author_handle TEXT, published_at_ms INTEGER, snapshot_captured_at_ms INTEGER NOT NULL, " +
+            "PRIMARY KEY(account_id,promotion_id), FOREIGN KEY(account_id,post_id) " +
+            "REFERENCES posts(account_id,post_id) ON DELETE CASCADE)",
+        "CREATE INDEX IF NOT EXISTS idx_timeline_promotions_post ON timeline_promotions(account_id,post_id,saved_at_ms DESC)"
+    };
+    public static final String[] CREATE = concatenate(CREATE_V5, MIGRATE_5_TO_6);
 
     private static String[] concatenate(String[] first, String[] second) {
         String[] joined = new String[first.length + second.length];

@@ -24,6 +24,8 @@ def main() -> None:
           for line in lines if line.startswith("V4:")]
     v5 = [base64.b64decode(line.partition(":")[2], validate=True).decode("utf-8")
           for line in lines if line.startswith("V5:")]
+    v6 = [base64.b64decode(line.partition(":")[2], validate=True).decode("utf-8")
+          for line in lines if line.startswith("V6:")]
     actual_query = next(base64.b64decode(line.partition(":")[2], validate=True).decode("utf-8")
                         for line in lines if line.startswith("QUERY:"))
     actual_args = [base64.b64decode(line.partition(":")[2], validate=True).decode("utf-8")
@@ -192,6 +194,22 @@ def main() -> None:
     assert old.execute("SELECT count(*) FROM own_action_events").fetchone()[0] == 2
     assert old.execute("PRAGMA foreign_key_check").fetchall() == []
 
+    # Additive v5 -> v6 ledger preserves every existing row and FTS body byte.
+    snapshots_before = old.execute("SELECT * FROM snapshot_versions ORDER BY rowid").fetchall()
+    for statement in v6:
+        old.executescript(statement + ";")
+    assert old.execute("SELECT * FROM snapshot_versions ORDER BY rowid").fetchall() == snapshots_before
+    assert old.execute("SELECT rowid,account_id,post_id,body,first_seen_at_ms,last_seen_at_ms FROM posts ORDER BY rowid").fetchall() == before_posts
+    assert old.execute("SELECT count(*) FROM timeline_promotions").fetchone()[0] == 0
+    old.execute("INSERT INTO timeline_promotions(account_id,promotion_id,post_id,captured_at_ms,saved_at_ms,timeline_source,batch_id,batch_reason,provenance,quality,snapshot_captured_at_ms) VALUES ('account-A','native:one','88',10,20,'unknown','batch','native_navigation','native_dom_fixture','PARTIAL',10)")
+    try:
+        old.execute("INSERT INTO timeline_promotions SELECT * FROM timeline_promotions")
+        raise AssertionError('Duplicate promotion accepted')
+    except sqlite3.IntegrityError:
+        pass
+    assert old.execute("SELECT count(*) FROM history_events").fetchone()[0] == len(before_events)
+    assert old.execute("PRAGMA foreign_key_check").fetchall() == []
+
     # Native own-action type/state/actor/date/source filters must match the same action.
     con.execute("INSERT INTO posts(account_id,post_id,body,first_seen_at_ms,last_seen_at_ms) VALUES ('local:own','901','own fixture',100,200)")
     for key,actor,state,at in [('a','fixture:me','REVERSED',150),('b','fixture:other','REVERSED',160),('c','fixture:me','ACTIVE',170)]:
@@ -274,7 +292,7 @@ def main() -> None:
     con.execute("DELETE FROM posts WHERE account_id='local:snapshots'")
     assert con.execute("SELECT count(*) FROM snapshot_versions WHERE account_id='local:snapshots'").fetchone()[0] == 0
     assert con.execute("SELECT count(*) FROM snapshot_versions_fts WHERE snapshot_versions_fts MATCH 'superseded*'").fetchone()[0] == 0
-    print("PASS SQLite v5 DDL, v1/v2/v3/v4 preserving migrations, snapshot history/current FTS, honest own-action provenance/reversal and same-action filtering, scope mappings, FTS, exposure dedup, dwell/never-opened and same-exposure date/source queries, independent favorites")
+    print("PASS SQLite v6 DDL, v1/v2/v3/v4/v5 preserving migrations, snapshot history/current FTS, honest own-action provenance/reversal and same-action filtering, scope mappings, FTS, exposure dedup, dwell/never-opened and same-exposure date/source queries, independent favorites")
 
 
 if __name__ == "__main__":

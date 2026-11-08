@@ -43,6 +43,9 @@ public final class XsLibraryDeletion {
                     boolean ok=false;String replacement=null;
                     try{
                         replacement=XsLocalSpaces.rotateDeleted(app,library);
+                        // The durable tombstone is already installed. Erase the independent
+                        // temporary body/FTS store inside this same ordered deletion barrier.
+                        XsTimelineBuffer.get(app).eraseLibrary(library);
                         XsMediaRepository.get(app).eraseLibrary(library);
                         try(XsArchiveDatabase archive=new XsArchiveDatabase(app)){XsArchiveLibraryOperations.eraseLibrary(archive,library);}
                         XsDeletedLibraries.completeDeletion(app,library);ok=true;
