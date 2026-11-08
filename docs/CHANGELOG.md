@@ -1,3 +1,7 @@
+## XS-16 CI89 旧包驱动进程栅栏
+
+CI89/API36在旧APK seed后失败：am start返回Status:ok/LaunchState UNKNOWN，紧随的pidof返回1/空；主XML为0，新增压力测试未执行。原始驱动/包/ZIP/设备摘要见evidence/xs16-ci89-api36-blocked.json。旧流程未隔离instrumentation异步结束与独立介绍页启动，现先显式force-stop seed并证明PID不存在，再启动、证明不同于seed的真实PID，仍执行原来的停止/缺席/正常升级/UID/原生内容断言。原失败原因未被日志充分确定，不将可能的时序竞态当已证根因；后续失败补有界只读logcat/activity诊断，原FAIL不被覆盖。16项旧包驱动host测试通过（新增seed栅栏、缺失/复用PID负例），安装仍禁止降级、卸载或清数据。
+
 ## XS-16 页面上限夹具校正
 
 首次软件API30探针的修改前/后包各执行两项，四项均因未真正触发页面上限而失败；不能作为产品缺陷的有效RED证据。Android WAL池允许PRAGMA落在reader连接，现将setMaximumSize和上限读取放入同一shared writer显式事务，绑定实际writer连接；保留全部拒收/回滚/恢复断言。CI88的core/build通过，新增原生矩阵尚排队时由本测试修复提交取代。正确夹具的原生执行结果待核对。

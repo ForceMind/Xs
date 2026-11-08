@@ -28,6 +28,8 @@ class Fixture:
         self.scenario = scenario
         self.commands = []
         self.version = None
+        self.stopped = False
+        self.launched = False
 
     def __call__(self, arguments, cwd, **kwargs):
         self.commands.append(arguments)
@@ -136,15 +138,19 @@ class Fixture:
                     newline = "\r\n" if runner and runner[3] == "crlf" else "\n"
                     output = newline.join(lines) + newline + "OK (1 test)" + newline
             elif args[:3] == ["shell", "am", "start"]:
+                self.stopped = False
+                self.launched = True
                 output = "Status: ok\n"
             elif args[:3] == ["shell", "am", "force-stop"]:
-                pass
+                self.stopped = True
             elif args == ["shell", "pidof", DRIVER.PACKAGE]:
-                stopped = any(x[:4] == ["adb", "shell", "am", "force-stop"] for x in self.commands)
-                if stopped:
-                    if self.scenario == "stop-not-absent": output = "1002\n"
+                if self.stopped:
+                    if (self.scenario == "stop-not-absent" and self.launched) or self.scenario == "seed-stop-not-absent": output = "1002\n"
                     else: code = 1
-                else: output = "1002\n"
+                elif self.scenario == "foreground-missing": code = 1
+                else: output = "1001\n" if self.scenario == "foreground-is-seed" else "1002\n"
+            elif args[:2] == ["shell", "logcat"] or args == ["shell", "dumpsys", "activity", "activities"]:
+                output = "bounded fixture diagnostic\n"
             else:
                 raise AssertionError(arguments)
         else:
@@ -180,7 +186,8 @@ class LegacyUpgradeDriverTests(unittest.TestCase):
             for command in fixture.commands:
                 self.assertNotIn("uninstall", command)
                 self.assertNotIn("clear", command)
-                self.assertNotIn("-d", command)
+                if command[:2] == ["adb", "install"]:
+                    self.assertNotIn("-d", command)  # no downgrade; logcat -d is read-only
             return fixture, report, failure
 
     def test_success_is_actual_ordered_upgrade_and_owned_cleanup(self):
@@ -247,6 +254,25 @@ class LegacyUpgradeDriverTests(unittest.TestCase):
         fixture, _, _ = self.exercise("stop-not-absent")
         self.assertEqual(["seed"], fixture.phases())
         self.assertEqual(1, fixture.version)
+
+    def test_seed_is_stopped_before_independent_old_foreground_launch(self):
+        fixture, report, _ = self.exercise(expected_failure=False)
+        stops = [i for i, x in enumerate(fixture.commands) if x[:4] == ["adb", "shell", "am", "force-stop"]]
+        launch = next(i for i, x in enumerate(fixture.commands) if x[:4] == ["adb", "shell", "am", "start"])
+        self.assertEqual(2, len(stops));self.assertLess(stops[0], launch);self.assertLess(launch, stops[1])
+        self.assertIn("old_seed_process_stopped_and_absent", report["phases"])
+
+    def test_seed_absence_is_required_before_launch(self):
+        fixture, _, _ = self.exercise("seed-stop-not-absent")
+        self.assertFalse(any(x[:4] == ["adb", "shell", "am", "start"] for x in fixture.commands))
+
+    def test_missing_or_reused_foreground_pid_keeps_failure_and_diagnostics(self):
+        for scenario in ("foreground-missing", "foreground-is-seed"):
+            with self.subTest(scenario=scenario):
+                fixture, report, _ = self.exercise(scenario)
+                self.assertEqual("old_live_process_stop", report["failure_stage"])
+                self.assertEqual(["seed"], fixture.phases())
+                self.assertTrue(any(x[:3] == ["adb", "shell", "logcat"] for x in fixture.commands))
 
     def test_installed_uid_change_rejects_before_native_verify(self):
         fixture, _, _ = self.exercise("installed-uid-change")

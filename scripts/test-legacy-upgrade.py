@@ -211,11 +211,19 @@ class LegacyUpgradeDriver:
             report.update(installed_old=old_installed, seed=seed)
             report["phases"].append("old_source_apk_schema2_native_seed_pass")
             self.stage = "old_live_process_stop"
+            # am instrument -w can return before target teardown has finished.
+            # End that process explicitly before starting an independent old-app
+            # foreground process; an am start Status:ok alone proves no live PID.
+            self.adb(["shell", "am", "force-stop", PACKAGE], "old-seed-force-stop")
+            seed_absent = self.adb(["shell", "pidof", PACKAGE], "old-seed-pid-after-stop", allowed=(1,))
+            if seed_absent.stdout.strip() or seed_absent.stderr.strip():
+                raise RuntimeError("Old seed process absence not proven")
+            report["phases"].append("old_seed_process_stopped_and_absent")
             launched = self.adb(["shell", "am", "start", "-W", "-n", PACKAGE + "/dev.forcemind.xs.browser.BrowserActivity"], "old-native-intro").stdout
             if not re.search(r"\bStatus:\s*ok\b", launched) or "Error" in launched:
                 raise RuntimeError("Old native introduction foreground launch not confirmed")
             foreground = self.adb(["shell", "pidof", PACKAGE], "old-foreground-pid").stdout.strip()
-            if not re.fullmatch(r"\d+", foreground) or int(foreground) <= 0:
+            if not re.fullmatch(r"\d+", foreground) or int(foreground) <= 0 or int(foreground) == seed["pid"]:
                 raise RuntimeError("Old foreground target process not proven")
             report["old_foreground_pid"] = int(foreground)
             self.adb(["shell", "am", "force-stop", PACKAGE], "old-force-stop")
@@ -250,6 +258,15 @@ class LegacyUpgradeDriver:
             original_failure = failure
             report.update(status="FAIL", failure_stage=self.stage, failure_type=type(failure).__name__,
                           failure_message=str(failure))
+            if self.stage == "old_live_process_stop":
+                # Read-only bounded observations on the already guarded CI guest.
+                # Keep the original failure even if diagnostic collection fails.
+                for label, arguments in (("failure-logcat", ["shell", "logcat", "-d", "-t", "300"]),
+                                          ("failure-activities", ["shell", "dumpsys", "activity", "activities"])):
+                    try:
+                        self.adb(arguments, label, timeout=10)
+                    except Exception as diagnostic_failure:
+                        report.setdefault("diagnostic_errors", {})[label] = type(diagnostic_failure).__name__
         finally:
             try:
                 if worktree_attempted:
