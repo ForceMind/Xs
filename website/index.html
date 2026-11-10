@@ -1,0 +1,550 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="dark light"><meta name="theme-color" content="#080808">
+<meta name="description" content="Xs，独立开源、本地优先的跨平台 X 增强客户端。Android 优先开发，Windows 与 macOS 规划中。浏览 X，留住值得回看的内容。">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>Xs · 更纯粹，更好用的 X</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23080808'/%3E%3Ctext x='7' y='45' font-family='Arial' font-weight='bold' font-size='40' fill='white'%3EXs%3C/text%3E%3C/svg%3E">
+<style>:root{--bg:#080808;--fg:#f5f5f5;--muted:#96999d;--line:#292b2d;--blue:#1d9bf0;--blue-ink:#0068a5;--paper:#fff;--ink:#111214;--soft:#f4f5f6;--light-line:#dedfe1;font-family:Arial,"Helvetica Neue","Noto Sans CJK SC","PingFang SC","Microsoft YaHei",sans-serif;font-synthesis:none;color-scheme:dark;background:var(--bg);color:var(--fg)}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:96px}body{margin:0;line-height:1.6;-webkit-font-smoothing:antialiased}button,input,textarea,select{font:inherit}button,a,input,textarea,select{-webkit-tap-highlight-color:transparent}button{cursor:pointer;border:0;background:none;color:inherit}a{color:inherit;text-decoration:none}button,a{touch-action:manipulation}button:disabled{cursor:not-allowed}h1,h2,h3,h4,h5,p{margin:0}h1,h2,h3,h4,h5{line-height:1.22}svg{flex-shrink:0}img{max-width:100%}.icon{width:20px;height:20px;display:inline-block;vertical-align:middle}.container{max-width:1312px;margin:0 auto;padding:0 48px}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}:focus-visible{outline:3px solid var(--blue);outline-offset:5px}::selection{background:#1d9bf0;color:#fff}.skip-link{position:fixed;top:-100px;left:20px;z-index:100;background:#fff;color:#111;padding:12px 24px;border-radius:6px}.skip-link:focus{top:12px}.external,.text-link{display:inline-flex;align-items:center;gap:13px;font-size:14px;font-weight:600}.external .icon,.text-link .icon{width:16px;height:16px}.external:hover,.text-link:hover{color:var(--blue)}.wordmark{display:inline-block;font-size:36px;font-weight:800;line-height:1;letter-spacing:-3px;white-space:nowrap}.wordmark span{font-size:.78em;letter-spacing:-2px}.wordmark i{color:var(--blue);font-style:normal;margin-left:1px}.blue-dot,.off-dot{width:6px;height:6px;display:inline-block;flex-shrink:0;background:var(--blue)}.off-dot{background:#8c8d90}.header{height:78px;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30;background:#080808f5;backdrop-filter:blur(12px)}.header-inner{max-width:1440px;margin:auto;padding:0 48px;height:100%;display:flex;align-items:center;justify-content:space-between;gap:24px}.brand{display:inline-flex;align-items:center;min-height:44px}.top-nav{display:flex;gap:34px;font-size:13px;color:#b5b6b9;margin-left:82px}.top-nav a{min-height:44px;display:flex;align-items:center}.top-nav a:hover{color:#fff}.header-actions{display:flex;align-items:center;gap:27px}.lang-button{display:flex;align-items:center;gap:10px;min-height:44px;font-size:12px;color:#919497;padding:8px 0}.lang-button .active{color:#fff;font-weight:700}.lang-sep{color:#93999f}.header-github{border:1px solid #414141;padding:8px 15px;border-radius:5px;font-size:12px;min-height:38px;gap:22px}.icon-button{display:inline-flex;justify-content:center;align-items:center;width:40px;height:40px;border-radius:50%;flex-shrink:0}.icon-button:hover{background:#ffffff12}.menu-toggle{display:none}.button{display:inline-flex;align-items:center;justify-content:center;gap:24px;min-height:52px;padding:14px 24px;border-radius:5px;font-size:14px;font-weight:700;line-height:1.4;transition:background .18s,transform .18s}.button .icon{width:18px;height:18px}.button:hover{transform:translateY(-1px)}.button.primary{background:#fff;color:#111}.button.primary:hover{background:#dfe3e6}.button.dark{background:#111;color:#fff}.button.dark:hover{background:#2d2e30}.hero{padding:58px 0 0}.hero-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:36px;align-items:center;min-height:565px}.eyebrow{display:flex;gap:11px;align-items:center;letter-spacing:1.7px;font-size:9px;font-weight:500;color:#b5b7ba;white-space:nowrap}.hero h1{font-size:clamp(42px,4.6vw,68px);font-weight:800;letter-spacing:-2.5px;line-height:1.19;margin:31px 0 27px}.hero-lead{font-size:21px;font-weight:600;line-height:1.65;letter-spacing:-.5px}.mobile-br{display:none}.hero-description{font-size:14px;color:#9b9ea2;line-height:1.9;margin-top:16px;max-width:490px}.hero-cta{display:flex;align-items:center;gap:28px;margin:28px 0 31px}.hero-platforms{display:flex;align-items:center;gap:18px;flex-wrap:wrap}.hero-platforms>span{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:#dbdcdd;white-space:nowrap}.hero-platforms .icon{width:15px;height:15px}.hero-platforms b{color:#9a9da1;font-weight:400;font-size:10px;margin-left:2px}.hero-small{font-size:10px;color:#96999d;margin:13px 0 0;max-width:450px;line-height:1.8}.hero-bottom{margin-top:54px;display:flex;justify-content:space-between;align-items:center;position:relative;min-height:77px;font-size:11px;color:#a3a6aa}.hero-bottom:before{content:"";position:absolute;top:0;left:48px;right:48px;border-top:1px solid var(--line)}.hero-bottom a{display:flex;align-items:center;gap:18px;font-size:9px;letter-spacing:1.4px;min-height:44px}.hero-bottom .icon{width:15px;height:15px}
+/* The hero contains actual HTML interface illustrations, not claimed screenshots. */
+.hero-visual{height:525px;position:relative;min-width:0}.visual-label{position:absolute;top:0;right:0;font-size:10px;letter-spacing:.4px;color:#9d9fa2;text-align:right}.hero-desktop{position:absolute;right:0;top:54px;width:calc(100% - 42px);height:322px;background:#fff;color:#111;border:1px solid #515255;border-radius:9px;overflow:hidden;box-shadow:0 18px 55px #0009}.mock-titlebar{height:32px;background:#161719;color:#b1b4b7;display:flex;align-items:center;justify-content:space-between;padding:0 11px;font-size:8px;border-bottom:1px solid #313236}.mock-titlebar .icon{width:11px;height:11px}.mock-dots{display:flex;gap:5px}.mock-dots i{width:6px;height:6px;background:#7c7f81;border-radius:50%}.hero-desktop-body{display:grid;grid-template-columns:56px 1fr;height:290px}.mock-sidebar{background:#f5f5f5;border-right:1px solid #e5e5e5;padding:13px 0;display:flex;align-items:center;flex-direction:column;gap:20px;position:relative}.mock-sidebar .wordmark{font-size:23px;letter-spacing:-1.5px}.mock-sidebar .icon{width:15px;height:15px}.mock-sidebar>span:not(.wordmark){display:flex;justify-content:center;color:#777}.mock-sidebar>span.active{color:var(--blue-ink)}.mock-bottom{position:absolute;bottom:14px}.mock-feed{min-width:0;padding:0 21px}.mock-feed-title{display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:700;padding:15px 0}.mock-feed-title>span{font:9px monospace;color:#686f75;font-weight:400}.mock-search{height:27px;border:1px solid #e8e8e8;border-radius:4px;background:#f6f6f6;font-size:8px;color:#666;display:flex;align-items:center;gap:6px;padding:0 8px}.mock-search .icon{width:11px;height:11px}.mini-post{display:flex;gap:9px;padding:13px 0;border-bottom:1px solid #e4e4e4;min-width:0}.mini-avatar{width:24px;height:24px;flex-shrink:0;border-radius:50%;background:#ededed;font-size:9px;display:grid;place-items:center;font-weight:700}.mini-body{flex:1;min-width:0;font-size:8px}.mini-body>b{font-size:9px;display:block;margin-bottom:7px}.mini-line{display:block;width:100%;height:3px;background:#d4d5d6;margin-bottom:6px}.mini-line.short{width:73%}.mini-art{display:flex;justify-content:space-between;background:#131313;color:white;padding:14px 17px;margin-top:10px;align-items:flex-end;border-radius:2px;height:93px}.mini-art>span{font-size:24px;line-height:.97;letter-spacing:-1px;font-weight:bold}.mini-art>i{font-style:normal;font-size:20px}.mini-post-foot{display:flex;align-items:center;gap:5px;color:#707276;font-size:7px;margin-top:8px}.mini-post-foot .icon{width:9px;height:9px}.hero-phone{position:absolute;left:0;top:154px;width:209px;height:341px;background:white;color:#111;border:6px solid #202123;outline:1px solid #535457;border-radius:27px;padding:0 12px;box-shadow:0 20px 60px #000a;overflow:hidden}.phone-status{height:26px;display:flex;align-items:center;justify-content:space-between;padding:0 9px;font-size:8px;line-height:1}.phone-status>span{font-size:8px;letter-spacing:1px}.hero-phone-header{display:flex;justify-content:space-between;align-items:center;height:35px}.hero-phone-header .wordmark{font-size:24px;letter-spacing:-1.5px}.hero-phone-header .icon{width:14px;height:14px}.phone-feed-label{display:flex;justify-content:space-between;align-items:center;font-size:9px;font-weight:600;height:28px;border-bottom:1px solid #e0e0e0}.phone-feed-label .blue-dot{width:4px;height:4px}.hero-phone .mini-post{gap:7px;padding:11px 0}.hero-phone .mini-avatar{width:20px;height:20px;font-size:8px}.hero-phone .mini-body>b{font-size:8px}.hero-phone .mini-art{height:81px;padding:11px}.hero-phone .mini-art>span{font-size:21px}.hero-phone .mini-body .mini-line{height:2px}.hero-phone .mini-post-foot{font-size:6px;gap:3px}.hero-phone .mini-post-foot .icon{width:8px;height:8px}.phone-mini-nav{display:flex;align-items:center;justify-content:space-around;position:absolute;bottom:0;left:0;right:0;height:35px;background:#fff;border-top:1px solid #e3e3e3}.phone-mini-nav .icon{width:14px;height:14px}.phone-mini-nav .icon:first-child{color:var(--blue-ink)}.hero-caption{position:absolute;right:0;bottom:105px;display:flex;flex-direction:column;gap:11px;color:#b2b5b8;font-size:10px}.hero-caption>span{display:flex;align-items:center;gap:8px}.hero-caption .icon{width:14px;height:14px}.mock-disclaimer{position:absolute;right:0;bottom:25px;font-size:9px;color:#979b9f;max-width:250px;text-align:right;line-height:1.8}
+.light-section{background:var(--paper);color:var(--ink);color-scheme:light}.dark-section{background:#0a0a0a;color:#fff}.section-kicker{font:10px/1.5 Arial,sans-serif;font-weight:500;letter-spacing:1.5px;display:flex;align-items:center;justify-content:space-between;color:#666b70;margin-bottom:36px;gap:20px}.section-kicker>span:last-child{font-size:9px;letter-spacing:.6px}.light-section h2{font-size:clamp(34px,3.7vw,51px);font-weight:750;letter-spacing:-1.8px;line-height:1.22}.experience{padding:66px 0 46px}.experience-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:35px;margin-bottom:42px}.experience-heading p{font-size:14px;color:#60656a;max-width:515px;line-height:1.9;margin-top:21px}.surface-switch{display:flex;border:1px solid #d8dadc;background:#f3f4f5;padding:4px;border-radius:7px;flex-shrink:0;white-space:nowrap}.surface-switch button{font-size:12px;display:flex;align-items:center;justify-content:center;gap:8px;padding:11px 17px;min-height:44px;color:#62676c;border-radius:4px}.surface-switch .icon{width:17px;height:17px}.surface-switch [aria-selected="true"]{background:#111214;color:#fff}.demo-workspace{border:1px solid #d8dbdd;border-radius:9px;display:grid;grid-template-columns:298px minmax(0,1fr);overflow:visible;min-height:695px}.demo-guide{padding:34px 30px;border-right:1px solid #dce0e2;background:#fff;border-radius:9px 0 0 9px;display:flex;flex-direction:column;align-items:flex-start;min-width:0}.guide-label{display:flex;justify-content:space-between;width:100%;font-size:9px;letter-spacing:1px;color:#666c71;margin-bottom:20px;gap:8px}.guide-label span{font:10px monospace;white-space:nowrap}.demo-guide h3{font-size:23px;letter-spacing:-.7px;margin-bottom:16px;line-height:1.4}.demo-guide>p:not(.guide-fine){color:#63696f;font-size:12px;line-height:1.9;min-height:75px}.demo-steps{list-style:none;padding:0;margin:26px 0 33px;display:flex;flex-direction:column;gap:0;width:100%}.demo-steps li{display:flex;align-items:center;gap:13px;font-size:12px;color:#5d6974;padding:12px 0;position:relative;line-height:1.4}.demo-steps li>span{font:10px monospace;display:grid;place-items:center;width:24px;height:24px;border:1px solid #d8dce0;border-radius:50%;background:#fff;z-index:1;flex-shrink:0}.demo-steps li:not(:last-child):after{content:"";position:absolute;left:12px;top:36px;height:24px;border-left:1px solid #dedfe1}.demo-steps li.current{color:#111;font-weight:700}.demo-steps li.current>span{background:#111;color:#fff;border-color:#111}.demo-steps li.done>span{border-color:#1878b6;color:#0068a5;background:#eef7ff}.demo-steps li.done .icon{width:13px;height:13px}.guide-action{width:100%;font-size:12px;justify-content:space-between;gap:12px;min-height:48px;padding:12px 15px;flex-shrink:0}.guide-status{display:flex;align-items:center;gap:7px;font-size:10px;color:#60666c;margin-top:20px}.guide-fine{font-size:10px!important;color:#66707a;line-height:1.9!important;margin-top:7px!important;min-height:0!important}.quiet-button{display:inline-flex;align-items:center;gap:7px;color:#636a70;font-size:10px;min-height:44px;margin-top:8px;padding:7px 0}.quiet-button .icon{width:13px;height:13px}.quiet-button:hover{color:#0068a5}.demo-stage{padding:24px 26px 18px;background:#f3f4f5;border-radius:0 9px 9px 0;display:flex;flex-direction:column;align-items:center;min-width:0;position:relative}.stage-label{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-height:34px;margin-bottom:15px;font-size:11px;font-weight:600}.stage-label>span{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.stage-label b{font-size:9px;font-weight:400;color:#656d75}.os-switch{display:flex;align-items:center;border:1px solid #d9dbde;border-radius:5px;background:#fff;padding:2px}.os-switch button{width:30px;height:29px;display:grid;place-items:center;border-radius:3px;color:#64707a}.os-switch button .icon{width:13px;height:13px}.os-switch [aria-selected="true"]{background:#18191b;color:#fff}.stage-caption{font-size:9px;color:#666e75;margin-top:13px;text-align:center;line-height:1.8}.demo-device{background:#fff;color:#141519;flex-shrink:0}.mobile-device{width:327px;max-width:100%;height:556px;border:7px solid #161719;outline:1px solid #a7abad;border-radius:33px;overflow:hidden;box-shadow:0 10px 25px #14171a0d;display:flex;flex-direction:column;position:relative}.mobile-device>.phone-status{height:26px;min-height:26px;font-size:10px;padding:0 20px}.mobile-device .phone-status>span{font-size:10px}.mobile-device .app-layout{display:flex;flex:1;min-height:0}.mobile-device .app-main{display:flex;flex-direction:column;min-height:0;flex:1;width:100%;min-width:0}.mobile-app-brand{display:flex;align-items:center;justify-content:space-between;height:40px;flex-shrink:0;padding:3px 16px 7px}.mobile-app-brand .wordmark{font-size:28px;letter-spacing:-1.5px}.mobile-app-brand>span:last-child{font:8px monospace;letter-spacing:1px;color:#66717b;border:1px solid #d9dde1;padding:2px 5px;border-radius:3px}.app-view-heading{height:48px;min-height:48px;display:flex;align-items:center;justify-content:space-between;padding:5px 17px;border-top:1px solid #eff0f1}.app-view-heading h4{font-size:15px;font-weight:700}.app-view-heading .icon-button{width:32px;height:32px}.app-view-heading .icon-button:hover,.post .icon-button:hover{background:#f0f2f4}.app-view-heading .icon{width:16px;height:16px}.local-label{font:8px monospace;letter-spacing:1px;color:#707880}.app-subline{font-size:9px;color:#606972;padding:0 17px 11px;line-height:1.6}.feed-status{display:flex;justify-content:space-between;align-items:center;font-size:9px;color:#5c6872;padding:8px 17px;background:#f7f8f9;border-top:1px solid #e8eaec;border-bottom:1px solid #e8eaec;min-height:31px;gap:8px;flex-shrink:0}.post-scroll{overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#c8cdd0 transparent;flex:1;min-height:0;background:white;scroll-behavior:auto}.post-scroll:focus-visible{outline-offset:-3px}.post{display:flex;gap:10px;padding:15px 14px 11px;border-bottom:1px solid #e7e9ec;min-width:0}.post-avatar{width:30px;height:30px;border-radius:50%;background:#eeeff1;display:grid;place-items:center;font-size:12px;font-weight:700;flex-shrink:0}.post-content{min-width:0;flex:1}.post-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:0 0 6px;font-size:10px;line-height:1.4;min-width:0}.post-meta strong{font-size:11px;color:#16191c}.post-meta>span{color:#5f6a74;font-size:8px}.post-meta .post-demo-label{font:7px monospace;letter-spacing:.4px;border:1px solid #dde1e4;padding:1px 3px;border-radius:2px;margin-left:auto}.post-open{padding:0;display:block;text-align:left;width:100%;border-radius:3px;color:#30363b;font-size:11px;line-height:1.8;overflow-wrap:anywhere}.post-open:hover>span{color:#101214}.post-art{margin-top:12px;position:relative;overflow:hidden;border-radius:3px}.type-art{background:#101112;color:#fff;min-height:143px;padding:13px 15px;display:flex;flex-direction:column;gap:10px;line-height:1}.art-index{font:7px monospace;letter-spacing:1px;color:#b5bcc2}.type-art strong{font-size:36px;line-height:.94;letter-spacing:-1.6px;margin-top:1px;font-family:Arial,sans-serif}.art-bottom{font:6px monospace;letter-spacing:1px;display:flex;align-items:center;justify-content:space-between;color:#d1d5d9;margin-top:auto}.art-bottom b{font:25px Arial,sans-serif;color:#fff}.grid-art{height:132px;background:#eaecee;padding:18px;display:grid;grid-template-columns:1fr 1fr;gap:7px}.grid-art>div{background:#17191b}.grid-art>div:nth-child(2){background:#fff;grid-row:span 2;border:1px solid #c7cbd0}.grid-art>div:nth-child(3){background:#c0c6cc}.grid-art>span{position:absolute;left:25px;bottom:25px;color:#101112;font:6px monospace;letter-spacing:.3px}.post-actions{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-top:8px;color:#68727b;font-size:8px;min-height:30px}.post-actions>div{display:flex;align-items:center;gap:3px}.post-actions>.icon-button{width:28px;height:28px}.post-actions .icon-button{width:30px;height:30px}.post-actions .icon-button .icon{width:13px;height:13px}.save-button{display:flex;align-items:center;gap:5px;border-radius:4px;font-size:9px;color:#606b74;padding:5px 7px;min-height:30px;border:1px solid transparent;white-space:nowrap}.save-button .icon{width:13px;height:13px}.save-button:hover{background:#edf6fd;border-color:#d5e8f7;color:#0068a5}.save-button.is-saved{color:#0068a5;background:#edf6fd}.bottom-nav{height:52px;flex-shrink:0;display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid #e5e8eb;align-items:stretch;background:#fff}.bottom-nav button{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:3px;font-size:8px;color:#626e79;position:relative;min-width:0}.bottom-nav .icon{width:16px;height:16px}.bottom-nav button[aria-selected="true"]{color:#0068a5}.bottom-nav small{position:absolute;top:3px;left:calc(50% + 7px);background:#0068a5;color:#fff;border-radius:10px;min-width:13px;min-height:13px;padding:0 3px;font-size:8px}.bottom-nav button:focus-visible{outline-offset:-3px}.android-home{height:12px;min-height:12px;display:grid;place-items:center}.android-home>span{display:block;width:77px;height:3px;background:#111;border-radius:9px}.search-form{display:flex;align-items:center;gap:7px;margin:0 12px 8px;padding:0 7px 0 10px;border:1px solid #dfe3e6;border-radius:5px;min-height:35px;flex-shrink:0;background:#fafbfc}.search-form>.icon{width:14px;height:14px;color:#626e79}.search-form input{width:100%;min-width:0;border:0;background:none;font-size:10px;padding:9px 0;outline:none!important;color:#14171a}.search-form:focus-within{outline:2px solid #1d9bf0;outline-offset:1px}.search-form input::-webkit-search-cancel-button{display:none}.search-form .icon-button{width:25px;height:25px}.search-form .icon-button>.icon{width:12px;height:12px}.empty-state{padding:39px 23px;min-height:230px;text-align:center;display:flex;flex-direction:column;align-items:center}.empty-state>.icon{width:28px;height:28px;color:#5f6d78}.empty-state h4{font-size:14px;margin-top:15px}.empty-state p{font-size:10px;line-height:1.9;color:#68747e;margin:12px 0 15px;max-width:300px}.small-button{padding:8px 12px;border:1px solid #cbd2d7;border-radius:4px;font-size:10px;min-height:35px;background:#fff;color:#18212a}.small-button:hover{background:#f1f5f7}.category-filters{display:flex;gap:6px;flex-shrink:0;margin:0 13px 9px}.category-filters button{font-size:9px;padding:4px 9px;border:1px solid #e0e4e7;border-radius:20px;min-height:27px;color:#66717a}.category-filters button[aria-pressed="true"]{background:#171b1f;color:#fff;border-color:#171b1f}.saved-meta{font-size:9px;margin-top:10px;color:#0068a5;overflow-wrap:anywhere}.saved-meta .icon{width:12px;height:12px}.saved-meta p{font-size:10px;line-height:1.7;padding:8px 10px;background:#f1f5f8;margin-top:5px;border-radius:3px;color:#46515a}.demo-scope{display:flex;align-items:flex-start;gap:8px;font-size:10px;color:#70767c;margin-top:19px;max-width:915px;line-height:1.8}.demo-scope .icon{width:13px;height:13px;margin-top:2px}
+/* Desktop is a genuinely different layout, not a scaled-up phone. */
+.desktop-mode{grid-template-columns:252px minmax(0,1fr)}.desktop-mode .demo-guide{padding:34px 23px}.desktop-mode .demo-guide h3{font-size:21px}.desktop-mode .demo-stage{padding:24px 20px 18px;justify-content:flex-start}.desktop-device{width:100%;height:556px;border:1px solid #b9c0c6;border-radius:8px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 12px 22px #111a2208}.app-titlebar{height:35px;min-height:35px;display:flex;align-items:center;justify-content:center;background:#eaedef;position:relative;border-bottom:1px solid #d7dde1;font-size:9px;color:#4e5963;padding:0 15px}.titlebar-controls{display:flex;align-items:center;gap:10px;position:absolute;left:12px;top:50%;transform:translateY(-50%)}.titlebar-controls>i{width:8px;height:8px;border:1px solid #929ca4;background:#aeb6bc;border-radius:50%}.app-titlebar.windows .titlebar-controls{left:auto;right:10px;font-size:14px;color:#586670;gap:15px}.app-titlebar .demo-title-tag{position:absolute;right:13px;font:7px monospace;color:#596770;letter-spacing:1px}.app-titlebar.windows .demo-title-tag{left:13px;right:auto}.desktop-device .app-layout{display:grid;grid-template-columns:115px minmax(0,1fr) 167px;min-height:0;flex:1}.app-sidebar{border-right:1px solid #e0e5e9;background:#f9fafb;display:flex;flex-direction:column;padding:23px 10px 13px;min-width:0}.app-sidebar>.wordmark{font-size:29px;letter-spacing:-2px;margin:0 7px 27px}.app-sidebar nav{display:flex;flex-direction:column;gap:5px}.app-sidebar nav button{display:flex;align-items:center;gap:8px;padding:10px 8px;min-height:39px;min-width:0;font-size:10px;color:#646f79;border-radius:4px;text-align:left;white-space:nowrap}.app-sidebar nav .icon{width:16px;height:16px}.app-sidebar nav button[aria-selected="true"]{background:#eaf3fa;color:#0068a5;font-weight:600}.app-sidebar nav small{margin-left:auto;font-size:9px}.sidebar-footer{margin-top:auto;color:#5f6d78;font-size:8px;display:flex;align-items:center;gap:6px;padding:8px 3px}.sidebar-footer .icon{width:11px;height:11px}.desktop-device .app-main{display:flex;flex-direction:column;min-width:0;min-height:0}.desktop-device .app-view-heading{height:59px;min-height:59px;border-top:0;padding:8px 18px}.desktop-device .app-view-heading h4{font-size:17px}.desktop-device .post{padding:18px 16px 13px;gap:10px}.desktop-device .post-open{font-size:11px;line-height:1.8}.desktop-device .post-art{max-width:320px}.desktop-device .post-meta{row-gap:4px}.desktop-device .type-art{min-height:160px;padding:16px 20px}.desktop-device .type-art strong{font-size:42px}.desktop-info{border-left:1px solid #e1e6e9;background:#fafbfc;padding:24px 16px;display:flex;flex-direction:column}.inspector-label{font-size:7px;letter-spacing:.8px;color:#5f6c77}.inspector-mark{margin-top:29px;width:37px;height:37px;border:1px solid #c9d2da;display:grid;place-items:center;border-radius:8px;color:#667888}.inspector-mark>.icon{width:17px;height:17px}.desktop-info h5{font-size:18px;line-height:1.5;margin:17px 0 22px;letter-spacing:-.6px}.desktop-info dl{margin:0;display:flex;flex-direction:column;gap:12px}.desktop-info dl>div{display:flex;justify-content:space-between;font-size:9px}.desktop-info dt{color:#62717d}.desktop-info dd{margin:0;font-family:monospace;font-size:11px}.desktop-info>p{font-size:9px;color:#62717d;line-height:1.9;margin-top:24px}.inspector-note{font-size:8px;line-height:1.8;color:#5c6c78;border-top:1px solid #dce2e7;margin-top:auto;padding-top:15px;display:flex;gap:6px}.inspector-note .icon{width:11px;height:11px;margin-top:2px}
+.records{padding:72px 0 45px}.dark-section .section-kicker{color:#92979c}.records-grid{display:grid;grid-template-columns:1fr 1.25fr;gap:90px;align-items:start}.records-intro h2{font-size:clamp(43px,4.6vw,67px);letter-spacing:-2.7px;line-height:1.3}.records-intro h2 span{color:#5d6974}.records-intro p{font-size:14px;color:#969ca2;line-height:1.9;margin-top:28px}.record-row{display:grid;grid-template-columns:30px 1fr;gap:20px;padding:31px 0;border-top:1px solid #303438}.record-row:first-child{padding-top:3px;border-top:0}.record-number{font:10px monospace;color:#91979d;padding-top:5px}.record-title{display:flex;align-items:center;gap:9px;color:#999fa5;font-size:12px;margin-bottom:12px}.record-title .icon{width:17px;height:17px}.record-title h3{font-weight:400;font-size:11px}.record-body h4{font-size:23px;font-weight:600;line-height:1.5;letter-spacing:-.5px}.record-body p{font-size:12px;color:#a3a9ae;line-height:2;margin-top:11px}.record-meta{font-size:9px;color:#858e96;display:block;margin-top:16px}.media-strip{display:flex;align-items:center;gap:14px;border-top:1px solid #2a2d30;border-bottom:1px solid #2a2d30;margin-top:44px;padding:32px 0}.media-file{border:1px solid #353b40;border-radius:5px;width:87px;height:90px;display:flex;flex-direction:column;justify-content:space-between;padding:12px;flex-shrink:0;background:#0f1113}.media-file>.icon{width:18px;height:18px;color:#a8b0b6}.media-file>span{font:7px/1.5 monospace;letter-spacing:.6px;color:#8f99a1}.media-file b{font-size:8px;font-weight:400;color:#e7e9eb}.media-copy{margin-left:22px;max-width:680px}.media-copy h3{font-size:21px;font-weight:600;line-height:1.4}.media-copy p{font-size:12px;line-height:1.9;color:#9aa4ac;margin-top:9px}.media-share{margin-left:auto;border:1px solid #3b4248;border-radius:50%;width:45px;height:45px;display:grid;place-items:center;flex-shrink:0}.feature-boundary{font-size:9px;color:#89929a;margin-top:16px;line-height:1.9}
+.platforms{padding:76px 0 60px}.platform-heading{display:flex;justify-content:space-between;align-items:flex-end;gap:45px;margin-bottom:40px}.platform-heading>p{font-size:13px;color:#667078;line-height:1.9;max-width:360px}.platform-row{display:grid;grid-template-columns:180px 130px 1fr 155px;align-items:center;gap:24px;padding:30px 0;border-top:1px solid #dce0e3}.platform-row:last-child{border-bottom:1px solid #dce0e3}.platform-name{display:flex;align-items:center;gap:15px}.platform-name>.icon{width:27px;height:27px}.platform-name h3{font-size:22px;letter-spacing:-.8px}.status-badge{font-size:10px;display:flex;gap:7px;align-items:center;width:max-content;max-width:100%;padding:5px 10px;background:#f1f3f4;color:#626f79;border:1px solid #e1e5e8;border-radius:4px;white-space:nowrap}.status-badge.developing{background:#eef6fc;color:#005f96;border-color:#cae3f6}.platform-row>p{font-size:12px;color:#68727b;line-height:1.9;max-width:460px}.platform-row .external,.platform-row .text-link{font-size:11px;justify-self:end;text-align:left;gap:8px;white-space:nowrap}.platform-row .external:hover,.dark-link:hover{color:#0068a5}.progress-note{margin-top:34px;padding:25px 28px;background:#f5f6f7;border-left:2px solid #242a2e}.progress-note>div:first-child{display:flex;align-items:center;gap:9px;font-size:12px}.progress-note>.icon{width:17px;height:17px}.progress-note>p{font-size:12px;color:#65717b;line-height:1.9;max-width:960px;margin-top:12px}.progress-links{display:flex;gap:24px;flex-wrap:wrap;margin-top:18px}.progress-links .external{font-size:10px;gap:8px}.progress-links .icon{width:12px;height:12px}.faq{padding:20px 0 88px}.faq-layout{display:grid;grid-template-columns:1fr 1.25fr;gap:90px;border-top:0}.faq .section-kicker{margin-bottom:23px;font-size:9px}.faq h2{font-size:37px;line-height:1.3}.faq-items{border-top:1px solid #d8dde1}.faq details{border-bottom:1px solid #d8dde1}.faq summary{font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:space-between;gap:25px;padding:22px 0;cursor:pointer;list-style:none;line-height:1.7}.faq summary::-webkit-details-marker{display:none}.plus{font-weight:400;font-size:20px;line-height:1;color:#68747d}.faq details[open] .plus{transform:rotate(45deg)}.faq details>p{padding:0 22px 25px 0;font-size:12px;line-height:2;color:#606e79}.footer{padding:63px 0 0}.footer-top{display:flex;justify-content:space-between;gap:45px;padding-bottom:56px}.footer-top .wordmark{font-size:108px;letter-spacing:-9px}.footer-top .wordmark span{letter-spacing:-7px}.footer-top p{font-size:12px;color:#99a1a8;letter-spacing:.3px;margin-top:20px}.footer-cta{min-width:355px;padding-top:6px}.footer-cta h2{font-size:31px;font-weight:600;letter-spacing:-1px;line-height:1.4;margin-bottom:25px}.footer-cta>div{display:flex;align-items:center;gap:28px}.footer-cta .external{font-size:12px}.footer-button{background:#fff;color:#111;padding:12px 17px;border-radius:4px;gap:25px}.footer-button:hover{background:#dfe5e9;color:#111}.footer-bottom{display:flex;justify-content:space-between;align-items:center;gap:24px;border-top:1px solid #2b3034;min-height:72px;font-size:10px;color:#8e99a2}.footer-bottom a{display:flex;align-items:center;min-height:44px;white-space:nowrap}.footer-bottom a:hover{color:#fff}
+/* Native dialogs provide keyboard trapping, Escape handling and modal semantics. */
+#toast{position:fixed;bottom:25px;left:50%;transform:translate(-50%,15px);display:flex;align-items:center;gap:10px;z-index:90;max-width:min(560px,calc(100% - 30px));width:max-content;background:#14191e;color:#fff;border:1px solid #59636a;border-radius:7px;padding:13px 18px;box-shadow:0 6px 25px #0003;font-size:12px;line-height:1.7;opacity:0;pointer-events:none;transition:opacity .15s,transform .15s}#toast.visible{opacity:1;transform:translate(-50%,0)}#toast .icon{width:17px;height:17px;color:#8acbff}dialog{color-scheme:light;position:fixed;width:min(470px,calc(100vw - 32px));max-height:85dvh;overflow:auto;border:1px solid #d1d8de;padding:36px;border-radius:10px;background:#fff;color:#151b21;box-shadow:0 24px 90px #0008}dialog::backdrop{background:#0009;backdrop-filter:blur(3px)}body.dialog-open{overflow:hidden}.dialog-close{position:absolute;top:12px;right:12px}.dialog-close:hover{background:#eff3f6}.dialog-kicker{font-size:9px;letter-spacing:.8px;color:#697780;padding-right:20px;margin-bottom:19px}dialog h2{font-size:25px;letter-spacing:-.6px;line-height:1.4;padding-right:20px}dialog .post-art{max-width:100%;margin-top:20px}dialog .type-art{height:210px;padding:22px}dialog .type-art strong{font-size:54px}.dialog-post-body{font-size:14px;line-height:1.9;margin-top:20px}.dialog-hint{font-size:11px;line-height:1.9;color:#687681;margin:20px 0}dialog .button{font-size:12px;min-height:46px}.dialog-nav{display:flex;flex-direction:column;margin-top:25px;gap:0}.dialog-nav>a{padding:17px 0;border-top:1px solid #dce2e6;font-size:16px}.dialog-nav>a:hover{color:#0068a5}#edit-form{display:flex;flex-direction:column;margin-top:24px}#edit-form label{font-size:12px;font-weight:600;margin:8px 0}#edit-form select,#edit-form textarea{border:1px solid #cbd3da;background:#fafbfc;padding:11px;border-radius:4px;width:100%;font-size:13px;color:#17212a;resize:vertical}#edit-form textarea{min-height:100px}
+@media(min-width:1550px){.hero-grid{gap:70px}.hero h1{font-size:72px}.hero-visual{height:555px}.hero-desktop{top:65px;height:335px}.hero-phone{top:170px;height:354px}.hero{padding-top:70px}.hero-bottom{margin-top:65px}}
+@media(max-width:1199px){.container{padding:0 36px}.header-inner{padding:0 36px}.hero-grid{gap:24px}.hero h1{font-size:55px}.hero-lead{font-size:19px}.hero-description{font-size:13px}.eyebrow{font-size:8px;letter-spacing:1.1px}.hero-visual{height:500px}.hero-desktop{width:calc(100% - 20px);top:65px;height:295px}.hero-phone{width:186px;height:321px;top:162px}.hero-phone .mini-art{height:68px}.hero-phone .mini-art>span{font-size:18px}.hero-caption{font-size:9px;bottom:100px;gap:10px}.mock-disclaimer{font-size:8px;max-width:175px;bottom:20px}.visual-label{font-size:9px;top:25px}.hero-platforms{gap:12px}.hero-platforms>span{font-size:10px}.hero-platforms b{font-size:9px}.hero-bottom:before{left:36px;right:36px}.demo-workspace{grid-template-columns:270px minmax(0,1fr)}.desktop-mode{grid-template-columns:225px minmax(0,1fr)}.desktop-mode .demo-guide{padding:30px 18px}.desktop-device .app-layout{grid-template-columns:94px minmax(0,1fr)}.desktop-info{display:none}.app-sidebar{padding-left:6px;padding-right:6px}.app-sidebar nav button{font-size:9px;gap:7px}.records-grid,.faq-layout{gap:65px}.platform-row{grid-template-columns:155px 110px 1fr 128px;gap:20px}.platform-name h3{font-size:20px}.platform-name>.icon{width:23px;height:23px}.platform-name{gap:12px}.platform-row .external,.platform-row .text-link{font-size:10px}.platform-row>p{font-size:11px}.platform-heading>p{max-width:310px}.hero-cta{gap:22px}.hero-cta .text-link{font-size:12px}.hero-cta .button{font-size:13px;padding:14px 18px}.footer-cta{min-width:320px}}
+@media(max-width:959px){.header{height:68px}.header-inner{padding:0 28px}.container{padding:0 28px}.top-nav{gap:23px;margin-left:20px;font-size:12px}.header-actions{gap:19px}.hero{padding-top:45px}.hero-grid{grid-template-columns:1fr 1fr;gap:20px;min-height:550px}.hero h1{font-size:44px;letter-spacing:-2px}.hero-lead{font-size:17px}.hero-description{font-size:12px}.hero-description br{display:none}.hero-platforms{gap:10px;align-items:flex-start;max-width:310px}.hero-platforms>span{gap:5px;font-size:10px}.hero-platforms b{font-size:9px}.hero-small{font-size:9px}.hero-cta{flex-wrap:wrap;gap:18px;margin-bottom:26px}.hero-cta .button{font-size:12px;gap:14px;padding:12px 16px;min-height:47px}.hero-cta .text-link{font-size:10px;gap:8px}.hero-visual{height:430px}.hero-desktop{height:264px;top:50px;width:calc(100% - 10px)}.hero-desktop-body{grid-template-columns:40px 1fr}.mock-feed{padding:0 12px}.mock-sidebar{gap:17px;padding-top:13px}.mock-sidebar .wordmark{font-size:20px}.mock-sidebar .icon{width:12px;height:12px}.mock-feed-title{font-size:10px;padding:13px 0}.hero-phone{width:157px;height:286px;top:128px;border-width:5px;padding:0 9px;border-radius:23px}.hero-phone .phone-status{height:21px;font-size:7px;padding:0 3px}.hero-phone .phone-status>span{font-size:6px}.hero-phone-header{height:31px}.hero-phone-header .wordmark{font-size:21px}.phone-feed-label{height:23px;font-size:8px}.hero-phone .mini-avatar{width:16px;height:16px;font-size:7px}.hero-phone .mini-body>b{font-size:7px}.hero-phone .mini-post{padding:9px 0;gap:5px}.hero-phone .mini-art{padding:9px;height:61px}.hero-phone .mini-art>span{font-size:17px}.hero-phone .mini-post-foot{font-size:5px}.hero-phone .phone-mini-nav{height:30px}.hero-phone .phone-mini-nav .icon{width:12px;height:12px}.hero-caption{font-size:8px;bottom:72px;gap:8px}.hero-caption .icon{width:12px;height:12px}.mock-disclaimer{font-size:7px;max-width:156px;bottom:1px}.visual-label{top:8px;font-size:8px}.hero-bottom{margin-top:30px}.hero-bottom:before{left:28px;right:28px}.experience{padding-top:55px}.experience-heading{gap:24px;align-items:flex-start}.experience-heading p{font-size:12px;max-width:360px}.surface-switch button{padding:9px 12px;font-size:11px;gap:6px}.experience-heading .surface-switch{margin-top:10px}.demo-workspace{grid-template-columns:235px minmax(0,1fr)}.demo-guide{padding:29px 21px}.demo-guide h3{font-size:21px}.demo-guide>p:not(.guide-fine){font-size:11px}.demo-steps li{font-size:11px}.demo-stage{padding:20px 18px 15px}.mobile-device{width:300px}.desktop-mode{grid-template-columns:205px minmax(0,1fr)}.desktop-mode .demo-guide{padding:29px 15px}.desktop-mode .demo-stage{padding:20px 12px 15px}.desktop-mode .demo-guide h3{font-size:19px}.desktop-device .app-layout{grid-template-columns:51px minmax(0,1fr)}.app-sidebar{align-items:center;padding:20px 4px 10px}.app-sidebar .wordmark{font-size:24px;margin:0 0 22px}.app-sidebar nav{width:100%}.app-sidebar nav button{justify-content:center;padding:10px 0;position:relative}.app-sidebar nav button>span{display:none}.app-sidebar nav small{position:absolute;right:1px;top:0;font-size:8px;background:#0068a5;color:#fff;padding:0 3px;border-radius:50%}.sidebar-footer span{display:none}.sidebar-footer{padding:8px 0}.desktop-device .post{padding:14px 11px;gap:8px}.desktop-device .post-avatar{width:25px;height:25px;font-size:10px}.desktop-device .type-art strong{font-size:35px}.desktop-device .type-art{min-height:140px;padding:14px}.desktop-device .post-meta>span:nth-child(2){font-size:7px}.desktop-device .post-meta strong{font-size:10px}.desktop-device .app-view-heading{height:51px;min-height:51px;padding:6px 14px}.desktop-device .app-view-heading h4{font-size:15px}.records-grid{grid-template-columns:.85fr 1.15fr;gap:40px}.records-intro h2{font-size:47px}.record-body h4{font-size:21px}.record-body p{font-size:11px}.record-row{gap:12px}.media-copy{margin-left:10px}.media-copy p{font-size:11px}.media-share{display:none}.platform-heading{gap:28px}.platform-heading>p{font-size:12px;max-width:270px}.platform-row{grid-template-columns:140px 105px minmax(0,1fr);gap:16px;padding:26px 0}.platform-row>.external,.platform-row>.text-link{grid-column:3;justify-self:start;margin-top:-6px}.platform-row .status-badge{font-size:9px;padding:5px 7px}.faq-layout{gap:40px;grid-template-columns:.85fr 1.15fr}.faq h2{font-size:32px}.faq summary{font-size:12px}.footer-cta{min-width:275px}.footer-cta h2{font-size:28px}.footer-cta>div{gap:18px}.footer-cta .external{font-size:10px}.footer-top .wordmark{font-size:94px}}
+@media(max-width:699px){html{scroll-padding-top:82px}.header{height:64px}.header-inner{padding:0 22px;gap:16px}.container{padding:0 24px}.wordmark{font-size:32px}.top-nav,.header-github{display:none}.header-actions{gap:20px}.menu-toggle{display:inline-flex;width:34px;height:40px}.lang-button{font-size:11px;gap:8px}.hero{padding:38px 0 0}.hero-grid{display:flex;flex-direction:column;gap:20px;min-height:0;align-items:stretch}.hero-copy{max-width:510px;width:100%;margin:auto}.eyebrow{font-size:7.7px;letter-spacing:1.2px;gap:8px}.hero h1{font-size:clamp(42px,9.3vw,60px);letter-spacing:-2px;line-height:1.22;margin:27px 0 24px}.hero-lead{font-size:19px;line-height:1.7}.hero-description{font-size:12px;line-height:1.9;margin-top:14px;max-width:420px}.hero-description br{display:none}.hero-cta{margin:25px 0 24px;gap:26px;flex-wrap:nowrap}.hero-cta .button{font-size:12px;padding:13px 18px;min-height:48px;gap:16px}.hero-cta .text-link{font-size:11px;gap:10px}.hero-platforms{gap:13px;max-width:none;row-gap:10px}.hero-platforms>span{font-size:10px}.hero-platforms b{font-size:8px}.hero-platforms .icon{width:13px;height:13px}.hero-small{font-size:8.5px;max-width:365px;line-height:1.8;margin-top:12px}.hero-visual{height:378px;max-width:420px;width:100%;margin:7px auto 0}.visual-label{font-size:8px;top:2px}.hero-desktop{width:calc(100% - 25px);top:35px;height:246px;right:0}.hero-desktop-body{height:220px;grid-template-columns:45px 1fr}.mock-titlebar{height:26px;font-size:7px}.mock-sidebar{gap:17px}.mock-feed{padding:0 14px}.mock-feed-title{padding:10px 0;font-size:10px}.mock-search{height:23px;font-size:7px}.mock-feed .mini-post{padding:10px 0}.mock-feed .mini-art{height:68px;margin-top:7px;padding:10px 13px}.mock-feed .mini-art>span{font-size:20px}.mock-feed .mini-body>b{font-size:8px}.mini-avatar{width:20px;height:20px;font-size:8px}.hero-phone{width:164px;height:274px;top:86px;left:0;border-width:5px;border-radius:23px;padding:0 10px}.hero-phone .mini-post{padding:9px 0}.hero-phone .phone-status{height:20px}.hero-phone-header{height:29px}.phone-feed-label{font-size:8px;height:24px}.hero-phone .mini-art{height:58px;padding:8px 10px}.hero-phone .mini-art>span{font-size:17px}.hero-phone .mini-body>b{font-size:7px}.hero-phone .phone-mini-nav{height:29px}.hero-phone .mini-post-foot{font-size:5px}.hero-caption{font-size:8px;bottom:51px;gap:9px}.hero-caption .icon{width:12px;height:12px}.mock-disclaimer{font-size:7px;max-width:160px;bottom:6px}.hero-bottom{margin-top:14px;min-height:69px;font-size:9px}.hero-bottom a{font-size:7px;letter-spacing:1px;gap:10px}.hero-bottom:before{left:24px;right:24px}.hero-bottom a .icon{width:13px;height:13px}.section-kicker{font-size:8px;letter-spacing:1px;margin-bottom:27px;align-items:flex-start}.section-kicker>span:last-child{font-size:7px;max-width:48%;text-align:right;letter-spacing:.2px}.experience{padding:43px 0 33px}.light-section h2{font-size:35px;letter-spacing:-1.4px;line-height:1.25}.experience-heading{display:block;margin-bottom:24px}.experience-heading p{font-size:12px;margin-top:18px;line-height:1.9;max-width:440px}.experience-heading .surface-switch{margin:24px 0 0}.surface-switch{display:inline-flex;max-width:100%;width:100%}.surface-switch button{flex:1;font-size:12px;min-height:44px;padding:9px 13px}.surface-switch .icon{width:16px;height:16px}.demo-workspace,.desktop-mode{display:flex;flex-direction:column;min-height:0;border-radius:7px;overflow:visible}.demo-guide,.desktop-mode .demo-guide{display:grid;grid-template-columns:1fr auto;gap:0 15px;padding:20px;border:0;border-bottom:1px solid #dce0e2;border-radius:7px 7px 0 0;align-items:center}.guide-label{grid-column:1/-1;font-size:8px;margin-bottom:13px}.demo-guide h3,.desktop-mode .demo-guide h3{font-size:19px;grid-column:1/-1;margin:0 0 9px}.demo-guide>p:not(.guide-fine){font-size:11px;min-height:0;grid-column:1/-1;margin:0 0 16px}.demo-steps{grid-column:1/-1;flex-direction:row;justify-content:space-between;margin:0 0 18px;gap:0}.demo-steps li{font-size:0;padding:0;flex:1;gap:0;justify-content:flex-start}.demo-steps li:last-child{flex:0}.demo-steps li>span{width:24px;height:24px;font-size:9px}.demo-steps li:not(:last-child):after{left:24px;right:0;top:12px;height:0;width:auto;border-left:0;border-top:1px solid #dfe3e7}.guide-action{grid-column:1/-1;font-size:11px;min-height:44px;padding:11px 13px}.guide-status{font-size:8px;margin-top:14px;grid-column:1;gap:5px}.guide-status .blue-dot,.guide-status .off-dot{width:4px;height:4px}.guide-fine{grid-column:1/-1;font-size:8px!important;margin-top:5px!important;line-height:1.8!important;order:8}.quiet-button{font-size:8px;grid-column:2;grid-row:6;margin:10px 0 0;padding:0;min-height:28px;gap:5px}.quiet-button .icon{width:11px;height:11px}.demo-stage,.desktop-mode .demo-stage{padding:15px 14px 13px;border-radius:0 0 7px 7px}.stage-label{font-size:10px;margin-bottom:16px;min-height:29px}.stage-label>span{gap:7px}.stage-label b{font-size:8px}.mobile-device{width:300px;height:544px;border-width:6px;border-radius:29px}.mobile-device .app-view-heading h4{font-size:14px}.mobile-device .mobile-app-brand{height:35px}.stage-caption{font-size:8px;margin-top:14px;line-height:1.7}.demo-scope{font-size:9px;margin-top:15px;line-height:1.9;gap:7px}.demo-scope>.icon{width:12px;height:12px}.desktop-device{height:555px;min-width:0;max-width:100%}.desktop-device .app-layout{grid-template-columns:38px minmax(0,1fr)}.desktop-device .app-sidebar{padding:17px 3px 10px}.desktop-device .app-sidebar>.wordmark{font-size:21px;letter-spacing:-1.7px;margin-bottom:19px}.desktop-device .app-sidebar nav .icon{width:15px;height:15px}.desktop-device .app-sidebar nav button{min-height:38px}.desktop-device .app-titlebar{font-size:7px;height:31px;min-height:31px;padding:0 6px}.desktop-device .app-titlebar.windows{justify-content:flex-start;padding-left:10px}.desktop-device .app-titlebar.windows .demo-title-tag{display:none}.desktop-device .app-titlebar.macos .titlebar-controls{left:7px;gap:3px}.desktop-device .titlebar-controls>i{width:5px;height:5px}.desktop-device .app-titlebar.macos{justify-content:center}.desktop-device .app-titlebar.macos .demo-title-tag{right:5px;font-size:6px}.desktop-device .titlebar-controls>span{font-size:11px}.desktop-device .titlebar-controls{gap:8px;right:6px!important}.desktop-device .app-view-heading{height:45px;min-height:45px;padding:6px 11px}.desktop-device .app-view-heading h4{font-size:13px}.desktop-device .app-subline{padding:0 11px 9px;font-size:8px}.desktop-device .post{padding:13px 10px;gap:7px}.desktop-device .post-avatar{width:23px;height:23px;font-size:9px}.desktop-device .post-content .post-meta{gap:4px}.desktop-device .post-meta strong{font-size:9px}.desktop-device .post-meta>span:nth-child(2){font-size:6.5px}.desktop-device .post-meta .post-demo-label{font-size:6px}.desktop-device .post-open{font-size:10px;line-height:1.8}.desktop-device .type-art{padding:13px;min-height:138px}.desktop-device .type-art strong{font-size:33px}.desktop-device .post-actions{font-size:7px}.desktop-device .save-button{font-size:8px;padding:4px}.desktop-device .post-actions>span{max-width:95px}.desktop-device .feed-status{font-size:8px;padding:8px 10px}.desktop-device .search-form{margin:0 8px 8px;padding-left:7px;gap:4px}.desktop-device .search-form input{font-size:9px}.desktop-device .category-filters{margin:0 8px 8px;gap:4px}.desktop-device .category-filters button{font-size:8px;padding:4px 7px}.desktop-device .empty-state{padding:30px 14px}.desktop-device .empty-state h4{font-size:12px}.desktop-device .empty-state p{font-size:9px}.desktop-device .local-label{font-size:7px}.records{padding:45px 0 30px}.records-grid{grid-template-columns:1fr;gap:37px}.records-intro h2{font-size:45px;line-height:1.26;letter-spacing:-1.8px}.records-intro p{font-size:12px;line-height:1.9;margin-top:20px}.record-row{grid-template-columns:22px 1fr;gap:13px;padding:25px 0}.record-row:first-child{border-top:1px solid #303438;padding-top:25px}.record-number{font-size:9px}.record-title{margin-bottom:10px;gap:8px}.record-title h3{font-size:10px}.record-title>.icon{width:15px;height:15px}.record-body h4{font-size:21px}.record-body p{font-size:11px;line-height:2}.record-meta{font-size:8px;margin-top:13px}.media-strip{display:grid;grid-template-columns:65px 65px 1fr;gap:12px;margin-top:22px;padding:25px 0}.media-file{width:65px;height:78px;padding:10px}.media-file>.icon{width:16px;height:16px}.media-file span{font-size:6px}.media-file b{font-size:7px}.media-copy{grid-column:1/-1;margin:3px 0 0}.media-copy h3{font-size:20px}.media-copy p{font-size:11px;margin-top:9px}.feature-boundary{font-size:8px;line-height:1.9;margin-top:15px}.platforms{padding:46px 0 38px}.platforms .section-kicker>span:last-child{font-size:6.5px;max-width:51%}.platform-heading{display:block;margin-bottom:25px}.platform-heading>p{font-size:12px;max-width:none;margin-top:19px;line-height:1.9}.platform-row{grid-template-columns:1fr auto;gap:17px 12px;padding:25px 0;align-items:center}.platform-name{gap:12px}.platform-name>.icon{width:22px;height:22px}.platform-name h3{font-size:21px}.platform-row .status-badge{font-size:9px;padding:4px 7px}.platform-row>p{grid-column:1/-1;font-size:11px;line-height:1.9}.platform-row>.external,.platform-row>.text-link{grid-column:1/-1;margin-top:-2px;font-size:10px;min-height:28px}.progress-note{padding:21px 19px;margin-top:26px}.progress-note>div:first-child{font-size:11px;gap:7px;align-items:flex-start}.progress-note>div:first-child>.icon{width:15px;height:15px;margin-top:2px}.progress-note>p{font-size:10px;line-height:2;margin-top:12px}.progress-links{gap:9px 16px;margin-top:17px}.progress-links .external{font-size:9px;gap:5px;min-height:27px}.faq{padding:10px 0 45px}.faq-layout{display:block}.faq h2{font-size:32px;margin-bottom:26px}.faq .section-kicker{font-size:8px;margin-bottom:18px}.faq summary{font-size:12px;line-height:1.8;padding:20px 0;gap:18px}.faq details>p{font-size:11px;line-height:2;padding:0 12px 21px 0}.footer{padding:39px 0 0}.footer-top{display:block;padding-bottom:34px}.footer-top .wordmark{font-size:83px;letter-spacing:-6px}.footer-top .wordmark span{letter-spacing:-5px}.footer-top p{font-size:11px;margin-top:14px}.footer-cta{min-width:0;padding-top:31px}.footer-cta h2{font-size:28px;line-height:1.4;margin-bottom:22px}.footer-cta>div{gap:24px}.footer-cta .external{font-size:10px}.footer-button{padding:12px 15px;gap:16px}.footer-bottom{font-size:8px;min-height:96px;display:grid;grid-template-columns:1fr auto;gap:0 14px;padding:16px 0}.footer-bottom>span:first-child{grid-column:1;grid-row:1}.footer-bottom>span:nth-child(2){grid-column:1;grid-row:2}.footer-bottom>a{grid-column:2;grid-row:1/3;font-size:9px}#toast{font-size:11px;bottom:15px;padding:11px 14px;line-height:1.8;gap:8px}dialog{padding:28px 23px;width:calc(100vw - 30px);border-radius:9px}dialog h2{font-size:22px}.dialog-kicker{font-size:8px;padding-right:22px}.dialog-post-body{font-size:13px}dialog .type-art strong{font-size:47px}.dialog-hint{font-size:10px}}
+@media(max-width:359px){.header-inner{padding:0 18px}.container{padding:0 18px}.hero h1{font-size:39px;letter-spacing:-1.8px}.eyebrow{font-size:6.6px;letter-spacing:1px}.hero-lead{font-size:17px}.hero-description{font-size:11px}.hero-cta{gap:17px}.hero-cta .button{padding:11px 13px;gap:11px;font-size:11px}.hero-cta .text-link{font-size:10px;gap:6px}.hero-platforms{gap:8px}.hero-platforms>span{font-size:9px;gap:4px}.hero-platforms b{font-size:7px}.hero-platforms .icon{width:11px;height:11px}.hero-small{font-size:8px}.hero-visual{height:350px}.hero-phone{width:146px;height:261px;top:76px;padding:0 8px}.hero-desktop{height:232px;top:30px;width:calc(100% - 18px)}.hero-phone .mini-art>span{font-size:15px}.hero-caption{font-size:7px;bottom:54px;gap:8px}.hero-caption .icon{width:10px;height:10px}.mock-disclaimer{max-width:131px;font-size:6px;bottom:7px}.visual-label{font-size:7px}.hero-bottom{font-size:8px}.hero-bottom:before{left:18px;right:18px}.hero-bottom a{font-size:6px;gap:6px}.light-section h2{font-size:31px}.demo-guide,.desktop-mode .demo-guide{padding:17px}.demo-stage,.desktop-mode .demo-stage{padding:13px 9px}.mobile-device{height:528px}.post{padding:13px 10px;gap:7px}.post-avatar{width:24px;height:24px;font-size:10px}.post-meta strong{font-size:10px}.post-meta>span:nth-child(2){font-size:7px}.post-open{font-size:10px}.type-art strong{font-size:32px}.post-art.type-art{min-height:133px}.post-actions{font-size:7px}.app-subline{font-size:8px;padding-left:13px;padding-right:13px}.desktop-device .app-layout{grid-template-columns:33px minmax(0,1fr)}.desktop-device .post{padding:11px 8px;gap:6px}.desktop-device .post-avatar{width:20px;height:20px;font-size:8px}.desktop-device .post-meta>span:nth-child(2){display:none}.desktop-device .type-art{padding:11px;min-height:128px}.desktop-device .type-art strong{font-size:30px}.desktop-device .app-titlebar.macos .demo-title-tag{display:none}.stage-label b{font-size:7px}.section-kicker>span:last-child{font-size:6.5px}.platform-name h3{font-size:19px}.progress-links{gap:8px 12px}.footer-cta>div{gap:18px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto!important}*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}.button:hover{transform:none}}
+@media(forced-colors:active){.blue-dot,.off-dot{background:Highlight}.surface-switch [aria-selected="true"],.bottom-nav [aria-selected="true"],.app-sidebar [aria-selected="true"]{outline:2px solid Highlight}.demo-device,.hero-phone,.hero-desktop{border:2px solid CanvasText}.type-art{border:1px solid CanvasText}.button{border:1px solid ButtonText}}
+@media print{.header,.hero-visual,.demo-workspace,.hero-cta,.footer-cta,#toast,dialog{display:none!important}body,.dark-section,.footer{background:#fff;color:#111}.container{padding:20px}.hero-grid,.records-grid,.platform-heading,.faq-layout{display:block}.hero h1{font-size:36px}.light-section,.records,.footer{padding:20px 0}.hero-platforms{display:block}.section-kicker{margin-bottom:15px}.record-body p,.record-meta,.hero-description{color:#333}.faq details>p{display:block}.footer-bottom{color:#333}}
+
+/* Preserve a readable brand accent inside light interface illustrations. */
+.mock-sidebar .wordmark i,.hero-phone .wordmark i,.demo-device .wordmark i{color:#0070b3}
+</style>
+</head>
+<body>
+<div id="site"></div>
+<div id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+<dialog id="dialog" aria-labelledby="dialog-title"></dialog>
+<noscript><main style="max-width:700px;margin:80px auto;padding:24px;font-family:system-ui;color:#fff;background:#080808"><h1>Xs · 更纯粹，更好用的 X</h1><p>独立开源、本地优先的跨平台 X 增强客户端。Android 开发中，Windows 与 macOS 规划中，尚无正式版本。此站点的交互演示需要 JavaScript；演示不连接 X 账号。</p><p>An independent, open-source, local-first X client. Android is in development; Windows and macOS are planned. No production release yet. Enable JavaScript to try the simulated demo.</p><a style="color:#8acbff" href="https://github.com/ForceMind/Xs">GitHub source / 查看源码</a></main></noscript>
+<script type="module">const posts = [
+    { id: 'type', author: { zh: '字间实验室', en: 'Type Notes' }, handle: 'type_demo', initials: 'Aa', batch: 0,
+        body: { zh: '好的界面，不是多放一点，而是让重要的东西先被看见。整理了这组关于留白与信息层级的笔记。', en: 'A good interface is not about adding more. It is about letting the important things be seen first. Notes on space and visual hierarchy.' },
+        topic: { zh: '设计灵感', en: 'Design notes' }, art: 'type' },
+    { id: 'local', author: { zh: '本地研究所', en: 'Local Works' }, handle: 'local_demo', initials: 'L', batch: 0,
+        body: { zh: '本地优先，不是与网络断开，而是让保存与整理的主动权回到自己手上。这篇值得留着慢慢看。', en: 'Local-first does not mean disconnected. It means keeping control over what you save and how you organize it. One to come back to.' },
+        topic: { zh: '稍后阅读', en: 'Read later' } },
+    { id: 'grid', author: { zh: '网格观察', en: 'Grid Study' }, handle: 'grid_demo', initials: 'G', batch: 0,
+        body: { zh: '同一套产品，在手机上专注浏览，在桌面上从容整理。适合屏幕的布局，比单纯缩放更重要。', en: 'One product: focused browsing on your phone, room to organize at your desk. Adapt the layout, not just the scale.' },
+        topic: { zh: '产品设计', en: 'Product design' }, art: 'grid' },
+    { id: 'new', author: { zh: '今日发现', en: 'Daily Finds' }, handle: 'today_demo', initials: 'D', batch: 1,
+        body: { zh: '时间线刷新了。这是新出现的一条示意帖子。刚才看到的设计笔记，现在去哪里找？', en: 'The feed refreshed. This is a new demo post. Where did those design notes go?' },
+        topic: { zh: '刷新后的内容', en: 'After refresh' } },
+    { id: 'new2', author: { zh: '简洁日志', en: 'Less Log' }, handle: 'less_demo', initials: '—', batch: 1,
+        body: { zh: '新的内容不断出现。但值得保留的，不应该只靠记忆找回。', en: 'There is always something new. The things worth keeping should not depend on memory alone.' },
+        topic: { zh: '新的时间线', en: 'The new feed' } }
+];
+function initialState() {
+    return { lang: 'zh', surface: 'mobile', os: 'windows', view: 'feed', enabled: false, refreshed: false, captured: [], opened: [], saved: {}, query: '', category: 'all', selected: null };
+}
+function copy(state) {
+    return { ...state, captured: [...state.captured], opened: [...state.opened], saved: { ...state.saved } };
+}
+function reduce(state, action) {
+    const next = copy(state);
+    const isPost = (id) => posts.some(p => p.id === id);
+    switch (action.type) {
+        case 'enable':
+            next.enabled = action.value;
+            break;
+        case 'observe':
+            if (state.enabled && state.view === 'feed' && isPost(action.id) &&
+                posts.find(p => p.id === action.id)?.batch === Number(state.refreshed) && !next.captured.includes(action.id))
+                next.captured.push(action.id);
+            break;
+        case 'refresh':
+            next.refreshed = true;
+            next.view = 'feed';
+            next.query = '';
+            next.selected = null;
+            break;
+        case 'view':
+            next.view = action.value;
+            next.query = '';
+            next.category = 'all';
+            next.selected = null;
+            break;
+        case 'search':
+            next.query = action.value.slice(0, 120);
+            break;
+        case 'category':
+            next.category = action.value;
+            break;
+        case 'save':
+            if (isPost(action.id) && !next.saved[action.id])
+                next.saved[action.id] = { category: 'ideas', note: '' };
+            break;
+        case 'remove':
+            delete next.saved[action.id];
+            break;
+        case 'edit':
+            if (next.saved[action.id])
+                next.saved[action.id] = { category: action.entry.category, note: action.entry.note.slice(0, 280) };
+            break;
+        case 'open':
+            if (isPost(action.id)) {
+                next.selected = action.id;
+                if (!next.opened.includes(action.id))
+                    next.opened.push(action.id);
+            }
+            break;
+        case 'clear-recent':
+            next.captured = [];
+            if (state.view === 'recent')
+                next.selected = null;
+            break;
+        case 'reset': return { ...initialState(), lang: state.lang, surface: state.surface, os: state.os };
+        case 'lang':
+            next.lang = action.value;
+            break;
+        case 'surface':
+            next.surface = action.value;
+            break;
+        case 'os':
+            next.os = action.value;
+            break;
+    }
+    return next;
+}
+function visiblePosts(state) {
+    const q = state.query.trim().toLocaleLowerCase();
+    return posts.filter(p => {
+        const included = state.view === 'feed' ? p.batch === Number(state.refreshed) :
+            state.view === 'recent' ? state.captured.includes(p.id) :
+                state.view === 'history' ? state.opened.includes(p.id) : Object.prototype.hasOwnProperty.call(state.saved, p.id);
+        if (!included)
+            return false;
+        if (state.view === 'saved' && state.category !== 'all' && state.saved[p.id]?.category !== state.category)
+            return false;
+        if (!q)
+            return true;
+        const haystack = [p.author.zh, p.author.en, p.handle, p.body.zh, p.body.en, p.topic.zh, p.topic.en, state.saved[p.id]?.note ?? ''].join(' ').toLocaleLowerCase();
+        return haystack.includes(q);
+    });
+}
+function progress(state) {
+    if (Object.keys(state.saved).length)
+        return 4;
+    if (state.refreshed && (state.view === 'recent' || state.query))
+        return state.query.trim() ? 3 : 2;
+    return state.refreshed ? 1 : 0;
+}
+
+
+let state = initialState();
+const site = document.querySelector('#site');
+const dialog = document.querySelector('#dialog');
+const toast = document.querySelector('#toast');
+let observer = null;
+let toastTimer;
+let returnFocus = null;
+const repository = 'https://github.com/ForceMind/Xs';
+const branch = '7bd4cd46eb83d7fa981e2ecba7d0e42cb10f94a2';
+const t = (zh, en) => state.lang === 'zh' ? zh : en;
+const esc = (s) => s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const paths = {
+    arrow: '<path d="M5 12h14m-6-6 6 6-6 6"/>', up: '<path d="M6 18 18 6M6 6h12v12"/>', down: '<path d="M12 5v14m-6-6 6 6 6-6"/>',
+    phone: '<rect x="6" y="2" width="12" height="20" rx="3"/><path d="M10 18h4M10 5h4"/>', desktop: '<rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/>',
+    feed: '<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-8H9v8H4a1 1 0 0 1-1-1z"/>', recent: '<path d="M3 11a9 9 0 1 1 2.5 7M3 4v7h7m2-4v5l3 2"/>',
+    history: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l4 2"/>', saved: '<path d="M6 4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v17l-6-4-6 4z"/>',
+    search: '<circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/>', check: '<path d="m5 12 4 4L19 6"/>', close: '<path d="m6 6 12 12M6 18 18 6"/>',
+    menu: '<path d="M4 7h16M4 17h16"/>', refresh: '<path d="M20 7v5h-5M4 17v-5h5M6.2 6.2A8 8 0 0 1 20 12M4 12a8 8 0 0 0 13.8 5.8"/>',
+    github: '<path d="M8 20c-5 1.5-5-2.5-7-3m14 6v-4c0-1 .1-1.5-.5-2 3-.3 6-1.5 6-7 0-1.5-.5-2.5-1.5-3.5.2-1 .2-2.5-.5-3.5-1.5 0-3 .8-4 1.5a13 13 0 0 0-6 0C7.5 3.8 6 3 4.5 3c-.7 1-.7 2.5-.5 3.5C3 7.5 2.5 8.5 2.5 10c0 5.5 3 6.7 6 7-.6.5-.5 1-.5 2v4"/>',
+    lock: '<rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 4v3"/>', file: '<path d="M13 2H5v20h14V8zM13 2v6h6M8 13h8m-8 4h5"/>',
+    share: '<path d="M12 16V3m-5 5 5-5 5 5M5 13v8h14v-8"/>', chevron: '<path d="m8 4 8 8-8 8"/>', info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-11v1"/>',
+    edit: '<path d="m15 3 6 6M3 21l5-1L21 7l-4-4L4 16z"/>', folder: '<path d="M3 5h7l2 3h9v12H3z"/>', windows: '<path d="M3 3h7v7H3zm11 0h7v7h-7zM3 14h7v7H3zm11 0h7v7h-7z"/>',
+    mac: '<path d="M8 8V5a3 3 0 1 0-3 3h14a3 3 0 1 0-3-3v14a3 3 0 1 0 3-3H5a3 3 0 1 0 3 3V8z"/>', dots: '<circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>'
+};
+function icon(name, cls = '') { return `<svg class="icon ${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name] ?? paths.info}</svg>`; }
+const logo = () => `<span class="wordmark" aria-label="Xs">X<span>s</span><i aria-hidden="true">.</i></span>`;
+function ext(label, path, cls = '') { return `<a class="external ${cls}" href="${repository}${path}" target="_blank" rel="noopener noreferrer">${label}${icon('up')}<span class="sr-only">${t('（在新标签页打开）', ' (opens in a new tab)')}</span></a>`; }
+function navLinks() { return `<a href="#experience">${t('亲自体验', 'Try Xs')}</a><a href="#records">${t('为什么用 Xs', 'Why Xs')}</a><a href="#platforms">${t('平台与进度', 'Platforms')}</a>`; }
+function header() { return `<a class="skip-link" href="#main">${t('跳到正文', 'Skip to content')}</a><header class="header"><div class="header-inner"><a class="brand" href="#top" aria-label="${t('Xs 首页', 'Xs home')}">${logo()}</a><nav class="top-nav" aria-label="${t('主导航', 'Main navigation')}">${navLinks()}</nav><div class="header-actions"><button class="lang-button" data-action="lang" data-key="lang" aria-label="${t('Switch to English', '切换为中文')}"><span class="${state.lang === 'zh' ? 'active' : ''}">中</span><span class="lang-sep">/</span><span class="${state.lang === 'en' ? 'active' : ''}">EN</span></button>${ext('GitHub', '', 'header-github')}<button class="icon-button menu-toggle" data-action="menu" data-key="menu" aria-label="${t('打开导航菜单', 'Open navigation menu')}" aria-haspopup="dialog">${icon('menu')}</button></div></div></header>`; }
+function miniPost(kind = 'text') { return `<div class="mini-post"><div class="mini-avatar">${kind === 'type' ? 'Aa' : 'L'}</div><div class="mini-body"><b>${kind === 'type' ? t('字间实验室', 'Type Notes') : t('本地研究所', 'Local Works')}</b><span class="mini-line"></span><span class="mini-line short"></span>${kind === 'type' ? '<div class="mini-art"><span>Less,<br>but better.</span><i>↗</i></div>' : ''}<div class="mini-post-foot">${icon('saved')}<span>${t('留在你的资料库', 'Keep it in your library')}</span></div></div></div>`; }
+function heroVisual() { return `<div class="hero-visual" aria-label="${t('手机与桌面界面设计示意，非真实应用截图', 'Phone and desktop interface illustrations, not real app screenshots')}"><div class="visual-label">${t('为不同屏幕，保留同一份从容。', 'Made for different screens. Designed to feel like Xs.')}</div><div class="hero-desktop"><div class="mock-titlebar"><span class="mock-dots"><i></i><i></i><i></i></span><span>Xs ${t('桌面概念', 'desktop concept')}</span><span>${icon('desktop')}</span></div><div class="hero-desktop-body"><div class="mock-sidebar">${logo()}<span>${icon('feed')}</span><span class="active">${icon('recent')}</span><span>${icon('saved')}</span><span class="mock-bottom">${icon('lock')}</span></div><div class="mock-feed"><div class="mock-feed-title">${t('最近时间线', 'Recent timeline')}<span>48h</span></div><div class="mock-search">${icon('search')} ${t('搜索刚才看过的内容', 'Find that post again')}</div>${miniPost('type')}${miniPost()}</div></div></div><div class="hero-phone"><div class="phone-status"><b>9:41</b><span>● ▰</span></div><div class="hero-phone-header">${logo()}<span>${icon('search')}</span></div><div class="phone-feed-label">${t('你的时间线', 'Your timeline')}<span class="blue-dot"></span></div>${miniPost('type')}${miniPost()}<div class="phone-mini-nav">${icon('feed')}${icon('recent')}${icon('saved')}</div></div><div class="hero-caption"><span>${icon('phone')}Android</span><span>${icon('desktop')}Windows / macOS</span></div><p class="mock-disclaimer">${t('界面设计示意 · 非真实截图 · 桌面端规划中', 'Interface illustrations · Not app screenshots · Desktop planned')}</p></div>`; }
+function hero() { return `<section class="hero" id="top"><div class="container hero-grid"><div class="hero-copy"><div class="eyebrow"><span class="blue-dot"></span>INDEPENDENT. OPEN SOURCE. LOCAL FIRST.</div><h1>${t('更纯粹。<br>更好用的 X。', 'A cleaner X.<br>More yours.')}</h1><p class="hero-lead">${t('尽情浏览。<br class="mobile-br">值得回看的，留在自己手里。', 'Keep scrolling.<br>Keep what matters, too.')}</p><p class="hero-description">${t('独立开源、本地优先的跨平台 X 增强客户端。<br>在手机上发现，在更大的屏幕上从容整理。', 'An independent, open-source, local-first X client.<br>Discover on your phone. Make room to organize on desktop.')}</p><div class="hero-cta"><a href="#experience" class="button primary">${t('体验刷新找回', 'Try the recovery demo')}${icon('arrow')}</a>${ext(t('查看源码', 'Explore the code'), '', 'text-link')}</div><div class="hero-platforms"><span>${icon('phone')}Android <b>${t('开发中', 'In development')}</b></span><span>${icon('windows')}Windows <b>${t('规划中', 'Planned')}</b></span><span>${icon('mac')}macOS <b>${t('规划中', 'Planned')}</b></span></div><p class="hero-small">${t('尚无正式发行版。桌面端为后续规划，不代表已支持跨设备同步。', 'No production release yet. Desktop is planned; cross-device sync is not promised.')}</p></div>${heroVisual()}</div><div class="container hero-bottom"><span>${t('你的时间线，不必转瞬即逝。', 'Your timeline need not be fleeting.')}</span><a href="#experience">SCROLL TO EXPLORE ${icon('down')}</a></div></section>`; }
+function surfaceTabs() { return `<div class="surface-switch" role="tablist" aria-label="${t('演示设备', 'Demo device')}"><button role="tab" id="surface-mobile" aria-selected="${state.surface === 'mobile'}" aria-controls="demo-device" tabindex="${state.surface === 'mobile' ? 0 : -1}" data-tab-group="surface" data-action="surface" data-value="mobile" data-key="surface-mobile">${icon('phone')}${t('手机体验', 'Mobile')}</button><button role="tab" id="surface-desktop" aria-selected="${state.surface === 'desktop'}" aria-controls="demo-device" tabindex="${state.surface === 'desktop' ? 0 : -1}" data-tab-group="surface" data-action="surface" data-value="desktop" data-key="surface-desktop">${icon('desktop')}${t('桌面体验', 'Desktop')}</button></div>`; }
+function experience() { return `<section class="experience light-section" id="experience"><div class="container"><div class="section-kicker"><span>01 / ${t('亲自试一试', 'HANDS ON')}</span><span>${t('仅示意数据 · 不连接 X 账号', 'Demo data only · No X account connection')}</span></div><div class="experience-heading"><div><h2>${t('刚才那条，<br>还找得到。', 'The feed moved.<br>Your finds stayed.')}</h2><p>${t('刷新不必成为遗忘的开始。用一次真实可操作的演示，试试从浏览到收藏的完整过程。', 'A refresh need not mean starting over. Try the whole journey, from browsing to keeping something for later.')}</p></div><div id="surface-controls">${surfaceTabs()}</div></div><div id="demo-workspace"></div><p class="demo-scope">${icon('info')}<span>${t('两种布局共用这一份示意数据，方便比较体验；这不是跨设备同步。刷新整个网页会重置演示，内容不会写入 X 书签。', 'Both layouts use this same demo session for comparison, not cross-device sync. Reloading this webpage resets the demo. Nothing is written to X bookmarks.')}</span></p></div></section>`; }
+function viewLabel(view) { return ({ feed: t('时间线', 'Feed'), recent: t('最近', 'Recent'), history: t('历史', 'History'), saved: t('收藏', 'Saved') })[view]; }
+function appNav() { return ['feed', 'recent', 'history', 'saved'].map(view => `<button role="tab" id="view-${view}" aria-controls="post-panel" aria-selected="${state.view === view}" tabindex="${state.view === view ? 0 : -1}" data-tab-group="views" data-action="view" data-value="${view}" data-key="view-${view}">${icon(view)}<span>${viewLabel(view)}</span>${view === 'saved' && Object.keys(state.saved).length ? `<small>${Object.keys(state.saved).length}</small>` : ''}</button>`).join(''); }
+function mainAction() {
+    if (!state.enabled && !state.refreshed)
+        return { action: 'start', label: t('开启演示，开始浏览', 'Start the demo') };
+    if (!state.refreshed)
+        return { action: 'refresh', label: t('模拟一次刷新', 'Simulate a refresh') };
+    if (Object.keys(state.saved).length)
+        return state.view === 'saved' ? { action: 'reset', label: t('重新体验', 'Try again') } : { action: 'saved-view', label: t('查看示意收藏', 'See your saved posts') };
+    if (state.view !== 'recent')
+        return { action: 'find', label: t('找回刷新前的内容', 'Find the earlier posts') };
+    if (!state.query)
+        return { action: 'search-example', label: t('试着搜「留白」', 'Try searching “space”') };
+    return { action: 'save-first', label: t('加入示意收藏', 'Save the demo post') };
+}
+function guide() {
+    const step = progress(state);
+    const action = mainAction();
+    const titles = [t('浏览示意帖子', 'Browse a few posts'), t('模拟刷新', 'Refresh the feed'), t('找回刚才的内容', 'Find the earlier posts'), t('搜索一个关键词', 'Search a keyword'), t('留下值得回看的', 'Keep it for later')];
+    return `<aside class="demo-guide"><div class="guide-label">${t('一次刷新之后', 'AFTER A REFRESH')}<span>0${step + 1} / 05</span></div><h3>${titles[step]}</h3><p>${t('先开启本页演示缓冲，再浏览帖子。点击刷新后，试试从「最近」里找回它。', 'Enable the demo buffer, then browse the posts. Refresh the feed and find them again in Recent.')}</p><ol class="demo-steps">${titles.map((s, i) => `<li class="${i === step ? 'current' : i < step ? 'done' : ''}" ${i === step ? 'aria-current="step"' : ''}><span>${i < step ? icon('check') : `0${i + 1}`}</span>${s}</li>`).join('')}</ol><button class="button dark guide-action" data-action="${action.action}" data-key="guide-action">${action.label}${icon('arrow')}</button><div class="guide-status"><span class="${state.enabled ? 'blue-dot' : 'off-dot'}"></span>${state.enabled ? t('演示缓冲已开启', 'Demo buffer is on') : t('演示缓冲尚未开启', 'Demo buffer is off')}</div><p class="guide-fine">${t('实际产品独立默认关闭。开启后默认保留 48 小时，临时预算 100 MiB；两项均可调整。', 'The product setting is off by default. When enabled: 48 hours and a 100 MiB temporary budget by default. Both are adjustable.')}</p><button class="quiet-button" data-action="reset" data-key="reset">${icon('refresh')}${t('重置本页演示', 'Reset this demo')}</button></aside>`;
+}
+function artwork(kind, tiny = false) {
+    if (kind === 'type')
+        return `<div class="post-art type-art ${tiny ? 'small-art' : ''}" aria-hidden="true"><span class="art-index">NOTES / 001</span><strong>Less,<br>but better.</strong><span class="art-bottom">SPACE IS A FEATURE. <b>↗</b></span></div>`;
+    if (kind === 'grid')
+        return `<div class="post-art grid-art" aria-hidden="true"><div></div><div></div><div></div><span>ROOM TO THINK.</span></div>`;
+    return '';
+}
+function postCard(p) {
+    const saved = state.saved[p.id];
+    return `<article class="post" data-post-id="${p.id}"><div class="post-avatar">${p.initials}</div><div class="post-content"><div class="post-meta"><strong>${esc(p.author[state.lang])}</strong><span>@${p.handle}</span><span class="post-demo-label">${t('示例', 'DEMO')}</span></div><button class="post-open" data-action="open" data-id="${p.id}" data-key="open-${p.id}" aria-label="${t('模拟打开帖子：', 'Open demo post: ')}${esc(p.author[state.lang])}"><span>${esc(p.body[state.lang])}</span>${artwork(p.art)}</button>${saved && state.view === 'saved' ? `<div class="saved-meta">${icon('folder')} ${saved.category === 'ideas' ? t('灵感', 'Ideas') : t('稍后阅读', 'Read later')}${saved.note ? `<p>${esc(saved.note)}</p>` : ''}</div>` : ''}<div class="post-actions"><span>${p.topic[state.lang]}</span><div>${saved ? `<button class="icon-button" data-action="edit" data-id="${p.id}" data-key="edit-${p.id}" aria-label="${t('编辑分类与备注', 'Edit category and note')}">${icon('edit')}</button>` : ''}<button class="save-button ${saved ? 'is-saved' : ''}" data-action="${saved ? 'remove' : 'save'}" data-id="${p.id}" data-key="save-${p.id}" aria-pressed="${!!saved}" aria-label="${saved ? t('取消示意收藏：', 'Remove demo bookmark: ') : t('加入示意收藏：', 'Save demo post: ')}${esc(p.author[state.lang])}">${icon(saved ? 'check' : 'saved')}<span>${saved ? t('已收藏', 'Saved') : t('收藏', 'Save')}</span></button></div></div></div></article>`;
+}
+function emptyState() {
+    const hasQuery = !!state.query.trim();
+    let heading = t('还没有示意收藏', 'Nothing saved yet');
+    let body = t('在帖子旁点击收藏，让值得回看的内容留在这里。', 'Use the bookmark button beside a post to keep it here.');
+    if (hasQuery) {
+        heading = t('没有找到匹配内容', 'No matching posts');
+        body = t('换个关键词试试，或清空搜索。', 'Try another keyword or clear your search.');
+    }
+    else if (state.view === 'recent') {
+        heading = t('这里还没有临时记录', 'No recent posts yet');
+        body = t('先开启演示缓冲，返回时间线浏览示意帖子。只会收录实际进入演示视口的内容。', 'Enable the demo buffer, then browse the feed. Only posts observed in the demo viewport are collected.');
+    }
+    else if (state.view === 'history') {
+        heading = t('还没有模拟打开记录', 'No simulated opens yet');
+        body = t('点击一条示意帖子的正文即可模拟打开。临时缓冲不会自动制造历史记录；停留记录未在本演示模拟。', 'Click the body of a demo post to simulate opening it. The buffer does not create history. Dwell tracking is not simulated here.');
+    }
+    else if (state.category !== 'all') {
+        heading = t('这个分类还没有内容', 'This category is empty');
+        body = t('在已收藏帖子上编辑分类，或查看全部收藏。', 'Edit the category on a saved post, or view all saved posts.');
+    }
+    return `<div class="empty-state">${icon(hasQuery ? 'search' : state.view)}<h4>${heading}</h4><p>${body}</p><button class="small-button" data-action="${hasQuery ? 'clear-search' : state.view === 'saved' && state.category !== 'all' ? 'all-categories' : 'feed-view'}" data-key="empty-action">${hasQuery ? t('清空搜索', 'Clear search') : state.view === 'saved' && state.category !== 'all' ? t('查看全部', 'View all') : t('返回时间线', 'Back to feed')}</button></div>`;
+}
+function appContent() {
+    let hint = state.view === 'feed' ? t('示意帖子，不是真实 X 时间线', 'Illustrative posts, not a live X feed') : state.view === 'recent' ? t('临时记录 ≠ 已读、历史或收藏', 'Temporary records ≠ read, history or saved') : state.view === 'history' ? t('仅本页模拟打开，不含停留计时', 'Simulated opens only; no dwell measurement') : t('示意收藏独立于 X 平台书签', 'Demo collection, separate from X bookmarks');
+    return `<div class="app-view-heading"><h4>${state.view === 'recent' ? t('最近时间线', 'Recent timeline') : viewLabel(state.view)}</h4>${state.view === 'feed' ? `<button class="icon-button" data-action="refresh" data-key="refresh" aria-label="${t('模拟刷新时间线', 'Simulate refreshing the feed')}">${icon('refresh')}</button>` : state.view === 'recent' ? `<button class="icon-button" data-action="clear-recent" data-key="clear-recent" aria-label="${t('清空示意临时记录', 'Clear demo temporary records')}">${icon('close')}</button>` : '<span class="local-label">LOCAL</span>'}</div><div class="app-subline">${hint}</div>${state.view !== 'feed' ? `<form class="search-form" role="search"><label class="sr-only" for="demo-search">${t('搜索示意帖子', 'Search demo posts')}</label>${icon('search')}<input id="demo-search" name="query" value="${esc(state.query)}" placeholder="${t('搜索正文、作者或备注', 'Search text, author or note')}" maxlength="120" autocomplete="off" type="search"><button class="icon-button" type="button" data-action="clear-search" data-key="clear-search" aria-label="${t('清空搜索', 'Clear search')}">${icon('close')}</button></form>` : ''}${state.view === 'saved' ? `<div class="category-filters" aria-label="${t('收藏分类', 'Saved categories')}">${['all', 'ideas', 'reading'].map(c => `<button aria-pressed="${state.category === c}" data-action="category" data-value="${c}" data-key="category-${c}">${c === 'all' ? t('全部', 'All') : c === 'ideas' ? t('灵感', 'Ideas') : t('稍后阅读', 'Read later')}</button>`).join('')}</div>` : ''}<div class="feed-status" aria-live="polite"><span>${state.view === 'feed' ? (state.refreshed ? t('刷新后的时间线', 'The refreshed feed') : t('刷新前的时间线', 'Before refresh')) : t('当前结果', 'Results')}</span><span id="result-count">${visiblePosts(state).length} ${t('条示例', 'demo posts')}</span></div><div id="post-panel" role="tabpanel" aria-labelledby="view-${state.view}" tabindex="0" class="post-scroll">${visiblePosts(state).length ? visiblePosts(state).map(postCard).join('') : emptyState()}</div>`;
+}
+function desktopInfo() { return `<aside class="desktop-info"><div class="inspector-label">${t('本机资料空间', 'LOCAL WORKSPACE')}</div><div class="inspector-mark">${icon('lock')}</div><h5>${t('你保存的。<br>你来整理。', 'Your finds.<br>Your collection.')}</h5><dl><div><dt>${t('临时记录', 'Temporary')}</dt><dd id="captured-count">${state.captured.length}</dd></div><div><dt>${t('模拟打开', 'Demo opens')}</dt><dd>${state.opened.length}</dd></div><div><dt>${t('示意收藏', 'Saved')}</dt><dd>${Object.keys(state.saved).length}</dd></div></dl><p>${t('清理临时记录，不会移除示意收藏。', 'Clearing the temporary buffer does not remove saved demo posts.')}</p><div class="inspector-note">${icon('info')}${t('桌面端设计探索，尚未实现。', 'Desktop design exploration. Not implemented.')}</div></aside>`; }
+function renderDemo() {
+    const el = document.querySelector('#demo-workspace');
+    if (!el)
+        return;
+    const desktop = state.surface === 'desktop';
+    const oldScroll = document.querySelector('.post-scroll')?.scrollTop ?? 0;
+    el.className = `demo-workspace ${desktop ? 'desktop-mode' : 'mobile-mode'}`;
+    el.innerHTML = `${guide()}<div class="demo-stage"><div class="stage-label"><span>${desktop ? (state.os === 'macos' ? 'macOS' : 'Windows') : 'Android'} <b>${desktop ? t('规划中 · 概念交互', 'Planned · Concept UI') : t('开发中 · 交互示意', 'In development · Demo UI')}</b></span>${desktop ? `<div class="os-switch" role="tablist" aria-label="${t('桌面系统外观', 'Desktop window style')}">${['windows', 'macos'].map(os => `<button role="tab" aria-selected="${state.os === os}" tabindex="${state.os === os ? 0 : -1}" data-tab-group="os" data-action="os" data-value="${os}" data-key="os-${os}" aria-label="${os === 'windows' ? 'Windows' : 'macOS'}">${icon(os === 'windows' ? 'windows' : 'mac')}</button>`).join('')}</div>` : ''}</div><div id="demo-device" role="tabpanel" aria-labelledby="surface-${state.surface}" class="demo-device ${desktop ? 'desktop-device' : 'mobile-device'} ${state.os}">${desktop ? `<div class="app-titlebar ${state.os}"><span class="titlebar-controls" aria-hidden="true">${state.os === 'macos' ? '<i></i><i></i><i></i>' : '<span>−</span><span>□</span><span>×</span>'}</span><span>Xs — ${t('本机资料空间', 'Local workspace')}</span><span class="demo-title-tag">DEMO</span></div>` : `<div class="phone-status"><b>9:41</b><span aria-hidden="true">● ▰</span></div>`}<div class="app-layout">${desktop ? `<aside class="app-sidebar">${logo()}<nav role="tablist" aria-label="${t('示意应用导航', 'Demo app navigation')}" aria-orientation="vertical">${appNav()}</nav><div class="sidebar-footer">${icon('lock')}<span>${t('仅本页示意', 'This demo only')}</span></div></aside>` : ''}<div class="app-main">${!desktop ? `<div class="mobile-app-brand">${logo()}<span>DEMO</span></div>` : ''}${appContent()}${!desktop ? `<nav class="bottom-nav" role="tablist" aria-label="${t('示意应用导航', 'Demo app navigation')}">${appNav()}</nav>` : ''}</div>${desktop ? desktopInfo() : ''}</div>${!desktop ? '<div class="android-home" aria-hidden="true"><span></span></div>' : ''}</div><p class="stage-caption">${t('可操作的界面示意，不是真实应用截图。', 'Interactive illustration, not a screenshot of the app.')}</p></div>`;
+    const scroll = document.querySelector('.post-scroll');
+    if (scroll)
+        scroll.scrollTop = oldScroll;
+    const controls = document.querySelector('#surface-controls');
+    if (controls)
+        controls.innerHTML = surfaceTabs();
+    observeDemo();
+}
+function observeDemo() {
+    observer?.disconnect();
+    if (state.view !== 'feed' || !state.enabled || document.visibilityState === 'hidden')
+        return;
+    // The page viewport clips the device scroller too. Never capture hidden or offscreen demo cards.
+    observer = new IntersectionObserver(entries => {
+        if (document.visibilityState !== 'visible' || state.view !== 'feed' || !state.enabled)
+            return;
+        for (const entry of entries) {
+            if (entry.isIntersecting && entry.intersectionRatio >= 0.15) {
+                const id = entry.target.dataset.postId;
+                if (id)
+                    state = reduce(state, { type: 'observe', id });
+            }
+        }
+        const count = document.querySelector('#captured-count');
+        if (count)
+            count.textContent = String(state.captured.length);
+    }, { threshold: 0.15 });
+    document.querySelectorAll('.post').forEach(el => observer?.observe(el));
+}
+function records() {
+    const rows = [
+        ['recent', t('最近时间线', 'Recent timeline'), t('刚才出现过的。', 'What just appeared.'), t('在允许的场景中，临时留住已经呈现且实际观察到的帖子元数据。刷新后，仍能找回已收录的内容。', 'Temporarily keep metadata from posts actually presented and observed in supported contexts. Find captured posts after a refresh.'), t('默认关闭 · 开启后默认 48 小时', 'Off by default · 48 hours when enabled')],
+        ['history', t('本地历史', 'Local history'), t('自己打开、停留过的。', 'What you opened or paused on.'), t('区分主动打开与达到条件的停留。出现过不等于读过，临时缓冲也不会自动制造历史记录。', 'Distinguish an opened post from a qualifying dwell. Appearing is not reading; the temporary buffer does not invent history.'), t('行为各自记录 · 不混淆已读', 'Separate behaviors · No invented read state')],
+        ['saved', t('长期资料与收藏', 'Library & bookmarks'), t('明确选择留下的。', 'What you chose to keep.'), t('主动长期保存，或加入独立收藏，再用分类、标签和备注整理。临时内容到期，不会带走长期资料。', 'Explicitly save long-term, or bookmark independently and organize with categories, tags and notes. Temporary expiry leaves these records alone.'), t('独立于 X 书签 · 明确保存', 'Separate from X bookmarks · Explicitly saved')]
+    ];
+    return `<section id="records" class="records dark-section"><div class="container"><div class="section-kicker"><span>02 / ${t('各归其位', 'A PLACE FOR EVERYTHING')}</span><span>LOCAL FIRST, BY DESIGN.</span></div><div class="records-grid"><div class="records-intro"><h2>${t('经过的。<br>看过的。<br><span>留下的。</span>', 'Passed by.<br>Looked at.<br><span>Kept.</span>')}</h2><p>${t('不是把所有内容堆在一起。<br>而是让每一次保存，都有清楚的含义。', 'Not one endless pile.<br>A clear meaning for every record.')}</p></div><div class="record-rows">${rows.map((r, i) => `<article class="record-row"><div class="record-number">0${i + 1}</div><div class="record-body"><div class="record-title">${icon(r[0])}<h3>${r[1]}</h3></div><h4>${r[2]}</h4><p>${r[3]}</p><span class="record-meta">${r[4]}</span></div></article>`).join('')}</div></div><div class="media-strip"><div class="media-file">${icon('file')}<span>IMAGE<br><b>PNG / JPG</b></span></div><div class="media-file">${icon('file')}<span>VIDEO<br><b>MP4</b></span></div><div class="media-copy"><h3>${t('不止留住文字。', 'More than words.')}</h3><p>${t('主动选择图片、图组和受支持的标准 MP4，下载、整理，再通过系统分享实际文件。真实 X 媒体与接收应用仍待验收。', 'Choose images, image sets and supported standard MP4s to download, organize and share as actual files. Real X media and receiving apps still need validation.')}</p></div><span class="media-share" aria-hidden="true">${icon('share')}</span></div><p class="feature-boundary">${t('以上描述开发分支的能力设计与实现范围，不代表真实 X、真机或桌面版本已验收。', 'These describe the development branch’s design and implementation scope, not acceptance of live X, physical devices or desktop releases.')}</p></div></section>`;
+}
+function platforms() { return `<section id="platforms" class="platforms light-section"><div class="container"><div class="section-kicker"><span>03 / ${t('从一块屏幕开始', 'ONE SCREEN TO START')}</span><span>ANDROID → WINDOWS / macOS</span></div><div class="platform-heading"><h2>${t('同一个 Xs。<br>不止一种屏幕。', 'One Xs.<br>More than one screen.')}</h2><p>${t('先把 Android 做扎实，再把体验带到 Windows 与 macOS。规划不是发布，进度保持公开。', 'Build a solid Android experience first. Bring it to Windows and macOS next. A plan is not a release; progress stays open.')}</p></div><div class="platform-table"><article class="platform-row"><div class="platform-name">${icon('phone')}<h3>Android</h3></div><span class="status-badge developing"><span class="blue-dot"></span>${t('优先开发', 'In development')}</span><p>${t('内部开发 PoC。资料库、最近时间线与媒体能力已有开发分支实现；真实 X 自动采集仍关闭。', 'Internal development PoC. Library, recent timeline and media implementations exist in the development branch; live X capture remains off.')}</p>${ext(t('查看 PR #5', 'View PR #5'), '/pull/5')}</article><article class="platform-row"><div class="platform-name">${icon('windows')}<h3>Windows</h3></div><span class="status-badge">${t('后续规划', 'Planned')}</span><p>${t('面向宽屏、键鼠与资料整理的桌面体验。当前只提供概念交互演示，尚无可下载客户端。', 'A desktop experience for wider screens, keyboard and mouse, and organizing your library. Concept demo only; no client download yet.')}</p><button class="text-link dark-link" data-action="try-windows">${t('体验桌面示意', 'Try desktop concept')}${icon('arrow')}</button></article><article class="platform-row"><div class="platform-name">${icon('mac')}<h3>macOS</h3></div><span class="status-badge">${t('后续规划', 'Planned')}</span><p>${t('延续同一套本地优先理念，探索适合 Mac 的窗口与操作。尚未承诺发行时间或跨设备同步。', 'The same local-first approach, with a window and interaction model for Mac. No release date or cross-device sync commitment yet.')}</p><button class="text-link dark-link" data-action="try-macos">${t('体验 Mac 示意', 'Try Mac concept')}${icon('arrow')}</button></article></div><div class="progress-note"><div>${icon('info')}<strong>${t('现在能用到什么程度？', 'What is ready today?')}</strong></div><p>${t('目前没有正式发行版。合成页面、构建与模拟器验证，不能替代真实 X、真实手机、生产签名及微信／QQ／飞书／Telegram 接收验收。此站不提供未经发布的安装包。', 'There is no production release. Synthetic-page, build and emulator checks do not replace live X, physical-device, production-signing or WeChat / QQ / Feishu / Telegram reception validation. This site does not offer unapproved installers.')}</p><div class="progress-links">${ext(t('开发进度', 'Development progress'), '/pull/5')}${ext(t('最近时间线任务', 'Timeline work'), '/issues/6')}${ext(t('项目文档', 'Documentation'), `/blob/${branch}/docs/README.md`)}</div></div></div></section>`; }
+function faq() {
+    const items = [
+        [t('这是 X 官方客户端吗？', 'Is Xs an official X client?'), t('不是。Xs 是独立开源项目，与 X Corp. 不存在官方隶属、合作或背书关系。Xs 使用 Web-first 思路增强 X 网页体验，不是另一套社交平台。', 'No. Xs is an independent open-source project with no official affiliation, partnership or endorsement from X Corp. It uses a web-first approach to enhance the X web experience, not build another social network.')],
+        [t('“最近时间线”会保存什么？', 'What does Recent timeline keep?'), t('独立默认关闭。开启后，只保存允许场景中已经呈现且实际被观察到的帖子元数据；不保存任意接口原包、凭据或隐藏内容，也不自动下载媒体。默认保留 48 小时、全应用临时预算 100 MiB，两项均可调整。受观察范围与空间限制，不保证完整覆盖 48 小时，也不恢复 X 推荐状态。', 'It is independently off by default. Once enabled, it keeps only metadata from posts presented and actually observed in supported contexts. No arbitrary raw API payloads, credentials, hidden content or automatic media downloads. Defaults are 48 hours and a 100 MiB app-wide temporary budget; both are adjustable. Observation and storage limits mean coverage is not guaranteed, and X recommendations are not restored.')],
+        [t('临时内容过期，收藏和下载会丢吗？', 'Will expiry remove saved posts or downloads?'), t('临时缓冲到期或被清理，不应删除长期保存的资料、独立收藏和已下载文件。缓冲记录不会自动变成打开、停留、收藏或已读记录。重要内容需要你明确长期保存或收藏。', 'Temporary-buffer expiry or cleanup must not delete long-term records, independent bookmarks or downloaded files. Buffer entries do not automatically become open, dwell, saved or read records. Choose explicit long-term save or bookmark for important content.')],
+        [t('本地优先意味着完全离线、加密或同步吗？', 'Does local-first mean offline, encrypted or synced?'), t('不意味着。浏览 X 和下载媒体仍需要网络；目前 SQLite、FTS 与 WAL 并非默认加密，也没有绝对安全承诺。跨平台规划不等于自动跨设备同步。官网演示只在当前页面内存中操作虚构数据，不登录真实 X，不持久保存演示记录。', 'No. Browsing X and downloading media still require a network. SQLite, FTS and WAL are not encrypted by default, and there is no absolute-security claim. Cross-platform plans do not imply automatic cross-device sync. This website demo uses fictional data in page memory only, without X sign-in or persistent demo storage.')]
+    ];
+    return `<section class="faq light-section" id="questions"><div class="container faq-layout"><div><div class="section-kicker">04 / ${t('说清楚一点', 'A FEW CLEAR ANSWERS')}</div><h2>${t('你可能<br>还想知道。', 'Good questions.<br>Clear answers.')}</h2></div><div class="faq-items">${items.map(([q, a]) => `<details><summary>${q}<span class="plus" aria-hidden="true">+</span></summary><p>${a}</p></details>`).join('')}</div></div></section>`;
+}
+function footer() { return `<footer class="footer"><div class="container"><div class="footer-top"><div>${logo()}<p>${t('你的时间线。你的资料库。', 'Your timeline. Your collection.')}</p></div><div class="footer-cta"><h2>${t('公开构建，<br>一起变得更好。', 'Built in the open.<br>Better, together.')}</h2><div>${ext(t('查看 GitHub', 'Explore on GitHub'), '', 'footer-button')}${ext(t('反馈问题', 'Report an issue'), '/issues/new')}</div></div></div><div class="footer-bottom"><span>Xs · ${t('独立开源项目', 'Independent open-source project')} · GPL-3.0</span><span>${t('与 X Corp. 无官方关联。', 'Not affiliated with X Corp.')}</span><a href="#top">${t('回到顶部', 'Back to top')} ↑</a></div></div></footer>`; }
+function mount() {
+    document.documentElement.lang = state.lang === 'zh' ? 'zh-CN' : 'en';
+    document.title = t('Xs · 更纯粹，更好用的 X', 'Xs · A cleaner X. More yours.');
+    document.querySelector('meta[name="description"]')?.setAttribute('content', t('Xs，独立开源、本地优先的跨平台 X 增强客户端。Android 优先开发，Windows 与 macOS 规划中。', 'Xs, an independent, open-source, local-first X client. Android in development; Windows and macOS planned.'));
+    site.innerHTML = header() + `<main id="main" tabindex="-1">${hero()}${experience()}${records()}${platforms()}${faq()}</main>` + footer();
+    renderDemo();
+}
+function announce(message) {
+    clearTimeout(toastTimer);
+    toast.innerHTML = icon('check') + `<span>${esc(message)}</span>`;
+    toast.classList.add('visible');
+    toastTimer = window.setTimeout(() => toast.classList.remove('visible'), 4500);
+}
+function focusKey(key) {
+    if (key)
+        document.querySelector(`[data-key="${CSS.escape(key)}"]`)?.focus({ preventScroll: true });
+}
+function dispatch(action, focus) {
+    state = reduce(state, action);
+    renderDemo();
+    focusKey(focus);
+}
+function showDialog(content, key) {
+    returnFocus = key;
+    dialog.innerHTML = content;
+    dialog.showModal();
+    document.body.classList.add('dialog-open');
+}
+function closeDialog() { dialog.close(); }
+function closeButton() { return `<button class="icon-button dialog-close" data-action="close-dialog" aria-label="${t('关闭对话框', 'Close dialog')}">${icon('close')}</button>`; }
+function postDialog(id, key) {
+    const post = posts.find(p => p.id === id);
+    if (!post)
+        return;
+    dispatch({ type: 'open', id });
+    showDialog(`${closeButton()}<div class="dialog-kicker">${t('模拟打开 · 仅示意数据', 'SIMULATED OPEN · DEMO DATA')}</div><h2 id="dialog-title">${post.author[state.lang]}</h2><p class="dialog-post-body">${esc(post.body[state.lang])}</p>${artwork(post.art)}<p class="dialog-hint">${t('这次明确点击会增加一条模拟打开记录，不代表真实 X 行为。', 'This explicit click adds a simulated open record, not a real X action.')}</p><button class="button dark" data-action="dialog-save" data-id="${id}">${icon(state.saved[id] ? 'check' : 'saved')}${state.saved[id] ? t('已在示意收藏中', 'Already saved in demo') : t('加入示意收藏', 'Save this demo post')}</button>`, key);
+}
+function editDialog(id, key) {
+    const entry = state.saved[id];
+    if (!entry)
+        return;
+    showDialog(`${closeButton()}<div class="dialog-kicker">${t('仅编辑示意收藏', 'EDIT DEMO COLLECTION ONLY')}</div><h2 id="dialog-title">${t('留给未来的自己。', 'A note to your future self.')}</h2><form id="edit-form" data-id="${id}"><label for="edit-category">${t('分类', 'Category')}</label><select id="edit-category" name="category"><option value="ideas" ${entry.category === 'ideas' ? 'selected' : ''}>${t('灵感', 'Ideas')}</option><option value="reading" ${entry.category === 'reading' ? 'selected' : ''}>${t('稍后阅读', 'Read later')}</option></select><label for="edit-note">${t('备注', 'Note')}</label><textarea id="edit-note" name="note" maxlength="280" rows="4" placeholder="${t('为什么想留住这条？', 'Why keep this post?')}">${esc(entry.note)}</textarea><p class="dialog-hint">${t('只保存在本页演示中，刷新网页即重置。最多 280 个字符。', 'This demo session only; reloading resets it. Up to 280 characters.')}</p><button type="submit" class="button dark">${t('保存示意备注', 'Save demo note')}${icon('check')}</button></form>`, key);
+}
+function scrollToDemo() {
+    document.querySelector('#experience')?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+}
+site.addEventListener('click', handleAction);
+dialog.addEventListener('click', handleAction);
+function handleAction(event) {
+    const target = event.target;
+    const button = target.closest('[data-action]');
+    if (!button)
+        return;
+    const action = button.dataset.action, key = button.dataset.key, id = button.dataset.id;
+    switch (action) {
+        case 'lang': {
+            const scrollY = window.scrollY;
+            state = reduce(state, { type: 'lang', value: state.lang === 'zh' ? 'en' : 'zh' });
+            mount();
+            focusKey('lang');
+            window.scrollTo(0, scrollY);
+            break;
+        }
+        case 'menu':
+            showDialog(`${closeButton()}<h2 id="dialog-title">${t('探索 Xs', 'Explore Xs')}</h2><nav class="dialog-nav" aria-label="${t('手机导航', 'Mobile navigation')}">${navLinks()}${ext('GitHub', '')}</nav>`, 'menu');
+            break;
+        case 'close-dialog':
+            closeDialog();
+            break;
+        case 'surface':
+            dispatch({ type: 'surface', value: button.dataset.value === 'desktop' ? 'desktop' : 'mobile' }, key);
+            break;
+        case 'os':
+            dispatch({ type: 'os', value: button.dataset.value === 'macos' ? 'macos' : 'windows' }, key);
+            break;
+        case 'view': {
+            const view = button.dataset.value;
+            if (['feed', 'recent', 'history', 'saved'].includes(view)) {
+                dispatch({ type: 'view', value: view }, key);
+                const scroll = document.querySelector('.post-scroll');
+                if (scroll)
+                    scroll.scrollTop = 0;
+            }
+            break;
+        }
+        case 'start':
+            dispatch({ type: 'enable', value: true }, 'guide-action');
+            announce(t('本页演示缓冲已开启。浏览右侧帖子，再试一次刷新。', 'Demo buffer enabled. Browse the posts, then simulate a refresh.'));
+            document.querySelector('#demo-device')?.scrollIntoView({ block: 'center', behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+            break;
+        case 'refresh':
+            dispatch({ type: 'refresh' }, key);
+            document.querySelector('.post-scroll')?.scrollTo(0, 0);
+            announce(state.enabled ? t('示意时间线已刷新；已观察到的旧内容仍在「最近」里。', 'Demo feed refreshed. Observed earlier posts remain in Recent.') : t('已模拟刷新，但缓冲未开启。重置后开启演示再试试。', 'Refreshed without a buffer. Reset and enable the demo to try recovery.'));
+            break;
+        case 'find':
+            dispatch({ type: 'view', value: 'recent' }, 'guide-action');
+            announce(t('这里是本次演示实际观察到的临时记录。', 'These are the temporary posts observed during this demo.'));
+            break;
+        case 'search-example':
+            dispatch({ type: 'search', value: t('留白', 'space') });
+            document.querySelector('#demo-search')?.focus({ preventScroll: true });
+            break;
+        case 'clear-search':
+            dispatch({ type: 'search', value: '' });
+            document.querySelector('#demo-search')?.focus({ preventScroll: true });
+            break;
+        case 'save-first': {
+            const post = visiblePosts(state)[0];
+            if (post) {
+                dispatch({ type: 'save', id: post.id }, 'guide-action');
+                announce(t('已加入示意收藏。清空临时记录也不会移除它。', 'Saved in the demo. Clearing temporary records will not remove it.'));
+            }
+            else
+                announce(t('没有可收藏的结果，请先清空或更换关键词。', 'No results to save. Clear or change the search first.'));
+            break;
+        }
+        case 'save':
+            if (id) {
+                dispatch({ type: 'save', id }, key);
+                announce(t('已加入示意收藏，没有修改 X 书签。', 'Saved in the demo. X bookmarks are unchanged.'));
+            }
+            break;
+        case 'remove':
+            if (id) {
+                dispatch({ type: 'remove', id }, key);
+                announce(t('已取消示意收藏。', 'Demo bookmark removed.'));
+                if (!document.querySelector(`[data-key="${key}"]`))
+                    focusKey('view-saved');
+            }
+            break;
+        case 'saved-view':
+            dispatch({ type: 'view', value: 'saved' }, 'view-saved');
+            break;
+        case 'feed-view':
+            dispatch({ type: 'view', value: 'feed' }, 'view-feed');
+            break;
+        case 'clear-recent':
+            dispatch({ type: 'clear-recent' }, key);
+            announce(t('临时记录已清空，示意收藏与打开记录保留。', 'Temporary records cleared. Saved posts and demo opens are preserved.'));
+            break;
+        case 'reset':
+            dispatch({ type: 'reset' }, 'guide-action');
+            announce(t('演示已重置，示意收藏已清空，缓冲恢复关闭。', 'Demo reset. Saved examples cleared; buffer is off again.'));
+            break;
+        case 'open':
+            if (id)
+                postDialog(id, key ?? null);
+            break;
+        case 'edit':
+            if (id)
+                editDialog(id, key ?? null);
+            break;
+        case 'dialog-save':
+            if (id) {
+                dispatch({ type: 'save', id });
+                closeDialog();
+                announce(t('已加入示意收藏。', 'Saved in this demo.'));
+            }
+            break;
+        case 'category':
+            dispatch({ type: 'category', value: button.dataset.value }, key);
+            break;
+        case 'all-categories':
+            dispatch({ type: 'category', value: 'all' }, 'category-all');
+            break;
+        case 'try-windows':
+        case 'try-macos':
+            state = reduce(state, { type: 'surface', value: 'desktop' });
+            dispatch({ type: 'os', value: action === 'try-macos' ? 'macos' : 'windows' });
+            scrollToDemo();
+            focusKey('surface-desktop');
+            break;
+    }
+}
+site.addEventListener('input', event => {
+    const input = event.target;
+    if (input.id !== 'demo-search')
+        return;
+    state = reduce(state, { type: 'search', value: input.value });
+    // Keep the search input alive so IME composition, cursor position and focus are never interrupted.
+    const panel = document.querySelector('#post-panel');
+    if (panel)
+        panel.innerHTML = visiblePosts(state).length ? visiblePosts(state).map(postCard).join('') : emptyState();
+    const count = document.querySelector('#result-count');
+    if (count)
+        count.textContent = `${visiblePosts(state).length} ${t('条示例', 'demo posts')}`;
+    const guideEl = document.querySelector('.demo-guide');
+    if (guideEl)
+        guideEl.outerHTML = guide();
+});
+site.addEventListener('submit', event => { if (event.target.classList.contains('search-form'))
+    event.preventDefault(); });
+dialog.addEventListener('submit', event => {
+    const form = event.target;
+    if (form.id !== 'edit-form')
+        return;
+    event.preventDefault();
+    const data = new FormData(form), id = form.dataset.id;
+    if (!id)
+        return;
+    dispatch({ type: 'edit', id, entry: { category: data.get('category') === 'reading' ? 'reading' : 'ideas', note: String(data.get('note') ?? '') } });
+    closeDialog();
+    announce(t('示意分类与备注已保存。', 'Demo category and note saved.'));
+});
+dialog.addEventListener('close', () => { document.body.classList.remove('dialog-open'); if (returnFocus)
+    focusKey(returnFocus); returnFocus = null; });
+dialog.addEventListener('click', event => {
+    const link = event.target.closest('a[href^="#"]');
+    if (link) {
+        closeDialog();
+        window.setTimeout(() => document.querySelector(link.hash)?.focus({ preventScroll: true }), 0);
+    }
+    if (event.target === dialog) {
+        const rect = dialog.getBoundingClientRect();
+        if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom)
+            closeDialog();
+    }
+});
+document.addEventListener('keydown', event => {
+    const active = document.activeElement;
+    if (!active)
+        return;
+    const group = active.dataset.tabGroup;
+    if (group && ['ArrowRight', 'ArrowLeft', 'ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) {
+        const buttons = Array.from(document.querySelectorAll(`[data-tab-group="${group}"]`));
+        let index = buttons.indexOf(active);
+        if (index < 0)
+            return;
+        event.preventDefault();
+        index = event.key === 'Home' ? 0 : event.key === 'End' ? buttons.length - 1 : (index + (['ArrowLeft', 'ArrowUp'].includes(event.key) ? -1 : 1) + buttons.length) % buttons.length;
+        buttons[index]?.click();
+        return;
+    }
+    if (event.key === 'Escape' && active.id === 'demo-search') {
+        dispatch({ type: 'search', value: '' });
+        document.querySelector('#demo-search')?.focus({ preventScroll: true });
+    }
+    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k' && document.querySelector('#experience')?.contains(active) && !dialog.open) {
+        event.preventDefault();
+        dispatch({ type: 'view', value: 'recent' });
+        document.querySelector('#demo-search')?.focus({ preventScroll: true });
+    }
+});
+document.addEventListener('visibilitychange', observeDemo);
+mount();
+</script>
+</body>
+</html>
