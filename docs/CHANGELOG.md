@@ -1,3 +1,7 @@
+## W0 真机验证入口
+
+固定 CI93 浏览器测试包及其 SHA-256，补充三星 S25 的登录、浏览与会话检查步骤。新增只读 ADB 工具，对照已安装 APK 摘要，收集 Android 和当前 WebView 版本。现场结果仍待执行，详见 [手机验证入口](W0_PHONE_CHECK.zh-CN.md)。
+
 ## XS-16 CI93 四API真实低空间补强验收
 
 代码/测试9e74ac8，实际merge3b36ff7/treebce4a29的CI93六作业SUCCESS：800/800主XML（0失败/错误/跳过）、20/20独立driver、44/44外部nativephase、1406 JVM、25临时SQLite、34 driver-host+6allowlist、容量/DOM/构建/双Lint通过。四API普通app UID均实测786432字节余量时拒收，压力文件删除、新观察恢复，旧临时卡片、长期收藏/晋升账本、登记媒体hash与OPEN/FEED断言通过。精确数值与8份ZIP/20份native APK独立核验见[最终证据](XS16_FILESYSTEM_PRESSURE_EVIDENCE.zh-CN.md)。CI91 API27 reboot超时保留原FAIL和UNKNOWN根因；新源码执行不覆盖历史失败。只更新文档证据，不修改已验生产/测试/workflow。T14/live/手机/正式发布仍独立。
