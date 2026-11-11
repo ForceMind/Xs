@@ -1,0 +1,284 @@
+package dev.forcemind.xs.android;
+
+import android.content.ContentValues;
+import android.content.Context;
+import android.content.Intent;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Bitmap;
+import android.net.Uri;
+import android.util.Base64;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
+import dev.forcemind.xs.core.ArchiveSearch;
+import dev.forcemind.xs.core.EncryptedLibraryBackup;
+import dev.forcemind.xs.core.LibraryBackupCodec;
+import dev.forcemind.xs.core.MediaDownloadPolicy;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import static org.junit.Assert.*;
+
+/** Real SQLite, Bitmap/MP4 validation, private files and outbound Provider bytes; local fixtures only. */
+@RunWith(AndroidJUnit4.class)
+public final class FullBackupIntegrationTest {
+    private Context app;private XsArchiveDatabase archive;private XsMediaRepository media;
+    private String source,defaultLibrary;private File png,movie;private final List<String> owned=new ArrayList<>();
+    private Set<String> initialMarkers;
+    private long writerTimeoutSeconds=20;
+    private static final char[] PASSWORD="Xs本地恢复-test-2026".toCharArray();
+    private static final String POST="https://x.com/i/web/status/912345";
+    @Before public void setUp()throws Exception {
+        app=InstrumentationRegistry.getInstrumentation().getTargetContext();initialMarkers=markerNames();archive=new XsArchiveDatabase(app);media=XsMediaRepository.get(app);
+        source="local:"+UUID.randomUUID();owned.add(source);defaultLibrary=XsLocalSpaces.defaultLibrary(app);
+        png=File.createTempFile("full-backup-image-",".png",app.getCacheDir());Bitmap bitmap=Bitmap.createBitmap(2,3,Bitmap.Config.ARGB_8888);bitmap.eraseColor(0xff4688ff);
+        try(FileOutputStream out=new FileOutputStream(png)){assertTrue(bitmap.compress(Bitmap.CompressFormat.PNG,100,out));}finally{bitmap.recycle();}
+        movie=File.createTempFile("full-backup-video-",".mp4",app.getCacheDir());
+        try(InputStream in=InstrumentationRegistry.getInstrumentation().getContext().getAssets().open("standard-video.mp4.b64");ByteArrayOutputStream bytes=new ByteArrayOutputStream();FileOutputStream out=new FileOutputStream(movie)) {
+            byte[] b=new byte[8192];int count;while((count=in.read(b))!=-1)bytes.write(b,0,count);out.write(Base64.decode(bytes.toByteArray(),Base64.DEFAULT));
+        }
+        write(source,()->{archive.ensureLibrary(source,"加密资料 📚");assertTrue(archive.favorite(source,POST,"作者","加密中文正文 🚀",1000L,2000L));archive.putFavoriteDetails(source,"912345","需要保留的备注 🧪","离线,研发");archive.putCategory(source,"folder","研究");assertTrue(archive.assignCategory(source,"912345","folder"));});
+    }
+    @After public void tearDown()throws Exception {
+        for(String scope:owned){CountDownLatch done=new CountDownLatch(1);AtomicReference<Throwable> failure=new AtomicReference<>();assertTrue(XsLibraryWrites.invalidateAndSubmit(scope,()->{try{media.eraseLibrary(scope);archive.clearAccount(scope);archive.getWritableDatabase().delete("libraries","storage_scope=?",new String[]{scope});File marker=markerFile(scope);if(marker.exists()&&!marker.delete())throw new IOException("Fixture marker cleanup failed");}catch(Throwable problem){failure.set(problem);}finally{done.countDown();}}));assertTrue(done.await(writerTimeoutSeconds,TimeUnit.SECONDS));assertNull("Owned fixture cleanup",failure.get());}
+        archive.close();if(png!=null)png.delete();if(movie!=null)movie.delete();
+    }
+    @Test public void encryptedRoundTripRestoresActualImageVideoMetadataAndShareableBytes()throws Exception {
+        addResources();String secret="PRIVATE_BROWSER_OR_DOWNLOAD_SECRET_"+UUID.randomUUID();
+        // Completed images from the old media schema may have no recorded checksum.
+        write(source,()->media.getWritableDatabase().execSQL("UPDATE assets SET sha256=NULL WHERE library_id=? AND media_kind='IMAGE'",new Object[]{source}));
+        write(source,()->{ContentValues task=new ContentValues();task.put("id",UUID.randomUUID().toString());task.put("library_id",source);task.put("post_url",POST);task.put("state","FAILED");task.put("created_ms",9000L);task.put("url_cipher",secret);media.getWritableDatabase().insertOrThrow("assets",null,task);});
+        byte[] encrypted=export();assertFalse(new String(encrypted,StandardCharsets.UTF_8).contains("加密中文正文"));assertFalse(new String(encrypted,StandardCharsets.UTF_8).contains(secret));
+        XsFullBackup.Prepared preview=XsFullBackup.inspectEncrypted(app,source,new ByteArrayInputStream(encrypted),PASSWORD);
+        assertEquals(2,preview.assetCount());assertEquals(png.length()+movie.length(),preview.assetBytes());assertEquals("加密资料 📚",preview.label());
+        String restored=XsFullBackup.restoreNewLibrary(app,preview,null);owned.add(restored);
+        assertNotEquals(source,restored);assertEquals(defaultLibrary,XsLocalSpaces.defaultLibrary(app));
+        assertEquals(3,media.list(source).size());assertEquals(2,media.list(restored).size());
+        ArchiveSearch.Filter query=new ArchiveSearch.Filter();query.keyword="加密中文";query.tag="研发";query.categoryId="folder";query.favoriteOnly=true;
+        try(Cursor c=archive.search(restored,query)){assertEquals(1,c.getCount());assertTrue(c.moveToFirst());assertEquals("需要保留的备注 🧪",c.getString(11));}
+        try(Cursor c=archive.getReadableDatabase().rawQuery("SELECT COUNT(*) FROM snapshot_versions WHERE account_id=?",new String[]{restored})){assertTrue(c.moveToFirst());assertTrue(c.getInt(0)>0);}
+        for(XsMediaRepository.Asset asset:media.list(restored)) {
+            assertEquals("COMPLETED",asset.state);assertEquals(POST,asset.postUrl);File file=media.completedFile(restored,asset.id);
+            String expected="VIDEO".equals(asset.mediaKind)?hash(movie):hash(png);assertEquals(expected,hash(file));
+            Intent send=XsShareCoordinator.assetIntent(app,restored,Collections.singletonList(asset.id));Uri uri=send.getParcelableExtra(Intent.EXTRA_STREAM);
+            assertNotNull(uri);assertEquals(asset.mime,app.getContentResolver().getType(uri));try(InputStream in=app.getContentResolver().openInputStream(uri)){assertNotNull(in);assertEquals(expected,hash(in));}
+        }
+        try(Cursor c=media.getReadableDatabase().rawQuery("SELECT media_url,url_cipher,sha256 FROM assets WHERE library_id=?",new String[]{restored})){while(c.moveToNext()){assertTrue(c.isNull(0));assertTrue(c.isNull(1));assertEquals(64,c.getString(2).length());}}
+        assertFalse("This restored scope completed its checkpoint",markerFile(restored).exists());assertNoNewMarkers();
+    }
+    @Test public void wrongPasswordTamperingTruncationAndCancellationNeverCreateALibrary()throws Exception {
+        addResources();byte[] encrypted=export();int libraries=libraries(),assets=allAssets(),staging=stagingCount();
+        reject(encrypted,"wrong-password".toCharArray());byte[] corrupt=encrypted.clone();corrupt[corrupt.length-1]^=1;reject(corrupt,PASSWORD);
+        reject(Arrays.copyOf(encrypted,encrypted.length-17),PASSWORD);
+        try(XsFullBackup.Prepared prepared=XsFullBackup.inspectEncrypted(app,source,new ByteArrayInputStream(encrypted),PASSWORD)){assertEquals(2,prepared.assetCount());}
+        assertEquals(staging,stagingCount());assertEquals(libraries,libraries());assertEquals(assets,allAssets());assertEquals(defaultLibrary,XsLocalSpaces.defaultLibrary(app));
+    }
+    @Test public void authenticatedMaliciousAssetDescriptorsAndInvalidMediaAreRejected()throws Exception {
+        byte[] metadata=metadata();int libraries=libraries(),assets=allAssets(),staging=stagingCount();
+        Map<String,Object> descriptor=descriptor(png);descriptor.put("filename","../../outside.db");reject(candidate(metadata,descriptor,png,1),PASSWORD);
+        descriptor=descriptor(png);descriptor.put("post_url","file:///data/data/private");reject(candidate(metadata,descriptor,png,1),PASSWORD);
+        descriptor=descriptor(png);descriptor.put("sha257",descriptor.remove("sha256"));reject(candidate(metadata,descriptor,png,1),PASSWORD); // Legal identifier, outside the native allowlist.
+        descriptor=descriptor(png);reject(candidate(metadata,descriptor,png,2),PASSWORD); // Duplicate opaque source identity.
+        File invalid=File.createTempFile("full-backup-invalid-",".png",app.getCacheDir());
+        try {try(FileOutputStream out=new FileOutputStream(invalid)){out.write("not a real image, even with a valid checksum".getBytes(StandardCharsets.UTF_8));}
+            reject(candidate(metadata,descriptor(invalid),invalid,1),PASSWORD);
+        }finally{invalid.delete();}
+        assertEquals(staging,stagingCount());assertEquals(libraries,libraries());assertEquals(assets,allAssets());assertFalse(new File(app.getDataDir(),"outside.db").exists());
+    }
+    @Test public void sqliteFailureAfterResourceStagingRollsBackEveryNewResourceAndMarker()throws Exception {
+        addResources();byte[] encrypted=export();int libraries=libraries(),assets=allAssets(),staging=stagingCount();
+        archive.getWritableDatabase().execSQL("CREATE TRIGGER fixture_full_restore_reject BEFORE INSERT ON libraries WHEN new.label='reject-full-fixture' BEGIN SELECT RAISE(ABORT,'fixture'); END");
+        try {
+            XsFullBackup.Prepared prepared=XsFullBackup.inspectEncrypted(app,source,new ByteArrayInputStream(encrypted),PASSWORD);
+            try{XsFullBackup.restoreNewLibrary(app,prepared,"reject-full-fixture");fail("SQLite fixture must abort after media staging");}
+            catch(IOException expected){boolean fixture=false;for(Throwable cause=expected;cause!=null;cause=cause.getCause())if(cause.getMessage()!=null&&cause.getMessage().contains("fixture"))fixture=true;assertTrue("Reached the explicit SQLite abort after staging",fixture);}
+        }finally{archive.getWritableDatabase().execSQL("DROP TRIGGER fixture_full_restore_reject");}
+        assertEquals(libraries,libraries());assertEquals(assets,allAssets());assertEquals(staging,stagingCount());assertNoNewMarkers();
+        assertEquals(2,media.list(source).size());assertEquals(defaultLibrary,XsLocalSpaces.defaultLibrary(app));
+    }
+    @Test public void clearingSourceExpiresPreparedFullRestoreWithoutResurrection()throws Exception {
+        addResources();XsFullBackup.Prepared prepared=XsFullBackup.inspectEncrypted(app,source,new ByteArrayInputStream(export()),PASSWORD);int libraries=libraries();
+        CountDownLatch cleared=new CountDownLatch(1);assertTrue(XsLibraryWrites.invalidateAndSubmit(source,()->{try{media.eraseLibrary(source);archive.clearAccount(source);}finally{cleared.countDown();}}));assertTrue(cleared.await(20,TimeUnit.SECONDS));
+        try{XsFullBackup.restoreNewLibrary(app,prepared,null);fail("cleared source admission reused");}catch(IOException expected){}
+        assertEquals(libraries,libraries());assertEquals(0,media.list(source).size());assertNoNewMarkers();assertEquals(defaultLibrary,XsLocalSpaces.defaultLibrary(app));
+    }
+    @Test public void sourceEpochChangeStopsExportBeforeAuthenticatedCompletion()throws Exception {
+        addResources();int libraries=libraries(),staging=stagingCount();ByteArrayOutputStream bytes=new ByteArrayOutputStream();boolean[] revoked={false};
+        XsLibraryWrites.Ticket original=XsLibraryWrites.ticket(source);
+        java.io.OutputStream changed=new java.io.OutputStream(){boolean first=true;@Override public void write(int value){bytes.write(value);}@Override public void write(byte[] b,int off,int count){bytes.write(b,off,count);if(first){first=false;revoked[0]=true;XsLibraryWrites.invalidate(source);}}};
+        try{XsFullBackup.exportEncrypted(app,source,changed,PASSWORD);fail("expired export completed");}catch(IOException expected){}
+        assertTrue("Reached encrypted output before invalidation",revoked[0]);assertTrue(bytes.size()>=EncryptedLibraryBackup.HEADER_BYTES);assertFalse(XsLibraryWrites.isCurrent(original));
+        reject(bytes.toByteArray(),PASSWORD);assertEquals(libraries,libraries());assertEquals(2,media.list(source).size());assertEquals(staging,stagingCount());assertNoNewMarkers();
+    }
+    @Test public void startupRecoveryDeletesUnpublishedResourcesButPreservesACommittedResult()throws Exception {
+        addResources();String pending="local:"+UUID.randomUUID();owned.add(pending);List<String> ids=new ArrayList<>();
+        write(pending,()->ids.addAll(media.restoreCompleted(pending,Collections.singletonList(image(png)))));
+        File orphan=media.completedFile(pending,ids.get(0));assertTrue(orphan.exists());File pendingMarker=marker(pending);
+        File staleDir=new File(new File(app.getCacheDir(),"xs-full-backup"),UUID.randomUUID().toString());assertTrue(staleDir.mkdirs());File stale=new File(staleDir,"verified.payload");try(FileOutputStream out=new FileOutputStream(stale)){out.write(7);}
+        XsFullBackup.recoverInterrupted(app);assertEquals(0,media.list(pending).size());assertFalse(orphan.exists());assertFalse(pendingMarker.exists());assertFalse(staleDir.exists());
+        XsFullBackup.Prepared prepared=XsFullBackup.inspectEncrypted(app,source,new ByteArrayInputStream(export()),PASSWORD);String committed=XsFullBackup.restoreNewLibrary(app,prepared,null);owned.add(committed);
+        assertFalse("Normal publication completed its own checkpoint",markerFile(committed).exists());File committedMarker=marker(committed);
+        XsFullBackup.recoverInterrupted(app);assertFalse(committedMarker.exists());assertEquals(2,media.list(committed).size());
+        for(XsMediaRepository.Asset asset:media.list(committed))assertTrue(media.completedFile(committed,asset.id).isFile());assertEquals(2,media.list(source).size());assertEquals(defaultLibrary,XsLocalSpaces.defaultLibrary(app));
+    }
+    @Test public void publishedMarkerWaitsForACompleteRealWalCheckpointAndRetriesAfterBusyWriter()throws Exception {
+        XsLibraryBackup.ValidatedBackup metadata=XsLibraryBackup.inspect(new ByteArrayInputStream(metadata()));AtomicReference<String> created=new AtomicReference<>();
+        write(source,()->created.set(XsLibraryBackup.restoreNewLibrary(app,metadata,"checkpoint fixture")));String target=created.get();owned.add(target);
+        File pending=marker(target);String unpublished="local:"+UUID.randomUUID();owned.add(unpublished);File unpublishedMarker=marker(unpublished);
+        SQLiteDatabase db=archive.getWritableDatabase();long synchronous=pragma(db,"PRAGMA main.synchronous"),timeout=pragma(db,"PRAGMA busy_timeout");
+        try {
+            try(Cursor mode=db.rawQuery("PRAGMA main.journal_mode",null)){assertTrue(mode.moveToFirst());assertEquals("wal",mode.getString(0));}
+            try(SQLiteDatabase writer=SQLiteDatabase.openDatabase(db.getPath(),null,SQLiteDatabase.OPEN_READWRITE|SQLiteDatabase.ENABLE_WRITE_AHEAD_LOGGING)) {
+                writer.beginTransactionNonExclusive(); // Concrete held writer lock, no timing sleeps.
+                try {
+                    XsFullBackup.recoverInterrupted(app);assertTrue("Busy published registration keeps its recovery marker",pending.exists());
+                    assertTrue("A busy unpublished cleanup is retained instead of aborting other recovery",unpublishedMarker.exists());
+                    try(Cursor rows=archive.search(source,new ArchiveSearch.Filter())){assertEquals(1,rows.getCount());}
+                }
+                finally{writer.endTransaction();}
+            }
+            XsFullBackup.recoverInterrupted(app);assertFalse("A later complete checkpoint retires the marker",pending.exists());assertFalse("Unpublished cleanup retries after the writer is released",unpublishedMarker.exists());
+            assertEquals(synchronous,pragma(db,"PRAGMA main.synchronous"));assertEquals(timeout,pragma(db,"PRAGMA busy_timeout"));
+            try(Cursor found=archive.search(target,new ArchiveSearch.Filter())){assertEquals(1,found.getCount());}
+            try(Cursor found=archive.search(source,new ArchiveSearch.Filter())){assertEquals(1,found.getCount());}
+            assertEquals(defaultLibrary,XsLocalSpaces.defaultLibrary(app));
+        }finally{pending.delete();unpublishedMarker.delete();}
+    }
+    @Test public void rollbackJournalFullSyncRetainsMarkerAndExtraSyncCanRetireIt()throws Exception {
+        File database=File.createTempFile("full-backup-checkpoint-",".db",app.getCacheDir());File pending=marker("local:"+UUID.randomUUID());
+        try(SQLiteDatabase db=SQLiteDatabase.openOrCreateDatabase(database,null)) {
+            db.disableWriteAheadLogging();db.execSQL("PRAGMA synchronous=FULL");db.execSQL("CREATE TABLE checkpoint_fixture(value INTEGER)");db.execSQL("INSERT INTO checkpoint_fixture VALUES(1)");
+            try(Cursor mode=db.rawQuery("PRAGMA main.journal_mode",null)){assertTrue(mode.moveToFirst());assertTrue(Arrays.asList("delete","truncate","persist").contains(mode.getString(0)));}
+            assertEquals(2,pragma(db,"PRAGMA main.synchronous"));assertFalse(XsFullBackup.checkpointAndClearMarker(db,pending));assertTrue(pending.exists());
+            db.execSQL("PRAGMA synchronous=EXTRA");db.execSQL("INSERT INTO checkpoint_fixture VALUES(2)");
+            assertEquals(3,pragma(db,"PRAGMA main.synchronous"));assertTrue(XsFullBackup.checkpointAndClearMarker(db,pending));assertFalse(pending.exists());
+            try(Cursor rows=db.rawQuery("SELECT COUNT(*) FROM checkpoint_fixture",null)){assertTrue(rows.moveToFirst());assertEquals(2,rows.getInt(0));}
+            assertEquals(defaultLibrary,XsLocalSpaces.defaultLibrary(app));
+        }finally{pending.delete();SQLiteDatabase.deleteDatabase(database);}
+    }
+    @Test public void maximumFiveHundredActualPngFilesRoundTripThroughEncryptedFileStreams()throws Exception {
+        final int count=500;XsMediaRepository.RestoredAsset tiny=image(png);
+        write(source,()->media.restoreCompleted(source,Collections.nCopies(count,tiny)));
+        List<XsMediaRepository.CompletedAsset> originals=media.snapshotCompleted(source);assertEquals(count,originals.size());
+        Set<String> sourceIds=new HashSet<>();for(XsMediaRepository.CompletedAsset item:originals)sourceIds.add(item.asset.id);assertEquals(count,sourceIds.size());
+        File encrypted=File.createTempFile("full-backup-500-",".xsbackup",app.getCacheDir());
+        try {
+            try(FileOutputStream out=new FileOutputStream(encrypted)){XsFullBackup.exportEncrypted(app,source,out,PASSWORD);}
+            assertTrue(encrypted.length()>0);String target;
+            try(FileInputStream in=new FileInputStream(encrypted);XsFullBackup.Prepared prepared=XsFullBackup.inspectEncrypted(app,source,in,PASSWORD)) {
+                assertEquals(count,prepared.assetCount());assertEquals(count*png.length(),prepared.assetBytes());
+                target=XsFullBackup.restoreNewLibrary(app,prepared,"500 PNG fixture");owned.add(target);
+            }
+            try(Cursor rows=media.getReadableDatabase().rawQuery("SELECT COUNT(*) FROM assets WHERE library_id=? AND state='COMPLETED'",new String[]{target})){assertTrue(rows.moveToFirst());assertEquals(count,rows.getInt(0));}
+            List<XsMediaRepository.CompletedAsset> restored=media.snapshotCompleted(target);assertEquals(count,restored.size());Set<String> targetIds=new HashSet<>();String expected=hash(png);
+            for(XsMediaRepository.CompletedAsset item:restored) {
+                assertTrue(targetIds.add(item.asset.id));assertFalse(sourceIds.contains(item.asset.id));assertEquals("IMAGE",item.asset.mediaKind);assertEquals("image/png",item.asset.mime);
+                assertEquals(POST,item.asset.postUrl);assertEquals(tiny.category,item.asset.category);assertEquals(tiny.createdMs,item.asset.createdMs);assertEquals(png.length(),item.file.length());assertEquals(expected,item.sha256);assertEquals(expected,hash(item.file));
+            }
+            assertEquals(count,media.snapshotCompleted(source).size());for(XsMediaRepository.CompletedAsset item:originals){assertTrue(item.file.isFile());assertEquals(expected,hash(item.file));}
+            try(Cursor rows=archive.search(source,new ArchiveSearch.Filter())){assertEquals(1,rows.getCount());}try(Cursor rows=archive.search(target,new ArchiveSearch.Filter())){assertEquals(1,rows.getCount());}
+            assertEquals(defaultLibrary,XsLocalSpaces.defaultLibrary(app));assertFalse(markerFile(target).exists());assertNoNewMarkers();
+        }finally{encrypted.delete();}
+    }
+    @Test public void nearMaximumPayloadRestoresThirtyActualLargePngFilesThroughEncryptedStreams()throws Exception {
+        writerTimeoutSeconds=120;final int count=30;long free=app.getCacheDir().getUsableSpace();
+        // Peak private disk use is about 1.9 GiB: source + ciphertext + verified payload
+        // + parsed resource staging (or restored files). Leave room for the running AVD.
+        assertTrue("Native near-limit fixture requires 2.5 GiB available /data; actual bytes="+free,free>=2560L*1024*1024);
+        File large=null,encrypted=null;
+        try {
+            large=File.createTempFile("full-backup-large-",".png",app.getCacheDir());
+            Bitmap bitmap=Bitmap.createBitmap(1024,4096,Bitmap.Config.ARGB_8888);
+            try {
+                bitmap.setPremultiplied(false);
+                int[] row=new int[1024];int random=0x4e3ab19d;
+                for(int y=0;y<4096;y++) {
+                    for(int x=0;x<row.length;x++){random^=random<<13;random^=random>>>17;random^=random<<5;row[x]=random;}
+                    bitmap.setPixels(row,0,row.length,0,y,row.length,1);
+                }
+                try(FileOutputStream out=new FileOutputStream(large)){assertTrue(bitmap.compress(Bitmap.CompressFormat.PNG,100,out));out.getFD().sync();}
+            }finally{bitmap.recycle();}
+            long total=count*large.length();
+            assertTrue("Actual PNG must stay within the image limit",large.length()<=MediaDownloadPolicy.MAX_BYTES);
+            assertTrue("Actual native resource bytes must reach 480 MiB; actual="+total,total>=480L*1024*1024);
+            assertTrue("Leave room below 512 MiB for metadata/framing",total<EncryptedLibraryBackup.MAX_PLAINTEXT_BYTES-1024*1024);
+            String expected=hash(large);XsMediaRepository.RestoredAsset original=new XsMediaRepository.RestoredAsset(POST,"IMAGE","image/png",large.length(),expected,"近容量边界",2600L,0,0,0,0,0,0,large);
+            write(source,()->media.restoreCompleted(source,Collections.nCopies(count,original)));
+            List<XsMediaRepository.CompletedAsset> originals=media.snapshotCompleted(source);assertEquals(count,originals.size());Set<String> sourceIds=new HashSet<>();for(XsMediaRepository.CompletedAsset item:originals)assertTrue(sourceIds.add(item.asset.id));
+            encrypted=File.createTempFile("full-backup-near-limit-",".xsbackup",app.getCacheDir());
+            try(FileOutputStream out=new FileOutputStream(encrypted)){XsFullBackup.exportEncrypted(app,source,out,PASSWORD);}
+            assertTrue(encrypted.length()>total);assertTrue("Payload plus encryption overhead is below 512 MiB",encrypted.length()<EncryptedLibraryBackup.MAX_PLAINTEXT_BYTES);
+            android.util.Log.i("XsFullBackupFixture","native near-limit assets="+count+" source_bytes="+total+" encrypted_bytes="+encrypted.length());
+            String target;
+            try(FileInputStream in=new FileInputStream(encrypted);XsFullBackup.Prepared prepared=XsFullBackup.inspectEncrypted(app,source,in,PASSWORD)) {
+                assertEquals(count,prepared.assetCount());assertEquals(total,prepared.assetBytes());
+                target=XsFullBackup.restoreNewLibrary(app,prepared,"near-limit native fixture");owned.add(target);
+            }
+            assertNotEquals(source,target);try(Cursor rows=media.getReadableDatabase().rawQuery("SELECT COUNT(*) FROM assets WHERE library_id=? AND state='COMPLETED'",new String[]{target})){assertTrue(rows.moveToFirst());assertEquals(count,rows.getInt(0));}
+            List<XsMediaRepository.CompletedAsset> restored=media.snapshotCompleted(target);assertEquals(count,restored.size());Set<String> targetIds=new HashSet<>();long restoredBytes=0;
+            for(XsMediaRepository.CompletedAsset item:restored) {
+                assertTrue(targetIds.add(item.asset.id));assertFalse(sourceIds.contains(item.asset.id));assertEquals("IMAGE",item.asset.mediaKind);assertEquals("image/png",item.asset.mime);assertEquals(POST,item.asset.postUrl);
+                assertEquals(original.category,item.asset.category);assertEquals(original.createdMs,item.asset.createdMs);assertEquals(original.bytes,item.file.length());assertEquals(expected,item.sha256);assertEquals(expected,hash(item.file));restoredBytes+=item.file.length();
+            }
+            assertEquals(total,restoredBytes);assertEquals(count,media.snapshotCompleted(source).size());for(XsMediaRepository.CompletedAsset item:originals){assertTrue(item.file.isFile());assertEquals(original.bytes,item.file.length());assertEquals(expected,hash(item.file));}
+            ArchiveSearch.Filter query=new ArchiveSearch.Filter();query.keyword="加密中文";query.tag="研发";query.categoryId="folder";query.favoriteOnly=true;
+            try(Cursor rows=archive.search(source,query)){assertEquals(1,rows.getCount());}try(Cursor rows=archive.search(target,query)){assertEquals(1,rows.getCount());assertTrue(rows.moveToFirst());assertEquals("需要保留的备注 🧪",rows.getString(11));}
+            assertEquals(defaultLibrary,XsLocalSpaces.defaultLibrary(app));assertFalse(markerFile(target).exists());assertNoNewMarkers();
+        }finally {
+            boolean ciphertextCleared=encrypted==null||!encrypted.exists()||encrypted.delete();
+            boolean sourceStageCleared=large==null||!large.exists()||large.delete();
+            assertTrue("Near-limit ciphertext fixture cleanup",ciphertextCleared);assertTrue("Large source staging fixture cleanup",sourceStageCleared);
+        }
+    }
+    private static long pragma(SQLiteDatabase db,String sql){try(Cursor c=db.rawQuery(sql,null)){assertTrue(c.moveToFirst());return c.getLong(0);}}
+    private void addResources()throws Exception {
+        VideoFileValidator.Info video=VideoFileValidator.validate(movie);
+        write(source,()->media.restoreCompleted(source,Arrays.asList(image(png),new XsMediaRepository.RestoredAsset(POST,"VIDEO","video/mp4",movie.length(),hash(movie),"视频",2500L,video.durationMs,video.width,video.height,video.videoTracks,video.audioTracks,video.rotationDegrees,movie))));
+    }
+    private XsMediaRepository.RestoredAsset image(File file)throws Exception{return new XsMediaRepository.RestoredAsset(POST,"IMAGE","image/png",file.length(),hash(file),"图片 📷",2400L,0,0,0,0,0,0,file);}
+    private byte[] export()throws Exception{ByteArrayOutputStream out=new ByteArrayOutputStream();XsFullBackup.exportEncrypted(app,source,out,PASSWORD);return out.toByteArray();}
+    private byte[] metadata()throws Exception{ByteArrayOutputStream out=new ByteArrayOutputStream();write(source,()->XsLibraryBackup.exportLibrary(app,source,out));return out.toByteArray();}
+    private static Map<String,Object> descriptor(File file)throws Exception {
+        Map<String,Object> row=new LinkedHashMap<>();row.put("source_id",UUID.randomUUID().toString());row.put("post_url",POST);row.put("media_kind","IMAGE");row.put("mime","image/png");row.put("bytes",file.length());row.put("sha256",hash(file));row.put("category","");row.put("created_ms",1000L);
+        for(String key:Arrays.asList("duration_ms","width","height","video_tracks","audio_tracks","rotation_degrees"))row.put(key,null);return row;
+    }
+    private static byte[] candidate(byte[] metadata,Map<String,Object> descriptor,File bytes,int copies)throws Exception {
+        ByteArrayOutputStream json=new ByteArrayOutputStream();LibraryBackupCodec.write(json,new LibraryBackupCodec.Header(3,1,"asset"),Collections.singletonList(new LibraryBackupCodec.Record("assets",descriptor)));
+        EncryptedLibraryBackup.AssetSource source=new EncryptedLibraryBackup.AssetSource(new String(json.toByteArray(),StandardCharsets.UTF_8),bytes.length(),hash(bytes),()->new FileInputStream(bytes));
+        ByteArrayOutputStream plain=new ByteArrayOutputStream();EncryptedLibraryBackup.writePayload(plain,metadata,Collections.nCopies(copies,source));ByteArrayOutputStream encrypted=new ByteArrayOutputStream();EncryptedLibraryBackup.encrypt(new ByteArrayInputStream(plain.toByteArray()),encrypted,PASSWORD,plain.size());return encrypted.toByteArray();
+    }
+    private void reject(byte[] bytes,char[] password)throws Exception{try(XsFullBackup.Prepared ignored=XsFullBackup.inspectEncrypted(app,source,new ByteArrayInputStream(bytes),password)){fail("invalid backup accepted");}catch(IOException expected){}}
+    private File markerFile(String target){return new File(new File(app.getFilesDir(),"xs-restore-pending"),target.substring(6)+".pending");}
+    private File marker(String target)throws Exception{File marker=markerFile(target);if(!marker.getParentFile().isDirectory())assertTrue(marker.getParentFile().mkdirs());assertTrue("Create only this fixture's marker",marker.createNewFile());try(FileOutputStream out=new FileOutputStream(marker)){out.getFD().sync();}return marker;}
+    private Set<String> markerNames(){Set<String> names=new HashSet<>();File[] files=new File(app.getFilesDir(),"xs-restore-pending").listFiles();if(files!=null)for(File file:files)names.add(file.getName());return names;}
+    private void assertNoNewMarkers(){Set<String> added=markerNames();added.removeAll(initialMarkers);assertTrue("This operation leaked no new pending restore",added.isEmpty());}
+    private int stagingCount(){File[] files=new File(app.getCacheDir(),"xs-full-backup").listFiles();return files==null?0:files.length;}
+    private int libraries(){try(Cursor c=archive.libraries()){return c.getCount();}}
+    private int allAssets(){try(Cursor c=media.getReadableDatabase().rawQuery("SELECT COUNT(*) FROM assets",null)){assertTrue(c.moveToFirst());return c.getInt(0);}}
+    private interface Mutation{void run()throws Exception;}
+    private void write(String scope,Mutation mutation)throws Exception{CountDownLatch done=new CountDownLatch(1);AtomicReference<Throwable> failure=new AtomicReference<>();assertTrue(XsLibraryWrites.submit(scope,()->{try{mutation.run();}catch(Throwable problem){failure.set(problem);}finally{done.countDown();}}));assertTrue(done.await(writerTimeoutSeconds,TimeUnit.SECONDS));if(failure.get()!=null)throw new AssertionError(failure.get());}
+    private static String hash(File file)throws Exception{try(InputStream in=new FileInputStream(file)){return hash(in);}}
+    private static String hash(InputStream in)throws Exception{MessageDigest digest=MessageDigest.getInstance("SHA-256");byte[] bytes=new byte[8192];int count;while((count=in.read(bytes))!=-1)digest.update(bytes,0,count);StringBuilder hex=new StringBuilder();for(byte b:digest.digest())hex.append(String.format(java.util.Locale.ROOT,"%02x",b&255));return hex.toString();}
+}

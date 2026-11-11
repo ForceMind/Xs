@@ -37,6 +37,8 @@ public final class WebObservationParser {
         int bytes = raw.getBytes(StandardCharsets.UTF_8).length;
         if (bytes > ObservationGate.MAX_BYTES) throw invalid();
         try {
+            // Android JSONObject accepts duplicate keys/trailing tokens; reject them first.
+            dev.forcemind.xs.core.StrictJson.parse(raw);
             JSONObject object = new JSONObject(raw);
             Iterator<String> keys = object.keys();
             while (keys.hasNext()) {
@@ -74,7 +76,7 @@ public final class WebObservationParser {
             }
             return new ObservationGate.Message(kind, epoch, seq, bytes, id, url,
                 author, body, source, fraction, dwell);
-        } catch (JSONException | ArithmeticException invalid) {
+        } catch (JSONException | ArithmeticException | IllegalArgumentException invalid) {
             throw invalid();
         }
     }

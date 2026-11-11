@@ -42,6 +42,14 @@ public final class ObservationGateTest {
                 "https://x.com.evil.com/user/status/123","http://x.com/home"})
             eq(ObservationRoutes.Kind.DENIED,ObservationRoutes.classify(route));
 
+        eq("home_following",ObservationRoutes.feedSource("https://x.com/home?next=/search", "home_following"));
+        eq("home_for_you",ObservationRoutes.feedSource("https://x.com/home/?q=/search", "home_for_you"));
+        eq(null,ObservationRoutes.feedSource("https://x.com/home", null));
+        eq(null,ObservationRoutes.feedSource("https://x.com/home", "search_results"));
+        eq("search_results",ObservationRoutes.feedSource("https://x.com/search?q=/home", null));
+        eq(null,ObservationRoutes.feedSource("https://x.com/explore", "home_for_you"));
+        eq(null,ObservationRoutes.feedSource("https://x.com/messages?q=/search", "home_for_you"));
+
         ObservationGate gate=new ObservationGate();
         String detail="https://x.com/user/status/123",home="https://x.com/home";
         ObservationGate.NativeState normal=state(1,1000,detail,"https://x.com",
@@ -82,6 +90,11 @@ public final class ObservationGateTest {
         gate.suspend();
         eq(ObservationGate.Verdict.DISARMED,gate.admit(
             state(2,1200,detail,"https://x.com",true,true,true,true),post(2,2,"123")));
+        boolean reused=false;try{gate.changeDocument(2);}catch(IllegalArgumentException expected){reused=true;}
+        eq(true,reused);
+        gate.changeDocument(3);
+        eq(ObservationGate.Verdict.STALE,gate.admit(
+            state(2,1200,detail,"https://x.com",true,true,true,true),post(2,3,"123")));
         System.out.println("PASS "+n+" observation admission assertions (no WebView hook)");
     }
 }

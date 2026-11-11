@@ -8,6 +8,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   core:
     runs-on: ubuntu-latest
@@ -21,6 +25,20 @@ jobs:
         run: bash scripts/check-project.sh
       - name: Compile JVM code and check real SQLite
         run: bash scripts/test-core.sh
+      - name: Check cross-source upgrade driver safety and failure handling
+        run: python3 tests/test_legacy_upgrade_driver.py
+      - name: Check 10k and 100k preserving migrations and search capacity
+        run: |
+          mkdir -p build/core-provenance
+          git rev-parse HEAD > build/core-provenance/source-commit.txt
+          git rev-parse HEAD^{tree} > build/core-provenance/source-tree.txt
+          python3 tests/sqlite_capacity_benchmark.py --sizes 10000 100000 --output build/core-provenance/capacity.json
+          python3 scripts/record-source-inventory.py --output build/core-provenance/source-and-notice-inventory.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: xs-core-capacity-and-source
+          path: build/core-provenance/
+          if-no-files-found: error
   android-library:
     runs-on: ubuntu-latest
     steps:
@@ -38,7 +56,7 @@ jobs:
         with:
           gradle-version: '8.9'
       - name: Compile independent Android archive AAR
-        run: gradle --no-daemon :xs-runtime:assembleDebug :dev-harness:assembleDebug :app-android:assembleDebug :app-android:assembleDebugAndroidTest :dev-harness:assembleDebugAndroidTest :app-android:lintDebug
+        run: gradle --no-daemon :xs-runtime:assembleDebug :dev-harness:assembleDebug :app-android:assembleDebug :app-android:assembleDebugAndroidTest :dev-harness:assembleDebugAndroidTest :app-android:lintDebug :xs-runtime:lintDebug
       - name: Upload Android library (not an APK)
         uses: actions/upload-artifact@v4
         with:
@@ -59,6 +77,7 @@ jobs:
           sha256sum app-android/build/outputs/apk/debug/*.apk > app-android/build/provenance/SHA256SUMS
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --print-certs app-android/build/outputs/apk/debug/app-android-debug.apk > app-android/build/provenance/signing-certificate.txt
           gradle --no-daemon :app-android:dependencies --configuration debugRuntimeClasspath > app-android/build/provenance/dependencies.txt
+          python3 scripts/record-source-inventory.py --output app-android/build/provenance/source-and-notice-inventory.json
       - name: Upload non-instrumented browser feasibility APK (NOT Alpha)
         uses: actions/upload-artifact@v4
         with:
@@ -73,11 +92,21 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        api-level: [30, 36]
+        include:
+          - api-level: 26
+            arch: x86_64
+          - api-level: 27
+            arch: x86
+          - api-level: 30
+            arch: x86_64
+          - api-level: 36
+            arch: x86_64
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -88,6 +117,10 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
+      - name: Install fixed tools for fixture upgrade verification
+        run: sdkmanager --install "platforms;android-35" "build-tools;35.0.0"
+      - name: Assemble current APKs before the old-source installation fixture
+        run: gradle --no-daemon :app-android:assembleDebug :app-android:assembleDebugAndroidTest
       - name: Enable KVM acceleration
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
@@ -97,17 +130,31 @@ jobs:
         with:
           api-level: ${{ matrix.api-level }}
           target: google_apis
-          arch: x86_64
+          arch: ${{ matrix.arch }}
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none -partition-size 8192
           disable-animations: true
           script: |
             mkdir -p app-android/build/compatibility
             git rev-parse HEAD > app-android/build/compatibility/source-commit.txt
             adb shell getprop ro.build.version.release > app-android/build/compatibility/android-release.txt
             adb shell getprop ro.build.version.sdk > app-android/build/compatibility/android-api.txt
+            adb shell getprop ro.product.cpu.abi > app-android/build/compatibility/primary-abi.txt
+            adb shell getprop ro.product.cpu.abilist > app-android/build/compatibility/supported-abis.txt
+            adb shell df -k /data > app-android/build/compatibility/data-space-before-tests.txt
             adb shell getprop persist.sys.locale > app-android/build/compatibility/locale.txt
+            adb shell am get-config > app-android/build/compatibility/device-configuration.txt
             adb shell dumpsys webviewupdate > app-android/build/compatibility/webview-provider.txt
             adb shell cmd uimode night > app-android/build/compatibility/night-mode.txt
-            gradle --no-daemon :dev-harness:connectedDebugAndroidTest :app-android:connectedDebugAndroidTest
+            python3 scripts/test-legacy-upgrade.py
+            python3 scripts/run-android-instrumentation.py
+            python3 scripts/prepare-process-fixtures.py
+            python3 scripts/test-process-recovery.py
+            python3 scripts/test-debug-upgrade.py
+            python3 scripts/test-process-recovery.py --reboot
+            python3 scripts/test-emulator-low-space.py
+      - name: Record job-local fixture APK hashes and public signing certificates
+        if: always()
+        run: python3 scripts/record-fixture-provenance.py
       - name: Upload synthetic Android test reports
         if: always()
         uses: actions/upload-artifact@v4
@@ -118,3 +165,5 @@ jobs:
             app-android/build/reports/androidTests/
             app-android/build/outputs/androidTest-results/
             dev-harness/build/reports/androidTests/
+            dev-harness/build/outputs/androidTest-results/
+            dev-harness/build/compatibility/

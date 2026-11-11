@@ -1,0 +1,26 @@
+{
+  "scope": "Simulated host commands only, not device/test outcome",
+  "result": "PASS",
+  "scenarios": [
+    {
+      "original_gradle_exit": 0,
+      "diagnostics_write_fault": false,
+      "observed_wrapper_exit": 0
+    },
+    {
+      "original_gradle_exit": 0,
+      "diagnostics_write_fault": true,
+      "observed_wrapper_exit": 0
+    },
+    {
+      "original_gradle_exit": 7,
+      "diagnostics_write_fault": false,
+      "observed_wrapper_exit": 7
+    },
+    {
+      "original_gradle_exit": 7,
+      "diagnostics_write_fault": true,
+      "observed_wrapper_exit": 7
+    }
+  ]
+}

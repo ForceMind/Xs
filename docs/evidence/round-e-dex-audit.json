@@ -1,0 +1,28 @@
+{
+  "scope": "Pre-CI local build/package isolation only, not actual old-device instrumentation",
+  "test_apk_sha256": "f596f79bb17e8a41a0bbf5d5d494a1c90a3e36f6dc61f67383d51a3c741e5a16",
+  "defined_test_class_count": 3196,
+  "defined_product_class_count": 529,
+  "probe_present": true,
+  "main_product_definitions_duplicated_in_test_apk": [],
+  "actual_png_validation": {
+    "PNG_BASE64": {
+      "bytes": 68,
+      "sha256": "431ced6916a2a21a156e38701afe55bbd7f88969fbbfc56d7fe099d47f265460",
+      "format": "PNG",
+      "dimensions": [
+        1,
+        1
+      ]
+    },
+    "SECOND_PNG_BASE64": {
+      "bytes": 70,
+      "sha256": "49e1dad481e94dfab7c9573a9a81d56aa2ca629fe15a3f7a910aa4f47601c00d",
+      "format": "PNG",
+      "dimensions": [
+        1,
+        1
+      ]
+    }
+  }
+}

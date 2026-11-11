@@ -1,0 +1,49 @@
+{
+  "source_identity": "pre-commit compatibility working tree; next CI records exact source identity",
+  "build": "PASS",
+  "tasks": 165,
+  "app_lint": {
+    "errors": 0,
+    "warnings": 11,
+    "NewApi": 0
+  },
+  "runtime_lint": {
+    "errors": 0,
+    "warnings": 11,
+    "NewApi": 0
+  },
+  "real_api26": "NOT RUN",
+  "build_log_sha256": "adfcf04795ad060e90afff34d3b1755f5f306e218f3589cd0355c79db91b5982",
+  "build_log_tail": [
+    "",
+    "BUILD SUCCESSFUL in 20s",
+    "165 actionable tasks: 17 executed, 148 up-to-date"
+  ],
+  "artifacts": [
+    {
+      "path": "app-android/build/outputs/apk/debug/app-android-debug.apk",
+      "bytes": 342032,
+      "sha256": "f5d10d17d87a99ab2a12f5175cd4be0c14544f31fa9e295bd94913bf1b35783f"
+    },
+    {
+      "path": "app-android/build/outputs/apk/androidTest/debug/app-android-debug-androidTest.apk",
+      "bytes": 1717459,
+      "sha256": "b74669fff1ebfa828c6438908c4c69da18358202ca63308560d71ecbd85bd146"
+    },
+    {
+      "path": "dev-harness/build/outputs/apk/debug/dev-harness-debug.apk",
+      "bytes": 225383,
+      "sha256": "bfd36408ce8600493a515cd52a62806505ade8f4f21de0f2ed1602a174182bbd"
+    },
+    {
+      "path": "dev-harness/build/outputs/apk/androidTest/debug/dev-harness-debug-androidTest.apk",
+      "bytes": 1705147,
+      "sha256": "f53cb080e6d33242e5e9364a5689105accf62ad888ae406995b1b048745d95fe"
+    },
+    {
+      "path": "xs-runtime/build/outputs/aar/xs-runtime-debug.aar",
+      "bytes": 245782,
+      "sha256": "67f4d1a16cc331fc332436e0c9351eb1f27203c23fa3a6657fc7fff2e37ffcd2"
+    }
+  ]
+}

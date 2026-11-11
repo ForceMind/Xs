@@ -1,0 +1,27 @@
+{
+  "scope": "Local APK build/certificate proof, not emulator installation or production signing",
+  "baseline_commit": "ee119c24aa5e4ba77b0872e4abdf2bd950d74851",
+  "working_tree_clean": false,
+  "artifacts": {
+    "old_main": {
+      "path": "/workspace/scratch/711283f6f3c9/xs-legacy-main-round-e/app-android/build/outputs/apk/debug/app-android-debug.apk",
+      "bytes": 84446,
+      "sha256": "d2428fdb890f2bff5109a87fdee8f54297b791d9af8ff4312249aa771f78fe26",
+      "package": "dev.forcemind.xs",
+      "version_code": 1,
+      "certificate_sha256": "0e75e2f67053495d8efb265b42349ef543012087886260d550814afe26c4be15",
+      "signature_verification": "PASS"
+    },
+    "current_main": {
+      "path": "app-android/build/outputs/apk/debug/app-android-debug.apk",
+      "bytes": 494429,
+      "sha256": "3afcb5684bc145331d921a3f3e764c3298c78813db6c51835d3875f8f65f704c",
+      "package": "dev.forcemind.xs",
+      "version_code": 3,
+      "certificate_sha256": "0e75e2f67053495d8efb265b42349ef543012087886260d550814afe26c4be15",
+      "signature_verification": "PASS"
+    }
+  },
+  "old_source_commit": "f88003c8ec1ee193b75de7267db6ae7654ee77c4",
+  "old_source_tree": "82011cd71d591eb1a300e7dd07725628dcc6f1fd"
+}

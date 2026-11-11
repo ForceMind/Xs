@@ -1,0 +1,84 @@
+{
+  "environment": "cloud local software TCG, API30 default x86_64, no KVM,480x800 mdpi,2 cores,2048MiB",
+  "apks": {
+    "app-android/build/outputs/apk/debug/app-android-debug.apk": "7f78e810654d5f19064897fe5ead040327a6d5e7605544acb74933f44ab9219c",
+    "app-android/build/outputs/apk/androidTest/debug/app-android-debug-androidTest.apk": "fe39418a68fc14e9a4c1c4c55fceb6bfcc80df586a4152e689fca03c21aaacea",
+    "dev-harness/build/outputs/apk/debug/dev-harness-debug.apk": "ef9669ff795b9cc737e2a2c7bbec2638502125a1573e0153da185fecd2fc3468",
+    "dev-harness/build/outputs/apk/androidTest/debug/dev-harness-debug-androidTest.apk": "b8db76983d9be7883ebd90bed7f5860d6be79d0d62525efbfb15cff6d3cc16e2",
+    "share-receiver-fixture/build/outputs/apk/debug/share-receiver-fixture-debug.apk": "e0ab1692fc42ffbe1f07210f734d833e6d79f277153e20b3c9452b0b4422d389"
+  },
+  "tests": [
+    {
+      "name": "timeline-store",
+      "returncode": 0,
+      "timeout": false,
+      "passed": false,
+      "seconds": 287.85
+    },
+    {
+      "name": "timeline-promotion",
+      "returncode": 0,
+      "timeout": false,
+      "passed": true,
+      "seconds": 23.23
+    },
+    {
+      "name": "recent-ui",
+      "returncode": 0,
+      "timeout": false,
+      "passed": false,
+      "seconds": 175.25
+    },
+    {
+      "name": "capture-new",
+      "returncode": 0,
+      "timeout": false,
+      "passed": false,
+      "seconds": 95.5
+    }
+  ],
+  "last_boot_note": 273,
+  "boot_seconds": 294.92,
+  "booted": true,
+  "result": "FAIL",
+  "test_counts": {
+    "executed": 39,
+    "passed": 28,
+    "failed": 11
+  },
+  "scope": "Cloud software-only TCG diagnostic lane, API30/default x86_64, no KVM. Not the accelerated CI matrix, a physical phone, live X or a production release. Return code zero from am instrument does not mean tests passed.",
+  "webview": "com.android.webview 83.0.4103.120",
+  "outcomes": {
+    "timeline-store": "17/18 PASS, heavy concurrent quota test Future.get timed out under TCG; same 18 tests passed accelerated CI86 API26/27/30/36.",
+    "timeline-promotion": "10/10 PASS",
+    "recent-ui": "1/7 PASS, six native accessibility/dialog wait failures retained without unproven attribution.",
+    "native-capture": "0/4 PASS, native/fixture wait failures retained; logs also showed slow frames/GC and renderer exits, without claiming a proved cause."
+  },
+  "raw_instrumentation": {
+    "timeline-store.instrumentation.txt": {
+      "bytes": 14381,
+      "sha256": "cd21924c5cbc4979b5f37fb8dca2a45fe90d19429c8a32ea1cdd491290e34bed"
+    },
+    "recent-ui.instrumentation.txt": {
+      "bytes": 15297,
+      "sha256": "2a4fda056825e736d1cc02c5405c51dcf9f06dde86f8717102846285cc76a772"
+    },
+    "capture-new.instrumentation.txt": {
+      "bytes": 8137,
+      "sha256": "acf64a1e5448be17fb541af07f8c96e771a1671370b80964069d9c64cf663353"
+    },
+    "timeline-promotion.instrumentation.txt": {
+      "bytes": 7443,
+      "sha256": "e6c016ca2a2e53ac7932daffc7b19a6dcd8848d5091386d3d0837472a8f3ac4d"
+    }
+  },
+  "source_provenance": {
+    "classification": "launch-declared context only, not independently verified installed source",
+    "launch_git_head": "f813e9d0a849521b41a36621bbebc07331a0131a",
+    "clean_tree_or_build_binding_verified": false,
+    "immutable_apk_snapshots": false,
+    "hash_collection": "Host mutable project output bytes hashed immediately before each adb install; no output lock or post-install guest pm-path/pull hash check. A hash-to-install-read replacement window exists.",
+    "apk_hash_meaning": "Pre-install host-file SHA256, not independently verified installed guest bytes. adb Success means installation acceptance only.",
+    "formal_matrix_use": "Excluded. Diagnostic failures retained without using passing cases as a verified-source acceptance result."
+  }
+}

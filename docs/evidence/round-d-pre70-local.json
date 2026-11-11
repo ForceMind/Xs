@@ -1,0 +1,21 @@
+{
+  "scope": "Test-helper-only local verification before next CI; no native PASS inferred",
+  "source_base_head": "a5695701ea09baa736811403af6d687b87418920",
+  "runtime_source_changed": false,
+  "test_apk_compilation": "PASS,132 tasks,10s",
+  "project_checks": "PASS,6 tests",
+  "python_syntax": "PASS",
+  "ci_wrapper_fault_scenarios": "4 simulated host scenarios PASS, original Gradle0/7 preserved; not native results",
+  "logs": {
+    "round-d-pre70-build.log": {
+      "sha256": "e6e1dca44668d9b162e5d392488147f39d046748829dd94a82edf033c696489f",
+      "bytes": 10183
+    },
+    "round-d-pre70-project.log": {
+      "sha256": "0e933f876748ea2856435bd1fc28189a6d02c8a416e3b87e787fcb4c76b9f6b5",
+      "bytes": 277
+    }
+  },
+  "native_main_cases": "608 expected only; CI69 actual589 PASS19FAIL",
+  "external_drivers": "NOT RUN in CI69, pending next source"
+}

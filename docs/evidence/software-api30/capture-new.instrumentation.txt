@@ -1,0 +1,137 @@
+INSTRUMENTATION_STATUS: class=dev.forcemind.xs.browser.NativeCaptureIntegrationTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=4
+INSTRUMENTATION_STATUS: stream=
+dev.forcemind.xs.browser.NativeCaptureIntegrationTest:
+INSTRUMENTATION_STATUS: test=independentBufferFindsQuickPartialCardsAndPriorRefreshBatchesWithoutHistory
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=dev.forcemind.xs.browser.NativeCaptureIntegrationTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=4
+INSTRUMENTATION_STATUS: stack=java.lang.AssertionError: Temporary fixture not captured: quick partial
+	at dev.forcemind.xs.browser.NativeCaptureIntegrationTest.awaitBuffer(NativeCaptureIntegrationTest.java:118)
+	at dev.forcemind.xs.browser.NativeCaptureIntegrationTest.independentBufferFindsQuickPartialCardsAndPriorRefreshBatchesWithoutHistory(NativeCaptureIntegrationTest.java:125)
+
+INSTRUMENTATION_STATUS: stream=
+Error in independentBufferFindsQuickPartialCardsAndPriorRefreshBatchesWithoutHistory(dev.forcemind.xs.browser.NativeCaptureIntegrationTest):
+java.lang.AssertionError: Temporary fixture not captured: quick partial
+	at dev.forcemind.xs.browser.NativeCaptureIntegrationTest.awaitBuffer(NativeCaptureIntegrationTest.java:118)
+	at dev.forcemind.xs.browser.NativeCaptureIntegrationTest.independentBufferFindsQuickPartialCardsAndPriorRefreshBatchesWithoutHistory(NativeCaptureIntegrationTest.java:125)
+
+INSTRUMENTATION_STATUS: test=independentBufferFindsQuickPartialCardsAndPriorRefreshBatchesWithoutHistory
+INSTRUMENTATION_STATUS_CODE: -2
+INSTRUMENTATION_STATUS: class=dev.forcemind.xs.browser.NativeCaptureIntegrationTest
+INSTRUMENTATION_STATUS: current=2
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=4
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=actualFeedRoutesAndNativeContextsDetermineExposureSource
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=dev.forcemind.xs.browser.NativeCaptureIntegrationTest
+INSTRUMENTATION_STATUS: current=2
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=4
+INSTRUMENTATION_STATUS: stack=java.lang.AssertionError
+	at org.junit.Assert.fail(Assert.java:87)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at org.junit.Assert.assertTrue(Assert.java:53)
+	at dev.forcemind.xs.browser.NativeCaptureIntegrationTest.actualFeedRoutesAndNativeContextsDetermineExposureSource(NativeCaptureIntegrationTest.java:214)
+
+INSTRUMENTATION_STATUS: stream=
+Error in actualFeedRoutesAndNativeContextsDetermineExposureSource(dev.forcemind.xs.browser.NativeCaptureIntegrationTest):
+java.lang.AssertionError
+	at org.junit.Assert.fail(Assert.java:87)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at org.junit.Assert.assertTrue(Assert.java:53)
+	at dev.forcemind.xs.browser.NativeCaptureIntegrationTest.actualFeedRoutesAndNativeContextsDetermineExposureSource(NativeCaptureIntegrationTest.java:214)
+
+INSTRUMENTATION_STATUS: test=actualFeedRoutesAndNativeContextsDetermineExposureSource
+INSTRUMENTATION_STATUS_CODE: -2
+INSTRUMENTATION_STATUS: class=dev.forcemind.xs.browser.NativeCaptureIntegrationTest
+INSTRUMENTATION_STATUS: current=3
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=4
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=canonicalDetailsEnrichDelayedBodiesWithoutAnotherOpen
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=dev.forcemind.xs.browser.NativeCaptureIntegrationTest
+INSTRUMENTATION_STATUS: current=3
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=4
+INSTRUMENTATION_STATUS: stack=java.lang.AssertionError
+	at org.junit.Assert.fail(Assert.java:87)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at org.junit.Assert.assertTrue(Assert.java:53)
+	at dev.forcemind.xs.browser.NativeCaptureIntegrationTest.canonicalDetailsEnrichDelayedBodiesWithoutAnotherOpen(NativeCaptureIntegrationTest.java:202)
+
+INSTRUMENTATION_STATUS: stream=
+Error in canonicalDetailsEnrichDelayedBodiesWithoutAnotherOpen(dev.forcemind.xs.browser.NativeCaptureIntegrationTest):
+java.lang.AssertionError
+	at org.junit.Assert.fail(Assert.java:87)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at org.junit.Assert.assertTrue(Assert.java:53)
+	at dev.forcemind.xs.browser.NativeCaptureIntegrationTest.canonicalDetailsEnrichDelayedBodiesWithoutAnotherOpen(NativeCaptureIntegrationTest.java:202)
+
+INSTRUMENTATION_STATUS: test=canonicalDetailsEnrichDelayedBodiesWithoutAnotherOpen
+INSTRUMENTATION_STATUS_CODE: -2
+INSTRUMENTATION_STATUS: class=dev.forcemind.xs.browser.NativeCaptureIntegrationTest
+INSTRUMENTATION_STATUS: current=4
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=4
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=preClearNativeReadCannotAcquireFreshBufferAuthorityAndFeedTicketsSurvive
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=dev.forcemind.xs.browser.NativeCaptureIntegrationTest
+INSTRUMENTATION_STATUS: current=4
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=4
+INSTRUMENTATION_STATUS: stack=java.lang.AssertionError
+	at org.junit.Assert.fail(Assert.java:87)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at org.junit.Assert.assertTrue(Assert.java:53)
+	at dev.forcemind.xs.browser.NativeCaptureIntegrationTest.preClearNativeReadCannotAcquireFreshBufferAuthorityAndFeedTicketsSurvive(NativeCaptureIntegrationTest.java:150)
+
+INSTRUMENTATION_STATUS: stream=
+Error in preClearNativeReadCannotAcquireFreshBufferAuthorityAndFeedTicketsSurvive(dev.forcemind.xs.browser.NativeCaptureIntegrationTest):
+java.lang.AssertionError
+	at org.junit.Assert.fail(Assert.java:87)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at org.junit.Assert.assertTrue(Assert.java:53)
+	at dev.forcemind.xs.browser.NativeCaptureIntegrationTest.preClearNativeReadCannotAcquireFreshBufferAuthorityAndFeedTicketsSurvive(NativeCaptureIntegrationTest.java:150)
+
+INSTRUMENTATION_STATUS: test=preClearNativeReadCannotAcquireFreshBufferAuthorityAndFeedTicketsSurvive
+INSTRUMENTATION_STATUS_CODE: -2
+INSTRUMENTATION_RESULT: stream=
+
+Time: 89.557
+There were 4 failures:
+1) independentBufferFindsQuickPartialCardsAndPriorRefreshBatchesWithoutHistory(dev.forcemind.xs.browser.NativeCaptureIntegrationTest)
+java.lang.AssertionError: Temporary fixture not captured: quick partial
+	at dev.forcemind.xs.browser.NativeCaptureIntegrationTest.awaitBuffer(NativeCaptureIntegrationTest.java:118)
+	at dev.forcemind.xs.browser.NativeCaptureIntegrationTest.independentBufferFindsQuickPartialCardsAndPriorRefreshBatchesWithoutHistory(NativeCaptureIntegrationTest.java:125)
+2) actualFeedRoutesAndNativeContextsDetermineExposureSource(dev.forcemind.xs.browser.NativeCaptureIntegrationTest)
+java.lang.AssertionError
+	at org.junit.Assert.fail(Assert.java:87)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at org.junit.Assert.assertTrue(Assert.java:53)
+	at dev.forcemind.xs.browser.NativeCaptureIntegrationTest.actualFeedRoutesAndNativeContextsDetermineExposureSource(NativeCaptureIntegrationTest.java:214)
+3) canonicalDetailsEnrichDelayedBodiesWithoutAnotherOpen(dev.forcemind.xs.browser.NativeCaptureIntegrationTest)
+java.lang.AssertionError
+	at org.junit.Assert.fail(Assert.java:87)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at org.junit.Assert.assertTrue(Assert.java:53)
+	at dev.forcemind.xs.browser.NativeCaptureIntegrationTest.canonicalDetailsEnrichDelayedBodiesWithoutAnotherOpen(NativeCaptureIntegrationTest.java:202)
+4) preClearNativeReadCannotAcquireFreshBufferAuthorityAndFeedTicketsSurvive(dev.forcemind.xs.browser.NativeCaptureIntegrationTest)
+java.lang.AssertionError
+	at org.junit.Assert.fail(Assert.java:87)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at org.junit.Assert.assertTrue(Assert.java:53)
+	at dev.forcemind.xs.browser.NativeCaptureIntegrationTest.preClearNativeReadCannotAcquireFreshBufferAuthorityAndFeedTicketsSurvive(NativeCaptureIntegrationTest.java:150)
+
+FAILURES!!!
+Tests run: 4,  Failures: 4
+
+
+INSTRUMENTATION_CODE: -1

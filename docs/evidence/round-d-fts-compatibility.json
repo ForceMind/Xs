@@ -1,0 +1,35 @@
+{
+  "result": "PASS",
+  "binary": "/workspace/scratch/711283f6f3c9/toolchain/android-sdk/platform-tools/sqlite3",
+  "binarySha256": "2e903ef0a08117c6c25016732047ee9905123cf235e10ff36a99e57c5ccc4496",
+  "sqliteVersion": "3.50.6 2025-09-22 18:50:24 9cc554372371e07bf01d8070a64d461ac85b91be6eef0e642ed129a0c7fa8105 (64-bit)",
+  "compileOptions": [],
+  "oldExplicitAndFailed": true,
+  "note": "An empty compile_options result means this CLI does not expose those diagnostics; query behavior is measured directly.",
+  "javaGeneratedTerms": {
+    "current": [
+      "native* resource*"
+    ],
+    "history": [
+      "native* resource*",
+      "native* resource*"
+    ],
+    "versions": [
+      "native* resource*"
+    ],
+    "literalOperator": [
+      "native* or* resource*",
+      "native* or* resource*"
+    ]
+  },
+  "counts": {
+    "oldExplicitAnd": 0,
+    "implicitAnd": 1,
+    "current0": 1,
+    "history0": 1,
+    "history1": 1,
+    "versions0": 1,
+    "literalOperator0": 0,
+    "literalOperator1": 0
+  }
+}
