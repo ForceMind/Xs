@@ -1,0 +1,69 @@
+name: Publish Xs W0 CI96 preview
+
+on:
+  push:
+    branches:
+      - release/w0-ci96
+
+permissions: {}
+
+concurrency:
+  group: xs-w0-ci96-publication
+  cancel-in-progress: false
+
+jobs:
+  publish-preview:
+    if: github.repository == 'ForceMind/Xs' && github.ref == 'refs/heads/release/w0-ci96'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: read
+      contents: write
+    env:
+      GH_REPO: ForceMind/Xs
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Verify and publish the fixed CI96 debug APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag=v0.3.0-w0-ci96
+          source=a6972d731df74c297622b001f8f6b11769c0add5
+          apk=Xs-W0-CI96-debug.apk
+          work="$(mktemp -d)"
+          trap 'rm -rf "$work"' EXIT
+          cd "$work"
+
+          gh run download 43015041218 --name xs-w0-browser-poc --dir artifact
+          test "$(cat artifact/provenance/source-commit.txt)" = "$source"
+          cp artifact/outputs/apk/debug/app-android-debug.apk "$apk"
+          printf '%s  %s\n' 947459e8ed78c0461c4d3465bdc6a6fab6b6cd8f8875cc5762460a46053767e6 "$apk" > SHA256SUMS.txt
+          sha256sum --check SHA256SUMS.txt
+
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "Release already exists. Inspect it before attempting another publication." >&2
+            exit 1
+          fi
+          if gh api "repos/$GH_REPO/git/ref/tags/$tag" >/dev/null 2>&1; then
+            echo "Tag already exists. Inspect its target before publication." >&2
+            exit 1
+          fi
+
+          cat > release-notes.md <<'NOTES'
+          Xs Android W0 测试预发行。APK 使用 CI 调试签名，供安装与浏览体验验证。
+
+          - 新增 Xs 桌面图标和浏览页顶部「资料库」入口，保留 X 网页自身的底栏。
+          - 真实 X 自动采集仍关闭，状态可在「构建与兼容性」查看。资料库四个分页仍处于设计阶段。
+          - CI96 构建成功。Android 16 模拟器 200 项常规测试通过，低磁盘空间专项未能达到测试目标余量，整轮 CI 未通过。真机验收待完成。
+          - 该包与 CI93 调试包的证书不同，不能覆盖安装。已有本地资料请保留原安装，可在未安装 Xs 的设备上试用。
+
+          下载 APK 后可用 SHA256SUMS.txt 核对完整性。
+
+          English: Android W0 debug preview. Live X capture is off. The APK built successfully, but CI96 failed the Android 16 low-storage scenario. The CI93 build used a different debug certificate, so this build cannot update it in place.
+
+          [实际构建源码](https://github.com/ForceMind/Xs/commit/a6972d731df74c297622b001f8f6b11769c0add5) · [CI96](https://github.com/ForceMind/Xs/actions/runs/43015041218)
+          NOTES
+
+          gh release create "$tag" "$apk" SHA256SUMS.txt \
+            --target "$source" --title 'Xs Android W0 · CI96 测试预发行' \
+            --notes-file release-notes.md --prerelease --latest=false
