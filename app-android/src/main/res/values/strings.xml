@@ -1,14 +1,15 @@
 <resources>
-    <string name="app_name">Xs · W0 PoC</string>
+    <string name="app_name">Xs</string>
     <string name="open_x">Open X</string>
     <string name="intro">Xs is an independent, unofficial browser feasibility build. X pages connect normally to X and WebView stores the web session. No Xs history capture, web bridge or filters are active. Login and media compatibility still need real-device testing. Local data is not a backup and may be lost on uninstall.</string>
-    <string name="poc">W0 · Capture off</string>
+    <string name="poc">Xs</string>
+    <string name="open_library">Library</string>
     <string name="menu">Menu</string>
     <string name="home">X home</string>
     <string name="reload">Reload</string>
     <string name="retry">Retry</string>
     <string name="loading">Loading X…</string>
-    <string name="ready">x.com · Capture off</string>
+    <string name="ready">Xs · x.com</string>
     <string name="failed">Page unavailable. Check your connection and retry.</string>
     <string name="blocked">This navigation is blocked.</string>
     <string name="external">Open in browser?</string>
