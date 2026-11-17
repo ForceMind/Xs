@@ -114,7 +114,7 @@ public final class BrowserActivity extends Activity {
         bar.setGravity(Gravity.CENTER_VERTICAL);
         status = new TextView(this);
         status.setId(R.id.browser_status);
-        status.setText(R.string.poc);
+        status.setText(R.string.app_name);
         status.setPadding(16, 12, 8, 12);
         bar.addView(status, new LinearLayout.LayoutParams(0, -2, 1));
         Button library = new Button(this);
@@ -139,7 +139,7 @@ public final class BrowserActivity extends Activity {
             if (web == null && !createWebView()) return;
             if (started) navigate(retryUrl);
             else {
-                status.setText(R.string.poc);
+                status.setText(R.string.app_name);
                 retry.setVisibility(View.GONE);
             }
         });
@@ -166,7 +166,7 @@ public final class BrowserActivity extends Activity {
             if (web.getContext() instanceof MutableContextWrapper)
                 ((MutableContextWrapper) web.getContext()).setBaseContext(this);
             attachWebView();
-            status.setText(!safeBrowsingAvailable?R.string.safe_browsing_unavailable:explicitLanding?R.string.browser_session_cleared:failed ? R.string.failed : R.string.ready);
+            status.setText(!safeBrowsingAvailable?R.string.safe_browsing_unavailable:explicitLanding?R.string.browser_session_cleared:failed ? R.string.failed : R.string.app_name);
             retry.setVisibility(failed && safeBrowsingAvailable ? View.VISIBLE : View.GONE);
             retained=true;
         } else {
@@ -321,7 +321,7 @@ public final class BrowserActivity extends Activity {
         @Override public void onPageFinished(WebView view, String url) {
             if(view!=web || privacyClearing)return;
             progress.setVisibility(View.GONE);
-            if (!failed) status.setText(safeBrowsingAvailable?R.string.ready:R.string.safe_browsing_unavailable);
+            if (!failed) status.setText(safeBrowsingAvailable?R.string.app_name:R.string.safe_browsing_unavailable);
         }
         @Override public void doUpdateVisitedHistory(WebView view, String url, boolean isReload) {
             if(view!=web || privacyClearing)return;

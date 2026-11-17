@@ -218,8 +218,12 @@ public class BrowserContainerTest {
             });
             assertTrue(pending.get().await(20, TimeUnit.SECONDS));
             scenario.onActivity(activity -> {
-                assertEquals("https://x.com/fixture/one",
-                    ((WebView) activity.findViewById(R.id.browser_view)).getUrl());
+                WebView web = activity.findViewById(R.id.browser_view);
+                assertEquals("https://x.com/fixture/one", web.getUrl());
+                TextView status = activity.findViewById(R.id.browser_status);
+                int expectedStatus = web.getSettings().getSafeBrowsingEnabled()
+                    ? R.string.app_name : R.string.safe_browsing_unavailable;
+                assertEquals(activity.getString(expectedStatus), status.getText().toString());
             });
         }
     }
