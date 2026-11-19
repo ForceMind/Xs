@@ -1,8 +1,51 @@
-# Xs 完整实施计划 v2.1
+当前XS-16：独立schema1/FTS、原生有界缓冲、最近时间线UI、Archive v6保留性晋升与清理/配额/生命周期源码已经加入。本轮实际执行与遗留失败见[证据](XS16_IMPLEMENTATION_EVIDENCE.zh-CN.md)，不得以历史CI83或本文旧快照替代新代码验证。
 
-日期：2026-11-06。基线：`eb5aa4dbbb0499fb632202a27aaf24e898718818`。范围依据：[产品要求](product.md)、[ADR-0002](adr/0002-local-library-media.md)、[ADR-0003](adr/0003-native-pull-delivery.md)。
+# Xs 完整实施计划 v2.3
 
-**这是可执行研发计划，不是功能完成报告。下面新增工作包均未因本次文档提交而完成。** 统一跟踪 [Issue #4](https://github.com/ForceMind/Xs/issues/4)。
+## 新增优先工作：XS-16 最近时间线
+
+用户已确认增加独立临时缓冲：默认关闭、48小时/应用级100MiB可调、只保存允许时间线已呈现且被观察到的帖子字段与本地批次。0.5–1秒快划可暂存，但不因此产生合格停留、打开、收藏或已读；原1.2/3/5秒和60%可读FEED规则不变。接口预取/未呈现/未采样项目不承诺覆盖。临时正文和FTS必须真正可回收，不直接复用只清历史事件的retention。
+
+**XS-16 云端源码与空间补强已验收。** 测试源码 `9e74ac85d96dcfc9f87a47c1e193d3fe85bd8f5d` 通过 [CI93](https://github.com/ForceMind/Xs/actions/runs/42519140643)：1406 JVM、四API800/800主用例（0失败/错误/跳过）、20/20独立driver、44/44外部native phase、34项driver host与6项allowlist，以及构建/双Lint/SQLite/DOM/容量检查。四API还在普通app UID下实测不足1MiB时缓冲拒收、压力文件清理与恢复。见[精确证据](XS16_FILESYSTEM_PRESSURE_EVIDENCE.zh-CN.md)。T14真实X/手机/接收应用/耗电/生产签名仍NOT RUN；live保持关闭，无main合并或正式发布。
+
+
+复查review和当前源码另确认两项应先复现修复：规范i/web/status链接在JS观察器匹配中缺失（r4500601373）；备份选择器Activity重建丢实例requestTicket（r4501080305虽outdated，当前仍无保留/恢复且manifest无configChanges）。新对话补DOM/WebView和实际SAF重建回归，密码不得持久保存。其它outdated评论须以当前源码/证据确认，不能自动当已解决。本轮仅记录，未修runtime。
+
+本轮E验证源码 `2c667517e5a812232a8b41e7a3f99166855963e6` / tested tree `e52dfdd3f5f7b51751154bf1cf2601554786ef33` 的[CI82](https://github.com/ForceMind/Xs/actions/runs/42419306946)已通过：1287项JVM、23项host检查、Android构建/双Lint，以及API26/27/30/36共624/624主用例（0失败/错误/跳过）。BrowserInteraction24/24、真实旧APK升级4/4通过；另有20/20独立driver、44次native phase通过，内部重复probe不计入主XML；均为本轮同源fresh attempt1。源码/merge/包摘要与CI76～81真实失败见[本轮E证据](ROUND_E_EVIDENCE.zh-CN.md)；D/CI75仅作历史基线。
+
+已实际验证5783字节合成MP4的真实SAF选择、FileReader完整字节/hash与用户手势播放至ended，两份新PNG的系统多选/逐文件集合核对，以及敏感SPA路由回HOME仍拒旧结果。固定旧main f88003c8ec1ee193b75de7267db6ae7654ee77c4的真实code1/schema2→current3/schema5升级保留UID/DB路径/默认UUID/旧行/分类/FTS/生成文件；默认LegacyUpgradeProbe只算current roundtrip，真正旧包升级另计driver。
+
+上传MIME来自provider声明，不证明文件内容真实、完整或已上传到X；不套用下载的20/100MiB上限，不增加权限、不由原生全读或转码。旧版本无独立收藏/媒体库，相应迁移为N/A；保留生成文件只证明文件保留。真实X/CDN/聊天App/物理设备/生产签名和live适配关闭边界不变。
+
+当前v5/可靠性增量见 [本轮证据](ROUND_D_EVIDENCE.zh-CN.md)；CI74云端回归全部通过；现场总体验收仍NOT RUN。历史 [阶段C证据](ROUND_C_EVIDENCE.zh-CN.md) 的933条JVM/146项API30/36通过仅覆盖旧源码，之前打开/停留/图片证据保留在 [既有实施记录](IMPLEMENTATION_EVIDENCE.zh-CN.md)。源码、编译、模拟器与现场验收分开记录。
+D轮已验证源码 `0d193e4689d649970d9705818d33e8706b470d8f` / tested tree `c8551cd4a09e4466cd84e7973039aba06a5f87b2`：[CI74](https://github.com/ForceMind/Xs/actions/runs/42386764024) 六项任务全部成功。1155项JVM、构建/双Lint及API26/27/30/36主仪器608/608通过，0失败/错误/跳过；独立force-stop、同job同源debug3→4升级、guest reboot与真实低空间各4/4，共16/16通过，不并入608主XML。
+
+低空间断言以普通应用原UID和实际可用空间为准，验证新任务拒绝、原文件/hash/离线搜索保留及压力文件清理；仅CI可丢弃旧userdebug模拟器的分配器在严格环境/当次quota/UID门后临时root，并已核实finally删除、unroot及shell UID恢复。10项host故障/安全门回归另行通过。完整case、身份/包摘要与CI66～73失败历史见本轮证据；这不是物理断电、用户手机提权或无限后台保证。
+
+
+实施状态更新：2026-11-07。原方案日期：2026-11-06；需求基线：`eb5aa4dbbb0499fb632202a27aaf24e898718818`，并非当前代码 HEAD。范围依据：[产品要求](product.md)、[ADR-0002](adr/0002-local-library-media.md)、[ADR-0003](adr/0003-native-pull-delivery.md)。
+
+**这是持续实施计划，不代表所有工作包已完成。** 以下状态表描述已落地源码及剩余边界；测试通过需附对应提交和环境证据。统一跟踪 [Issue #4](https://github.com/ForceMind/Xs/issues/4)。
+
+## 当前可执行基线
+
+A/早期B和C的离线代码继续保留，本轮实际补XS-06/07/09/14/15，不重新创建项目。CI74已实际通过核心/SQLite/DOM压力与Android构建检查；已验证的云端合成范围包括真实原生SAF导出/恢复、Browser真实SAF PNG文件选择、只读URI/68字节FileReader读取与手势子窗口、独立UID文件授权/拒绝越权/删源后延迟读取、320dp/1.8字号/中英深浅配置、500个小资源和约481MiB/30文件的实际原生备份恢复，以及512MiB容器在32MiB JVM逐字节往返。不同规模、平台与driver分别记账，不合并成真实X/手机或聊天App验收。上述离线子项已由CI74实际执行，四API低空间与其余系统driver也已实际通过，不借用主XML通过替代driver结果。旧源码4ee242e的历史结果见 [阶段C摘要](evidence/round-c-ci64.json)。
+
+| 范围 | 当前已有源码与边界 | 本轮执行与剩余工作 |
+| --- | --- | --- |
+| XS-02 E轮上传 | 不可变accept/MIME与单选/多选策略；picker/result一致；最多8、重复/空/错型拒绝、SPA逐URL失效和回调重入安全 | 新132项JVM/core1287已通过；CI82 Android构建、Browser6例×4 API及MP4/双PNG/敏感SPA原生结果PASS |
+| XS-15 E轮跨source升级 | 固定f880 code1/schema2→当前code3/schema5的同job同签名真实APK覆盖；原default/UID/DBpath/事件/分类/FTS迁移验证 | 默认LegacyUpgradeProbe仅current roundtrip；4个真实旧包driver实际PASS，旧收藏/媒体库N/A，不代表生产签名升级 |
+| XS-03/04 | v1～v4→v5保留迁移；32活动写入器及实例/epoch票据；整库删除持久tombstone、事务内revocation guard、默认UUID轮换、失败pending重试 | CI74并发/删除回归PASS；真实旧资料升级、容量/多日异常仍待验收 |
+| XS-06 | snapshot_versions/current pointer、来源/时间/质量与历史正文搜索/每页50条的只读版本翻页/关键词查询；更新的较短COMPLETE可成为current，PARTIAL不降级COMPLETE | CI74版本/合并/JVM/SQLite/UI回归PASS；COMPLETE不等于服务端全文 |
+| XS-07/09 | 批量收藏/分类/标签追加或替换/取消收藏，资源分页搜索/类型状态筛选/多选分类删除分享，单项或多项ZIP导出≤200MiB | CI74原生UI/SAF与320dp/大字号配置PASS；真机/接收应用另验 |
+| XS-08/12 | 显式图片/≤100MiB/10分钟H.264可选AAC标准MP4；JobScheduler与密封候选URL；API34+先UIDT，API26～33普通持久任务；每轮最多3次网络尝试、均从头重下 | CI74持久/取消/系统停止夹具与OS强停探针PASS；不承诺续传/及时后台；真实X来源和全程/接收播放未验收 |
+| XS-11/13 | native fixture确认本人行为/撤销、三默认关闭可撤销精简规则 | 现场动作和真实浏览器规则仍关闭；此前夹具结果不等于现场验收 |
+| XS-14 | 独立1.2/3/5秒开关/档位、连续停留与未打开查询；已达标时长1秒合并写，10分钟cap后停止重复；暂停停止JS timer | CI74合成压力/生命周期回归PASS；真实电量、长滚动、多日soak仍需设备证据 |
+| XS-14/15 保留/配额/统计 | 事件明细默认永久/可选7/30/90/365天，保留累计打开与最近事实；媒体默认不限，完成+活动预留预算，超限下调停止未完成但保留完成文件；双语管理预览/确认与累计/保留统计 | 普通writer内锁后复验policy，不撤销媒体票据；懒清理无后台定时保证；CI74配置/原生保留配额回归PASS；四API实际低空间拒绝/保留/清理通过 |
+| XS-10/02/15 云端端到端 | 独立UID实际URI grant/延迟读；真实Browser SAF PNG读取/手势子窗；外部ADB真实force-stop/不同PID恢复；同job调试证书3→4安装升级；API27入矩阵 | CI74列举夹具与强停/debug升级/reboot探针PASS；不等于聊天App、真实X、物理断电、生产key或跨schema升级 |
+| XS-15 元数据与资源备份 | 原明文元数据≤16MiB/20,000条/schema3/4→5；另有口令分块AES-256-GCM≤512MiB/500完成资源，完整认证/哈希/媒体校验后新库恢复，media-first/archive-last与崩溃markers | 最大512MiB容器32MiB JVM逐字节流式往返已通过；CI74 Android实际资源恢复/失败清理/SAF口令UI PASS（500tiny及约481MiB/30文件分别验）；不含任务、候选URL、密钥、会话或lease；SQLite未加密 |
+| XS-03/15 显式合并 | 2～4库、≤8MiB/20,000元数据预览快照→新库；保留全部版本并按SnapshotPolicy选current，源和default保留；严格受限即时撤销 | CI74版本合并/实际UI PASS；不搬媒体；改动/媒体任务拒绝撤销，源清理使预览失效 |
+| XS-15 签名 | 手动内部候选workflow，exact main祖先SHA、环境secret与证书pin、候选摘要 | 正式key/cert未配置，未发布；需独立升级/回退与现场验收；GPL及第三方义务有效，自定义切换可选 |
 
 ## 1. 产品闭环与边界
 
@@ -39,7 +82,8 @@ W0 是启用真实站点自动采集和发布的验证门槛，不是禁止写�
 | XS-12 | 标准视频完整下载与分享，音轨/时长/播放验证；只有真实需要时再实现允许的 HLS/DASH 合并 | XS-08/09/10 | V01～V03 |
 | XS-13 | 可撤销推广/会员营销/推荐精简：分开开关、结构识别、未知降级、恢复原样 | XS-02/05；规则夹具可并行 | C01～C03 |
 | XS-14 | **提前到 B 早期**的可选时间线停留：1.2/3/5 秒档、默认 3 秒、长帖视口可见性、有效时长持久化、同次曝光去重、未打开筛选；后续 D 优化容量/后台/性能 | XS-04/05/06（可先合成） | D01～D09、Q03 |
-| XS-15 | 备份恢复/容量/隐私/性能、固定测试与发布签名、来源依赖清单、升级回退、正式许可与分发检查 | 前述可用闭环 | G01～G04、Q04 |
+| XS-15 | 备份恢复/容量/隐私/性能、固定测试与发布签名、来源依赖清单、升级回退、有效许可/第三方义务与分发检查（自定义切换可选） | 前述可用闭环 | G01～G04、Q04 |
+| XS-16 | 独立临时时间线：48小时/100MiB可调；有界原生观察、临时SQLite/FTS、查询TTL/实际空间回收、刷新批次查找、幂等长期保存和清理屏障 | F1～F5云端实现及T07空间补强CI93完成，T14现场仍独立；详最新证据 | T01～T14、Q03/Q04 |
 
 详见 [验收矩阵](ACCEPTANCE_MATRIX.zh-CN.md)。测试编号是计划关联，不代表测试代码已存在。
 
@@ -52,6 +96,8 @@ XS-01/02 与 XS-03/04 并行，随后串起 XS-05/06。完成应用资料所有�
 出口：主动打开不足 1.2 秒仍有一条历史；刷新/旋转/五次正文更新不加次数；离开再开有新事件；重启、断网可查；X 退出不清库。真实站点不通过时不得称 Alpha，但可以继续离线开发其他模块。
 
 ### B：独立收藏、图片、资源库与系统分享
+
+新增XS-16在本轮E验收后进入B轨：先独立临时store/策略，再观察/UI/回收，不等待W0即可开发合成闭环；真实启用仍须W0。
 
 在 A 的即开即记基础上，**优先完成 XS-14 基础“停留无需点开”闭环**，与 XS-07/08/09/10 的收藏、图片和链接部分并行。原生详情工具栏先提供「收藏到 Xs」「下载」「分享」「资料库」；经验证的卡片按钮随后加入，不阻塞核心功能。
 
@@ -71,15 +117,16 @@ XS-14 的基础触发和本地查询在 B 验收，D 只做其**长期滚动性�
 
 ## 5. 数据与状态设计约束
 
-拟引入/调整的实体：library、legacy_scope_mapping、post、post_snapshot、history_event、favorite、category/tag/note、own_action、download_task、asset、asset_post_relation、share_lease。字段和具体迁移版本在代码实施前用测试锁定；本文不声称已经有新 Schema。
+已有实现包括library/旧空间映射、posts/history_events、favorites、分类/标签/备注、own_actions/own_action_events、v5 snapshot_versions/current pointer，以及独立媒体任务/资源与分享副本。保留明确版本与迁移测试；口令完整资源备份现已有源码，但其新测试执行和真机恢复不能被旧元数据测试代替。
 
 - 资料所有者用 library_id；浏览器用 browser_profile_id；本人行为用 actor_hint/provenance。三者不得混为一个账号字段。
 - 旧 account_id 命名空间保留来源。先做快照/备份、事务迁移与完整性校验，后续显式选择合并；失败保留原库。
-- 同一 navigationId 只有一个 OPEN_POST。快照可以更新/版本化，不再盲目把“更长”当作唯一正确标准。
+- 同一navigationId只有一个OPEN_POST。快照保留全部接受版本；COMPLETE仅为原生证据支持的可见DOM完整性，较短更新COMPLETE可取代current，PARTIAL不可降级，版本浏览不改current。
 - FEED_VISIBLE 使用独立的 exposureId/连续单调时长，前台且实际可见达档位才形成；一段曝光不重复，后续补时长不新建事件。旧数据库需保留性迁移，支持“停留≥N秒 且未点开”搜索；已阅与曝光严格区分。
 - LOCAL_SAVE 作为历史链接收录语义保留；新 FAVORITE 是明确本地收藏关系。迁移不能凭空增加阅读或 X 社交行为。
 - 下载状态至少包括排队、解析、下载中、暂停/等待、完成、失败、取消；不支持恢复时不能显示虚假的“已暂停可续传”。
 - 只有校验并完成的实际文件进入可分享集合；临时片段、签名 URL、浏览器会话、数据库不进分享目录。
+- 保留策略只清理事件明细，累计打开次数与最近打开/停留事实不重置；主动清历史语义单独保留。统计将已知累计打开下界与保留事件分开，按每帖MAX(累计计数,OPEN明细数)求和，不双计数；曝光时长下界可重叠，不等于阅读时长。媒体配额默认不限、无自动删除完成文件。
 - 各入口的保存/导入/收藏/下载完成/删除使用统一写入顺序；排队任务携带代次，写入前重查。清理目标库不影响其他资料或网页会话。
 
 ## 6. 默认交互与隐私
@@ -94,7 +141,7 @@ XS-14 的基础触发和本地查询在 B 验收，D 只做其**长期滚动性�
 
 ## 7. 执行纪律
 
-从 XS-01 开始，接着并行 XS-02/03 和观察夹具，再完成 XS-04/05 的最小闭环。不要继续堆叠手动收藏入口、重复计划或 APK 白名单来替代主路径。
+先核对最新 main、未合并 PR、CI 与上述已实现代码，再执行尚未满足的工作包和验收项；保留 XS-01 来源/工具链检查，不能重做已有 A/B 闭环来代替后续研发。保留CI74已通过的API26/27/30/36主用例与强停/升级/reboot/大资源恢复证据，四API低空间与清理恢复已实际通过，再推进现场适配、真机容量/多日可靠性；真实Browser尚未挂载自动打开/停留、本人动作和网页精简的live适配器；开关不能把fixture能力变为现场验收。真实X登录/DOM/媒体CDN、微信/QQ/飞书/Telegram接收、厂商后台与多日电量、物理断电、生产签名升级/真实个人资料迁移仍缺独立证据。如选择切换自定义许可，须另行确定权利范围与条款；当前GPL及历史授权/第三方义务继续有效。 真实启用按独立 W0/站点证据执行。不要继续堆叠手动收藏入口、重复计划或 APK 白名单来替代主路径。
 
 每个实现提交应关联 XS 编号和验收项；完成判定需真实代码、命令结果和对应环境证据。新功能先在开发构建测试，真机未验证项保持 NOT RUN。会话受限时提交可核验的阶段工作与阻塞点，不宣称后台自动继续。
 

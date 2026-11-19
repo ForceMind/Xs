@@ -1,0 +1,13 @@
+{
+  "baseline_commit": "32b43387ef7e2d886ccfe73b43b58d1842e43882",
+  "scope": "Synthetic Browser SPA route stimulus/acknowledgement and bounded failure scalar diagnostics only; production/Gov/provider/legacy unchanged",
+  "command": [
+    ":app-android:assembleDebugAndroidTest",
+    ":app-android:lintDebug"
+  ],
+  "result": "PASS",
+  "tasks": 121,
+  "seconds": 16,
+  "log_sha256": "e8eab5fdb0cf996d8109e838e0e35e91b1876bd521378d9b39a9f9ca85e49874",
+  "native_result": "PENDING CI80; CI79 623/624 retained without claiming exact failed JS subcondition"
+}

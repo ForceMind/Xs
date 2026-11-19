@@ -1,0 +1,17 @@
+<resources>
+    <string name="clear_browser_cache">Clear browser cache</string>
+    <string name="clear_browser_cache_notice">Remove only the WebView browser cache. Website login, browsing history, your Xs library, saved files and files already shared remain available.</string>
+    <string name="clear_web_session">Clear website session</string>
+    <string name="clear_web_session_notice">Sign out of websites inside Xs and remove their cookies, website storage, open pages and browser back history. Pending uploads and authentication windows will be cancelled. Your Xs library, settings, downloaded files and existing file shares remain available.</string>
+    <string name="clear_confirm">Clear</string>
+    <string name="browser_cache_cleared">Browser cache cleared</string>
+    <string name="browser_session_clearing">Clearing website session…</string>
+    <string name="browser_session_cleared">Website session cleared. Choose Home to browse again.</string>
+    <string name="browser_privacy_failed">Website session cleanup is incomplete. Retry before browsing again.</string>
+    <string name="safe_browsing_unavailable">This System WebView does not report Safe Browsing support. Website browsing is unavailable. Update System WebView through your device’s normal app store and restart Xs. Your local library remains available.</string>
+    <string name="safe_browsing_enabled">This System WebView reports Safe Browsing enabled. This does not guarantee that every website is safe.</string>
+    <string name="incoming_post_title">Open received post link?</string>
+    <string name="incoming_post_after_clear">Your cleared website session will stay empty until you choose a new navigation. Open this received public post link?
+
+%1$s</string>
+</resources>

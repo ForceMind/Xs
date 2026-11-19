@@ -1,0 +1,75 @@
+name: xs-signed-candidate
+on:
+  workflow_dispatch:
+    inputs:
+      source_sha:
+        description: "Reviewed 40-character commit already on main; candidate only"
+        required: true
+        type: string
+      version_code:
+        description: "Positive Android version code greater than the previously distributed candidate"
+        required: true
+        type: number
+permissions:
+  contents: read
+jobs:
+  candidate:
+    runs-on: ubuntu-latest
+    environment: xs-release-signing
+    timeout-minutes: 20
+    steps:
+      - name: Validate requested source identifier
+        env:
+          XS_SOURCE_SHA: ${{ inputs.source_sha }}
+          XS_VERSION_CODE: ${{ inputs.version_code }}
+        run: python3 -c 'import os,re; assert re.fullmatch("[0-9a-f]{40}",os.environ["XS_SOURCE_SHA"]), "Use an exact reviewed commit"; assert re.fullmatch("[1-9][0-9]{0,9}",os.environ["XS_VERSION_CODE"]) and int(os.environ["XS_VERSION_CODE"])<=2147483647, "Use a positive Android version code"'
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.source_sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Require reviewed main ancestry
+        run: git merge-base --is-ancestor HEAD origin/main
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v4
+        with:
+          packages: 'platform-tools'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+          cache-disabled: true
+      - name: Install the pinned build toolchain
+        run: sdkmanager --install "platforms;android-35" "build-tools;35.0.0"
+      - name: Materialize configured stable signing inputs
+        env:
+          XS_SIGNING_STORE_BASE64: ${{ secrets.XS_SIGNING_STORE_BASE64 }}
+          XS_SIGNING_STORE_PASSWORD: ${{ secrets.XS_SIGNING_STORE_PASSWORD }}
+          XS_SIGNING_KEY_ALIAS: ${{ secrets.XS_SIGNING_KEY_ALIAS }}
+          XS_SIGNING_KEY_PASSWORD: ${{ secrets.XS_SIGNING_KEY_PASSWORD }}
+          XS_SIGNING_CERT_SHA256: ${{ vars.XS_SIGNING_CERT_SHA256 }}
+        run: python3 scripts/prepare-signing.py
+      - name: Build and verify internal signed candidate
+        env:
+          XS_SIGNING_STORE_PASSWORD: ${{ secrets.XS_SIGNING_STORE_PASSWORD }}
+          XS_SIGNING_KEY_ALIAS: ${{ secrets.XS_SIGNING_KEY_ALIAS }}
+          XS_SIGNING_KEY_PASSWORD: ${{ secrets.XS_SIGNING_KEY_PASSWORD }}
+          XS_SIGNING_CERT_SHA256: ${{ vars.XS_SIGNING_CERT_SHA256 }}
+          XS_VERSION_CODE: ${{ inputs.version_code }}
+        run: |
+          gradle --no-daemon :app-android:assembleRelease :app-android:lintRelease :xs-runtime:lintRelease -PxsVersionCode="$XS_VERSION_CODE"
+          python3 scripts/verify-candidate.py app-android/build/outputs/apk/release/app-android-release.apk --apksigner "$ANDROID_HOME/build-tools/35.0.0/apksigner" --aapt "$ANDROID_HOME/build-tools/35.0.0/aapt" --version-code "$XS_VERSION_CODE" --output app-android/build/candidate/provenance.json
+          python3 scripts/record-source-inventory.py --output app-android/build/candidate/source-and-notice-inventory.json
+          gradle --no-daemon :app-android:dependencies --configuration releaseRuntimeClasspath > app-android/build/candidate/dependencies.txt
+      - name: Remove private keystore
+        if: always()
+        run: rm -rf -- "$RUNNER_TEMP/xs-private-signing"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: xs-internal-signed-candidate
+          path: |
+            app-android/build/outputs/apk/release/*.apk
+            app-android/build/candidate/
+          if-no-files-found: error

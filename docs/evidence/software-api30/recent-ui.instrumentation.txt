@@ -1,0 +1,223 @@
+INSTRUMENTATION_STATUS: class=dev.forcemind.xs.android.RecentTimelineUiTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=7
+INSTRUMENTATION_STATUS: stream=
+dev.forcemind.xs.android.RecentTimelineUiTest:
+INSTRUMENTATION_STATUS: test=clockResetRequiresExplicitConfirmationClearsAllTemporaryScopesAndLeavesCaptureOff
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=dev.forcemind.xs.android.RecentTimelineUiTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=7
+INSTRUMENTATION_STATUS: stack=java.lang.AssertionError: Native control appeared
+	at dev.forcemind.xs.android.RecentTimelineUiTest.await(RecentTimelineUiTest.java:307)
+	at dev.forcemind.xs.android.RecentTimelineUiTest.awaitNode(RecentTimelineUiTest.java:305)
+	at dev.forcemind.xs.android.RecentTimelineUiTest.awaitText(RecentTimelineUiTest.java:303)
+	at dev.forcemind.xs.android.RecentTimelineUiTest.clockResetRequiresExplicitConfirmationClearsAllTemporaryScopesAndLeavesCaptureOff(RecentTimelineUiTest.java:137)
+
+INSTRUMENTATION_STATUS: stream=
+Error in clockResetRequiresExplicitConfirmationClearsAllTemporaryScopesAndLeavesCaptureOff(dev.forcemind.xs.android.RecentTimelineUiTest):
+java.lang.AssertionError: Native control appeared
+	at dev.forcemind.xs.android.RecentTimelineUiTest.await(RecentTimelineUiTest.java:307)
+	at dev.forcemind.xs.android.RecentTimelineUiTest.awaitNode(RecentTimelineUiTest.java:305)
+	at dev.forcemind.xs.android.RecentTimelineUiTest.awaitText(RecentTimelineUiTest.java:303)
+	at dev.forcemind.xs.android.RecentTimelineUiTest.clockResetRequiresExplicitConfirmationClearsAllTemporaryScopesAndLeavesCaptureOff(RecentTimelineUiTest.java:137)
+
+INSTRUMENTATION_STATUS: test=clockResetRequiresExplicitConfirmationClearsAllTemporaryScopesAndLeavesCaptureOff
+INSTRUMENTATION_STATUS_CODE: -2
+INSTRUMENTATION_STATUS: class=dev.forcemind.xs.android.RecentTimelineUiTest
+INSTRUMENTATION_STATUS: current=2
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=7
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=offlineSearchBatchPagingAndPreviewDoNotCreateOpenOrDwellFacts
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=dev.forcemind.xs.android.RecentTimelineUiTest
+INSTRUMENTATION_STATUS: current=2
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=7
+INSTRUMENTATION_STATUS: stack=java.lang.AssertionError: Native control appeared
+	at dev.forcemind.xs.android.RecentTimelineUiTest.await(RecentTimelineUiTest.java:307)
+	at dev.forcemind.xs.android.RecentTimelineUiTest.awaitNode(RecentTimelineUiTest.java:305)
+	at dev.forcemind.xs.android.RecentTimelineUiTest.awaitText(RecentTimelineUiTest.java:303)
+	at dev.forcemind.xs.android.RecentTimelineUiTest.offlineSearchBatchPagingAndPreviewDoNotCreateOpenOrDwellFacts(RecentTimelineUiTest.java:89)
+
+INSTRUMENTATION_STATUS: stream=
+Error in offlineSearchBatchPagingAndPreviewDoNotCreateOpenOrDwellFacts(dev.forcemind.xs.android.RecentTimelineUiTest):
+java.lang.AssertionError: Native control appeared
+	at dev.forcemind.xs.android.RecentTimelineUiTest.await(RecentTimelineUiTest.java:307)
+	at dev.forcemind.xs.android.RecentTimelineUiTest.awaitNode(RecentTimelineUiTest.java:305)
+	at dev.forcemind.xs.android.RecentTimelineUiTest.awaitText(RecentTimelineUiTest.java:303)
+	at dev.forcemind.xs.android.RecentTimelineUiTest.offlineSearchBatchPagingAndPreviewDoNotCreateOpenOrDwellFacts(RecentTimelineUiTest.java:89)
+
+INSTRUMENTATION_STATUS: test=offlineSearchBatchPagingAndPreviewDoNotCreateOpenOrDwellFacts
+INSTRUMENTATION_STATUS_CODE: -2
+INSTRUMENTATION_STATUS: class=dev.forcemind.xs.android.RecentTimelineUiTest
+INSTRUMENTATION_STATUS: current=3
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=7
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=independentSettingsRejectInvalidBoundsAndPersistBothValidExtremes
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=dev.forcemind.xs.android.RecentTimelineUiTest
+INSTRUMENTATION_STATUS: current=3
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=7
+INSTRUMENTATION_STATUS: stack=java.lang.AssertionError: Native control appeared
+	at dev.forcemind.xs.android.RecentTimelineUiTest.await(RecentTimelineUiTest.java:307)
+	at dev.forcemind.xs.android.RecentTimelineUiTest.awaitNode(RecentTimelineUiTest.java:305)
+	at dev.forcemind.xs.android.RecentTimelineUiTest.awaitText(RecentTimelineUiTest.java:303)
+	at dev.forcemind.xs.android.RecentTimelineUiTest.independentSettingsRejectInvalidBoundsAndPersistBothValidExtremes(RecentTimelineUiTest.java:104)
+
+INSTRUMENTATION_STATUS: stream=
+Error in independentSettingsRejectInvalidBoundsAndPersistBothValidExtremes(dev.forcemind.xs.android.RecentTimelineUiTest):
+java.lang.AssertionError: Native control appeared
+	at dev.forcemind.xs.android.RecentTimelineUiTest.await(RecentTimelineUiTest.java:307)
+	at dev.forcemind.xs.android.RecentTimelineUiTest.awaitNode(RecentTimelineUiTest.java:305)
+	at dev.forcemind.xs.android.RecentTimelineUiTest.awaitText(RecentTimelineUiTest.java:303)
+	at dev.forcemind.xs.android.RecentTimelineUiTest.independentSettingsRejectInvalidBoundsAndPersistBothValidExtremes(RecentTimelineUiTest.java:104)
+
+INSTRUMENTATION_STATUS: test=independentSettingsRejectInvalidBoundsAndPersistBothValidExtremes
+INSTRUMENTATION_STATUS_CODE: -2
+INSTRUMENTATION_STATUS: class=dev.forcemind.xs.android.RecentTimelineUiTest
+INSTRUMENTATION_STATUS: current=4
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=7
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=productionPanelActionsRemainReachableAt320DpLargeFontInBothLocalesAndThemes
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=dev.forcemind.xs.android.RecentTimelineUiTest
+INSTRUMENTATION_STATUS: current=4
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=7
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=productionPanelActionsRemainReachableAt320DpLargeFontInBothLocalesAndThemes
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=dev.forcemind.xs.android.RecentTimelineUiTest
+INSTRUMENTATION_STATUS: current=5
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=7
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=delayedPreviewCannotReappearAfterActualPauseResumeOrAfterClosingNewPreview
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=dev.forcemind.xs.android.RecentTimelineUiTest
+INSTRUMENTATION_STATUS: current=5
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=7
+INSTRUMENTATION_STATUS: stack=java.lang.AssertionError: Native control appeared
+	at dev.forcemind.xs.android.RecentTimelineUiTest.await(RecentTimelineUiTest.java:307)
+	at dev.forcemind.xs.android.RecentTimelineUiTest.awaitNode(RecentTimelineUiTest.java:305)
+	at dev.forcemind.xs.android.RecentTimelineUiTest.awaitText(RecentTimelineUiTest.java:303)
+	at dev.forcemind.xs.android.RecentTimelineUiTest.delayedPreviewCannotReappearAfterActualPauseResumeOrAfterClosingNewPreview(RecentTimelineUiTest.java:202)
+
+INSTRUMENTATION_STATUS: stream=
+Error in delayedPreviewCannotReappearAfterActualPauseResumeOrAfterClosingNewPreview(dev.forcemind.xs.android.RecentTimelineUiTest):
+java.lang.AssertionError: Native control appeared
+	at dev.forcemind.xs.android.RecentTimelineUiTest.await(RecentTimelineUiTest.java:307)
+	at dev.forcemind.xs.android.RecentTimelineUiTest.awaitNode(RecentTimelineUiTest.java:305)
+	at dev.forcemind.xs.android.RecentTimelineUiTest.awaitText(RecentTimelineUiTest.java:303)
+	at dev.forcemind.xs.android.RecentTimelineUiTest.delayedPreviewCannotReappearAfterActualPauseResumeOrAfterClosingNewPreview(RecentTimelineUiTest.java:202)
+
+INSTRUMENTATION_STATUS: test=delayedPreviewCannotReappearAfterActualPauseResumeOrAfterClosingNewPreview
+INSTRUMENTATION_STATUS_CODE: -2
+INSTRUMENTATION_STATUS: class=dev.forcemind.xs.android.RecentTimelineUiTest
+INSTRUMENTATION_STATUS: current=6
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=7
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=explicitNativeFavoriteSurvivesScopedBufferClearWithoutOpeningPost
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=dev.forcemind.xs.android.RecentTimelineUiTest
+INSTRUMENTATION_STATUS: current=6
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=7
+INSTRUMENTATION_STATUS: stack=java.lang.AssertionError: Native control appeared
+	at dev.forcemind.xs.android.RecentTimelineUiTest.await(RecentTimelineUiTest.java:307)
+	at dev.forcemind.xs.android.RecentTimelineUiTest.awaitNode(RecentTimelineUiTest.java:305)
+	at dev.forcemind.xs.android.RecentTimelineUiTest.awaitText(RecentTimelineUiTest.java:303)
+	at dev.forcemind.xs.android.RecentTimelineUiTest.explicitNativeFavoriteSurvivesScopedBufferClearWithoutOpeningPost(RecentTimelineUiTest.java:123)
+
+INSTRUMENTATION_STATUS: stream=
+Error in explicitNativeFavoriteSurvivesScopedBufferClearWithoutOpeningPost(dev.forcemind.xs.android.RecentTimelineUiTest):
+java.lang.AssertionError: Native control appeared
+	at dev.forcemind.xs.android.RecentTimelineUiTest.await(RecentTimelineUiTest.java:307)
+	at dev.forcemind.xs.android.RecentTimelineUiTest.awaitNode(RecentTimelineUiTest.java:305)
+	at dev.forcemind.xs.android.RecentTimelineUiTest.awaitText(RecentTimelineUiTest.java:303)
+	at dev.forcemind.xs.android.RecentTimelineUiTest.explicitNativeFavoriteSurvivesScopedBufferClearWithoutOpeningPost(RecentTimelineUiTest.java:123)
+
+INSTRUMENTATION_STATUS: test=explicitNativeFavoriteSurvivesScopedBufferClearWithoutOpeningPost
+INSTRUMENTATION_STATUS_CODE: -2
+INSTRUMENTATION_STATUS: class=dev.forcemind.xs.android.RecentTimelineUiTest
+INSTRUMENTATION_STATUS: current=7
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=7
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=alreadyOpenTemporaryPreviewExpiresAndExternalClearDismissesItWithoutTap
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=dev.forcemind.xs.android.RecentTimelineUiTest
+INSTRUMENTATION_STATUS: current=7
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=7
+INSTRUMENTATION_STATUS: stack=java.lang.AssertionError: Native control appeared
+	at dev.forcemind.xs.android.RecentTimelineUiTest.await(RecentTimelineUiTest.java:307)
+	at dev.forcemind.xs.android.RecentTimelineUiTest.awaitNode(RecentTimelineUiTest.java:305)
+	at dev.forcemind.xs.android.RecentTimelineUiTest.awaitText(RecentTimelineUiTest.java:303)
+	at dev.forcemind.xs.android.RecentTimelineUiTest.alreadyOpenTemporaryPreviewExpiresAndExternalClearDismissesItWithoutTap(RecentTimelineUiTest.java:158)
+
+INSTRUMENTATION_STATUS: stream=
+Error in alreadyOpenTemporaryPreviewExpiresAndExternalClearDismissesItWithoutTap(dev.forcemind.xs.android.RecentTimelineUiTest):
+java.lang.AssertionError: Native control appeared
+	at dev.forcemind.xs.android.RecentTimelineUiTest.await(RecentTimelineUiTest.java:307)
+	at dev.forcemind.xs.android.RecentTimelineUiTest.awaitNode(RecentTimelineUiTest.java:305)
+	at dev.forcemind.xs.android.RecentTimelineUiTest.awaitText(RecentTimelineUiTest.java:303)
+	at dev.forcemind.xs.android.RecentTimelineUiTest.alreadyOpenTemporaryPreviewExpiresAndExternalClearDismissesItWithoutTap(RecentTimelineUiTest.java:158)
+
+INSTRUMENTATION_STATUS: test=alreadyOpenTemporaryPreviewExpiresAndExternalClearDismissesItWithoutTap
+INSTRUMENTATION_STATUS_CODE: -2
+INSTRUMENTATION_RESULT: stream=
+
+Time: 168.968
+There were 6 failures:
+1) clockResetRequiresExplicitConfirmationClearsAllTemporaryScopesAndLeavesCaptureOff(dev.forcemind.xs.android.RecentTimelineUiTest)
+java.lang.AssertionError: Native control appeared
+	at dev.forcemind.xs.android.RecentTimelineUiTest.await(RecentTimelineUiTest.java:307)
+	at dev.forcemind.xs.android.RecentTimelineUiTest.awaitNode(RecentTimelineUiTest.java:305)
+	at dev.forcemind.xs.android.RecentTimelineUiTest.awaitText(RecentTimelineUiTest.java:303)
+	at dev.forcemind.xs.android.RecentTimelineUiTest.clockResetRequiresExplicitConfirmationClearsAllTemporaryScopesAndLeavesCaptureOff(RecentTimelineUiTest.java:137)
+2) offlineSearchBatchPagingAndPreviewDoNotCreateOpenOrDwellFacts(dev.forcemind.xs.android.RecentTimelineUiTest)
+java.lang.AssertionError: Native control appeared
+	at dev.forcemind.xs.android.RecentTimelineUiTest.await(RecentTimelineUiTest.java:307)
+	at dev.forcemind.xs.android.RecentTimelineUiTest.awaitNode(RecentTimelineUiTest.java:305)
+	at dev.forcemind.xs.android.RecentTimelineUiTest.awaitText(RecentTimelineUiTest.java:303)
+	at dev.forcemind.xs.android.RecentTimelineUiTest.offlineSearchBatchPagingAndPreviewDoNotCreateOpenOrDwellFacts(RecentTimelineUiTest.java:89)
+3) independentSettingsRejectInvalidBoundsAndPersistBothValidExtremes(dev.forcemind.xs.android.RecentTimelineUiTest)
+java.lang.AssertionError: Native control appeared
+	at dev.forcemind.xs.android.RecentTimelineUiTest.await(RecentTimelineUiTest.java:307)
+	at dev.forcemind.xs.android.RecentTimelineUiTest.awaitNode(RecentTimelineUiTest.java:305)
+	at dev.forcemind.xs.android.RecentTimelineUiTest.awaitText(RecentTimelineUiTest.java:303)
+	at dev.forcemind.xs.android.RecentTimelineUiTest.independentSettingsRejectInvalidBoundsAndPersistBothValidExtremes(RecentTimelineUiTest.java:104)
+4) delayedPreviewCannotReappearAfterActualPauseResumeOrAfterClosingNewPreview(dev.forcemind.xs.android.RecentTimelineUiTest)
+java.lang.AssertionError: Native control appeared
+	at dev.forcemind.xs.android.RecentTimelineUiTest.await(RecentTimelineUiTest.java:307)
+	at dev.forcemind.xs.android.RecentTimelineUiTest.awaitNode(RecentTimelineUiTest.java:305)
+	at dev.forcemind.xs.android.RecentTimelineUiTest.awaitText(RecentTimelineUiTest.java:303)
+	at dev.forcemind.xs.android.RecentTimelineUiTest.delayedPreviewCannotReappearAfterActualPauseResumeOrAfterClosingNewPreview(RecentTimelineUiTest.java:202)
+5) explicitNativeFavoriteSurvivesScopedBufferClearWithoutOpeningPost(dev.forcemind.xs.android.RecentTimelineUiTest)
+java.lang.AssertionError: Native control appeared
+	at dev.forcemind.xs.android.RecentTimelineUiTest.await(RecentTimelineUiTest.java:307)
+	at dev.forcemind.xs.android.RecentTimelineUiTest.awaitNode(RecentTimelineUiTest.java:305)
+	at dev.forcemind.xs.android.RecentTimelineUiTest.awaitText(RecentTimelineUiTest.java:303)
+	at dev.forcemind.xs.android.RecentTimelineUiTest.explicitNativeFavoriteSurvivesScopedBufferClearWithoutOpeningPost(RecentTimelineUiTest.java:123)
+6) alreadyOpenTemporaryPreviewExpiresAndExternalClearDismissesItWithoutTap(dev.forcemind.xs.android.RecentTimelineUiTest)
+java.lang.AssertionError: Native control appeared
+	at dev.forcemind.xs.android.RecentTimelineUiTest.await(RecentTimelineUiTest.java:307)
+	at dev.forcemind.xs.android.RecentTimelineUiTest.awaitNode(RecentTimelineUiTest.java:305)
+	at dev.forcemind.xs.android.RecentTimelineUiTest.awaitText(RecentTimelineUiTest.java:303)
+	at dev.forcemind.xs.android.RecentTimelineUiTest.alreadyOpenTemporaryPreviewExpiresAndExternalClearDismissesItWithoutTap(RecentTimelineUiTest.java:158)
+
+FAILURES!!!
+Tests run: 7,  Failures: 6
+
+
+INSTRUMENTATION_CODE: -1

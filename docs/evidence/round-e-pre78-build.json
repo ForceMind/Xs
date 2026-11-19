@@ -1,0 +1,13 @@
+{
+  "baseline_commit": "5773aa0d8b6f081f5dd9bd48c844b6cac99d92a2",
+  "scope": "Browser integration UI helper and failure diagnostics only; production, provider, legacy driver unchanged",
+  "command": [
+    ":app-android:assembleDebugAndroidTest",
+    ":app-android:lintDebug"
+  ],
+  "result": "PASS",
+  "tasks": 121,
+  "seconds": 17,
+  "log_sha256": "f65f10a16f1f7e30a885ddd12909859bea920252d2c41ac44f39082b443cf199",
+  "native_result": "PENDING next CI; CI77 615 passed / 9 failed is preserved separately"
+}

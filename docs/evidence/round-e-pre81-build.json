@@ -1,0 +1,13 @@
+{
+  "baseline_commit": "22894747b40d64fcc00cc8d252257ab13ad40778",
+  "scope": "Fixed native consolidation form observed IME dismissal only; production/Browser/provider/legacy unchanged",
+  "command": [
+    ":dev-harness:assembleDebugAndroidTest",
+    ":dev-harness:lintDebug"
+  ],
+  "result": "PASS",
+  "tasks": 88,
+  "seconds": 15,
+  "log_sha256": "2b140655bc5711abfefe4b93a90f6b0504ff072b66f57b874114244871ef6a0d",
+  "native_result": "PENDING CI81; CI80 623/624 retained without misclassifying pre-preview visibility as consolidation transaction failure"
+}

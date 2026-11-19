@@ -20,16 +20,31 @@ public final class XsLocalSpaces {
             PREFS, Context.MODE_PRIVATE).getString(KEY, null);
     }
 
+    /** Native app library identity is independent of every browser/X account. */
+    public static String defaultLibrary(Context context) {
+        return createOnExplicitUserAction(context);
+    }
+
     public static synchronized String createOnExplicitUserAction(Context context) {
         if (context == null) throw new IllegalArgumentException("Context required");
         SharedPreferences prefs = context.getApplicationContext().getSharedPreferences(
             PREFS, Context.MODE_PRIVATE);
         String existing = prefs.getString(KEY, null);
-        if (existing != null && existing.startsWith("local:")) return existing;
+        if (existing != null && existing.startsWith("local:") && !XsLibraryWrites.isDeleted(existing)) return existing;
         String created = "local:" + UUID.randomUUID();
         if (!prefs.edit().putString(KEY, created).commit()) {
             throw new IllegalStateException("Cannot persist native local archive space");
         }
         return created;
+    }
+    /** Rotates only the deleted default. Separate library deletion never selects another default. */
+    public static synchronized String rotateDeleted(Context context,String expected) {
+        if(context==null)throw new IllegalArgumentException("Context required");
+        SharedPreferences prefs=context.getApplicationContext().getSharedPreferences(PREFS,Context.MODE_PRIVATE);
+        String existing=prefs.getString(KEY,null);
+        if(existing==null||!existing.equals(expected))return existing;
+        String replacement="local:"+UUID.randomUUID();
+        if(!prefs.edit().putString(KEY,replacement).commit())throw new IllegalStateException("Cannot persist replacement library");
+        return replacement;
     }
 }

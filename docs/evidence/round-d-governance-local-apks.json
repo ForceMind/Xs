@@ -1,0 +1,124 @@
+{
+  "schema_version": 1,
+  "recorded_at_utc": "2026-11-07T12:54:48.386526+00:00",
+  "evidence_scope": "Job-local APK availability and public signing certificates only; test execution/outcomes come from this job's instrumentation reports. This is not real-X, physical-device or recipient-app acceptance.",
+  "source": {
+    "head_commit": "aaf4f1be709d12d3e05c66669fb60eacbcd75761",
+    "head_tree": "cf99e2281e5e23e528d8b2bffd2845d1ff103549",
+    "working_tree_clean": false,
+    "working_tree_status": [
+      "M .github/workflows/core-tests.yml",
+      " M app-android/build.gradle.kts",
+      " M app-android/src/androidTest/java/dev/forcemind/xs/android/FullBackupIntegrationTest.java",
+      " M app-android/src/androidTest/java/dev/forcemind/xs/browser/BrowserPrivacyIntegrationTest.java",
+      " M app-android/src/main/java/dev/forcemind/xs/browser/BrowserActivity.java",
+      " M dev-harness/src/androidTest/java/dev/forcemind/xs/android/GovernanceUiTest.java",
+      " M docs/ROUND_D_EVIDENCE.zh-CN.md",
+      " M scripts/record-fixture-provenance.py",
+      " M scripts/test-core.sh",
+      " M settings.gradle.kts",
+      " M src/android/java/dev/forcemind/xs/android/XsArchiveDatabase.java",
+      " M src/android/java/dev/forcemind/xs/android/XsFullBackup.java",
+      " M src/android/java/dev/forcemind/xs/android/XsHistoryActivity.java",
+      " M src/android/java/dev/forcemind/xs/android/XsLibraryManagementActivity.java",
+      " M src/android/java/dev/forcemind/xs/android/XsMediaRepository.java",
+      " M src/main/java/dev/forcemind/xs/core/ArchiveSearch.java",
+      " M tests/java/dev/forcemind/xs/tests/CoreSmokeTest.java",
+      " M tests/java/dev/forcemind/xs/tests/EncryptedLibraryBackupTest.java",
+      " M tests/java/dev/forcemind/xs/tests/SnapshotPolicyTest.java",
+      "?? app-android/src/androidTest/AndroidManifest.xml",
+      "?? app-android/src/androidTest/java/dev/forcemind/xs/android/CrossUidSharingTest.java",
+      "?? app-android/src/androidTest/java/dev/forcemind/xs/android/FtsCompatibilityIntegrationTest.java",
+      "?? app-android/src/androidTest/java/dev/forcemind/xs/android/MediaQuotaIntegrationTest.java",
+      "?? app-android/src/androidTest/java/dev/forcemind/xs/android/ProcessRecoveryProbe.java",
+      "?? app-android/src/androidTest/java/dev/forcemind/xs/android/RetentionIntegrationTest.java",
+      "?? app-android/src/androidTest/java/dev/forcemind/xs/android/StorageGovernanceUiTest.java",
+      "?? app-android/src/androidTest/java/dev/forcemind/xs/browser/BrowserInteractionIntegrationTest.java",
+      "?? app-android/src/androidTest/java/dev/forcemind/xs/browser/fixtures/",
+      "?? app-android/src/debug/",
+      "?? docs/evidence/round-d-ci67-failures.json",
+      "?? docs/evidence/round-d-fts-compatibility.json",
+      "?? scripts/test-debug-upgrade.py",
+      "?? scripts/test-process-recovery.py",
+      "?? share-receiver-fixture/",
+      "?? src/android/java/dev/forcemind/xs/android/XsRetentionController.java",
+      "?? src/android/java/dev/forcemind/xs/android/XsRetentionSettings.java",
+      "?? src/android/java/dev/forcemind/xs/android/XsStorageSettings.java",
+      "?? tests/fts4_compatibility_test.py",
+      "?? tests/java/dev/forcemind/xs/tests/FtsCompatibilityDump.java"
+    ]
+  },
+  "apksigner": "/workspace/scratch/711283f6f3c9/toolchain/android-sdk/build-tools/35.0.0/apksigner",
+  "artifacts": [
+    {
+      "module": "app-android",
+      "role": "application",
+      "path": "app-android/build/outputs/apk/debug/app-android-debug.apk",
+      "availability": "present",
+      "bytes": 494089,
+      "sha256": "b2dab143f836990a45d0d5978b518f6dcc099565938d3babefdaa6d56bb5684d",
+      "signature_verification": {
+        "exit_code": 0,
+        "stdout": "Signer #1 certificate DN: C=US, O=Android, CN=Android Debug\nSigner #1 certificate SHA-256 digest: 0e75e2f67053495d8efb265b42349ef543012087886260d550814afe26c4be15\nSigner #1 certificate SHA-1 digest: 1d0487cfbedf2033448615244c4d99461761e43d\nSigner #1 certificate MD5 digest: 91e2dcbe60caed9610ce2e7af103b128",
+        "stderr": "",
+        "status": "passed"
+      }
+    },
+    {
+      "module": "app-android",
+      "role": "instrumentation",
+      "path": "app-android/build/outputs/apk/androidTest/debug/app-android-debug-androidTest.apk",
+      "availability": "present",
+      "bytes": 1807025,
+      "sha256": "da1b94d8736875e22ebb9dff931a8327ffdccd8e552b9be7825772df1c1b89db",
+      "signature_verification": {
+        "exit_code": 0,
+        "stdout": "Signer #1 certificate DN: C=US, O=Android, CN=Android Debug\nSigner #1 certificate SHA-256 digest: 0e75e2f67053495d8efb265b42349ef543012087886260d550814afe26c4be15\nSigner #1 certificate SHA-1 digest: 1d0487cfbedf2033448615244c4d99461761e43d\nSigner #1 certificate MD5 digest: 91e2dcbe60caed9610ce2e7af103b128",
+        "stderr": "",
+        "status": "passed"
+      }
+    },
+    {
+      "module": "dev-harness",
+      "role": "application",
+      "path": "dev-harness/build/outputs/apk/debug/dev-harness-debug.apk",
+      "availability": "present",
+      "bytes": 563176,
+      "sha256": "c471ada83cf7804bfa7722774cb3c65f3b52d331eb9b7cd0e5411d7f0a3aa3e3",
+      "signature_verification": {
+        "exit_code": 0,
+        "stdout": "Signer #1 certificate DN: C=US, O=Android, CN=Android Debug\nSigner #1 certificate SHA-256 digest: 0e75e2f67053495d8efb265b42349ef543012087886260d550814afe26c4be15\nSigner #1 certificate SHA-1 digest: 1d0487cfbedf2033448615244c4d99461761e43d\nSigner #1 certificate MD5 digest: 91e2dcbe60caed9610ce2e7af103b128",
+        "stderr": "",
+        "status": "passed"
+      }
+    },
+    {
+      "module": "dev-harness",
+      "role": "instrumentation",
+      "path": "dev-harness/build/outputs/apk/androidTest/debug/dev-harness-debug-androidTest.apk",
+      "availability": "present",
+      "bytes": 1736015,
+      "sha256": "790c7b2a98d81047225f5fc32d362d2b5dd38f918826c72ef6ada76c2c71bd39",
+      "signature_verification": {
+        "exit_code": 0,
+        "stdout": "Signer #1 certificate DN: C=US, O=Android, CN=Android Debug\nSigner #1 certificate SHA-256 digest: 0e75e2f67053495d8efb265b42349ef543012087886260d550814afe26c4be15\nSigner #1 certificate SHA-1 digest: 1d0487cfbedf2033448615244c4d99461761e43d\nSigner #1 certificate MD5 digest: 91e2dcbe60caed9610ce2e7af103b128",
+        "stderr": "",
+        "status": "passed"
+      }
+    },
+    {
+      "module": "share-receiver-fixture",
+      "role": "independent-uid-receiver",
+      "path": "share-receiver-fixture/build/outputs/apk/debug/share-receiver-fixture-debug.apk",
+      "availability": "present",
+      "bytes": 11509,
+      "sha256": "ccefa779df94427e4ef75af069721d6fa48fb0b0532f4b8589fc07d00dece54f",
+      "signature_verification": {
+        "exit_code": 0,
+        "stdout": "Signer #1 certificate DN: C=US, O=Android, CN=Android Debug\nSigner #1 certificate SHA-256 digest: 0e75e2f67053495d8efb265b42349ef543012087886260d550814afe26c4be15\nSigner #1 certificate SHA-1 digest: 1d0487cfbedf2033448615244c4d99461761e43d\nSigner #1 certificate MD5 digest: 91e2dcbe60caed9610ce2e7af103b128",
+        "stderr": "",
+        "status": "passed"
+      }
+    }
+  ]
+}

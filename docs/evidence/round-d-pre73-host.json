@@ -1,0 +1,15 @@
+{
+  "baseline_commit": "026245fa8cfa791f85d766d34a90b2822fe5f514",
+  "scope": "Host control flow only; actual main/run/log/report with stateful fake subprocess, no ADB/device/allocation/privilege changes",
+  "tests": 10,
+  "failures": 0,
+  "errors": 0,
+  "result": "PASS",
+  "project_checks": "PASS",
+  "python_compile": "PASS",
+  "shell_syntax": "PASS",
+  "diff_check": "PASS",
+  "log_sha256": "4cd7ddb389d6ea0a0906de8cad838c4ea7de74ab412a90c70c3ff7d4b02fdbd9",
+  "runtime_java_changed": false,
+  "actual_emulator_low_space_result": "Pending next CI; do not count host cases as Android evidence"
+}

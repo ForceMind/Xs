@@ -1,0 +1,291 @@
+{
+  "scope": "Actual downloaded job-local report bytes; emulator synthetic tests only; no real-X/physical-device/production assertion",
+  "root": "deps/ci89/api36",
+  "xml": [],
+  "drivers": {
+    "app-android/build/compatibility/legacy-upgrade": {
+      "status": "FAIL",
+      "scope": "Actual fixed old-main source APK/schema2 to current source APK/schema6, using one job-local debug signer on a disposable CI emulator. Synthetic native records only; not production-key, physical-device or live-X acceptance.",
+      "phases": [
+        "old_source_apk_schema2_native_seed_pass"
+      ],
+      "old_independent_favorites": "NOT APPLICABLE: absent in this old main",
+      "old_media_library": "NOT APPLICABLE: absent in this old main",
+      "external_probe_invocations_counted_in_main_xml": false,
+      "emulator_serial": "emulator-5554",
+      "initial_shell_uid": 2000,
+      "initial_target_absent": true,
+      "current_source": {
+        "head_commit": "c9daceb0fdccdbed9caa824618152e7e0703e4c1",
+        "head_tree": "83dcaab146b9fc95933b3cae28eb72830ddf2b5e",
+        "working_tree_clean": true
+      },
+      "old_source": {
+        "head_commit": "f88003c8ec1ee193b75de7267db6ae7654ee77c4",
+        "head_tree": "82011cd71d591eb1a300e7dd07725628dcc6f1fd",
+        "working_tree_clean_before_build": true
+      },
+      "apk_artifacts": [
+        {
+          "role": "old-application",
+          "package": "dev.forcemind.xs",
+          "version_code": 1,
+          "bytes": 84446,
+          "sha256": "551474f17f1a3d996e72022426d6608196b503f6fe7b5faf4e97b847c327b736",
+          "certificate_sha256": "24973caa6b0b800d360d3d1f5246960e443bc6429f0e7dec934eed0a4f3fc589",
+          "signature_verification": "passed"
+        },
+        {
+          "role": "current-application",
+          "package": "dev.forcemind.xs",
+          "version_code": 3,
+          "bytes": 391935,
+          "sha256": "49bd5592d99c86b9973fdaa9cd4e9f4ada74ba993a5c7d1d892037b43a1eb97a",
+          "certificate_sha256": "24973caa6b0b800d360d3d1f5246960e443bc6429f0e7dec934eed0a4f3fc589",
+          "signature_verification": "passed"
+        },
+        {
+          "role": "current-instrumentation",
+          "package": "dev.forcemind.xs.test",
+          "version_code": null,
+          "bytes": 1871495,
+          "sha256": "512e45b19ad7d99cecff0a28c29bb3b0725c412c1b901602456f75273d40690d",
+          "certificate_sha256": "24973caa6b0b800d360d3d1f5246960e443bc6429f0e7dec934eed0a4f3fc589",
+          "signature_verification": "passed"
+        }
+      ],
+      "current_build_outputs_preserved": true,
+      "installed_old": {
+        "package": "dev.forcemind.xs",
+        "version_code": 1,
+        "uid": 10216
+      },
+      "seed": {
+        "schema": 2,
+        "uid": 10216,
+        "pid": 3241,
+        "db_path": "/data/data/dev.forcemind.xs/databases/xs-local-history.db",
+        "scope": "local:548faee9-592c-4727-960f-89090f06d771"
+      },
+      "failure_stage": "old_live_process_stop",
+      "failure_type": "CommandFailure",
+      "failure_message": "Legacy upgrade command failed: old-foreground-pid"
+    }
+  },
+  "device": {
+    "source-commit.txt": "c9daceb0fdccdbed9caa824618152e7e0703e4c1\n",
+    "android-api.txt": "36\n",
+    "android-release.txt": "16\n",
+    "primary-abi.txt": "x86_64\n",
+    "supported-abis.txt": "x86_64,arm64-v8a\n",
+    "locale.txt": "\n",
+    "night-mode.txt": "Night mode: no\n",
+    "device-configuration.txt": "config: mcc310-mnc260-en-rUS-ldltr-sw320dp-w320dp-h640dp-normal-long-notround-nowidecg-lowdr-port-notnight-mdpi-finger-keysexposed-qwerty-navhidden-nonav-640x320-v36\nabi: x86_64,arm64-v8a\n",
+    "webview-provider.txt": "Current WebView Update Service state\n  Current WebView package (name, version): (com.google.android.webview, 133.0.6943.137)\n  Minimum targetSdkVersion: 33\n  Minimum WebView version code: 694313738\n  Number of relros started: 1\n  Number of relros finished: 1\n  WebView package dirty: false\n  Any WebView package installed: true\n  Preferred WebView package (name, version): (com.google.android.webview, 133.0.6943.137)\n  WebView packages:\n    Valid package com.google.android.webview (versionName: 133.0.6943.137, versionCode: 694313738, targetSdkVersion: 34) is  installed/enabled for all users\n    com.google.android.webview.beta is NOT installed.\n    com.google.android.webview.dev is NOT installed.\n    com.google.android.webview.canary is NOT installed.\n    com.google.android.webview.debug is NOT installed.\n    com.android.webview is NOT installed.\n"
+  },
+  "provenance": [
+    {
+      "schema_version": 1,
+      "recorded_at_utc": "2026-11-08T19:37:00.184053+00:00",
+      "evidence_scope": "Job-local APK availability and public signing certificates only; test execution/outcomes come from this job's instrumentation reports. This is not real-X, physical-device or recipient-app acceptance.",
+      "source": {
+        "head_commit": "c9daceb0fdccdbed9caa824618152e7e0703e4c1",
+        "head_tree": "83dcaab146b9fc95933b3cae28eb72830ddf2b5e",
+        "working_tree_clean": true,
+        "working_tree_status": []
+      },
+      "apksigner": "/usr/local/lib/android/sdk/build-tools/37.0.0/apksigner",
+      "artifacts": [
+        {
+          "module": "app-android",
+          "role": "application",
+          "path": "app-android/build/outputs/apk/debug/app-android-debug.apk",
+          "availability": "present",
+          "bytes": 391935,
+          "sha256": "49bd5592d99c86b9973fdaa9cd4e9f4ada74ba993a5c7d1d892037b43a1eb97a",
+          "signature_verification": {
+            "exit_code": 0,
+            "stdout": "V2 Signer: certificate DN: C=US, O=Android, CN=Android Debug\nV2 Signer: certificate SHA-256 digest: 24973caa6b0b800d360d3d1f5246960e443bc6429f0e7dec934eed0a4f3fc589\nV2 Signer: certificate SHA-1 digest: 2b959e7544dda6f1eda5fcc3401939e6a9d20362\nV2 Signer: certificate MD5 digest: 39f1fedd5a261c39988f25737c302908",
+            "stderr": "",
+            "status": "passed"
+          }
+        },
+        {
+          "module": "app-android",
+          "role": "instrumentation",
+          "path": "app-android/build/outputs/apk/androidTest/debug/app-android-debug-androidTest.apk",
+          "availability": "present",
+          "bytes": 1871495,
+          "sha256": "512e45b19ad7d99cecff0a28c29bb3b0725c412c1b901602456f75273d40690d",
+          "signature_verification": {
+            "exit_code": 0,
+            "stdout": "V2 Signer: certificate DN: C=US, O=Android, CN=Android Debug\nV2 Signer: certificate SHA-256 digest: 24973caa6b0b800d360d3d1f5246960e443bc6429f0e7dec934eed0a4f3fc589\nV2 Signer: certificate SHA-1 digest: 2b959e7544dda6f1eda5fcc3401939e6a9d20362\nV2 Signer: certificate MD5 digest: 39f1fedd5a261c39988f25737c302908",
+            "stderr": "",
+            "status": "passed"
+          }
+        },
+        {
+          "module": "dev-harness",
+          "role": "application",
+          "path": "dev-harness/build/outputs/apk/debug/dev-harness-debug.apk",
+          "availability": "unavailable",
+          "bytes": null,
+          "sha256": null,
+          "signature_verification": {
+            "status": "unavailable",
+            "exit_code": null,
+            "stdout": "",
+            "stderr": "APK not built in this job"
+          }
+        },
+        {
+          "module": "dev-harness",
+          "role": "instrumentation",
+          "path": "dev-harness/build/outputs/apk/androidTest/debug/dev-harness-debug-androidTest.apk",
+          "availability": "unavailable",
+          "bytes": null,
+          "sha256": null,
+          "signature_verification": {
+            "status": "unavailable",
+            "exit_code": null,
+            "stdout": "",
+            "stderr": "APK not built in this job"
+          }
+        },
+        {
+          "module": "share-receiver-fixture",
+          "role": "independent-uid-receiver",
+          "path": "share-receiver-fixture/build/outputs/apk/debug/share-receiver-fixture-debug.apk",
+          "availability": "present",
+          "bytes": 11769,
+          "sha256": "b192652c532e5bc0d6a500ea71f2324c5ec16cb7a415df6021d3a052fd5b19be",
+          "signature_verification": {
+            "exit_code": 0,
+            "stdout": "V2 Signer: certificate DN: C=US, O=Android, CN=Android Debug\nV2 Signer: certificate SHA-256 digest: 24973caa6b0b800d360d3d1f5246960e443bc6429f0e7dec934eed0a4f3fc589\nV2 Signer: certificate SHA-1 digest: 2b959e7544dda6f1eda5fcc3401939e6a9d20362\nV2 Signer: certificate MD5 digest: 39f1fedd5a261c39988f25737c302908",
+            "stderr": "",
+            "status": "passed"
+          }
+        }
+      ]
+    }
+  ],
+  "downloaded_apks": [
+    {
+      "path": "app-android/build/compatibility/legacy-upgrade/current-instrumentation.apk",
+      "bytes": 1871495,
+      "sha256": "512e45b19ad7d99cecff0a28c29bb3b0725c412c1b901602456f75273d40690d",
+      "signature": {
+        "exit_code": 0,
+        "stdout": "Signer #1 certificate DN: C=US, O=Android, CN=Android Debug\nSigner #1 certificate SHA-256 digest: 24973caa6b0b800d360d3d1f5246960e443bc6429f0e7dec934eed0a4f3fc589\nSigner #1 certificate SHA-1 digest: 2b959e7544dda6f1eda5fcc3401939e6a9d20362\nSigner #1 certificate MD5 digest: 39f1fedd5a261c39988f25737c302908\n",
+        "stderr": ""
+      },
+      "badging": {
+        "exit_code": 0,
+        "stdout": "package: name='dev.forcemind.xs.test' versionCode='' versionName='' platformBuildVersionName='15' platformBuildVersionCode='35' compileSdkVersion='35' compileSdkVersionCodename='15'\nsdkVersion:'26'\ntargetSdkVersion:'35'\nuses-permission: name='android.permission.REORDER_TASKS'\napplication-label:'Xs synthetic browser fixtures'\napplication: label='Xs synthetic browser fixtures' icon=''\napplication-debuggable\nuses-library:'android.test.runner'\nfeature-group: label=''\n  uses-feature: name='android.hardware.faketouch'\n  uses-implied-feature: name='android.hardware.faketouch' reason='default feature for all apps'\nprovides-component:'document-provider'\nother-activities\nsupports-screens: 'small' 'normal' 'large' 'xlarge'\nsupports-any-density: 'true'\nlocales: '--_--'\ndensities: '160'\n",
+        "stderr": ""
+      }
+    },
+    {
+      "path": "app-android/build/compatibility/legacy-upgrade/current-main-v3.apk",
+      "bytes": 391935,
+      "sha256": "49bd5592d99c86b9973fdaa9cd4e9f4ada74ba993a5c7d1d892037b43a1eb97a",
+      "signature": {
+        "exit_code": 0,
+        "stdout": "Signer #1 certificate DN: C=US, O=Android, CN=Android Debug\nSigner #1 certificate SHA-256 digest: 24973caa6b0b800d360d3d1f5246960e443bc6429f0e7dec934eed0a4f3fc589\nSigner #1 certificate SHA-1 digest: 2b959e7544dda6f1eda5fcc3401939e6a9d20362\nSigner #1 certificate MD5 digest: 39f1fedd5a261c39988f25737c302908\n",
+        "stderr": ""
+      },
+      "badging": {
+        "exit_code": 0,
+        "stdout": "package: name='dev.forcemind.xs' versionCode='3' versionName='0.3-reliability-poc' platformBuildVersionName='15' platformBuildVersionCode='35' compileSdkVersion='35' compileSdkVersionCodename='15'\nsdkVersion:'26'\ntargetSdkVersion:'35'\nuses-permission: name='android.permission.INTERNET'\nuses-permission: name='android.permission.ACCESS_NETWORK_STATE'\nuses-permission: name='android.permission.RECEIVE_BOOT_COMPLETED'\nuses-permission: name='android.permission.RUN_USER_INITIATED_JOBS'\nuses-permission: name='android.permission.POST_NOTIFICATIONS'\napplication-label:'Xs · W0 PoC'\napplication-label-zh-CN:'Xs · W0 验证版'\napplication: label='Xs · W0 PoC' icon=''\napplication-debuggable\nlaunchable-activity: name='dev.forcemind.xs.browser.BrowserActivity'  label='' icon=''\nfeature-group: label=''\n  uses-feature: name='android.hardware.faketouch'\n  uses-implied-feature: name='android.hardware.faketouch' reason='default feature for all apps'\nmain\nother-activities\nother-services\nsupports-screens: 'small' 'normal' 'large' 'xlarge'\nsupports-any-density: 'true'\nlocales: '--_--' 'zh-CN'\ndensities: '160'\n",
+        "stderr": ""
+      }
+    },
+    {
+      "path": "app-android/build/compatibility/legacy-upgrade/old-main-v1.apk",
+      "bytes": 84446,
+      "sha256": "551474f17f1a3d996e72022426d6608196b503f6fe7b5faf4e97b847c327b736",
+      "signature": {
+        "exit_code": 0,
+        "stdout": "Signer #1 certificate DN: C=US, O=Android, CN=Android Debug\nSigner #1 certificate SHA-256 digest: 24973caa6b0b800d360d3d1f5246960e443bc6429f0e7dec934eed0a4f3fc589\nSigner #1 certificate SHA-1 digest: 2b959e7544dda6f1eda5fcc3401939e6a9d20362\nSigner #1 certificate MD5 digest: 39f1fedd5a261c39988f25737c302908\n",
+        "stderr": ""
+      },
+      "badging": {
+        "exit_code": 0,
+        "stdout": "package: name='dev.forcemind.xs' versionCode='1' versionName='0.1-w0-poc' platformBuildVersionName='15' platformBuildVersionCode='35' compileSdkVersion='35' compileSdkVersionCodename='15'\nsdkVersion:'26'\ntargetSdkVersion:'35'\nuses-permission: name='android.permission.INTERNET'\napplication-label:'Xs · W0 PoC'\napplication-label-zh-CN:'Xs · W0 验证版'\napplication: label='Xs · W0 PoC' icon=''\napplication-debuggable\nlaunchable-activity: name='dev.forcemind.xs.browser.BrowserActivity'  label='' icon=''\nfeature-group: label=''\n  uses-feature: name='android.hardware.faketouch'\n  uses-implied-feature: name='android.hardware.faketouch' reason='default feature for all apps'\nmain\nother-activities\nsupports-screens: 'small' 'normal' 'large' 'xlarge'\nsupports-any-density: 'true'\nlocales: '--_--' 'zh-CN'\ndensities: '160'\n",
+        "stderr": ""
+      }
+    }
+  ],
+  "zip": {
+    "bytes": 2350997,
+    "sha256": "124bfbedfa71acb9c53c92ac541fd5c5418b1a58f0263123617df22952a2f2d5"
+  },
+  "main_counts": {
+    "tests": 0,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "driver_counts": {
+    "attempted": 1,
+    "passed": 0,
+    "failed": 1
+  },
+  "native_driver_phases": [
+    {
+      "driver": "app-android/build/compatibility/legacy-upgrade",
+      "phase": "seed",
+      "path": "app-android/build/compatibility/legacy-upgrade/seed.result.json",
+      "sha256": "6d4c5a56dc70aedc8d55b3069563fbc41b2d26d6d614709d2e3da01c1a8ce345",
+      "passed": true,
+      "status_lines": [
+        "dev.forcemind.xs.android.LegacyUpgradeProbe:INSTRUMENTATION_STATUS: xs_legacy_db_path=/data/data/dev.forcemind.xs/databases/xs-local-history.db",
+        "INSTRUMENTATION_STATUS: xs_legacy_pid=3241",
+        "INSTRUMENTATION_STATUS: xs_legacy_schema=2",
+        "INSTRUMENTATION_STATUS: xs_legacy_scope=local:548faee9-592c-4727-960f-89090f06d771",
+        "INSTRUMENTATION_STATUS: xs_legacy_uid=10216"
+      ]
+    }
+  ],
+  "native_driver_phase_counts": {
+    "executed": 1,
+    "passed": 1
+  },
+  "run": {
+    "number": 89,
+    "id": 42514845910,
+    "artifact_id": 13631695796,
+    "head": "a7e84bd2423ba0778cee5de32713b5f33cff1326",
+    "url": "https://github.com/ForceMind/Xs/actions/runs/42514845910"
+  },
+  "classification": "Blocked before main instrumentation: fixed old-main APK driver foreground PID absent; intended storage-pressure cases NOT RUN. Underlying cause UNKNOWN.",
+  "failed_commands": {
+    "old-native-intro": {
+      "argv": [
+        "adb",
+        "shell",
+        "am",
+        "start",
+        "-W",
+        "-n",
+        "dev.forcemind.xs/dev.forcemind.xs.browser.BrowserActivity"
+      ],
+      "cwd": "/home/runner/work/Xs/Xs",
+      "exit_code": 0,
+      "stdout": "Starting: Intent { cmp=dev.forcemind.xs/.browser.BrowserActivity }\nStatus: ok\nLaunchState: UNKNOWN (0)\nActivity: dev.forcemind.xs/.browser.BrowserActivity\nWaitTime: 65\nComplete\n",
+      "stderr": ""
+    },
+    "old-foreground-pid": {
+      "argv": [
+        "adb",
+        "shell",
+        "pidof",
+        "dev.forcemind.xs"
+      ],
+      "cwd": "/home/runner/work/Xs/Xs",
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": ""
+    }
+  }
+}

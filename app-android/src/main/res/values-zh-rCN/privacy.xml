@@ -1,0 +1,17 @@
+<resources>
+    <string name="clear_browser_cache">清除浏览器缓存</string>
+    <string name="clear_browser_cache_notice">仅清除 WebView 浏览缓存。网页登录、浏览历史、Xs 本地资料库、已保存文件和已分享文件仍保留。</string>
+    <string name="clear_web_session">清除网页登录会话</string>
+    <string name="clear_web_session_notice">退出 Xs 内网页的登录，清除 Cookie、网站存储、打开的网页和浏览后退记录。取消待处理的上传及认证子窗口。Xs 本地资料库、设置、下载文件和已有文件分享仍保留。</string>
+    <string name="clear_confirm">清除</string>
+    <string name="browser_cache_cleared">已清除浏览器缓存</string>
+    <string name="browser_session_clearing">正在清除网页登录会话…</string>
+    <string name="browser_session_cleared">已清除网页登录会话，可选择首页重新浏览。</string>
+    <string name="browser_privacy_failed">网页登录会话尚未清理完成，请重试后再浏览。</string>
+    <string name="safe_browsing_unavailable">当前 System WebView 未报告安全浏览支持，暂不能打开网页。请通过设备正常应用商店更新 System WebView 后重新启动 Xs。本地资料库仍可使用。</string>
+    <string name="safe_browsing_enabled">当前 System WebView 报告安全浏览已开启；这不代表所有网站都安全。</string>
+    <string name="incoming_post_title">打开收到的帖子链接？</string>
+    <string name="incoming_post_after_clear">清理后的网页登录会话会保持空白，直到你主动选择新导航。是否打开收到的公开帖子链接？
+
+%1$s</string>
+</resources>

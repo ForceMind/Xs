@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <queries><package android:name="dev.forcemind.xs.sharefixture" /></queries>
+    <application>
+        <!-- Debug-only native caller: never part of a release candidate. -->
+        <activity android:name="dev.forcemind.xs.browser.CrossUidShareHostActivity"
+            android:exported="false" android:excludeFromRecents="true" />
+    </application>
+</manifest>

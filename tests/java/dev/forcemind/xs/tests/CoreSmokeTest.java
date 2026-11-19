@@ -52,7 +52,7 @@ public final class CoreSmokeTest {
         yes(q.sql.contains("posts_fts MATCH ?"));
         yes(q.sql.contains("p.opened_count > 0"));
         eq("user-1", q.args[0]);
-        eq("ai* AND agent*", q.args[q.args.length - 3]);
+        yes(contains(q.args, "ai* agent*"));
         eq("200", q.args[q.args.length - 2]);
 
         f.keyword = "人工智能";
@@ -77,15 +77,15 @@ public final class CoreSmokeTest {
         yes(q.sql.contains("p.last_opened_at_ms DESC"));
         f.dateField = ArchiveSearch.DateField.FEED_SEEN;
         q = ArchiveSearch.build("user-2", f);
-        yes(q.sql.contains("p.last_feed_seen_at_ms DESC"));
+        yes(q.sql.contains("matched_feed.feed_time DESC"));
         f.dateField = ArchiveSearch.DateField.ACTION;
         q = ArchiveSearch.build("user-2", f);
         yes(q.sql.contains("MAX(a.action_at_ms)"));
-        yes(q.sql.contains("a.action_type='REPOST'"));
+        yes(q.sql.contains("a.action_type=?"));
         f.actionType = "REPOST' OR 1=1 --";
         expectInvalid(() -> ArchiveSearch.build("user-2", f));
         f.actionType = "REPOST";
-        yes(q.sql.contains("user_actions"));
+        yes(q.sql.contains("own_actions"));
         eq("user-2", q.args[0]);
 
         f.fromMs = 5L;
@@ -111,7 +111,7 @@ public final class CoreSmokeTest {
         gate.reset();
         yes(gate.shouldSave("a", "42", "home_for_you", true, 0.8, 1400, now + 500));
 
-        yes(ArchiveSchema.VERSION == 2);
+        yes(ArchiveSchema.VERSION == 6);
         yes(ArchiveSchema.CREATE.length >= 10);
         yes(ArchiveSchema.MIGRATE_1_TO_2.length > 1);
         boolean fts = false, cascade = false;

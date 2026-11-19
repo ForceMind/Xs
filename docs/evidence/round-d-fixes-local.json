@@ -1,0 +1,45 @@
+{
+  "status": "PASS",
+  "source_base_head": "50c91ecfa5eff5df306a6adfe9c63c17750ea3cb",
+  "source_worktree_clean": false,
+  "scope": "local final failure fixes and browser privacy; not emulator execution or real X",
+  "core_jvm_assertions": 1152,
+  "core_and_dom_sqlite_stress_log_sha256": "425e51876f35a7a16ceed8a83a2acb641832be1e9c6a2e0e763d3ab5e09e55ed",
+  "gradle_build_log_sha256": "db3b6f22e8bba1e06653106ca3be94edf33be7c602d3efef083701dd9e20c601",
+  "build": "165 tasks,27s,packages and AndroidTest compilation plus dual lint",
+  "lint": {
+    "xs-runtime": {
+      "errors": 0,
+      "warnings": 16,
+      "report_sha256": "d751a0df41b88614e9315a39e5be70e03bd639dbfe6399972385fbecc54a9461"
+    },
+    "app-android": {
+      "errors": 0,
+      "warnings": 12,
+      "report_sha256": "f6a95d9c0dc2f1317d5889f7001f51d0ecd28bd0dd97338a694a79ed11ae7946"
+    }
+  },
+  "packages": {
+    "dev-harness/build/outputs/apk/androidTest/debug/dev-harness-debug-androidTest.apk": {
+      "bytes": 1735295,
+      "sha256": "eed2526899d4eaab948b042a685e8abbd93cb96d47fd3223608c9bf4587a7409"
+    },
+    "dev-harness/build/outputs/apk/debug/dev-harness-debug.apk": {
+      "bytes": 547549,
+      "sha256": "d2cdd2608a7de64d6d6e82e43bd52c351d25f44356c29ab47e81be5c9bc0fd30"
+    },
+    "app-android/build/outputs/apk/androidTest/debug/app-android-debug-androidTest.apk": {
+      "bytes": 1759912,
+      "sha256": "e5f87d3d0bce66e4da7102010f14c7eba7eb800a834b5d36b5a3e4ca8ddc9413"
+    },
+    "app-android/build/outputs/apk/debug/app-android-debug.apk": {
+      "bytes": 478462,
+      "sha256": "89fdffbd63d8aac7a0c1b7f3e9d69dc663989afbaf96c9ee9124dca207e7da00"
+    },
+    "app-android/build/outputs/apk/release/app-android-release.apk": {
+      "bytes": 235280,
+      "sha256": "760acf22d0a01db2929be2ee9b4d62161e4674dfb0a16d3cbcd70dbb26629bdc"
+    }
+  },
+  "instrumentation": "PENDING new GitHub run; CI66 actual failures retained"
+}
