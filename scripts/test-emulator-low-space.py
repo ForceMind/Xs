@@ -30,11 +30,38 @@ def run(args,name,timeout=120):
     return result.stdout
 
 
-def instrument(phase):
+class InstrumentationFailure(RuntimeError):
+    def __init__(self, phase, output):
+        super().__init__("Low-space instrumentation did not pass: " + phase)
+        self.output = output
+
+
+def instrument(phase, log_name=None):
     text=run(["shell","am","instrument","-w","-e","class",TEST_CLASS,"-e","xs_phase",phase,
-              *([] if phase!="low-space" else ["-e","xs_pressure_fixture","bounded-native-buffer-v1"]),COMPONENT],phase)
-    if not re.search(r"OK \(1 test\)",text) or "FAILURES" in text or "INSTRUMENTATION_FAILED" in text:raise RuntimeError("Low-space instrumentation did not pass: "+phase)
+              *([] if phase!="low-space" else ["-e","xs_pressure_fixture","bounded-native-buffer-v1"]),COMPONENT],log_name or phase)
+    if not re.search(r"OK \(1 test\)",text) or "FAILURES" in text or "INSTRUMENTATION_FAILED" in text:
+        raise InstrumentationFailure(phase, text)
     return text
+
+
+def native_baseline(log_name):
+    seeded = instrument("seed", log_name)
+    available = re.search(r"INSTRUMENTATION_STATUS: xs_seed_available_bytes=(\d+)", seeded)
+    uid = re.search(r"INSTRUMENTATION_STATUS: xs_seed_app_uid=(\d+)", seeded)
+    if not available or not uid or int(uid[1]) < 10000:
+        raise RuntimeError("Ordinary application free-space measurement not proven")
+    return int(available[1]), int(uid[1])
+
+
+def excess_free_bytes(failure):
+    # Retry only an evidenced setup failure before the admission assertions:
+    # the native fixture used all 40 MiB while usable space still exceeded its floor.
+    output = failure.output
+    match = re.search(r"^java\.lang\.AssertionError: Actual native filesystem floor required: "
+                      r"available=(\d+), written=41943040\s*$", output, re.MULTILINE)
+    if match and int(match[1]) >= 1024 * 1024 and re.search(r"Tests run: 1,\s*Failures: 1\b", output):
+        return int(match[1])
+    return None
 
 
 def main():
@@ -47,17 +74,14 @@ def main():
         if os.environ.get("GITHUB_ACTIONS")!="true" or not run(["get-serialno"],"emulator-serial").strip().startswith("emulator-") or run(["shell","getprop","ro.kernel.qemu"],"emulator-qemu").strip()!="1":raise RuntimeError("Disk pressure is restricted to this disposable GitHub CI emulator")
         if run(["shell","id","-u"],"allocator-initial-uid").strip()!="2000":raise RuntimeError("Pressure fixture must start with the ordinary shell UID")
         report.update(allocator="ordinary-shell",allocator_uid_before=2000)
-        seeded=instrument("seed")
-        native_baseline=re.search(r"INSTRUMENTATION_STATUS: xs_seed_available_bytes=(\d+)",seeded)
-        native_uid=re.search(r"INSTRUMENTATION_STATUS: xs_seed_app_uid=(\d+)",seeded)
-        if not native_baseline or not native_uid or int(native_uid[1])<10000:raise RuntimeError("Ordinary application free-space measurement not proven")
+        available, native_uid = native_baseline("seed")
         listing=run(["shell","df","-k","/data"],"space-before")
         fields=listing.strip().splitlines()[-1].split()
         if len(fields)<6 or not fields[3].isdigit():raise RuntimeError("Cannot measure emulator /data free space")
         # Legacy df and filesystem reservations can differ from the ordinary app's
         # usable bytes. Budget with the same real syscall/API used by the download guard.
-        available=int(native_baseline[1]);target=28*1024*1024;allocate=available-target
-        report.update(native_baseline_available_bytes=available,native_actor_uid=int(native_uid[1]),diagnostic_df_available_bytes=int(fields[3])*1024)
+        target=28*1024*1024;allocate=available-target
+        report.update(native_baseline_available_bytes=available,native_actor_uid=native_uid,diagnostic_df_available_bytes=int(fields[3])*1024)
         if allocate<=0:raise RuntimeError("Disposable emulator already has insufficient free space")
         def allocate_file(label):
             try:run(["shell","fallocate","-l",str(allocate),allocation],label,180)
@@ -85,10 +109,30 @@ def main():
             if run(["shell","id","-u"],"allocator-uid-root").strip()!="0":raise RuntimeError("Disposable pressure allocator did not gain root")
             report.update(allocator="isolated-root-after-shell-quota",allocator_uid_before=2000,allocator_uid_during=0)
             allocate_file("allocate-pressure-root")
-        text=instrument("low-space")
+        try:
+            text = instrument("low-space")
+        except InstrumentationFailure as failure:
+            excess = excess_free_bytes(failure)
+            if (excess is None or root_attempted or
+                    run(["shell", "getprop", "ro.build.version.sdk"], "retry-allocator-api").strip() != "36" or
+                    run(["shell", "id", "-u"], "retry-allocator-uid").strip() != "2000"):
+                raise
+            report["pressure_setup_retry"] = {
+                "first_attempt_available_bytes": excess,
+                "first_attempt_requested_allocation_bytes": allocate,
+            }
+            run(["shell", "rm", "-f", allocation], "release-pressure-before-retry")
+            run(["shell", "test", "!", "-e", allocation], "allocation-absent-before-retry")
+            retry_available, retry_uid = native_baseline("seed-retry")
+            allocate = retry_available - target
+            if retry_uid != native_uid or allocate <= 0:
+                raise RuntimeError("Invalid ordinary-UID baseline for pressure retry")
+            report["pressure_setup_retry"]["native_baseline_available_bytes"] = retry_available
+            allocate_file("allocate-pressure-retry")
+            text = instrument("low-space", "low-space-retry")
         measured=re.search(r"INSTRUMENTATION_STATUS: xs_available_bytes=(\d+)",text)
         measured_uid=re.search(r"INSTRUMENTATION_STATUS: xs_low_space_app_uid=(\d+)",text)
-        if not measured or not 0<int(measured[1])<40*1024*1024 or not measured_uid or int(measured_uid[1])!=int(native_uid[1]):raise RuntimeError("Native measured pressure at the ordinary application UID not proven")
+        if not measured or not 0<int(measured[1])<40*1024*1024 or not measured_uid or int(measured_uid[1])!=native_uid:raise RuntimeError("Native measured pressure at the ordinary application UID not proven")
         buffer={}
         for key in ("available_before","available_after","pressure_bytes","recovered_bytes","rejected","retry_accepted","file_removed"):
             values=re.findall(r"INSTRUMENTATION_STATUS: xs_buffer_"+key+r"=(\d+)(?:\r?\n|$)",text)

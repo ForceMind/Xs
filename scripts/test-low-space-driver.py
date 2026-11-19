@@ -27,7 +27,7 @@ class AdbModel:
     """Model command exit status and partial side effects, not driver branch decisions."""
     def __init__(self,**options):
         self.options=options;self.calls=[];self.uid=options.get("initial_uid","2000")
-        self.paths=set();self.allocated=False;self.low_ran=False;self.reset_failed=False
+        self.paths=set();self.allocated=False;self.low_ran=False;self.reset_failed=False;self.low_attempts=0
     def result(self,command,stdout="",stderr="",code=0):
         return subprocess.CompletedProcess(command,code,stdout,stderr)
     def path(self,value):
@@ -52,6 +52,12 @@ class AdbModel:
             if phase!="low-space":raise AssertionError("Unexpected native fixture phase")
             if args[args.index("xs_pressure_fixture")+1]!="bounded-native-buffer-v1":raise AssertionError("Missing bounded native pressure capability")
             self.low_ran=True
+            self.low_attempts += 1
+            if self.low_attempts <= self.options.get("drift_attempts", 0):
+                return self.result(command, """java.lang.AssertionError: Actual native filesystem floor required: available=54161408, written=41943040
+FAILURES!!!
+Tests run: 1, Failures: 1
+""")
             proof={"available_before":768*1024,"available_after":700*1024,"pressure_bytes":28*MIB,"recovered_bytes":29*MIB,"rejected":1,"retry_accepted":1,"file_removed":1}
             proof.update(self.options.get("buffer",{}))
             lines="".join("INSTRUMENTATION_STATUS: xs_buffer_"+key+"="+str(value)+"\n" for key,value in proof.items() if value is not None)
@@ -156,6 +162,27 @@ class LowSpaceDriverTests(unittest.TestCase):
                     {"rejected":0},{"retry_accepted":0},{"file_removed":0}):
             with self.subTest(bad=bad):
                 model=AdbModel(buffer=bad);self.failed(self.execute(model));self.restored_and_clean(model)
+    def test_api36_can_reseed_once_after_measured_pressure_drift(self):
+        model = AdbModel(sdk="36", quota=False, drift_attempts=1)
+        report, _, error = self.execute(model)
+        self.assertIsNone(error)
+        self.assertEqual("PASS", report["status"])
+        self.assertEqual(2, model.low_attempts)
+        self.assertEqual(54161408, report["pressure_setup_retry"]["first_attempt_available_bytes"])
+        self.assertEqual(2, sum("seed" in call for call in model.calls))
+        self.assertEqual(2, sum(call[:2] == ["shell", "fallocate"] for call in model.calls))
+        self.assertNotIn(["root"], model.calls)
+        self.assertFalse(model.allocated)
+
+    def test_pressure_setup_retry_is_platform_scoped_and_bounded(self):
+        for sdk, expected_attempts in (("30", 1), ("36", 2)):
+            with self.subTest(sdk=sdk):
+                model = AdbModel(sdk=sdk, quota=False, drift_attempts=2)
+                self.failed(self.execute(model))
+                self.assertEqual(expected_attempts, model.low_attempts)
+                self.assertNotIn(["root"], model.calls)
+                self.assertFalse(model.allocated)
+
     def test_duplicate_buffer_status_cannot_prove_the_native_window(self):
         model=AdbModel(duplicate_buffer=True);self.failed(self.execute(model));self.restored_and_clean(model)
 

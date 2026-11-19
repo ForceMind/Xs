@@ -350,40 +350,38 @@ public final class GovernanceUiTest {
             "SAF shows the synthetic provider directory with its navigation drawer closed");
     }
     private void activateFixtureSidebarRow() {
-        AccessibilityNodeInfo title=awaitNode(this::fixtureSidebarRoot);
-        // Roots is an actual ListView item with a click delegate, unlike document
-        // RecyclerView titles. Provider/package updates can rebind this adapter
-        // between a synthetic DOWN and UP even when title bounds do not move.
-        // Activate only the exact direct item containing our fixture title.
-        for(int depth=0;title!=null&&depth<12;depth++) {
-            AccessibilityNodeInfo parent=title.getParent();
-            if(parent==null)break;
-            String id=parent.getViewIdResourceName();CharSequence type=parent.getClassName();
-            boolean rootList=(id!=null&&(id.equals("android:id/list")||id.endsWith(":id/roots_list")))||
-                (type!=null&&type.toString().equals("android.widget.ListView"));
-            if(rootList) {
-                assertTrue("Only the fixture's actual clickable sidebar item is activated",title.refresh()&&systemDocumentNode(title)&&title.isClickable());
-                assertNotNull("The refreshed sidebar item still names only our fixture provider",collect(title,
-                    n->systemDocumentNode(n)&&GovernanceDocumentsProvider.TITLE.equals(text(n)),new int[]{0}));
-                AccessibilityNodeInfo active=instrumentation.getUiAutomation().getRootInActiveWindow();
-                assertTrue("The system picker remains the active window",active!=null&&systemDocumentNode(active));
-                Rect row=new Rect(),window=new Rect();title.getBoundsInScreen(row);active.getBoundsInScreen(window);
-                assertTrue("The fixture sidebar item is inside the active picker",row.intersect(window)&&!row.isEmpty());
-                android.util.Log.i("XsGovernanceFixture","activate exact fixture roots-list item bounds="+row);
-                assertTrue("Activate the actual system fixture root item",title.performAction(AccessibilityNodeInfo.ACTION_CLICK));
-                return;
-            }
-            title=parent;
-        }
-        throw new AssertionError("The fixture title has no direct system roots-list item");
+        // DocumentsUI may rebind the roots list while its drawer is opening.
+        // Reacquire and validate the direct item immediately before dispatch.
+        await(() -> {
+            AccessibilityNodeInfo row=fixtureSidebarItem(find(this::fixtureSidebarRoot));
+            if(row==null || !row.refresh() || !systemDocumentNode(row) || !row.isClickable())return false;
+            if(collect(row,this::fixtureProviderTitle,new int[]{0})==null)return false;
+            AccessibilityNodeInfo active=instrumentation.getUiAutomation().getRootInActiveWindow();
+            if(active==null || !systemDocumentNode(active) || row.getWindowId()!=active.getWindowId())return false;
+            Rect rowBounds=new Rect(),windowBounds=new Rect();
+            row.getBoundsInScreen(rowBounds);
+            active.getBoundsInScreen(windowBounds);
+            if(!rowBounds.intersect(windowBounds) || rowBounds.isEmpty())return false;
+            return row.performAction(AccessibilityNodeInfo.ACTION_CLICK);
+        },"Activate the actual clickable system fixture root item");
+    }
+    private boolean fixtureProviderTitle(AccessibilityNodeInfo node){
+        return systemDocumentNode(node)&&GovernanceDocumentsProvider.TITLE.equals(text(node));
     }
     private boolean fixtureSidebarRoot(AccessibilityNodeInfo node){
-        if(!systemDocumentNode(node)||!GovernanceDocumentsProvider.TITLE.equals(text(node)))return false;
-        for(int depth=0;node!=null&&depth<12;depth++,node=node.getParent()) {
-            String id=node.getViewIdResourceName();CharSequence type=node.getClassName();
+        return fixtureProviderTitle(node)&&fixtureSidebarItem(node)!=null;
+    }
+    private AccessibilityNodeInfo fixtureSidebarItem(AccessibilityNodeInfo node){
+        for(int depth=0;node!=null&&depth<12;depth++) {
+            AccessibilityNodeInfo parent=node.getParent();
+            if(parent==null)break;
+            String id=parent.getViewIdResourceName();
+            CharSequence type=parent.getClassName();
             if((id!=null&&(id.equals("android:id/list")||id.endsWith(":id/roots_list")))||
-                    (type!=null&&type.toString().equals("android.widget.ListView")))return true;
-        }return false;
+                    (type!=null&&type.toString().equals("android.widget.ListView")))return node;
+            node=parent;
+        }
+        return null;
     }
     private boolean fixtureToolbarVisible(){return find(n->{
         if(!systemDocumentNode(n)||!GovernanceDocumentsProvider.TITLE.equals(text(n)))return false;
