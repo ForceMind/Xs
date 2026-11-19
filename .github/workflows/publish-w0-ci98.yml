@@ -1,0 +1,88 @@
+name: Publish Xs W0 CI98 preview
+
+on:
+  push:
+    branches: [release/w0-ci98]
+    paths: [.github/workflows/publish-w0-ci98.yml]
+
+permissions: {}
+
+concurrency:
+  group: xs-w0-ci98-publication
+  cancel-in-progress: false
+
+jobs:
+  publish-preview:
+    if: github.repository == 'ForceMind/Xs' && github.ref == 'refs/heads/release/w0-ci98'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: read
+      contents: write
+    env:
+      GH_REPO: ForceMind/Xs
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify and publish the CI98 debug APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          run_id=44534887383
+          artifact_id=14536625392
+          source=96b84066dfc65174b05de9d947d37ffdd51f2e22
+          dev_commit=db1bc85ac12e57bdeff8a5554004635e9455c616
+          tag=v0.3.0-w0-ci98
+          apk=Xs-W0-CI98-debug.apk
+
+          gh api "repos/$GH_REPO/actions/runs/$run_id" --jq '.head_sha' | grep -Fx "$dev_commit"
+          gh api "repos/$GH_REPO/actions/runs/$run_id/jobs" --jq \
+            '.jobs[] | select(.name == "android-library") | .status + " " + .conclusion' \
+            | grep -Fx 'completed success'
+          gh api "repos/$GH_REPO/actions/artifacts/$artifact_id" --jq \
+            '.name + " " + (.workflow_run.id|tostring) + " " + (.expired|tostring)' \
+            | grep -Fx "xs-w0-browser-poc $run_id false"
+
+          work="$(mktemp -d)"
+          trap 'rm -rf "$work"' EXIT
+          cd "$work"
+          gh api "repos/$GH_REPO/actions/artifacts/$artifact_id/zip" > artifact.zip
+          printf '%s  %s\n' 29da5a881ea027e306e8e9a2f82c6860314008be51cdce6e6235e6d4391cfa9b artifact.zip | sha256sum --check -
+          test "$(unzip -p artifact.zip provenance/source-commit.txt)" = "$source"
+          unzip -p artifact.zip provenance/signing-certificate.txt \
+            | grep -Fx 'Signer #1 certificate SHA-256 digest: f034afe5ba5dabd29159787ee934cf011624025f7ed045ea252018d7862c758a'
+          unzip -p artifact.zip outputs/apk/debug/app-android-debug.apk > "$apk"
+          printf '%s  %s\n' 68b06cad26209bf84c5629ffea43884a13f56bf08ae8eb7e8a678ea0f7c775b0 "$apk" > SHA256SUMS.txt
+          sha256sum --check SHA256SUMS.txt
+
+          if gh release view "$tag" >/dev/null 2>&1 || gh api "repos/$GH_REPO/git/ref/tags/$tag" >/dev/null 2>&1; then
+            echo "An existing release or tag requires inspection." >&2
+            exit 1
+          fi
+
+          cat > release-notes.md <<'NOTES'
+          Xs Android W0 调试测试包
+
+          - 正常浏览时，顶部只显示「Xs」。资料库和菜单留在顶部，外链确认弹窗会显示目标域名。
+          - Android 8.0、8.1、11、16 的 WebView 回归均覆盖浏览顶部标题。CI97 的 Android 11 模拟器在 Ubuntu 26.04 上两次重启后失去 ADB 连接。CI98 将该项固定到 Ubuntu 24.04，完整回归结果见下方 CI 链接。
+          - 真实 X 自动采集关闭，真实账号和真机兼容性有待验收。
+          - CI98 使用与 CI96 不同的调试签名，装有 CI96 的设备无法直接覆盖升级。请保留含有本机资料的原安装。
+
+          Android W0 debug preview. The in-app toolbar shows Xs without the site host. The preview uses a different debug certificate from CI96.
+
+          [源码](https://github.com/ForceMind/Xs/commit/96b84066dfc65174b05de9d947d37ffdd51f2e22) · [CI98](https://github.com/ForceMind/Xs/actions/runs/44534887383)
+          NOTES
+
+          gh release create "$tag" "$apk" SHA256SUMS.txt \
+            --target "$source" --title 'Xs Android W0 · CI98 测试预发行' \
+            --notes-file release-notes.md --prerelease --latest=false
+
+      - name: Archive and remove the temporary publication branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          archive=refs/tags/archive/branches/w0-ci98-publication
+          git push --atomic \
+            --force-with-lease="$GITHUB_REF:$GITHUB_SHA" \
+            --force-with-lease="$archive:" \
+            origin "$GITHUB_SHA:$archive" ":$GITHUB_REF"
