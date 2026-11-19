@@ -99,9 +99,11 @@ jobs:
             arch: x86
           - api-level: 30
             arch: x86_64
+            # Emulator 37.2.13 lost ADB after guest reboot twice on Ubuntu 26.04 (CI97).
+            runner: ubuntu-24.04
           - api-level: 36
             arch: x86_64
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.runner || 'ubuntu-latest' }}
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
