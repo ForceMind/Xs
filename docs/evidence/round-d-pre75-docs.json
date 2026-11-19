@@ -1,0 +1,9 @@
+{
+  "baseline_commit": "0d193e4689d649970d9705818d33e8706b470d8f",
+  "scope": "Documentation and evidence only; no runtime/test/workflow/script source changes",
+  "project_checks": "PASS",
+  "diff_check": "PASS",
+  "check_log_sha256": "8c4ed14c92219bc9f97dbf0278fdc61350789619b507d4ba03ee2fbcad3c06b1",
+  "ci74_summary_sha256": "45e09b6718ea5164d886124a1edb6ff90bd26849736013aaa3ddca65cfb391c3",
+  "local_Android_tests": "Not rerun for documentation-only change; final GitHub CI will run separately and be recorded on PR/Issues without recursive evidence commits"
+}

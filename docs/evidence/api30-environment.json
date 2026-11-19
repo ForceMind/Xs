@@ -1,0 +1,19 @@
+{
+  "source": "3068676986364e5608854c228bf583a5d97cf128",
+  "host": "Codex managed cloud Linux x86_64; no KVM, vmx/svm unavailable",
+  "android": "11 / API30 / sdk_gphone_x86_64",
+  "emulator": "37.2.13.0 (16740729), TCG -accel off, read-only, 1 core",
+  "webview": "com.google.android.webview 83.0.4103.106",
+  "boot_completed": true,
+  "command": "gradle --no-daemon --no-parallel :dev-harness:connectedDebugAndroidTest :app-android:connectedDebugAndroidTest",
+  "instrumentation_result": "ENVIRONMENT FAILURE BEFORE APPLICATION TESTS",
+  "executed_application_test_cases": 0,
+  "runner_synthetic_failure_count": 1,
+  "diagnosis": [
+    "CLI adb successfully recorded API30 and current WebView",
+    "Gradle ddmlib PropertyFetcher repeatedly raised ShellCommandUnresponsiveException",
+    "Runner skipped device with Unknown API Level; found1 connected,0 compatible devices",
+    "No app assertion result and no PASS claimed; no third software-emulator retry"
+  ],
+  "status": "BLOCKED"
+}

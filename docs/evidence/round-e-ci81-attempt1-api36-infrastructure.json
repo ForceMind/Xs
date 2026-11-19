@@ -1,0 +1,108 @@
+{
+  "run_id": 42416903923,
+  "run_number": 81,
+  "attempt": 1,
+  "job_id": 128537228135,
+  "head_commit": "e3990d5047c8e94f136c033fa7d92a6e5bfa882e",
+  "tested_tree": "d0e68c50aa8cc15e304894b35e34887eeda53b44",
+  "native_execution": "NOT RUN",
+  "main_native_cases": 0,
+  "external_native_phases": 0,
+  "failure_class": "Infrastructure SDK/emulator package install failed before emulator creation",
+  "actual_error": "An error occurred while preparing SDK package Android Emulator: Error on ZipFile unknown archive.",
+  "artifact": {
+    "id": 13591912016,
+    "bytes": 1244,
+    "sha256": "6435aa2e79237e80fc08d94ce91e45351001a75c64144af0116074d771b273d2",
+    "digest_verified": true
+  },
+  "provenance": {
+    "schema_version": 1,
+    "recorded_at_utc": "2026-11-07T21:42:25.656675+00:00",
+    "evidence_scope": "Job-local APK availability and public signing certificates only; test execution/outcomes come from this job's instrumentation reports. This is not real-X, physical-device or recipient-app acceptance.",
+    "source": {
+      "head_commit": "f8f54bd7eb801fe42c2570c6a1b5115d1028461e",
+      "head_tree": "d0e68c50aa8cc15e304894b35e34887eeda53b44",
+      "working_tree_clean": true,
+      "working_tree_status": []
+    },
+    "apksigner": "/usr/local/lib/android/sdk/build-tools/37.0.0/apksigner",
+    "artifacts": [
+      {
+        "module": "app-android",
+        "role": "application",
+        "path": "app-android/build/outputs/apk/debug/app-android-debug.apk",
+        "availability": "present",
+        "bytes": 338279,
+        "sha256": "cce2b8b0e58345d2f2803806eaf1665bc59aa4e2e3cbbed969056027979f306e",
+        "signature_verification": {
+          "exit_code": 0,
+          "stdout": "V2 Signer: certificate DN: C=US, O=Android, CN=Android Debug\nV2 Signer: certificate SHA-256 digest: 4265a6bef3db762337df8937a9892ea8955e53f27764a7e2e20f1f841d359d35\nV2 Signer: certificate SHA-1 digest: 8b506c7e798ec006ad7ffea8a8b8d68f91e39b69\nV2 Signer: certificate MD5 digest: 489d27ca30ce8e72e6fe6701a1b47a5b",
+          "stderr": "",
+          "status": "passed"
+        }
+      },
+      {
+        "module": "app-android",
+        "role": "instrumentation",
+        "path": "app-android/build/outputs/apk/androidTest/debug/app-android-debug-androidTest.apk",
+        "availability": "present",
+        "bytes": 1832271,
+        "sha256": "aed369d67c98a13d43a98387c0800809ad5545107e53ddd282beaa3f314a7b27",
+        "signature_verification": {
+          "exit_code": 0,
+          "stdout": "V2 Signer: certificate DN: C=US, O=Android, CN=Android Debug\nV2 Signer: certificate SHA-256 digest: 4265a6bef3db762337df8937a9892ea8955e53f27764a7e2e20f1f841d359d35\nV2 Signer: certificate SHA-1 digest: 8b506c7e798ec006ad7ffea8a8b8d68f91e39b69\nV2 Signer: certificate MD5 digest: 489d27ca30ce8e72e6fe6701a1b47a5b",
+          "stderr": "",
+          "status": "passed"
+        }
+      },
+      {
+        "module": "dev-harness",
+        "role": "application",
+        "path": "dev-harness/build/outputs/apk/debug/dev-harness-debug.apk",
+        "availability": "unavailable",
+        "bytes": null,
+        "sha256": null,
+        "signature_verification": {
+          "status": "unavailable",
+          "exit_code": null,
+          "stdout": "",
+          "stderr": "APK not built in this job"
+        }
+      },
+      {
+        "module": "dev-harness",
+        "role": "instrumentation",
+        "path": "dev-harness/build/outputs/apk/androidTest/debug/dev-harness-debug-androidTest.apk",
+        "availability": "unavailable",
+        "bytes": null,
+        "sha256": null,
+        "signature_verification": {
+          "status": "unavailable",
+          "exit_code": null,
+          "stdout": "",
+          "stderr": "APK not built in this job"
+        }
+      },
+      {
+        "module": "share-receiver-fixture",
+        "role": "independent-uid-receiver",
+        "path": "share-receiver-fixture/build/outputs/apk/debug/share-receiver-fixture-debug.apk",
+        "availability": "present",
+        "bytes": 11769,
+        "sha256": "b8de6eb95d5ecccd5c64cd6f0f5cc8f9e28bf709d2fb002cbb4621a7552f9228",
+        "signature_verification": {
+          "exit_code": 0,
+          "stdout": "V2 Signer: certificate DN: C=US, O=Android, CN=Android Debug\nV2 Signer: certificate SHA-256 digest: 4265a6bef3db762337df8937a9892ea8955e53f27764a7e2e20f1f841d359d35\nV2 Signer: certificate SHA-1 digest: 8b506c7e798ec006ad7ffea8a8b8d68f91e39b69\nV2 Signer: certificate MD5 digest: 489d27ca30ce8e72e6fe6701a1b47a5b",
+          "stderr": "",
+          "status": "passed"
+        }
+      }
+    ]
+  },
+  "raw_job_log": {
+    "path": "attempt1-api36-full-job.log",
+    "sha256": "634b2bb9b4409567e4e7dba18f71487ef12bdd03ced62f7fdbf1e547444c9363"
+  },
+  "policy": "This attempt1 record is retained independently. A subsequent job rerun must supply its own source/environment/native/case/APK artifacts."
+}

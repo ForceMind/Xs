@@ -1,0 +1,72 @@
+{
+  "ci_run": 42348665957,
+  "ci_url": "https://github.com/ForceMind/Xs/actions/runs/42348665957",
+  "head_commit": "d76bfb49021b00ae21d4e2903fe243c12dd7ee86",
+  "tested_pr_merge_commit": "4793ea92c1539c864773eab3ebda1623341600f0",
+  "jobs": {
+    "core": "PASS",
+    "android-library": "PASS",
+    "android-instrumentation (30)": "PASS",
+    "android-instrumentation (36)": "PASS"
+  },
+  "jvm_assertions": 443,
+  "scope": "Synthetic/offline fixtures using actual Android WebView, SQLite, HTTP response fixture, filesystem and Provider; not live X or receiving apps",
+  "devices": [
+    {
+      "api": 30,
+      "android": "11",
+      "webview": "com.google.android.webview, 83.0.4103.106",
+      "locale_property": null,
+      "locale_note": "persist.sys.locale empty; do not infer exact configuration from it. Next CI records am get-config.",
+      "theme": "Night mode: no",
+      "source": "4793ea92c1539c864773eab3ebda1623341600f0",
+      "artifact_id": 13563894677,
+      "suites": [
+        {
+          "report": "TEST-emulator-5554 - 11-_app-android-.xml",
+          "tests": 26,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "report": "TEST-emulator-5554 - 11-_dev-harness-.xml",
+          "tests": 15,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        }
+      ]
+    },
+    {
+      "api": 36,
+      "android": "16",
+      "webview": "com.google.android.webview, 133.0.6943.137",
+      "locale_property": null,
+      "locale_note": "persist.sys.locale empty; do not infer exact configuration from it. Next CI records am get-config.",
+      "theme": "Night mode: no",
+      "source": "4793ea92c1539c864773eab3ebda1623341600f0",
+      "artifact_id": 13564613477,
+      "suites": [
+        {
+          "report": "TEST-emulator-5554 - 16-_app-android-.xml",
+          "tests": 26,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "report": "TEST-emulator-5554 - 16-_dev-harness-.xml",
+          "tests": 15,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        }
+      ]
+    }
+  ],
+  "live_x": "NOT RUN; automatic live capture disabled",
+  "physical_device": "NOT RUN",
+  "recipient_apps": "NOT RUN",
+  "instrumentation_total": 82
+}

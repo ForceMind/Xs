@@ -1,0 +1,47 @@
+{
+  "scope": "Local pre-CI69 checks only, no native execution inferred",
+  "base_head": "58585977c90307cbf97d0aadafd818bcbdf88793",
+  "worktree_clean": false,
+  "jvm_assertions": 1155,
+  "maximum_container_bytes_in_32_MiB_JVM": 536870912,
+  "core_sqlite5_fts_sdk_dom_stress": "PASS",
+  "project_checks": "PASS",
+  "full_android_build": "196 tasks,28 seconds PASS",
+  "lint": {
+    "app-android": {
+      "errors": 0,
+      "warnings": 12,
+      "sha256": "f6a95d9c0dc2f1317d5889f7001f51d0ecd28bd0dd97338a694a79ed11ae7946"
+    },
+    "xs-runtime": {
+      "errors": 0,
+      "warnings": 20,
+      "sha256": "6723a88fd30b9fc19386816f079fb8a219861d6919fcd54e8169c5abe43e986b"
+    }
+  },
+  "logs": {
+    "round-d-round69-project.log": {
+      "sha256": "106965100ec2288f196e67e86c2e8bccb3449f8a559eeaeb125ca541d9e19e05",
+      "bytes": 277
+    },
+    "round-d-round69-core.log": {
+      "sha256": "75c21556a76b4158588f1066fd69fe37408b630695828e7a2d573097608112f8",
+      "bytes": 2652
+    },
+    "round-d-round69-build.log": {
+      "sha256": "56bbb99a2dc0407d6f18728200919a7ab9018ccf9f0b90780d3d226c3072ec42",
+      "bytes": 15426
+    }
+  },
+  "expected_not_executed_native_cases": {
+    "harness": 52,
+    "app": 100,
+    "apis": [
+      26,
+      27,
+      30,
+      36
+    ]
+  },
+  "guest_os_reboot_low_space_debug_upgrade_near512_native": "PENDING new CI"
+}

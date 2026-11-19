@@ -1,0 +1,39 @@
+{
+  "run_id": 42416903923,
+  "run_number": 81,
+  "attempt": 1,
+  "job_id": 128537228149,
+  "head_commit": "e3990d5047c8e94f136c033fa7d92a6e5bfa882e",
+  "tested_tree": "d0e68c50aa8cc15e304894b35e34887eeda53b44",
+  "main_native_cases": 156,
+  "main_failures": 0,
+  "external_driver_status": {
+    "legacy-upgrade": "PASS",
+    "process-recovery": "PASS",
+    "signed-debug-upgrade": "PASS",
+    "emulator-reboot": "FAIL before verify: adb wait-for-device180second timeout",
+    "low-space": "NOT RUN"
+  },
+  "external_native_phases_completed": 8,
+  "external_native_failure_cases": 0,
+  "reboot_native_seed": "passed",
+  "reboot_native_verify": "NOT RUN",
+  "actual_error": "subprocess.TimeoutExpired: Command [adb, wait-for-device] timed out after180 seconds",
+  "boot_before": "b4bf293f-ca96-49a6-85e5-94443fd3bf9b",
+  "boot_after": null,
+  "serial_before": "emulator-5554",
+  "reboot_request_stdout": "",
+  "emulator_termination_cleanup": "TCPport5554 Connection refused",
+  "diagnosis_limits": "The emulator/ADB did not return after the actual reboot request. No kernel/emulator crash cause was logged. Do not classify the unexecuted native recovery verification as a failed data-preservation assertion.",
+  "artifact": {
+    "id": 13591844868,
+    "bytes": 3395944,
+    "sha256": "bdfee31bf1c3174c4477d3a47fd1a271a63d7520877a3eb22ebfd1c108ec4e32",
+    "digest_verified": true
+  },
+  "raw_job_log": {
+    "path": "attempt1-api26-full-job.log",
+    "sha256": "6af4be23968c9580d0619f41212c3dba7fc78f4fe252da59f3b34cf293c92adc"
+  },
+  "policy": "Retain this attempt independently from any subsequent rerun. If later effective API26 success is used, do not add these earlier156 main or8 external phases into the final successful matrix totals."
+}

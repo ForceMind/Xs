@@ -49,13 +49,14 @@ public final class ObservationGate {
         }
     }
 
-    private long activeEpoch=-1, lastSequence=0, bucketAt=-1;
+    private long activeEpoch=-1, highestEpoch=-1, lastSequence=0, bucketAt=-1;
     private int tokens=BURST;
 
     public synchronized void changeDocument(long nextEpoch) {
-        if (nextEpoch < 0 || (activeEpoch >= 0 && nextEpoch <= activeEpoch))
+        if (nextEpoch < 0 || nextEpoch <= highestEpoch)
             throw new IllegalArgumentException("Native epoch must increase");
         activeEpoch=nextEpoch;
+        highestEpoch=nextEpoch;
         lastSequence=0;
         bucketAt=-1;
         tokens=BURST;

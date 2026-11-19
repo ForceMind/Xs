@@ -1,0 +1,3380 @@
+{
+  "schema_version": 1,
+  "repository": "ForceMind/Xs",
+  "recorded_at_utc": "2026-11-07T12:40:59.727813+00:00",
+  "run": {
+    "id": 42372593770,
+    "number": 67,
+    "event": "pull_request",
+    "status": "completed",
+    "conclusion": "failure",
+    "url": "https://github.com/ForceMind/Xs/actions/runs/42372593770",
+    "head_branch": "feat/local-library-capture-media",
+    "head_sha": "aaf4f1be709d12d3e05c66669fb60eacbcd75761",
+    "created_at": "2026-11-07T12:27:54Z",
+    "updated_at": "2026-11-07T12:37:25Z"
+  },
+  "head_commit": "aaf4f1be709d12d3e05c66669fb60eacbcd75761",
+  "tested_merge_commit": "67b594c27eda42de9782b692320bab51457dec81",
+  "tested_tree": "cf99e2281e5e23e528d8b2bffd2845d1ff103549",
+  "jobs": [
+    {
+      "id": 128403608119,
+      "name": "core",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 128403608332,
+      "name": "android-library",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 128403988314,
+      "name": "android-instrumentation (26)",
+      "status": "completed",
+      "conclusion": "failure"
+    },
+    {
+      "id": 128403988317,
+      "name": "android-instrumentation (36)",
+      "status": "completed",
+      "conclusion": "failure"
+    },
+    {
+      "id": 128403988419,
+      "name": "android-instrumentation (30)",
+      "status": "completed",
+      "conclusion": "failure"
+    }
+  ],
+  "evidence_scope": "Synthetic fixtures executed on GitHub-hosted KVM Android emulators. Native SAF tests use only fixed test-APK documents. No signed artifact download URLs are retained. No real-X, physical-device, power-cut or recipient-app acceptance. This failed run proves Assets multi-select ZIP export through the real SYSTEM SAF picker; metadata restore, encrypted UI and consolidation undo scenarios did not complete and are not accepted.",
+  "core": {
+    "jvm_assertions": 1152,
+    "sqlite_schema_version": 5,
+    "preserving_migrations": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "observer_dom": "passed",
+    "reversible_cleanup_dom": "passed",
+    "capture_stress": {
+      "virtual_posts": 20000,
+      "simulated_minutes": 11,
+      "cards": 24,
+      "interval_ms": 200,
+      "writes_including_final_caps": 14400,
+      "lifecycle_cycles": 1000
+    },
+    "capacity_report": {
+      "result": "PASS",
+      "scope": "synthetic desktop SQLite; no Android/real-device timing claim",
+      "python": "3.12.3",
+      "sqlite": "3.45.1",
+      "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
+      "workloads": [
+        {
+          "posts": 10000,
+          "historyEvents": 11530,
+          "snapshotVersions": 10199,
+          "populateMs": 538.822,
+          "migrationMs": {
+            "v1_to_v2": 25.712,
+            "v2_to_v3": 23.691,
+            "v3_to_v4": 1.158,
+            "v4_to_v5": 126.806
+          },
+          "legacyLookupPlan": [
+            "SEARCH history_events USING INDEX idx_history_account_time (account_id=?)"
+          ],
+          "indexedLookupPlan": [
+            "SEARCH history_events USING COVERING INDEX idx_history_post_type_time (account_id=? AND post_id=? AND event_type=?)"
+          ],
+          "legacyBackfillSelectMs": null,
+          "databaseBytes": 13557760,
+          "ftsRowidIdentity": "PASS",
+          "foreignKeys": "PASS",
+          "integrity": "PASS",
+          "retainedOriginalRows": "PASS",
+          "queries": {
+            "AUTHOR": {
+              "matchedPosts": 100,
+              "returnedRows": 50,
+              "runsMs": [
+                16.41,
+                15.901,
+                15.876
+              ],
+              "medianMs": 15.901,
+              "explainQueryPlan": [
+                "MATERIALIZE matched_feed",
+                "SEARCH e USING INDEX idx_history_dwell (account_id=?)",
+                "MATERIALIZE matched_action",
+                "SEARCH a USING INDEX idx_own_actions_post (account_id=?)",
+                "SEARCH p USING INDEX idx_posts_opened (account_id=?)",
+                "SEARCH matched_feed USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "SEARCH matched_action USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "CORRELATED SCALAR SUBQUERY 1",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 2",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 3",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 4",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 5",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 6",
+                "SEARCH v USING COVERING INDEX idx_snapshot_versions_post (account_id=? AND post_id=?)",
+                "USE TEMP B-TREE FOR RIGHT PART OF ORDER BY"
+              ]
+            },
+            "CJK": {
+              "matchedPosts": 112,
+              "returnedRows": 50,
+              "runsMs": [
+                20.169,
+                20.104,
+                20.174
+              ],
+              "medianMs": 20.169,
+              "explainQueryPlan": [
+                "MATERIALIZE matched_feed",
+                "SEARCH e USING INDEX idx_history_dwell (account_id=?)",
+                "MATERIALIZE matched_action",
+                "SEARCH a USING INDEX idx_own_actions_post (account_id=?)",
+                "SEARCH p USING INDEX idx_posts_opened (account_id=?)",
+                "CORRELATED SCALAR SUBQUERY 9",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 10",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "SEARCH matched_feed USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "SEARCH matched_action USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "CORRELATED SCALAR SUBQUERY 1",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 2",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 3",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 4",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 5",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 6",
+                "SEARCH v USING COVERING INDEX idx_snapshot_versions_post (account_id=? AND post_id=?)",
+                "USE TEMP B-TREE FOR RIGHT PART OF ORDER BY"
+              ]
+            },
+            "DWELL_DATE_SOURCE": {
+              "matchedPosts": 141,
+              "returnedRows": 50,
+              "runsMs": [
+                11.505,
+                11.221,
+                11.922
+              ],
+              "medianMs": 11.505,
+              "explainQueryPlan": [
+                "MATERIALIZE matched_feed",
+                "SEARCH e USING INDEX idx_history_account_time (account_id=? AND event_at_ms>? AND event_at_ms<?)",
+                "USE TEMP B-TREE FOR GROUP BY",
+                "MATERIALIZE matched_action",
+                "SEARCH a USING INDEX idx_own_actions_post (account_id=?)",
+                "SEARCH p USING INDEX idx_posts_feed_time (account_id=?)",
+                "CORRELATED SCALAR SUBQUERY 9",
+                "SEARCH o USING COVERING INDEX idx_history_dwell (account_id=? AND post_id=? AND event_type=?)",
+                "SEARCH matched_feed USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "SEARCH matched_action USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "CORRELATED SCALAR SUBQUERY 1",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 2",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 3",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 4",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 5",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 6",
+                "SEARCH v USING COVERING INDEX idx_snapshot_versions_post (account_id=? AND post_id=?)",
+                "USE TEMP B-TREE FOR ORDER BY"
+              ]
+            },
+            "DWELL_NEVER_OPENED": {
+              "matchedPosts": 2823,
+              "returnedRows": 50,
+              "runsMs": [
+                19.353,
+                19.503,
+                19.485
+              ],
+              "medianMs": 19.485,
+              "explainQueryPlan": [
+                "MATERIALIZE matched_feed",
+                "SEARCH e USING INDEX idx_history_dwell (account_id=?)",
+                "MATERIALIZE matched_action",
+                "SEARCH a USING INDEX idx_own_actions_post (account_id=?)",
+                "SEARCH p USING INDEX idx_posts_feed_time (account_id=?)",
+                "CORRELATED SCALAR SUBQUERY 9",
+                "SEARCH o USING COVERING INDEX idx_history_dwell (account_id=? AND post_id=? AND event_type=?)",
+                "SEARCH matched_feed USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "SEARCH matched_action USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "CORRELATED SCALAR SUBQUERY 1",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 2",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 3",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 4",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 5",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 6",
+                "SEARCH v USING COVERING INDEX idx_snapshot_versions_post (account_id=? AND post_id=?)",
+                "USE TEMP B-TREE FOR ORDER BY"
+              ]
+            },
+            "FAVORITE_CATEGORY": {
+              "matchedPosts": 109,
+              "returnedRows": 50,
+              "runsMs": [
+                18.072,
+                18.034,
+                18.093
+              ],
+              "medianMs": 18.072,
+              "explainQueryPlan": [
+                "MATERIALIZE matched_feed",
+                "SEARCH e USING INDEX idx_history_dwell (account_id=?)",
+                "MATERIALIZE matched_action",
+                "SEARCH a USING INDEX idx_own_actions_post (account_id=?)",
+                "SEARCH p USING INDEX idx_posts_opened (account_id=?)",
+                "CORRELATED SCALAR SUBQUERY 9",
+                "SEARCH f USING COVERING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 10",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=? AND tag=?)",
+                "CORRELATED SCALAR SUBQUERY 11",
+                "SEARCH c USING COVERING INDEX sqlite_autoindex_post_categories_1 (account_id=? AND post_id=? AND category_id=?)",
+                "SEARCH matched_feed USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "SEARCH matched_action USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "CORRELATED SCALAR SUBQUERY 1",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 2",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 3",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 4",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 5",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 6",
+                "SEARCH v USING COVERING INDEX idx_snapshot_versions_post (account_id=? AND post_id=?)",
+                "USE TEMP B-TREE FOR RIGHT PART OF ORDER BY"
+              ]
+            },
+            "LATIN": {
+              "matchedPosts": 103,
+              "returnedRows": 50,
+              "runsMs": [
+                20.59,
+                20.59,
+                20.489
+              ],
+              "medianMs": 20.59,
+              "explainQueryPlan": [
+                "MATERIALIZE matched_feed",
+                "SEARCH e USING INDEX idx_history_dwell (account_id=?)",
+                "MATERIALIZE matched_action",
+                "SEARCH a USING INDEX idx_own_actions_post (account_id=?)",
+                "SEARCH p USING INDEX idx_posts_opened (account_id=?)",
+                "LIST SUBQUERY 9",
+                "SCAN posts_fts VIRTUAL TABLE INDEX 6:",
+                "CORRELATED SCALAR SUBQUERY 10",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 11",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "SEARCH matched_feed USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "SEARCH matched_action USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "CORRELATED SCALAR SUBQUERY 1",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 2",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 3",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 4",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 5",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 6",
+                "SEARCH v USING COVERING INDEX idx_snapshot_versions_post (account_id=? AND post_id=?)",
+                "USE TEMP B-TREE FOR RIGHT PART OF ORDER BY"
+              ]
+            },
+            "RECENT": {
+              "matchedPosts": 10000,
+              "returnedRows": 50,
+              "runsMs": [
+                14.571,
+                13.894,
+                13.805
+              ],
+              "medianMs": 13.894,
+              "explainQueryPlan": [
+                "MATERIALIZE matched_feed",
+                "SEARCH e USING INDEX idx_history_dwell (account_id=?)",
+                "MATERIALIZE matched_action",
+                "SEARCH a USING INDEX idx_own_actions_post (account_id=?)",
+                "SEARCH p USING INDEX idx_posts_opened (account_id=?)",
+                "SEARCH matched_feed USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "SEARCH matched_action USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "CORRELATED SCALAR SUBQUERY 1",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 2",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 3",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 4",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 5",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 6",
+                "SEARCH v USING COVERING INDEX idx_snapshot_versions_post (account_id=? AND post_id=?)",
+                "USE TEMP B-TREE FOR RIGHT PART OF ORDER BY"
+              ]
+            },
+            "VERSION_HISTORY": {
+              "matchedPosts": 99,
+              "returnedRows": 50,
+              "runsMs": [
+                21.536,
+                21.794,
+                21.691
+              ],
+              "medianMs": 21.691,
+              "explainQueryPlan": [
+                "MATERIALIZE matched_feed",
+                "SEARCH e USING INDEX idx_history_dwell (account_id=?)",
+                "MATERIALIZE matched_action",
+                "SEARCH a USING INDEX idx_own_actions_post (account_id=?)",
+                "SEARCH p USING INDEX idx_posts_opened (account_id=?)",
+                "LIST SUBQUERY 9",
+                "SCAN posts_fts VIRTUAL TABLE INDEX 6:",
+                "LIST SUBQUERY 10",
+                "SCAN snapshot_versions_fts VIRTUAL TABLE INDEX 7:",
+                "CORRELATED SCALAR SUBQUERY 11",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 12",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "SEARCH matched_feed USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "SEARCH matched_action USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "CORRELATED SCALAR SUBQUERY 1",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 2",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 3",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 4",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 5",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 6",
+                "SEARCH v USING COVERING INDEX idx_snapshot_versions_post (account_id=? AND post_id=?)",
+                "USE TEMP B-TREE FOR RIGHT PART OF ORDER BY"
+              ]
+            }
+          }
+        },
+        {
+          "posts": 100000,
+          "historyEvents": 115294,
+          "snapshotVersions": 101090,
+          "populateMs": 5806.115,
+          "migrationMs": {
+            "v1_to_v2": 386.264,
+            "v2_to_v3": 346.837,
+            "v3_to_v4": 1.533,
+            "v4_to_v5": 1267.874
+          },
+          "legacyLookupPlan": [
+            "SEARCH history_events USING INDEX idx_history_account_time (account_id=?)"
+          ],
+          "indexedLookupPlan": [
+            "SEARCH history_events USING COVERING INDEX idx_history_post_type_time (account_id=? AND post_id=? AND event_type=?)"
+          ],
+          "legacyBackfillSelectMs": null,
+          "databaseBytes": 136241152,
+          "ftsRowidIdentity": "PASS",
+          "foreignKeys": "PASS",
+          "integrity": "PASS",
+          "retainedOriginalRows": "PASS",
+          "queries": {
+            "AUTHOR": {
+              "matchedPosts": 1000,
+              "returnedRows": 50,
+              "runsMs": [
+                150.232,
+                151.745,
+                147.941
+              ],
+              "medianMs": 150.232,
+              "explainQueryPlan": [
+                "MATERIALIZE matched_feed",
+                "SEARCH e USING INDEX idx_history_dwell (account_id=?)",
+                "MATERIALIZE matched_action",
+                "SEARCH a USING INDEX idx_own_actions_post (account_id=?)",
+                "SEARCH p USING INDEX idx_posts_opened (account_id=?)",
+                "SEARCH matched_feed USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "SEARCH matched_action USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "CORRELATED SCALAR SUBQUERY 1",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 2",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 3",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 4",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 5",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 6",
+                "SEARCH v USING COVERING INDEX idx_snapshot_versions_post (account_id=? AND post_id=?)",
+                "USE TEMP B-TREE FOR RIGHT PART OF ORDER BY"
+              ]
+            },
+            "CJK": {
+              "matchedPosts": 1123,
+              "returnedRows": 50,
+              "runsMs": [
+                153.755,
+                154.559,
+                153.933
+              ],
+              "medianMs": 153.933,
+              "explainQueryPlan": [
+                "MATERIALIZE matched_feed",
+                "SEARCH e USING INDEX idx_history_dwell (account_id=?)",
+                "MATERIALIZE matched_action",
+                "SEARCH a USING INDEX idx_own_actions_post (account_id=?)",
+                "SEARCH p USING INDEX idx_posts_opened (account_id=?)",
+                "CORRELATED SCALAR SUBQUERY 9",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 10",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "SEARCH matched_feed USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "SEARCH matched_action USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "CORRELATED SCALAR SUBQUERY 1",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 2",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 3",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 4",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 5",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 6",
+                "SEARCH v USING COVERING INDEX idx_snapshot_versions_post (account_id=? AND post_id=?)",
+                "USE TEMP B-TREE FOR RIGHT PART OF ORDER BY"
+              ]
+            },
+            "DWELL_DATE_SOURCE": {
+              "matchedPosts": 141,
+              "returnedRows": 50,
+              "runsMs": [
+                114.506,
+                114.102,
+                114.277
+              ],
+              "medianMs": 114.277,
+              "explainQueryPlan": [
+                "MATERIALIZE matched_feed",
+                "SEARCH e USING INDEX idx_history_account_time (account_id=? AND event_at_ms>? AND event_at_ms<?)",
+                "USE TEMP B-TREE FOR GROUP BY",
+                "MATERIALIZE matched_action",
+                "SEARCH a USING INDEX idx_own_actions_post (account_id=?)",
+                "SEARCH p USING INDEX idx_posts_feed_time (account_id=?)",
+                "CORRELATED SCALAR SUBQUERY 9",
+                "SEARCH o USING COVERING INDEX idx_history_dwell (account_id=? AND post_id=? AND event_type=?)",
+                "SEARCH matched_feed USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "SEARCH matched_action USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "CORRELATED SCALAR SUBQUERY 1",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 2",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 3",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 4",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 5",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 6",
+                "SEARCH v USING COVERING INDEX idx_snapshot_versions_post (account_id=? AND post_id=?)",
+                "USE TEMP B-TREE FOR ORDER BY"
+              ]
+            },
+            "DWELL_NEVER_OPENED": {
+              "matchedPosts": 28235,
+              "returnedRows": 50,
+              "runsMs": [
+                211.431,
+                218.212,
+                210.812
+              ],
+              "medianMs": 211.431,
+              "explainQueryPlan": [
+                "MATERIALIZE matched_feed",
+                "SEARCH e USING INDEX idx_history_dwell (account_id=?)",
+                "MATERIALIZE matched_action",
+                "SEARCH a USING INDEX idx_own_actions_post (account_id=?)",
+                "SEARCH p USING INDEX idx_posts_feed_time (account_id=?)",
+                "CORRELATED SCALAR SUBQUERY 9",
+                "SEARCH o USING COVERING INDEX idx_history_dwell (account_id=? AND post_id=? AND event_type=?)",
+                "SEARCH matched_feed USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "SEARCH matched_action USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "CORRELATED SCALAR SUBQUERY 1",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 2",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 3",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 4",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 5",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 6",
+                "SEARCH v USING COVERING INDEX idx_snapshot_versions_post (account_id=? AND post_id=?)",
+                "USE TEMP B-TREE FOR ORDER BY"
+              ]
+            },
+            "FAVORITE_CATEGORY": {
+              "matchedPosts": 1098,
+              "returnedRows": 50,
+              "runsMs": [
+                154.149,
+                153.936,
+                153.88
+              ],
+              "medianMs": 153.936,
+              "explainQueryPlan": [
+                "MATERIALIZE matched_feed",
+                "SEARCH e USING INDEX idx_history_dwell (account_id=?)",
+                "MATERIALIZE matched_action",
+                "SEARCH a USING INDEX idx_own_actions_post (account_id=?)",
+                "SEARCH p USING INDEX idx_posts_opened (account_id=?)",
+                "CORRELATED SCALAR SUBQUERY 9",
+                "SEARCH f USING COVERING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 10",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=? AND tag=?)",
+                "CORRELATED SCALAR SUBQUERY 11",
+                "SEARCH c USING COVERING INDEX sqlite_autoindex_post_categories_1 (account_id=? AND post_id=? AND category_id=?)",
+                "SEARCH matched_feed USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "SEARCH matched_action USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "CORRELATED SCALAR SUBQUERY 1",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 2",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 3",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 4",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 5",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 6",
+                "SEARCH v USING COVERING INDEX idx_snapshot_versions_post (account_id=? AND post_id=?)",
+                "USE TEMP B-TREE FOR RIGHT PART OF ORDER BY"
+              ]
+            },
+            "LATIN": {
+              "matchedPosts": 1030,
+              "returnedRows": 50,
+              "runsMs": [
+                157.18,
+                154.418,
+                153.454
+              ],
+              "medianMs": 154.418,
+              "explainQueryPlan": [
+                "MATERIALIZE matched_feed",
+                "SEARCH e USING INDEX idx_history_dwell (account_id=?)",
+                "MATERIALIZE matched_action",
+                "SEARCH a USING INDEX idx_own_actions_post (account_id=?)",
+                "SEARCH p USING INDEX idx_posts_opened (account_id=?)",
+                "LIST SUBQUERY 9",
+                "SCAN posts_fts VIRTUAL TABLE INDEX 6:",
+                "CORRELATED SCALAR SUBQUERY 10",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 11",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "SEARCH matched_feed USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "SEARCH matched_action USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "CORRELATED SCALAR SUBQUERY 1",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 2",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 3",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 4",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 5",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 6",
+                "SEARCH v USING COVERING INDEX idx_snapshot_versions_post (account_id=? AND post_id=?)",
+                "USE TEMP B-TREE FOR RIGHT PART OF ORDER BY"
+              ]
+            },
+            "RECENT": {
+              "matchedPosts": 100000,
+              "returnedRows": 50,
+              "runsMs": [
+                155.736,
+                151.013,
+                150.521
+              ],
+              "medianMs": 151.013,
+              "explainQueryPlan": [
+                "MATERIALIZE matched_feed",
+                "SEARCH e USING INDEX idx_history_dwell (account_id=?)",
+                "MATERIALIZE matched_action",
+                "SEARCH a USING INDEX idx_own_actions_post (account_id=?)",
+                "SEARCH p USING INDEX idx_posts_opened (account_id=?)",
+                "SEARCH matched_feed USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "SEARCH matched_action USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "CORRELATED SCALAR SUBQUERY 1",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 2",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 3",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 4",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 5",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 6",
+                "SEARCH v USING COVERING INDEX idx_snapshot_versions_post (account_id=? AND post_id=?)",
+                "USE TEMP B-TREE FOR RIGHT PART OF ORDER BY"
+              ]
+            },
+            "VERSION_HISTORY": {
+              "matchedPosts": 990,
+              "returnedRows": 50,
+              "runsMs": [
+                159.778,
+                157.695,
+                166.424
+              ],
+              "medianMs": 159.778,
+              "explainQueryPlan": [
+                "MATERIALIZE matched_feed",
+                "SEARCH e USING INDEX idx_history_dwell (account_id=?)",
+                "MATERIALIZE matched_action",
+                "SEARCH a USING INDEX idx_own_actions_post (account_id=?)",
+                "SEARCH p USING INDEX idx_posts_opened (account_id=?)",
+                "LIST SUBQUERY 9",
+                "SCAN posts_fts VIRTUAL TABLE INDEX 6:",
+                "LIST SUBQUERY 10",
+                "SCAN snapshot_versions_fts VIRTUAL TABLE INDEX 7:",
+                "CORRELATED SCALAR SUBQUERY 11",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 12",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "SEARCH matched_feed USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "SEARCH matched_action USING AUTOMATIC COVERING INDEX (account_id=? AND post_id=?) LEFT-JOIN",
+                "CORRELATED SCALAR SUBQUERY 1",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 2",
+                "SEARCH f USING INDEX sqlite_autoindex_favorites_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 3",
+                "SEARCH t USING COVERING INDEX sqlite_autoindex_post_tags_1 (account_id=? AND post_id=?)",
+                "CORRELATED SCALAR SUBQUERY 4",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 5",
+                "SEARCH v USING INDEX sqlite_autoindex_snapshot_versions_1 (account_id=? AND post_id=? AND snapshot_key=?)",
+                "CORRELATED SCALAR SUBQUERY 6",
+                "SEARCH v USING COVERING INDEX idx_snapshot_versions_post (account_id=? AND post_id=?)",
+                "USE TEMP B-TREE FOR RIGHT PART OF ORDER BY"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "core_artifact": {
+      "id": 13573648749,
+      "sha256": "620b3f553fc20f0223f9d69c29b6a229d8592b09bc2024289edd862adec212a0",
+      "digest_verified": true
+    }
+  },
+  "per_api": {
+    "26": {
+      "android_api": 26,
+      "android_release": "8.0.0",
+      "webview": {
+        "package": "com.android.chrome",
+        "version": "69.0.3497.100"
+      },
+      "device_configuration": "config: mcc310-mnc260-en-rUS-ldltr-sw320dp-w320dp-h616dp-normal-long-notround-lowdr-nowidecg-port-notnight-mdpi-finger-keysexposed-nokeys-navexposed-trackball-v26\nabi: x86_64,x86",
+      "locale_snapshot": "",
+      "night_mode": "Night mode: no",
+      "artifact": {
+        "id": 13574512291,
+        "name": "xs-android-test-reports-api-26",
+        "size_in_bytes": 348997,
+        "digest": "sha256:02d6ad1ec86f97e81a2b940b81b35ceffd8935426466136f036073efad24c627",
+        "downloaded_zip_sha256": "02d6ad1ec86f97e81a2b940b81b35ceffd8935426466136f036073efad24c627",
+        "digest_verified": true
+      },
+      "modules": {
+        "dev-harness": {
+          "xml_path": "dev-harness/build/outputs/androidTest-results/connected/debug/TEST-emulator-5554 - 8.0.0-_dev-harness-.xml",
+          "counts": {
+            "tests": 52,
+            "failures": 3,
+            "errors": 0,
+            "skipped": 0
+          },
+          "time_seconds": "68.802",
+          "class_counts": {
+            "dev.forcemind.xs.android.GovernanceUiTest": 4,
+            "dev.forcemind.xs.android.LibraryBackupIntegrationTest": 7,
+            "dev.forcemind.xs.android.LibraryConsolidationIntegrationTest": 9,
+            "dev.forcemind.xs.harness.ArchiveIntegrationTest": 16,
+            "dev.forcemind.xs.harness.LibraryUiTest": 9,
+            "dev.forcemind.xs.harness.SnapshotVersionIntegrationTest": 7
+          },
+          "cases": [
+            {
+              "class": "dev.forcemind.xs.android.GovernanceUiTest",
+              "name": "assetsMultiSelectSafZipContainsEverySelectedOriginalFile",
+              "status": "passed",
+              "time_seconds": "3.716"
+            },
+            {
+              "class": "dev.forcemind.xs.android.GovernanceUiTest",
+              "name": "consolidationNativePreviewCancelConfirmAndUndoPreserveSourcesAndDefault",
+              "status": "failed",
+              "time_seconds": "1.752",
+              "diagnostic": "java.lang.AssertionError: expected:<1> but was:<0>\nat org.junit.Assert.fail(Assert.java:89)\nat org.junit.Assert.failNotEquals(Assert.java:835)\nat org.junit.Assert.assertEquals(Assert.java:647)\nat org.junit.Assert.assertEquals(Assert.java:633)\nat dev.forcemind.xs.android.GovernanceUiTest.assertSearchable(GovernanceUiTest.java:197)\nat dev.forcemind.xs.android.GovernanceUiTest.consolidationNativePreviewCancelConfirmAndUndoPreserveSourcesAndDefault(GovernanceUiTest.java:135)\n"
+            },
+            {
+              "class": "dev.forcemind.xs.android.GovernanceUiTest",
+              "name": "metadataSafExportPreviewCancelAndConfirmUseActualDocumentBytes",
+              "status": "failed",
+              "time_seconds": "1.191",
+              "diagnostic": "java.lang.AssertionError: Native UI is not clickable: [xs-library-metadata.xsmeta]\nat dev.forcemind.xs.android.GovernanceUiTest.clickText(GovernanceUiTest.java:235)\nat dev.forcemind.xs.android.GovernanceUiTest.openFixtureFile(GovernanceUiTest.java:224)\nat dev.forcemind.xs.android.GovernanceUiTest.metadataSafExportPreviewCancelAndConfirmUseActualDocumentBytes(GovernanceUiTest.java:97)\n"
+            },
+            {
+              "class": "dev.forcemind.xs.android.GovernanceUiTest",
+              "name": "encryptedFullSafRoundTripValidatesPasswordAndRestoresActualImage",
+              "status": "failed",
+              "time_seconds": "45.198",
+              "diagnostic": "java.lang.RuntimeException: Could not launch intent Intent { flg=0x10000000 cmp=dev.forcemind.xs.harness/dev.forcemind.xs.android.XsBackupActivity (has extras) } within 45000 milliseconds. Perhaps the main thread has not gone idle within a reasonable amount of time? There could be an animation or something constantly repainting the screen. Or the activity is doing network calls on creation? See the threaddump logs. For your reference the last time the event queue was idle before your activity launch request was 1794054761058 and now the last time the queue went idle was: 1794054764373. If these numbers are the same your activity might be hogging the event queue.\nat androidx.test.runner.MonitoringInstrumentation.startActivitySync(MonitoringInstrumentation.java:537)\nat dev.forcemind.xs.android.GovernanceUiTest.openBackup(GovernanceUiTest.java:192)\nat dev.forcemind.xs.android.GovernanceUiTest.encryptedFullSafRoundTripValidatesPasswordAndRestoresActualImage(GovernanceUiTest.java:109)\n"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryBackupIntegrationTest",
+              "name": "metadataRoundTripPreservesUnicodeTimesDwellAndSearchWithoutPrivateFiles",
+              "status": "passed",
+              "time_seconds": "0.148"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryBackupIntegrationTest",
+              "name": "generatedLongLabelIsUnicodeSafeAndRepeatedRestoreIsAlwaysSeparate",
+              "status": "passed",
+              "time_seconds": "0.156"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryBackupIntegrationTest",
+              "name": "schemaThreeRestoreProjectsUnknownOwnActionsWithoutInventedTimesOrActor",
+              "status": "passed",
+              "time_seconds": "0.157"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryBackupIntegrationTest",
+              "name": "restoreRollbackPreservesOriginalForEarlyAndLateGuardFailure",
+              "status": "passed",
+              "time_seconds": "0.306"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryBackupIntegrationTest",
+              "name": "libraryErasureInvalidatesQueuedRestoreAndCannotResurrectMetadata",
+              "status": "passed",
+              "time_seconds": "0.075"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryBackupIntegrationTest",
+              "name": "restoredMaximumOpenCountSaturatesAcrossBothOpenEntryPoints",
+              "status": "passed",
+              "time_seconds": "0.156"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryBackupIntegrationTest",
+              "name": "malformedMetadataFailsBeforeCreatingAnyLibrary",
+              "status": "passed",
+              "time_seconds": "0.276"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryConsolidationIntegrationTest",
+              "name": "undoProtectsDefaultEvenIfPreferenceWasChangedAfterCreation",
+              "status": "passed",
+              "time_seconds": "0.154"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryConsolidationIntegrationTest",
+              "name": "undoRefusesAnyMediaTaskWithoutDeletingItsMetadataOrSources",
+              "status": "passed",
+              "time_seconds": "0.154"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryConsolidationIntegrationTest",
+              "name": "explicitMergeKeepsEverySourceNoteFolderAndVisitInAnotherLibrary",
+              "status": "passed",
+              "time_seconds": "0.126"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryConsolidationIntegrationTest",
+              "name": "erasingEitherPreparedSourceExpiresPreviewWithoutCloningDeletedData",
+              "status": "passed",
+              "time_seconds": "0.128"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryConsolidationIntegrationTest",
+              "name": "undoRefusesResultWithLaterMetadataEditsAndKeepsSources",
+              "status": "passed",
+              "time_seconds": "0.133"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryConsolidationIntegrationTest",
+              "name": "olderMandatoryClearDuringUndoPreflightRejectsWithoutDurableDeletion",
+              "status": "passed",
+              "time_seconds": "0.126"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryConsolidationIntegrationTest",
+              "name": "sourceMustBeExplicitDistinctAndRegistered",
+              "status": "passed",
+              "time_seconds": "0.105"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryConsolidationIntegrationTest",
+              "name": "undoRemovesOnlyItsUnchangedNewResultAndCannotBeReused",
+              "status": "passed",
+              "time_seconds": "0.153"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryConsolidationIntegrationTest",
+              "name": "conflictingLegacyActionSourcesFailBeforePreviewAndKeepOriginals",
+              "status": "passed",
+              "time_seconds": "0.102"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "partialMetadataDoesNotTruncateStoredTextOrSearchIndex",
+              "status": "passed",
+              "time_seconds": "0.084"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "nativeArchiveActivityLoads",
+              "status": "passed",
+              "time_seconds": "0.151"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "databaseV1MigrationPreservesHistory",
+              "status": "passed",
+              "time_seconds": "0.153"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "nativeCreationStoresNewPostAndRelatedParentWithoutSyntheticOpens",
+              "status": "passed",
+              "time_seconds": "0.078"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "manualLocalSpaceSavesLinkWithoutFakeReadingHistory",
+              "status": "passed",
+              "time_seconds": "0.177"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "databaseV2UpgradeKeepsScopesMappingsAndUnknownLegacyDurations",
+              "status": "passed",
+              "time_seconds": "0.252"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "confirmedNativeFixtureRepostAndReversalKeepIndependentData",
+              "status": "passed",
+              "time_seconds": "0.076"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "historyFeedAndSearchAreAccountScoped",
+              "status": "passed",
+              "time_seconds": "0.052"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "officialPostsJsImportsOfflineWithoutFakeVisits",
+              "status": "passed",
+              "time_seconds": "0.077"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "favoritesNotesTagsAndHistoryErasureHaveSeparateScopes",
+              "status": "passed",
+              "time_seconds": "0.079"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "durationSourceAndFeedDateMustMatchTheSameExposure",
+              "status": "passed",
+              "time_seconds": "0.053"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "nativeNavigationAndExposureIdentitiesArePersistentAndIndependent",
+              "status": "passed",
+              "time_seconds": "0.127"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "largeHistoryCanPageWithoutLosingEarlierVisits",
+              "status": "passed",
+              "time_seconds": "0.731"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "databaseV3MigrationPreservesActionsWithoutInventingActorOrObservationTime",
+              "status": "passed",
+              "time_seconds": "0.327"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "foldersAndActionsDoNotLeakBetweenAccounts",
+              "status": "passed",
+              "time_seconds": "0.075"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "ambiguousRetweetTextRetainsSnapshotWithoutInventingRepostAndImportsParents",
+              "status": "passed",
+              "time_seconds": "0.052"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.LibraryUiTest",
+              "name": "nativeSearchFiltersMeasuredDwellAndNeverOpenedOffline",
+              "status": "passed",
+              "time_seconds": "0.78"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.LibraryUiTest",
+              "name": "nativeConfirmedActivityAndReversalAreSearchableInActualIndexUi",
+              "status": "passed",
+              "time_seconds": "0.581"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.LibraryUiTest",
+              "name": "batchFailureRollsBackFavoritesAndKeepsOtherScope",
+              "status": "passed",
+              "time_seconds": "0.079"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.LibraryUiTest",
+              "name": "batchFavoriteTagCategoryAndUnfavoriteUseActualNativeControls",
+              "status": "passed",
+              "time_seconds": "1.559"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.LibraryUiTest",
+              "name": "existingLibraryIntentSelectsSeparateScopeWithoutChangingDefault",
+              "status": "passed",
+              "time_seconds": "0.406"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.LibraryUiTest",
+              "name": "editExistingFavoriteTagsAndClearHistoryKeepLocalFavorite",
+              "status": "passed",
+              "time_seconds": "0.857"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.LibraryUiTest",
+              "name": "recordingPreferencesAreIndependentAndPersisted",
+              "status": "passed",
+              "time_seconds": "0.078"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.LibraryUiTest",
+              "name": "historicalTextSearchAndSnapshotBrowserDoNotReplaceCurrent",
+              "status": "passed",
+              "time_seconds": "1.333"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.LibraryUiTest",
+              "name": "snapshotPaginationReachesOldestBeyondTwoHundredAndSearchKeepsCurrent",
+              "status": "passed",
+              "time_seconds": "2.566"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.SnapshotVersionIntegrationTest",
+              "name": "clearingVisitsKeepsVersionsButDeletingScopeCascadesOnlyThatScope",
+              "status": "passed",
+              "time_seconds": "0.078"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.SnapshotVersionIntegrationTest",
+              "name": "partialLinkOnlyAndOutOfOrderBodiesDoNotReplaceCompleteCurrent",
+              "status": "passed",
+              "time_seconds": "0.078"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.SnapshotVersionIntegrationTest",
+              "name": "lateAuthorAndPublicationEnrichSameTextWithoutInventingNewCaptureOrVersion",
+              "status": "passed",
+              "time_seconds": "0.052"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.SnapshotVersionIntegrationTest",
+              "name": "v4MigrationPreservesBodyFtsRelationsAndUnknownCaptureTime",
+              "status": "passed",
+              "time_seconds": "0.354"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.SnapshotVersionIntegrationTest",
+              "name": "newerCompleteShortEditRetainsOldVersionAndBothSearchIndexes",
+              "status": "passed",
+              "time_seconds": "0.053"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.SnapshotVersionIntegrationTest",
+              "name": "deletedScopeRejectsDirectNativeWritesEvenAfterWaitingForDatabaseLock",
+              "status": "passed",
+              "time_seconds": "0.077"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.SnapshotVersionIntegrationTest",
+              "name": "archiveSnapshotHasImportProvenanceWithoutInventingWebsiteEditOrVisit",
+              "status": "passed",
+              "time_seconds": "0.05"
+            }
+          ]
+        },
+        "app-android": {
+          "xml_path": "app-android/build/outputs/androidTest-results/connected/debug/TEST-emulator-5554 - 8.0.0-_app-android-.xml",
+          "counts": {
+            "tests": 68,
+            "failures": 3,
+            "errors": 0,
+            "skipped": 0
+          },
+          "time_seconds": "184.93",
+          "class_counts": {
+            "dev.forcemind.xs.android.AssetLibraryUiTest": 4,
+            "dev.forcemind.xs.android.FullBackupIntegrationTest": 9,
+            "dev.forcemind.xs.android.MediaDownloadEngineTest": 4,
+            "dev.forcemind.xs.android.MediaDurabilityTest": 10,
+            "dev.forcemind.xs.android.VideoDownloadEngineTest": 6,
+            "dev.forcemind.xs.browser.BrowserContainerTest": 8,
+            "dev.forcemind.xs.browser.BrowserPrivacyIntegrationTest": 3,
+            "dev.forcemind.xs.browser.MediaSharingTest": 6,
+            "dev.forcemind.xs.browser.NativeCaptureIntegrationTest": 7,
+            "dev.forcemind.xs.browser.ObservationParserTest": 3,
+            "dev.forcemind.xs.browser.PageCleanupIntegrationTest": 4,
+            "dev.forcemind.xs.browser.PostImageSelectionTest": 2,
+            "dev.forcemind.xs.browser.PostVideoSelectionTest": 2
+          },
+          "cases": [
+            {
+              "class": "dev.forcemind.xs.android.AssetLibraryUiTest",
+              "name": "actualAssetsUiSearchesThenBatchCategorizesAndDeletesOnlySelected",
+              "status": "passed",
+              "time_seconds": "2.516"
+            },
+            {
+              "class": "dev.forcemind.xs.android.AssetLibraryUiTest",
+              "name": "failedFilePurgeRemainsRevokedAndStartupRetryCompletesOnlyPendingScope",
+              "status": "passed",
+              "time_seconds": "0.189"
+            },
+            {
+              "class": "dev.forcemind.xs.android.AssetLibraryUiTest",
+              "name": "failedPreferenceCommitRestoresCachedSetsWithoutRevokingWriter",
+              "status": "passed",
+              "time_seconds": "0.054"
+            },
+            {
+              "class": "dev.forcemind.xs.android.AssetLibraryUiTest",
+              "name": "wholeLibraryUiRequiresTypedConfirmationAndPreservesOtherScopeAndShareLease",
+              "status": "passed",
+              "time_seconds": "0.578"
+            },
+            {
+              "class": "dev.forcemind.xs.android.FullBackupIntegrationTest",
+              "name": "authenticatedMaliciousAssetDescriptorsAndInvalidMediaAreRejected",
+              "status": "passed",
+              "time_seconds": "26.545"
+            },
+            {
+              "class": "dev.forcemind.xs.android.FullBackupIntegrationTest",
+              "name": "encryptedRoundTripRestoresActualImageVideoMetadataAndShareableBytes",
+              "status": "passed",
+              "time_seconds": "7.101"
+            },
+            {
+              "class": "dev.forcemind.xs.android.FullBackupIntegrationTest",
+              "name": "sqliteFailureAfterResourceStagingRollsBackEveryNewResourceAndMarker",
+              "status": "passed",
+              "time_seconds": "7.003"
+            },
+            {
+              "class": "dev.forcemind.xs.android.FullBackupIntegrationTest",
+              "name": "startupRecoveryDeletesUnpublishedResourcesButPreservesACommittedResult",
+              "status": "passed",
+              "time_seconds": "7.031"
+            },
+            {
+              "class": "dev.forcemind.xs.android.FullBackupIntegrationTest",
+              "name": "clearingSourceExpiresPreparedFullRestoreWithoutResurrection",
+              "status": "passed",
+              "time_seconds": "6.625"
+            },
+            {
+              "class": "dev.forcemind.xs.android.FullBackupIntegrationTest",
+              "name": "publishedMarkerWaitsForACompleteRealWalCheckpointAndRetriesAfterBusyWriter",
+              "status": "passed",
+              "time_seconds": "2.636"
+            },
+            {
+              "class": "dev.forcemind.xs.android.FullBackupIntegrationTest",
+              "name": "wrongPasswordTamperingTruncationAndCancellationNeverCreateALibrary",
+              "status": "passed",
+              "time_seconds": "14.424"
+            },
+            {
+              "class": "dev.forcemind.xs.android.FullBackupIntegrationTest",
+              "name": "sourceEpochChangeStopsExportBeforeAuthenticatedCompletion",
+              "status": "passed",
+              "time_seconds": "6.197"
+            },
+            {
+              "class": "dev.forcemind.xs.android.FullBackupIntegrationTest",
+              "name": "rollbackJournalFullSyncRetainsMarkerAndExtraSyncCanRetireIt",
+              "status": "passed",
+              "time_seconds": "0.078"
+            },
+            {
+              "class": "dev.forcemind.xs.android.MediaDownloadEngineTest",
+              "name": "cancelAndErasureWhileReadingCannotRegisterAnAsset",
+              "status": "passed",
+              "time_seconds": "0.104"
+            },
+            {
+              "class": "dev.forcemind.xs.android.MediaDownloadEngineTest",
+              "name": "hostileRedirectIsRejectedBeforeOpeningItsDestination",
+              "status": "passed",
+              "time_seconds": "0.052"
+            },
+            {
+              "class": "dev.forcemind.xs.android.MediaDownloadEngineTest",
+              "name": "realEngineCompletesValidatedImageAndSharesEveryByte",
+              "status": "passed",
+              "time_seconds": "0.083"
+            },
+            {
+              "class": "dev.forcemind.xs.android.MediaDownloadEngineTest",
+              "name": "truncatedAndHtmlResponsesNeverBecomeCompletedAssets",
+              "status": "passed",
+              "time_seconds": "0.102"
+            },
+            {
+              "class": "dev.forcemind.xs.android.MediaDurabilityTest",
+              "name": "rejectedSchedulerAndTamperedCipherBecomeExplicitFailures",
+              "status": "passed",
+              "time_seconds": "0.103"
+            },
+            {
+              "class": "dev.forcemind.xs.android.MediaDurabilityTest",
+              "name": "networkRetriesAreBoundedAndRestartAtByteZero",
+              "status": "passed",
+              "time_seconds": "0.105"
+            },
+            {
+              "class": "dev.forcemind.xs.android.MediaDurabilityTest",
+              "name": "stopPolicyRespectsUserIntentAndLegacyLibraryLength",
+              "status": "passed",
+              "time_seconds": "0.028"
+            },
+            {
+              "class": "dev.forcemind.xs.android.MediaDurabilityTest",
+              "name": "erasureBarrierCancelsPersistedRequestAndLateJobStaysInert",
+              "status": "passed",
+              "time_seconds": "0.053"
+            },
+            {
+              "class": "dev.forcemind.xs.android.MediaDurabilityTest",
+              "name": "cancelClearsSecretAndOrphanCallbackCannotStartNetwork",
+              "status": "passed",
+              "time_seconds": "0.053"
+            },
+            {
+              "class": "dev.forcemind.xs.android.MediaDurabilityTest",
+              "name": "persistedJobContainsOnlyOpaqueNativeIdsAndProtectedService",
+              "status": "passed",
+              "time_seconds": "0.001"
+            },
+            {
+              "class": "dev.forcemind.xs.android.MediaDurabilityTest",
+              "name": "queuedUrlIsEncryptedBoundToTaskAndResumesAfterRepositoryRestart",
+              "status": "passed",
+              "time_seconds": "0.101"
+            },
+            {
+              "class": "dev.forcemind.xs.android.MediaDurabilityTest",
+              "name": "staleDeletedJobScopeIsRejectedWithoutStatusReentry",
+              "status": "passed",
+              "time_seconds": "0.051"
+            },
+            {
+              "class": "dev.forcemind.xs.android.MediaDurabilityTest",
+              "name": "systemStopPreservesEncryptedReferenceAndOldRunCannotComplete",
+              "status": "passed",
+              "time_seconds": "0.079"
+            },
+            {
+              "class": "dev.forcemind.xs.android.MediaDurabilityTest",
+              "name": "versionOneAndTwoMigrationPreservesAssetsAndLeaseRows",
+              "status": "passed",
+              "time_seconds": "0.153"
+            },
+            {
+              "class": "dev.forcemind.xs.android.VideoDownloadEngineTest",
+              "name": "mediaV1MigrationPreservesExistingImagesAndShareLeases",
+              "status": "passed",
+              "time_seconds": "0.102"
+            },
+            {
+              "class": "dev.forcemind.xs.android.VideoDownloadEngineTest",
+              "name": "codecTailFallbackReachesFinalPresentationBeyondPreviousSync",
+              "status": "passed",
+              "time_seconds": "0.503"
+            },
+            {
+              "class": "dev.forcemind.xs.android.VideoDownloadEngineTest",
+              "name": "fullMp4WithAudioCompletesPlaysAndSharesOriginalFile",
+              "status": "passed",
+              "time_seconds": "1.737"
+            },
+            {
+              "class": "dev.forcemind.xs.android.VideoDownloadEngineTest",
+              "name": "cancelAndEraseDuringVideoReadCannotComplete",
+              "status": "passed",
+              "time_seconds": "0.078"
+            },
+            {
+              "class": "dev.forcemind.xs.android.VideoDownloadEngineTest",
+              "name": "truncatedFragmentedHtmlAndPlaylistNeverRegisterVideo",
+              "status": "passed",
+              "time_seconds": "0.203"
+            },
+            {
+              "class": "dev.forcemind.xs.android.VideoDownloadEngineTest",
+              "name": "redirectPolicyBlocksPrivateDestinationBeforeOpeningIt",
+              "status": "passed",
+              "time_seconds": "0.052"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.BrowserContainerTest",
+              "name": "actualWebViewExecutesSyntheticPageWithoutNativeArchive",
+              "status": "passed",
+              "time_seconds": "1.966"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.BrowserContainerTest",
+              "name": "nonWebNavigationAndWebPermissionsAreDenied",
+              "status": "passed",
+              "time_seconds": "0.603"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.BrowserContainerTest",
+              "name": "configurationRecreationRetainsActualPageAndJavascriptState",
+              "status": "passed",
+              "time_seconds": "1.085"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.BrowserContainerTest",
+              "name": "realWebViewBackAndReloadUseSyntheticHttpsResponses",
+              "status": "passed",
+              "time_seconds": "1.539"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.BrowserContainerTest",
+              "name": "subframeErrorsDoNotReplacePageAndRendererLossIsRecoverable",
+              "status": "passed",
+              "time_seconds": "0.48"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.BrowserContainerTest",
+              "name": "httpFailureCallbackDisplaysNativeRetry",
+              "status": "passed",
+              "time_seconds": "0.956"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.BrowserContainerTest",
+              "name": "initialHostHasNoNavigationAndRestrictedSettings",
+              "status": "passed",
+              "time_seconds": "0.484"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.BrowserContainerTest",
+              "name": "sharedPostLinkRequiresExplicitSaveBeforeAnyLocalWrite",
+              "status": "passed",
+              "time_seconds": "0.681"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.BrowserPrivacyIntegrationTest",
+              "name": "confirmedSessionReplacesDOMClearsWebStateAndRejectsOldCallbacks",
+              "status": "failed",
+              "time_seconds": "1.664",
+              "diagnostic": "java.lang.AssertionError: expected:<1> but was:<0>\nat org.junit.Assert.fail(Assert.java:89)\nat org.junit.Assert.failNotEquals(Assert.java:835)\nat org.junit.Assert.assertEquals(Assert.java:647)\nat org.junit.Assert.assertEquals(Assert.java:633)\nat dev.forcemind.xs.browser.BrowserPrivacyIntegrationTest.assertNativeResources(BrowserPrivacyIntegrationTest.java:131)\nat dev.forcemind.xs.browser.BrowserPrivacyIntegrationTest.confirmedSessionReplacesDOMClearsWebStateAndRejectsOldCallbacks(BrowserPrivacyIntegrationTest.java:164)\n"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.BrowserPrivacyIntegrationTest",
+              "name": "cacheConfirmationKeepsWebsiteStateAndActualNativeFiles",
+              "status": "failed",
+              "time_seconds": "1.184",
+              "diagnostic": "java.lang.AssertionError: expected:<1> but was:<0>\nat org.junit.Assert.fail(Assert.java:89)\nat org.junit.Assert.failNotEquals(Assert.java:835)\nat org.junit.Assert.assertEquals(Assert.java:647)\nat org.junit.Assert.assertEquals(Assert.java:633)\nat dev.forcemind.xs.browser.BrowserPrivacyIntegrationTest.assertNativeResources(BrowserPrivacyIntegrationTest.java:131)\nat dev.forcemind.xs.browser.BrowserPrivacyIntegrationTest.cacheConfirmationKeepsWebsiteStateAndActualNativeFiles(BrowserPrivacyIntegrationTest.java:138)\n"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.BrowserPrivacyIntegrationTest",
+              "name": "destroyedActivityWithOldDeepLinkStaysEmptyUntilCurrentNativeConfirmation",
+              "status": "failed",
+              "time_seconds": "46.09",
+              "diagnostic": "java.lang.AssertionError: Activity never becomes requested state \"[DESTROYED]\" (last lifecycle transition = \"RESUMED\")\nat androidx.test.core.app.ActivityScenario.waitForActivityToBecomeAnyOf(ActivityScenario.java:454)\nat androidx.test.core.app.ActivityScenario.moveToState(ActivityScenario.java:689)\nat androidx.test.core.app.ActivityScenario.close(ActivityScenario.java:421)\nat dev.forcemind.xs.browser.BrowserPrivacyIntegrationTest.cleanup(BrowserPrivacyIntegrationTest.java:96)\n"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.MediaSharingTest",
+              "name": "singleImageSharesActualReadOnlyBytesAfterSourceDeletion",
+              "status": "passed",
+              "time_seconds": "0.024"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.MediaSharingTest",
+              "name": "providerRejectsRootTraversalExpiredAndUnfinishedFiles",
+              "status": "passed",
+              "time_seconds": "0.051"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.MediaSharingTest",
+              "name": "textSharingCanonicalizesSourceAndNeverAddsPrivateMetadata",
+              "status": "passed",
+              "time_seconds": "0.026"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.MediaSharingTest",
+              "name": "cacheAndOtherLibraryDeletionPreserveSavedImage",
+              "status": "passed",
+              "time_seconds": "0.029"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.MediaSharingTest",
+              "name": "failedBatchShareRollsBackOnlyItsOwnNewCopies",
+              "status": "passed",
+              "time_seconds": "0.025"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.MediaSharingTest",
+              "name": "multipleImageIntentContainsOnlyChosenCopies",
+              "status": "passed",
+              "time_seconds": "0.051"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.NativeCaptureIntegrationTest",
+              "name": "immediateOpenLateBodyReloadAndQuickReturn",
+              "status": "passed",
+              "time_seconds": "1.988"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.NativeCaptureIntegrationTest",
+              "name": "overlayAndBackgroundBreakContinuousIntervals",
+              "status": "passed",
+              "time_seconds": "9.842"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.NativeCaptureIntegrationTest",
+              "name": "transparentParentsAndVirtualRebindsNeverCreateNativeOpens",
+              "status": "passed",
+              "time_seconds": "2.595"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.NativeCaptureIntegrationTest",
+              "name": "screenOffBreaksDwellAndStopsTheFixtureObserver",
+              "status": "passed",
+              "time_seconds": "6.253"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.NativeCaptureIntegrationTest",
+              "name": "noClickDwellIsMeasuredAndOfflineNeverOpenedSearchWorks",
+              "status": "passed",
+              "time_seconds": "5.523"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.NativeCaptureIntegrationTest",
+              "name": "nativeTextEvidenceKeepsPartialAndAcceptsNewerShortCompleteBody",
+              "status": "passed",
+              "time_seconds": "1.684"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.NativeCaptureIntegrationTest",
+              "name": "pauseOverlayAndDestroyStopPageWorkAndOldConsentCannotRevive",
+              "status": "passed",
+              "time_seconds": "4.545"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.ObservationParserTest",
+              "name": "typedEnvelopeNeedsNativeMainFrameGestureAndScope",
+              "status": "passed",
+              "time_seconds": "0.0"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.ObservationParserTest",
+              "name": "onlyAllowedTypedPublicObservationsAreParsed",
+              "status": "passed",
+              "time_seconds": "0.0"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.ObservationParserTest",
+              "name": "rejectAccountControlAndUnauthorizedInstructions",
+              "status": "passed",
+              "time_seconds": "0.001"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.PageCleanupIntegrationTest",
+              "name": "independentDefaultsAndExactStyleRestorationKeepOrdinaryContent",
+              "status": "passed",
+              "time_seconds": "1.482"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.PageCleanupIntegrationTest",
+              "name": "nativePauseNavigationAndDestroyRestoreAndPreserveReadingAnchor",
+              "status": "passed",
+              "time_seconds": "1.558"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.PageCleanupIntegrationTest",
+              "name": "unknownStructuresSensitiveSpaAndPaidPagesFailClosed",
+              "status": "passed",
+              "time_seconds": "1.992"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.PageCleanupIntegrationTest",
+              "name": "hiddenPromotedCardCannotProduceFeedExposure",
+              "status": "passed",
+              "time_seconds": "2.671"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.PostImageSelectionTest",
+              "name": "untrustedImageListCannotChoosePrivateHostsOrExtraData",
+              "status": "passed",
+              "time_seconds": "0.0"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.PostImageSelectionTest",
+              "name": "selectedPostExcludesQuotedAndOtherPostImages",
+              "status": "passed",
+              "time_seconds": "0.727"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.PostVideoSelectionTest",
+              "name": "rawListCannotTurnBlobManifestOrPrivateAddressesIntoVideo",
+              "status": "passed",
+              "time_seconds": "0.0"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.PostVideoSelectionTest",
+              "name": "currentPostExcludesQuotedProtectedAndOtherPostVideos",
+              "status": "passed",
+              "time_seconds": "0.781"
+            }
+          ]
+        }
+      },
+      "totals": {
+        "tests": 120,
+        "failures": 6,
+        "errors": 0,
+        "skipped": 0
+      },
+      "job_local_apk_provenance": {
+        "schema_version": 1,
+        "recorded_at_utc": "2026-11-07T12:37:01.314050+00:00",
+        "evidence_scope": "Job-local APK availability and public signing certificates only; test execution/outcomes come from this job's instrumentation reports. This is not real-X, physical-device or recipient-app acceptance.",
+        "source": {
+          "head_commit": "67b594c27eda42de9782b692320bab51457dec81",
+          "head_tree": "cf99e2281e5e23e528d8b2bffd2845d1ff103549",
+          "working_tree_clean": true,
+          "working_tree_status": []
+        },
+        "apksigner": "/usr/local/lib/android/sdk/build-tools/37.0.0/apksigner",
+        "artifacts": [
+          {
+            "module": "app-android",
+            "role": "application",
+            "path": "app-android/build/outputs/apk/debug/app-android-debug.apk",
+            "availability": "present",
+            "bytes": 317135,
+            "sha256": "42753a9f53377d5a79d8a23fff1ff61a7b8937de440653dbee93e8856846fd8c",
+            "signature_verification": {
+              "exit_code": 0,
+              "stdout": "V2 Signer: certificate DN: C=US, O=Android, CN=Android Debug\nV2 Signer: certificate SHA-256 digest: 61fe8a01bc18543be870eab4e8488090ee379d5d28aa5a73408dbb302199ab87\nV2 Signer: certificate SHA-1 digest: 3d58838837ca6120e710ebdc0e29e2e430a0e58f\nV2 Signer: certificate MD5 digest: ed34b7d62da39c5a04dee6df69f47b60",
+              "stderr": "",
+              "status": "passed"
+            }
+          },
+          {
+            "module": "app-android",
+            "role": "instrumentation",
+            "path": "app-android/build/outputs/apk/androidTest/debug/app-android-debug-androidTest.apk",
+            "availability": "present",
+            "bytes": 1752947,
+            "sha256": "7da1959c06fae6c4902eecd6a5228932113dd82c5e87b5f5f09110b64082f317",
+            "signature_verification": {
+              "exit_code": 0,
+              "stdout": "V2 Signer: certificate DN: C=US, O=Android, CN=Android Debug\nV2 Signer: certificate SHA-256 digest: 61fe8a01bc18543be870eab4e8488090ee379d5d28aa5a73408dbb302199ab87\nV2 Signer: certificate SHA-1 digest: 3d58838837ca6120e710ebdc0e29e2e430a0e58f\nV2 Signer: certificate MD5 digest: ed34b7d62da39c5a04dee6df69f47b60",
+              "stderr": "",
+              "status": "passed"
+            }
+          },
+          {
+            "module": "dev-harness",
+            "role": "application",
+            "path": "dev-harness/build/outputs/apk/debug/dev-harness-debug.apk",
+            "availability": "present",
+            "bytes": 273754,
+            "sha256": "ce2a6ae7db3ae08d21e78f4ca375d64c7fb7031d348f46a5cab27192130e3de4",
+            "signature_verification": {
+              "exit_code": 0,
+              "stdout": "V2 Signer: certificate DN: C=US, O=Android, CN=Android Debug\nV2 Signer: certificate SHA-256 digest: 61fe8a01bc18543be870eab4e8488090ee379d5d28aa5a73408dbb302199ab87\nV2 Signer: certificate SHA-1 digest: 3d58838837ca6120e710ebdc0e29e2e430a0e58f\nV2 Signer: certificate MD5 digest: ed34b7d62da39c5a04dee6df69f47b60",
+              "stderr": "",
+              "status": "passed"
+            }
+          },
+          {
+            "module": "dev-harness",
+            "role": "instrumentation",
+            "path": "dev-harness/build/outputs/apk/androidTest/debug/dev-harness-debug-androidTest.apk",
+            "availability": "present",
+            "bytes": 1725941,
+            "sha256": "c998c827e3d153d80e78909073db5f8867dc48c758dfb0beba73d410897ca405",
+            "signature_verification": {
+              "exit_code": 0,
+              "stdout": "V2 Signer: certificate DN: C=US, O=Android, CN=Android Debug\nV2 Signer: certificate SHA-256 digest: 61fe8a01bc18543be870eab4e8488090ee379d5d28aa5a73408dbb302199ab87\nV2 Signer: certificate SHA-1 digest: 3d58838837ca6120e710ebdc0e29e2e430a0e58f\nV2 Signer: certificate MD5 digest: ed34b7d62da39c5a04dee6df69f47b60",
+              "stderr": "",
+              "status": "passed"
+            }
+          }
+        ]
+      }
+    },
+    "30": {
+      "android_api": 30,
+      "android_release": "11",
+      "webview": {
+        "package": "com.google.android.webview",
+        "version": "83.0.4103.106"
+      },
+      "device_configuration": "config: mcc310-mnc260-en-rUS-ldltr-sw320dp-w320dp-h616dp-normal-long-notround-nowidecg-lowdr-port-notnight-mdpi-finger-keysexposed-qwerty-navhidden-nonav-640x320-v30\nabi: x86_64,x86,arm64-v8a,armeabi-v7a,armeabi",
+      "locale_snapshot": "",
+      "night_mode": "Night mode: no",
+      "artifact": {
+        "id": 13574442227,
+        "name": "xs-android-test-reports-api-30",
+        "size_in_bytes": 399799,
+        "digest": "sha256:f14e8b9cc8d5837bb8f3dc992bc50af05fcec5fb8bcf5547c3ef6292fb671286",
+        "downloaded_zip_sha256": "f14e8b9cc8d5837bb8f3dc992bc50af05fcec5fb8bcf5547c3ef6292fb671286",
+        "digest_verified": true
+      },
+      "modules": {
+        "dev-harness": {
+          "xml_path": "dev-harness/build/outputs/androidTest-results/connected/debug/TEST-emulator-5554 - 11-_dev-harness-.xml",
+          "counts": {
+            "tests": 52,
+            "failures": 3,
+            "errors": 0,
+            "skipped": 0
+          },
+          "time_seconds": "62.197",
+          "class_counts": {
+            "dev.forcemind.xs.android.GovernanceUiTest": 4,
+            "dev.forcemind.xs.android.LibraryBackupIntegrationTest": 7,
+            "dev.forcemind.xs.android.LibraryConsolidationIntegrationTest": 9,
+            "dev.forcemind.xs.harness.ArchiveIntegrationTest": 16,
+            "dev.forcemind.xs.harness.LibraryUiTest": 9,
+            "dev.forcemind.xs.harness.SnapshotVersionIntegrationTest": 7
+          },
+          "cases": [
+            {
+              "class": "dev.forcemind.xs.android.GovernanceUiTest",
+              "name": "assetsMultiSelectSafZipContainsEverySelectedOriginalFile",
+              "status": "passed",
+              "time_seconds": "3.659"
+            },
+            {
+              "class": "dev.forcemind.xs.android.GovernanceUiTest",
+              "name": "consolidationNativePreviewCancelConfirmAndUndoPreserveSourcesAndDefault",
+              "status": "failed",
+              "time_seconds": "1.193",
+              "diagnostic": "java.lang.AssertionError: expected:<1> but was:<0>\nat org.junit.Assert.fail(Assert.java:89)\nat org.junit.Assert.failNotEquals(Assert.java:835)\nat org.junit.Assert.assertEquals(Assert.java:647)\nat org.junit.Assert.assertEquals(Assert.java:633)\nat dev.forcemind.xs.android.GovernanceUiTest.assertSearchable(GovernanceUiTest.java:197)\nat dev.forcemind.xs.android.GovernanceUiTest.consolidationNativePreviewCancelConfirmAndUndoPreserveSourcesAndDefault(GovernanceUiTest.java:135)\n"
+            },
+            {
+              "class": "dev.forcemind.xs.android.GovernanceUiTest",
+              "name": "metadataSafExportPreviewCancelAndConfirmUseActualDocumentBytes",
+              "status": "failed",
+              "time_seconds": "1.533",
+              "diagnostic": "java.lang.AssertionError: Native UI is not clickable: [xs-library-metadata.xsmeta]\nat dev.forcemind.xs.android.GovernanceUiTest.clickText(GovernanceUiTest.java:235)\nat dev.forcemind.xs.android.GovernanceUiTest.openFixtureFile(GovernanceUiTest.java:224)\nat dev.forcemind.xs.android.GovernanceUiTest.metadataSafExportPreviewCancelAndConfirmUseActualDocumentBytes(GovernanceUiTest.java:97)\n"
+            },
+            {
+              "class": "dev.forcemind.xs.android.GovernanceUiTest",
+              "name": "encryptedFullSafRoundTripValidatesPasswordAndRestoresActualImage",
+              "status": "failed",
+              "time_seconds": "45.08",
+              "diagnostic": "java.lang.RuntimeException: Could not launch intent Intent { flg=0x10000000 cmp=dev.forcemind.xs.harness/dev.forcemind.xs.android.XsBackupActivity (has extras) } within 45000 milliseconds. Perhaps the main thread has not gone idle within a reasonable amount of time? There could be an animation or something constantly repainting the screen. Or the activity is doing network calls on creation? See the threaddump logs. For your reference the last time the event queue was idle before your activity launch request was 1794054753038 and now the last time the queue went idle was: 1794054756874. If these numbers are the same your activity might be hogging the event queue.\nat androidx.test.runner.MonitoringInstrumentation.startActivitySync(MonitoringInstrumentation.java:537)\nat dev.forcemind.xs.android.GovernanceUiTest.openBackup(GovernanceUiTest.java:192)\nat dev.forcemind.xs.android.GovernanceUiTest.encryptedFullSafRoundTripValidatesPasswordAndRestoresActualImage(GovernanceUiTest.java:109)\n"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryBackupIntegrationTest",
+              "name": "metadataRoundTripPreservesUnicodeTimesDwellAndSearchWithoutPrivateFiles",
+              "status": "passed",
+              "time_seconds": "0.048"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryBackupIntegrationTest",
+              "name": "generatedLongLabelIsUnicodeSafeAndRepeatedRestoreIsAlwaysSeparate",
+              "status": "passed",
+              "time_seconds": "0.078"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryBackupIntegrationTest",
+              "name": "schemaThreeRestoreProjectsUnknownOwnActionsWithoutInventedTimesOrActor",
+              "status": "passed",
+              "time_seconds": "0.055"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryBackupIntegrationTest",
+              "name": "restoreRollbackPreservesOriginalForEarlyAndLateGuardFailure",
+              "status": "passed",
+              "time_seconds": "0.177"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryBackupIntegrationTest",
+              "name": "libraryErasureInvalidatesQueuedRestoreAndCannotResurrectMetadata",
+              "status": "passed",
+              "time_seconds": "0.026"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryBackupIntegrationTest",
+              "name": "restoredMaximumOpenCountSaturatesAcrossBothOpenEntryPoints",
+              "status": "passed",
+              "time_seconds": "0.079"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryBackupIntegrationTest",
+              "name": "malformedMetadataFailsBeforeCreatingAnyLibrary",
+              "status": "passed",
+              "time_seconds": "0.179"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryConsolidationIntegrationTest",
+              "name": "undoProtectsDefaultEvenIfPreferenceWasChangedAfterCreation",
+              "status": "passed",
+              "time_seconds": "0.079"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryConsolidationIntegrationTest",
+              "name": "undoRefusesAnyMediaTaskWithoutDeletingItsMetadataOrSources",
+              "status": "passed",
+              "time_seconds": "0.08"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryConsolidationIntegrationTest",
+              "name": "explicitMergeKeepsEverySourceNoteFolderAndVisitInAnotherLibrary",
+              "status": "passed",
+              "time_seconds": "0.074"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryConsolidationIntegrationTest",
+              "name": "erasingEitherPreparedSourceExpiresPreviewWithoutCloningDeletedData",
+              "status": "passed",
+              "time_seconds": "0.053"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryConsolidationIntegrationTest",
+              "name": "undoRefusesResultWithLaterMetadataEditsAndKeepsSources",
+              "status": "passed",
+              "time_seconds": "0.082"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryConsolidationIntegrationTest",
+              "name": "olderMandatoryClearDuringUndoPreflightRejectsWithoutDurableDeletion",
+              "status": "passed",
+              "time_seconds": "0.08"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryConsolidationIntegrationTest",
+              "name": "sourceMustBeExplicitDistinctAndRegistered",
+              "status": "passed",
+              "time_seconds": "0.05"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryConsolidationIntegrationTest",
+              "name": "undoRemovesOnlyItsUnchangedNewResultAndCannotBeReused",
+              "status": "passed",
+              "time_seconds": "0.078"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryConsolidationIntegrationTest",
+              "name": "conflictingLegacyActionSourcesFailBeforePreviewAndKeepOriginals",
+              "status": "passed",
+              "time_seconds": "0.054"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "partialMetadataDoesNotTruncateStoredTextOrSearchIndex",
+              "status": "passed",
+              "time_seconds": "0.026"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "nativeArchiveActivityLoads",
+              "status": "passed",
+              "time_seconds": "0.152"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "databaseV1MigrationPreservesHistory",
+              "status": "passed",
+              "time_seconds": "0.078"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "nativeCreationStoresNewPostAndRelatedParentWithoutSyntheticOpens",
+              "status": "passed",
+              "time_seconds": "0.033"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "manualLocalSpaceSavesLinkWithoutFakeReadingHistory",
+              "status": "passed",
+              "time_seconds": "0.126"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "databaseV2UpgradeKeepsScopesMappingsAndUnknownLegacyDurations",
+              "status": "passed",
+              "time_seconds": "0.077"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "confirmedNativeFixtureRepostAndReversalKeepIndependentData",
+              "status": "passed",
+              "time_seconds": "0.025"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "historyFeedAndSearchAreAccountScoped",
+              "status": "passed",
+              "time_seconds": "0.026"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "officialPostsJsImportsOfflineWithoutFakeVisits",
+              "status": "passed",
+              "time_seconds": "0.029"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "favoritesNotesTagsAndHistoryErasureHaveSeparateScopes",
+              "status": "passed",
+              "time_seconds": "0.025"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "durationSourceAndFeedDateMustMatchTheSameExposure",
+              "status": "passed",
+              "time_seconds": "0.027"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "nativeNavigationAndExposureIdentitiesArePersistentAndIndependent",
+              "status": "passed",
+              "time_seconds": "0.052"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "largeHistoryCanPageWithoutLosingEarlierVisits",
+              "status": "passed",
+              "time_seconds": "0.228"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "databaseV3MigrationPreservesActionsWithoutInventingActorOrObservationTime",
+              "status": "passed",
+              "time_seconds": "0.103"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "foldersAndActionsDoNotLeakBetweenAccounts",
+              "status": "passed",
+              "time_seconds": "0.027"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "ambiguousRetweetTextRetainsSnapshotWithoutInventingRepostAndImportsParents",
+              "status": "passed",
+              "time_seconds": "0.026"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.LibraryUiTest",
+              "name": "nativeSearchFiltersMeasuredDwellAndNeverOpenedOffline",
+              "status": "passed",
+              "time_seconds": "0.454"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.LibraryUiTest",
+              "name": "nativeConfirmedActivityAndReversalAreSearchableInActualIndexUi",
+              "status": "passed",
+              "time_seconds": "0.507"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.LibraryUiTest",
+              "name": "batchFailureRollsBackFavoritesAndKeepsOtherScope",
+              "status": "passed",
+              "time_seconds": "0.053"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.LibraryUiTest",
+              "name": "batchFavoriteTagCategoryAndUnfavoriteUseActualNativeControls",
+              "status": "passed",
+              "time_seconds": "1.109"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.LibraryUiTest",
+              "name": "existingLibraryIntentSelectsSeparateScopeWithoutChangingDefault",
+              "status": "passed",
+              "time_seconds": "0.355"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.LibraryUiTest",
+              "name": "editExistingFavoriteTagsAndClearHistoryKeepLocalFavorite",
+              "status": "passed",
+              "time_seconds": "0.608"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.LibraryUiTest",
+              "name": "recordingPreferencesAreIndependentAndPersisted",
+              "status": "passed",
+              "time_seconds": "0.029"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.LibraryUiTest",
+              "name": "historicalTextSearchAndSnapshotBrowserDoNotReplaceCurrent",
+              "status": "passed",
+              "time_seconds": "0.979"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.LibraryUiTest",
+              "name": "snapshotPaginationReachesOldestBeyondTwoHundredAndSearchKeepsCurrent",
+              "status": "passed",
+              "time_seconds": "1.341"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.SnapshotVersionIntegrationTest",
+              "name": "clearingVisitsKeepsVersionsButDeletingScopeCascadesOnlyThatScope",
+              "status": "passed",
+              "time_seconds": "0.028"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.SnapshotVersionIntegrationTest",
+              "name": "partialLinkOnlyAndOutOfOrderBodiesDoNotReplaceCompleteCurrent",
+              "status": "passed",
+              "time_seconds": "0.025"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.SnapshotVersionIntegrationTest",
+              "name": "lateAuthorAndPublicationEnrichSameTextWithoutInventingNewCaptureOrVersion",
+              "status": "passed",
+              "time_seconds": "0.053"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.SnapshotVersionIntegrationTest",
+              "name": "v4MigrationPreservesBodyFtsRelationsAndUnknownCaptureTime",
+              "status": "passed",
+              "time_seconds": "0.101"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.SnapshotVersionIntegrationTest",
+              "name": "newerCompleteShortEditRetainsOldVersionAndBothSearchIndexes",
+              "status": "passed",
+              "time_seconds": "0.028"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.SnapshotVersionIntegrationTest",
+              "name": "deletedScopeRejectsDirectNativeWritesEvenAfterWaitingForDatabaseLock",
+              "status": "passed",
+              "time_seconds": "0.025"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.SnapshotVersionIntegrationTest",
+              "name": "archiveSnapshotHasImportProvenanceWithoutInventingWebsiteEditOrVisit",
+              "status": "passed",
+              "time_seconds": "0.026"
+            }
+          ]
+        },
+        "app-android": {
+          "xml_path": "app-android/build/outputs/androidTest-results/connected/debug/TEST-emulator-5554 - 11-_app-android-.xml",
+          "counts": {
+            "tests": 68,
+            "failures": 9,
+            "errors": 0,
+            "skipped": 0
+          },
+          "time_seconds": "164.632",
+          "class_counts": {
+            "dev.forcemind.xs.android.AssetLibraryUiTest": 4,
+            "dev.forcemind.xs.android.FullBackupIntegrationTest": 9,
+            "dev.forcemind.xs.android.MediaDownloadEngineTest": 4,
+            "dev.forcemind.xs.android.MediaDurabilityTest": 10,
+            "dev.forcemind.xs.android.VideoDownloadEngineTest": 6,
+            "dev.forcemind.xs.browser.BrowserContainerTest": 8,
+            "dev.forcemind.xs.browser.BrowserPrivacyIntegrationTest": 3,
+            "dev.forcemind.xs.browser.MediaSharingTest": 6,
+            "dev.forcemind.xs.browser.NativeCaptureIntegrationTest": 7,
+            "dev.forcemind.xs.browser.ObservationParserTest": 3,
+            "dev.forcemind.xs.browser.PageCleanupIntegrationTest": 4,
+            "dev.forcemind.xs.browser.PostImageSelectionTest": 2,
+            "dev.forcemind.xs.browser.PostVideoSelectionTest": 2
+          },
+          "cases": [
+            {
+              "class": "dev.forcemind.xs.android.AssetLibraryUiTest",
+              "name": "actualAssetsUiSearchesThenBatchCategorizesAndDeletesOnlySelected",
+              "status": "passed",
+              "time_seconds": "2.185"
+            },
+            {
+              "class": "dev.forcemind.xs.android.AssetLibraryUiTest",
+              "name": "failedFilePurgeRemainsRevokedAndStartupRetryCompletesOnlyPendingScope",
+              "status": "passed",
+              "time_seconds": "0.053"
+            },
+            {
+              "class": "dev.forcemind.xs.android.AssetLibraryUiTest",
+              "name": "failedPreferenceCommitRestoresCachedSetsWithoutRevokingWriter",
+              "status": "passed",
+              "time_seconds": "0.029"
+            },
+            {
+              "class": "dev.forcemind.xs.android.AssetLibraryUiTest",
+              "name": "wholeLibraryUiRequiresTypedConfirmationAndPreservesOtherScopeAndShareLease",
+              "status": "passed",
+              "time_seconds": "0.593"
+            },
+            {
+              "class": "dev.forcemind.xs.android.FullBackupIntegrationTest",
+              "name": "authenticatedMaliciousAssetDescriptorsAndInvalidMediaAreRejected",
+              "status": "passed",
+              "time_seconds": "25.5"
+            },
+            {
+              "class": "dev.forcemind.xs.android.FullBackupIntegrationTest",
+              "name": "encryptedRoundTripRestoresActualImageVideoMetadataAndShareableBytes",
+              "status": "failed",
+              "time_seconds": "6.024",
+              "diagnostic": "java.lang.AssertionError: expected:<0> but was:<1>\nat org.junit.Assert.fail(Assert.java:89)\nat org.junit.Assert.failNotEquals(Assert.java:835)\nat org.junit.Assert.assertEquals(Assert.java:647)\nat org.junit.Assert.assertEquals(Assert.java:633)\nat dev.forcemind.xs.android.FullBackupIntegrationTest.encryptedRoundTripRestoresActualImageVideoMetadataAndShareableBytes(FullBackupIntegrationTest.java:84)\n"
+            },
+            {
+              "class": "dev.forcemind.xs.android.FullBackupIntegrationTest",
+              "name": "sqliteFailureAfterResourceStagingRollsBackEveryNewResourceAndMarker",
+              "status": "failed",
+              "time_seconds": "5.773",
+              "diagnostic": "java.lang.AssertionError: expected:<0> but was:<1>\nat org.junit.Assert.fail(Assert.java:89)\nat org.junit.Assert.failNotEquals(Assert.java:835)\nat org.junit.Assert.assertEquals(Assert.java:647)\nat org.junit.Assert.assertEquals(Assert.java:633)\nat dev.forcemind.xs.android.FullBackupIntegrationTest.sqliteFailureAfterResourceStagingRollsBackEveryNewResourceAndMarker(FullBackupIntegrationTest.java:113)\n"
+            },
+            {
+              "class": "dev.forcemind.xs.android.FullBackupIntegrationTest",
+              "name": "startupRecoveryDeletesUnpublishedResourcesButPreservesACommittedResult",
+              "status": "failed",
+              "time_seconds": "5.804",
+              "diagnostic": "java.lang.AssertionError\nat org.junit.Assert.fail(Assert.java:87)\nat org.junit.Assert.assertTrue(Assert.java:42)\nat org.junit.Assert.assertTrue(Assert.java:53)\nat dev.forcemind.xs.android.FullBackupIntegrationTest.marker(FullBackupIntegrationTest.java:188)\nat dev.forcemind.xs.android.FullBackupIntegrationTest.startupRecoveryDeletesUnpublishedResourcesButPreservesACommittedResult(FullBackupIntegrationTest.java:136)\n"
+            },
+            {
+              "class": "dev.forcemind.xs.android.FullBackupIntegrationTest",
+              "name": "clearingSourceExpiresPreparedFullRestoreWithoutResurrection",
+              "status": "failed",
+              "time_seconds": "5.519",
+              "diagnostic": "java.lang.AssertionError: expected:<0> but was:<1>\nat org.junit.Assert.fail(Assert.java:89)\nat org.junit.Assert.failNotEquals(Assert.java:835)\nat org.junit.Assert.assertEquals(Assert.java:647)\nat org.junit.Assert.assertEquals(Assert.java:633)\nat dev.forcemind.xs.android.FullBackupIntegrationTest.clearingSourceExpiresPreparedFullRestoreWithoutResurrection(FullBackupIntegrationTest.java:120)\n"
+            },
+            {
+              "class": "dev.forcemind.xs.android.FullBackupIntegrationTest",
+              "name": "publishedMarkerWaitsForACompleteRealWalCheckpointAndRetriesAfterBusyWriter",
+              "status": "failed",
+              "time_seconds": "2.563",
+              "diagnostic": "android.database.sqlite.SQLiteDatabaseLockedException: database is locked (code 5 SQLITE_BUSY)\nat android.database.sqlite.SQLiteConnection.nativeExecute(Native Method)\nat android.database.sqlite.SQLiteConnection.execute(SQLiteConnection.java:707)\nat android.database.sqlite.SQLiteSession.beginTransactionUnchecked(SQLiteSession.java:325)\nat android.database.sqlite.SQLiteSession.beginTransaction(SQLiteSession.java:300)\nat android.database.sqlite.SQLiteDatabase.beginTransaction(SQLiteDatabase.java:571)\nat android.database.sqlite.SQLiteDatabase.beginTransaction(SQLiteDatabase.java:481)\nat dev.forcemind.xs.android.XsArchiveDatabase.clearAccount(XsArchiveDatabase.java:757)\nat dev.forcemind.xs.android.XsFullBackup.recoverInterrupted(XsFullBackup.java:174)\nat dev.forcemind.xs.android.FullBackupIntegrationTest.publishedMarkerWaitsForACompleteRealWalCheckpointAndRetriesAfterBusyWriter(FullBackupIntegrationTest.java:148)\n"
+            },
+            {
+              "class": "dev.forcemind.xs.android.FullBackupIntegrationTest",
+              "name": "wrongPasswordTamperingTruncationAndCancellationNeverCreateALibrary",
+              "status": "passed",
+              "time_seconds": "12.492"
+            },
+            {
+              "class": "dev.forcemind.xs.android.FullBackupIntegrationTest",
+              "name": "sourceEpochChangeStopsExportBeforeAuthenticatedCompletion",
+              "status": "failed",
+              "time_seconds": "5.321",
+              "diagnostic": "java.lang.AssertionError: expected:<0> but was:<1>\nat org.junit.Assert.fail(Assert.java:89)\nat org.junit.Assert.failNotEquals(Assert.java:835)\nat org.junit.Assert.assertEquals(Assert.java:647)\nat org.junit.Assert.assertEquals(Assert.java:633)\nat dev.forcemind.xs.android.FullBackupIntegrationTest.sourceEpochChangeStopsExportBeforeAuthenticatedCompletion(FullBackupIntegrationTest.java:128)\n"
+            },
+            {
+              "class": "dev.forcemind.xs.android.FullBackupIntegrationTest",
+              "name": "rollbackJournalFullSyncRetainsMarkerAndExtraSyncCanRetireIt",
+              "status": "passed",
+              "time_seconds": "0.027"
+            },
+            {
+              "class": "dev.forcemind.xs.android.MediaDownloadEngineTest",
+              "name": "cancelAndErasureWhileReadingCannotRegisterAnAsset",
+              "status": "passed",
+              "time_seconds": "0.078"
+            },
+            {
+              "class": "dev.forcemind.xs.android.MediaDownloadEngineTest",
+              "name": "hostileRedirectIsRejectedBeforeOpeningItsDestination",
+              "status": "passed",
+              "time_seconds": "0.028"
+            },
+            {
+              "class": "dev.forcemind.xs.android.MediaDownloadEngineTest",
+              "name": "realEngineCompletesValidatedImageAndSharesEveryByte",
+              "status": "passed",
+              "time_seconds": "0.058"
+            },
+            {
+              "class": "dev.forcemind.xs.android.MediaDownloadEngineTest",
+              "name": "truncatedAndHtmlResponsesNeverBecomeCompletedAssets",
+              "status": "passed",
+              "time_seconds": "0.028"
+            },
+            {
+              "class": "dev.forcemind.xs.android.MediaDurabilityTest",
+              "name": "rejectedSchedulerAndTamperedCipherBecomeExplicitFailures",
+              "status": "passed",
+              "time_seconds": "0.051"
+            },
+            {
+              "class": "dev.forcemind.xs.android.MediaDurabilityTest",
+              "name": "networkRetriesAreBoundedAndRestartAtByteZero",
+              "status": "passed",
+              "time_seconds": "0.053"
+            },
+            {
+              "class": "dev.forcemind.xs.android.MediaDurabilityTest",
+              "name": "stopPolicyRespectsUserIntentAndLegacyLibraryLength",
+              "status": "passed",
+              "time_seconds": "0.026"
+            },
+            {
+              "class": "dev.forcemind.xs.android.MediaDurabilityTest",
+              "name": "erasureBarrierCancelsPersistedRequestAndLateJobStaysInert",
+              "status": "passed",
+              "time_seconds": "0.028"
+            },
+            {
+              "class": "dev.forcemind.xs.android.MediaDurabilityTest",
+              "name": "cancelClearsSecretAndOrphanCallbackCannotStartNetwork",
+              "status": "passed",
+              "time_seconds": "0.027"
+            },
+            {
+              "class": "dev.forcemind.xs.android.MediaDurabilityTest",
+              "name": "persistedJobContainsOnlyOpaqueNativeIdsAndProtectedService",
+              "status": "passed",
+              "time_seconds": "0.002"
+            },
+            {
+              "class": "dev.forcemind.xs.android.MediaDurabilityTest",
+              "name": "queuedUrlIsEncryptedBoundToTaskAndResumesAfterRepositoryRestart",
+              "status": "passed",
+              "time_seconds": "0.052"
+            },
+            {
+              "class": "dev.forcemind.xs.android.MediaDurabilityTest",
+              "name": "staleDeletedJobScopeIsRejectedWithoutStatusReentry",
+              "status": "passed",
+              "time_seconds": "0.025"
+            },
+            {
+              "class": "dev.forcemind.xs.android.MediaDurabilityTest",
+              "name": "systemStopPreservesEncryptedReferenceAndOldRunCannotComplete",
+              "status": "passed",
+              "time_seconds": "0.052"
+            },
+            {
+              "class": "dev.forcemind.xs.android.MediaDurabilityTest",
+              "name": "versionOneAndTwoMigrationPreservesAssetsAndLeaseRows",
+              "status": "passed",
+              "time_seconds": "0.052"
+            },
+            {
+              "class": "dev.forcemind.xs.android.VideoDownloadEngineTest",
+              "name": "mediaV1MigrationPreservesExistingImagesAndShareLeases",
+              "status": "passed",
+              "time_seconds": "0.029"
+            },
+            {
+              "class": "dev.forcemind.xs.android.VideoDownloadEngineTest",
+              "name": "codecTailFallbackReachesFinalPresentationBeyondPreviousSync",
+              "status": "passed",
+              "time_seconds": "0.302"
+            },
+            {
+              "class": "dev.forcemind.xs.android.VideoDownloadEngineTest",
+              "name": "fullMp4WithAudioCompletesPlaysAndSharesOriginalFile",
+              "status": "passed",
+              "time_seconds": "1.907"
+            },
+            {
+              "class": "dev.forcemind.xs.android.VideoDownloadEngineTest",
+              "name": "cancelAndEraseDuringVideoReadCannotComplete",
+              "status": "passed",
+              "time_seconds": "0.03"
+            },
+            {
+              "class": "dev.forcemind.xs.android.VideoDownloadEngineTest",
+              "name": "truncatedFragmentedHtmlAndPlaylistNeverRegisterVideo",
+              "status": "passed",
+              "time_seconds": "0.103"
+            },
+            {
+              "class": "dev.forcemind.xs.android.VideoDownloadEngineTest",
+              "name": "redirectPolicyBlocksPrivateDestinationBeforeOpeningIt",
+              "status": "passed",
+              "time_seconds": "0.029"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.BrowserContainerTest",
+              "name": "actualWebViewExecutesSyntheticPageWithoutNativeArchive",
+              "status": "passed",
+              "time_seconds": "1.311"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.BrowserContainerTest",
+              "name": "nonWebNavigationAndWebPermissionsAreDenied",
+              "status": "passed",
+              "time_seconds": "0.504"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.BrowserContainerTest",
+              "name": "configurationRecreationRetainsActualPageAndJavascriptState",
+              "status": "passed",
+              "time_seconds": "1.01"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.BrowserContainerTest",
+              "name": "realWebViewBackAndReloadUseSyntheticHttpsResponses",
+              "status": "passed",
+              "time_seconds": "0.781"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.BrowserContainerTest",
+              "name": "subframeErrorsDoNotReplacePageAndRendererLossIsRecoverable",
+              "status": "passed",
+              "time_seconds": "0.408"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.BrowserContainerTest",
+              "name": "httpFailureCallbackDisplaysNativeRetry",
+              "status": "passed",
+              "time_seconds": "0.805"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.BrowserContainerTest",
+              "name": "initialHostHasNoNavigationAndRestrictedSettings",
+              "status": "passed",
+              "time_seconds": "0.458"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.BrowserContainerTest",
+              "name": "sharedPostLinkRequiresExplicitSaveBeforeAnyLocalWrite",
+              "status": "passed",
+              "time_seconds": "0.431"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.BrowserPrivacyIntegrationTest",
+              "name": "confirmedSessionReplacesDOMClearsWebStateAndRejectsOldCallbacks",
+              "status": "failed",
+              "time_seconds": "1.166",
+              "diagnostic": "java.lang.AssertionError: expected:<1> but was:<0>\nat org.junit.Assert.fail(Assert.java:89)\nat org.junit.Assert.failNotEquals(Assert.java:835)\nat org.junit.Assert.assertEquals(Assert.java:647)\nat org.junit.Assert.assertEquals(Assert.java:633)\nat dev.forcemind.xs.browser.BrowserPrivacyIntegrationTest.assertNativeResources(BrowserPrivacyIntegrationTest.java:131)\nat dev.forcemind.xs.browser.BrowserPrivacyIntegrationTest.confirmedSessionReplacesDOMClearsWebStateAndRejectsOldCallbacks(BrowserPrivacyIntegrationTest.java:164)\n"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.BrowserPrivacyIntegrationTest",
+              "name": "cacheConfirmationKeepsWebsiteStateAndActualNativeFiles",
+              "status": "failed",
+              "time_seconds": "0.884",
+              "diagnostic": "java.lang.AssertionError: expected:<1> but was:<0>\nat org.junit.Assert.fail(Assert.java:89)\nat org.junit.Assert.failNotEquals(Assert.java:835)\nat org.junit.Assert.assertEquals(Assert.java:647)\nat org.junit.Assert.assertEquals(Assert.java:633)\nat dev.forcemind.xs.browser.BrowserPrivacyIntegrationTest.assertNativeResources(BrowserPrivacyIntegrationTest.java:131)\nat dev.forcemind.xs.browser.BrowserPrivacyIntegrationTest.cacheConfirmationKeepsWebsiteStateAndActualNativeFiles(BrowserPrivacyIntegrationTest.java:138)\n"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.BrowserPrivacyIntegrationTest",
+              "name": "destroyedActivityWithOldDeepLinkStaysEmptyUntilCurrentNativeConfirmation",
+              "status": "failed",
+              "time_seconds": "45.822",
+              "diagnostic": "java.lang.AssertionError: Activity never becomes requested state \"[DESTROYED]\" (last lifecycle transition = \"RESUMED\")\nat androidx.test.core.app.ActivityScenario.waitForActivityToBecomeAnyOf(ActivityScenario.java:454)\nat androidx.test.core.app.ActivityScenario.moveToState(ActivityScenario.java:689)\nat androidx.test.core.app.ActivityScenario.close(ActivityScenario.java:421)\nat dev.forcemind.xs.browser.BrowserPrivacyIntegrationTest.cleanup(BrowserPrivacyIntegrationTest.java:96)\n"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.MediaSharingTest",
+              "name": "singleImageSharesActualReadOnlyBytesAfterSourceDeletion",
+              "status": "passed",
+              "time_seconds": "0.001"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.MediaSharingTest",
+              "name": "providerRejectsRootTraversalExpiredAndUnfinishedFiles",
+              "status": "passed",
+              "time_seconds": "0.024"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.MediaSharingTest",
+              "name": "textSharingCanonicalizesSourceAndNeverAddsPrivateMetadata",
+              "status": "passed",
+              "time_seconds": "0.002"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.MediaSharingTest",
+              "name": "cacheAndOtherLibraryDeletionPreserveSavedImage",
+              "status": "passed",
+              "time_seconds": "0.027"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.MediaSharingTest",
+              "name": "failedBatchShareRollsBackOnlyItsOwnNewCopies",
+              "status": "passed",
+              "time_seconds": "0.0"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.MediaSharingTest",
+              "name": "multipleImageIntentContainsOnlyChosenCopies",
+              "status": "passed",
+              "time_seconds": "0.025"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.NativeCaptureIntegrationTest",
+              "name": "immediateOpenLateBodyReloadAndQuickReturn",
+              "status": "passed",
+              "time_seconds": "0.858"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.NativeCaptureIntegrationTest",
+              "name": "overlayAndBackgroundBreakContinuousIntervals",
+              "status": "passed",
+              "time_seconds": "9.509"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.NativeCaptureIntegrationTest",
+              "name": "transparentParentsAndVirtualRebindsNeverCreateNativeOpens",
+              "status": "passed",
+              "time_seconds": "0.884"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.NativeCaptureIntegrationTest",
+              "name": "screenOffBreaksDwellAndStopsTheFixtureObserver",
+              "status": "passed",
+              "time_seconds": "6.48"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.NativeCaptureIntegrationTest",
+              "name": "noClickDwellIsMeasuredAndOfflineNeverOpenedSearchWorks",
+              "status": "passed",
+              "time_seconds": "5.244"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.NativeCaptureIntegrationTest",
+              "name": "nativeTextEvidenceKeepsPartialAndAcceptsNewerShortCompleteBody",
+              "status": "passed",
+              "time_seconds": "1.11"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.NativeCaptureIntegrationTest",
+              "name": "pauseOverlayAndDestroyStopPageWorkAndOldConsentCannotRevive",
+              "status": "passed",
+              "time_seconds": "4.119"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.ObservationParserTest",
+              "name": "typedEnvelopeNeedsNativeMainFrameGestureAndScope",
+              "status": "passed",
+              "time_seconds": "0.004"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.ObservationParserTest",
+              "name": "onlyAllowedTypedPublicObservationsAreParsed",
+              "status": "passed",
+              "time_seconds": "0.001"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.ObservationParserTest",
+              "name": "rejectAccountControlAndUnauthorizedInstructions",
+              "status": "passed",
+              "time_seconds": "0.022"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.PageCleanupIntegrationTest",
+              "name": "independentDefaultsAndExactStyleRestorationKeepOrdinaryContent",
+              "status": "passed",
+              "time_seconds": "0.959"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.PageCleanupIntegrationTest",
+              "name": "nativePauseNavigationAndDestroyRestoreAndPreserveReadingAnchor",
+              "status": "passed",
+              "time_seconds": "0.905"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.PageCleanupIntegrationTest",
+              "name": "unknownStructuresSensitiveSpaAndPaidPagesFailClosed",
+              "status": "passed",
+              "time_seconds": "0.937"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.PageCleanupIntegrationTest",
+              "name": "hiddenPromotedCardCannotProduceFeedExposure",
+              "status": "passed",
+              "time_seconds": "2.364"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.PostImageSelectionTest",
+              "name": "untrustedImageListCannotChoosePrivateHostsOrExtraData",
+              "status": "passed",
+              "time_seconds": "0.025"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.PostImageSelectionTest",
+              "name": "selectedPostExcludesQuotedAndOtherPostImages",
+              "status": "passed",
+              "time_seconds": "0.627"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.PostVideoSelectionTest",
+              "name": "rawListCannotTurnBlobManifestOrPrivateAddressesIntoVideo",
+              "status": "passed",
+              "time_seconds": "0.002"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.PostVideoSelectionTest",
+              "name": "currentPostExcludesQuotedProtectedAndOtherPostVideos",
+              "status": "passed",
+              "time_seconds": "0.984"
+            }
+          ]
+        }
+      },
+      "totals": {
+        "tests": 120,
+        "failures": 12,
+        "errors": 0,
+        "skipped": 0
+      },
+      "job_local_apk_provenance": {
+        "schema_version": 1,
+        "recorded_at_utc": "2026-11-07T12:36:28.957698+00:00",
+        "evidence_scope": "Job-local APK availability and public signing certificates only; test execution/outcomes come from this job's instrumentation reports. This is not real-X, physical-device or recipient-app acceptance.",
+        "source": {
+          "head_commit": "67b594c27eda42de9782b692320bab51457dec81",
+          "head_tree": "cf99e2281e5e23e528d8b2bffd2845d1ff103549",
+          "working_tree_clean": true,
+          "working_tree_status": []
+        },
+        "apksigner": "/usr/local/lib/android/sdk/build-tools/37.0.0/apksigner",
+        "artifacts": [
+          {
+            "module": "app-android",
+            "role": "application",
+            "path": "app-android/build/outputs/apk/debug/app-android-debug.apk",
+            "availability": "present",
+            "bytes": 317135,
+            "sha256": "28a1c6a26d8130b71be50664fea5eadcb858d1fc6753a6e11878adf6266e0281",
+            "signature_verification": {
+              "exit_code": 0,
+              "stdout": "V2 Signer: certificate DN: C=US, O=Android, CN=Android Debug\nV2 Signer: certificate SHA-256 digest: edf65c321d6639c14206284b7139cd7760335363a5d8343fb9a34f7230401cae\nV2 Signer: certificate SHA-1 digest: 3e1112d59aea55fcf2c676af62354dfdb690e5fa\nV2 Signer: certificate MD5 digest: 3b7a98b6deaef8315965763c1df9d0bb",
+              "stderr": "",
+              "status": "passed"
+            }
+          },
+          {
+            "module": "app-android",
+            "role": "instrumentation",
+            "path": "app-android/build/outputs/apk/androidTest/debug/app-android-debug-androidTest.apk",
+            "availability": "present",
+            "bytes": 1752947,
+            "sha256": "61cbc0a08c90822a499178152b6c9b477225ffcaf1b6ad50597e7c5cd078e208",
+            "signature_verification": {
+              "exit_code": 0,
+              "stdout": "V2 Signer: certificate DN: C=US, O=Android, CN=Android Debug\nV2 Signer: certificate SHA-256 digest: edf65c321d6639c14206284b7139cd7760335363a5d8343fb9a34f7230401cae\nV2 Signer: certificate SHA-1 digest: 3e1112d59aea55fcf2c676af62354dfdb690e5fa\nV2 Signer: certificate MD5 digest: 3b7a98b6deaef8315965763c1df9d0bb",
+              "stderr": "",
+              "status": "passed"
+            }
+          },
+          {
+            "module": "dev-harness",
+            "role": "application",
+            "path": "dev-harness/build/outputs/apk/debug/dev-harness-debug.apk",
+            "availability": "present",
+            "bytes": 273754,
+            "sha256": "a6690ec503aa9481fa816d1bc887067184bb9d40bc974c674a538adcb655e68c",
+            "signature_verification": {
+              "exit_code": 0,
+              "stdout": "V2 Signer: certificate DN: C=US, O=Android, CN=Android Debug\nV2 Signer: certificate SHA-256 digest: edf65c321d6639c14206284b7139cd7760335363a5d8343fb9a34f7230401cae\nV2 Signer: certificate SHA-1 digest: 3e1112d59aea55fcf2c676af62354dfdb690e5fa\nV2 Signer: certificate MD5 digest: 3b7a98b6deaef8315965763c1df9d0bb",
+              "stderr": "",
+              "status": "passed"
+            }
+          },
+          {
+            "module": "dev-harness",
+            "role": "instrumentation",
+            "path": "dev-harness/build/outputs/apk/androidTest/debug/dev-harness-debug-androidTest.apk",
+            "availability": "present",
+            "bytes": 1725941,
+            "sha256": "3240cb8708f1babd83f8b2975e22291cea11e02d71010f7d7c9239c9d65f3f2b",
+            "signature_verification": {
+              "exit_code": 0,
+              "stdout": "V2 Signer: certificate DN: C=US, O=Android, CN=Android Debug\nV2 Signer: certificate SHA-256 digest: edf65c321d6639c14206284b7139cd7760335363a5d8343fb9a34f7230401cae\nV2 Signer: certificate SHA-1 digest: 3e1112d59aea55fcf2c676af62354dfdb690e5fa\nV2 Signer: certificate MD5 digest: 3b7a98b6deaef8315965763c1df9d0bb",
+              "stderr": "",
+              "status": "passed"
+            }
+          }
+        ]
+      }
+    },
+    "36": {
+      "android_api": 36,
+      "android_release": "16",
+      "webview": {
+        "package": "com.google.android.webview",
+        "version": "133.0.6943.137"
+      },
+      "device_configuration": "config: mcc310-mnc260-en-rUS-ldltr-sw320dp-w320dp-h640dp-normal-long-notround-nowidecg-lowdr-port-notnight-mdpi-finger-keysexposed-qwerty-navhidden-nonav-640x320-v36\nabi: x86_64,arm64-v8a",
+      "locale_snapshot": "",
+      "night_mode": "Night mode: no",
+      "artifact": {
+        "id": 13574044236,
+        "name": "xs-android-test-reports-api-36",
+        "size_in_bytes": 846729,
+        "digest": "sha256:0ff3998cc713d64cb3d23258935dbcf4a9f331d47d20e0120ae4893c95280081",
+        "downloaded_zip_sha256": "0ff3998cc713d64cb3d23258935dbcf4a9f331d47d20e0120ae4893c95280081",
+        "digest_verified": true
+      },
+      "modules": {
+        "dev-harness": {
+          "xml_path": "dev-harness/build/outputs/androidTest-results/connected/debug/TEST-emulator-5554 - 16-_dev-harness-.xml",
+          "counts": {
+            "tests": 52,
+            "failures": 3,
+            "errors": 0,
+            "skipped": 0
+          },
+          "time_seconds": "75.859",
+          "class_counts": {
+            "dev.forcemind.xs.android.GovernanceUiTest": 4,
+            "dev.forcemind.xs.android.LibraryBackupIntegrationTest": 7,
+            "dev.forcemind.xs.android.LibraryConsolidationIntegrationTest": 9,
+            "dev.forcemind.xs.harness.ArchiveIntegrationTest": 16,
+            "dev.forcemind.xs.harness.LibraryUiTest": 9,
+            "dev.forcemind.xs.harness.SnapshotVersionIntegrationTest": 7
+          },
+          "cases": [
+            {
+              "class": "dev.forcemind.xs.android.GovernanceUiTest",
+              "name": "assetsMultiSelectSafZipContainsEverySelectedOriginalFile",
+              "status": "passed",
+              "time_seconds": "9.211"
+            },
+            {
+              "class": "dev.forcemind.xs.android.GovernanceUiTest",
+              "name": "consolidationNativePreviewCancelConfirmAndUndoPreserveSourcesAndDefault",
+              "status": "failed",
+              "time_seconds": "2.349",
+              "diagnostic": "java.lang.AssertionError: expected:<1> but was:<0>\nat org.junit.Assert.fail(Assert.java:89)\nat org.junit.Assert.failNotEquals(Assert.java:835)\nat org.junit.Assert.assertEquals(Assert.java:647)\nat org.junit.Assert.assertEquals(Assert.java:633)\nat dev.forcemind.xs.android.GovernanceUiTest.assertSearchable(GovernanceUiTest.java:197)\nat dev.forcemind.xs.android.GovernanceUiTest.consolidationNativePreviewCancelConfirmAndUndoPreserveSourcesAndDefault(GovernanceUiTest.java:135)\n"
+            },
+            {
+              "class": "dev.forcemind.xs.android.GovernanceUiTest",
+              "name": "metadataSafExportPreviewCancelAndConfirmUseActualDocumentBytes",
+              "status": "failed",
+              "time_seconds": "4.937",
+              "diagnostic": "java.lang.AssertionError: Native UI is not clickable: [xs-library-metadata.xsmeta]\nat dev.forcemind.xs.android.GovernanceUiTest.clickText(GovernanceUiTest.java:235)\nat dev.forcemind.xs.android.GovernanceUiTest.openFixtureFile(GovernanceUiTest.java:224)\nat dev.forcemind.xs.android.GovernanceUiTest.metadataSafExportPreviewCancelAndConfirmUseActualDocumentBytes(GovernanceUiTest.java:97)\n"
+            },
+            {
+              "class": "dev.forcemind.xs.android.GovernanceUiTest",
+              "name": "encryptedFullSafRoundTripValidatesPasswordAndRestoresActualImage",
+              "status": "failed",
+              "time_seconds": "45.304",
+              "diagnostic": "java.lang.RuntimeException: Could not launch intent Intent { flg=0x10000000 cmp=dev.forcemind.xs.harness/dev.forcemind.xs.android.XsBackupActivity (has extras) } within 45000 milliseconds. Perhaps the main thread has not gone idle within a reasonable amount of time? There could be an animation or something constantly repainting the screen. Or the activity is doing network calls on creation? See the threaddump logs. For your reference the last time the event queue was idle before your activity launch request was 1794054780639 and now the last time the queue went idle was: 1794054797909. If these numbers are the same your activity might be hogging the event queue.\nat androidx.test.runner.MonitoringInstrumentation.startActivitySync(MonitoringInstrumentation.java:537)\nat dev.forcemind.xs.android.GovernanceUiTest.openBackup(GovernanceUiTest.java:192)\nat dev.forcemind.xs.android.GovernanceUiTest.encryptedFullSafRoundTripValidatesPasswordAndRestoresActualImage(GovernanceUiTest.java:109)\n"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryBackupIntegrationTest",
+              "name": "metadataRoundTripPreservesUnicodeTimesDwellAndSearchWithoutPrivateFiles",
+              "status": "passed",
+              "time_seconds": "0.078"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryBackupIntegrationTest",
+              "name": "generatedLongLabelIsUnicodeSafeAndRepeatedRestoreIsAlwaysSeparate",
+              "status": "passed",
+              "time_seconds": "0.084"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryBackupIntegrationTest",
+              "name": "schemaThreeRestoreProjectsUnknownOwnActionsWithoutInventedTimesOrActor",
+              "status": "passed",
+              "time_seconds": "0.05"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryBackupIntegrationTest",
+              "name": "restoreRollbackPreservesOriginalForEarlyAndLateGuardFailure",
+              "status": "passed",
+              "time_seconds": "0.154"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryBackupIntegrationTest",
+              "name": "libraryErasureInvalidatesQueuedRestoreAndCannotResurrectMetadata",
+              "status": "passed",
+              "time_seconds": "0.028"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryBackupIntegrationTest",
+              "name": "restoredMaximumOpenCountSaturatesAcrossBothOpenEntryPoints",
+              "status": "passed",
+              "time_seconds": "0.053"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryBackupIntegrationTest",
+              "name": "malformedMetadataFailsBeforeCreatingAnyLibrary",
+              "status": "passed",
+              "time_seconds": "0.178"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryConsolidationIntegrationTest",
+              "name": "undoProtectsDefaultEvenIfPreferenceWasChangedAfterCreation",
+              "status": "passed",
+              "time_seconds": "0.077"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryConsolidationIntegrationTest",
+              "name": "undoRefusesAnyMediaTaskWithoutDeletingItsMetadataOrSources",
+              "status": "passed",
+              "time_seconds": "0.053"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryConsolidationIntegrationTest",
+              "name": "explicitMergeKeepsEverySourceNoteFolderAndVisitInAnotherLibrary",
+              "status": "passed",
+              "time_seconds": "0.053"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryConsolidationIntegrationTest",
+              "name": "erasingEitherPreparedSourceExpiresPreviewWithoutCloningDeletedData",
+              "status": "passed",
+              "time_seconds": "0.053"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryConsolidationIntegrationTest",
+              "name": "undoRefusesResultWithLaterMetadataEditsAndKeepsSources",
+              "status": "passed",
+              "time_seconds": "0.083"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryConsolidationIntegrationTest",
+              "name": "olderMandatoryClearDuringUndoPreflightRejectsWithoutDurableDeletion",
+              "status": "passed",
+              "time_seconds": "0.077"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryConsolidationIntegrationTest",
+              "name": "sourceMustBeExplicitDistinctAndRegistered",
+              "status": "passed",
+              "time_seconds": "0.027"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryConsolidationIntegrationTest",
+              "name": "undoRemovesOnlyItsUnchangedNewResultAndCannotBeReused",
+              "status": "passed",
+              "time_seconds": "0.077"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryConsolidationIntegrationTest",
+              "name": "conflictingLegacyActionSourcesFailBeforePreviewAndKeepOriginals",
+              "status": "passed",
+              "time_seconds": "0.053"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "partialMetadataDoesNotTruncateStoredTextOrSearchIndex",
+              "status": "passed",
+              "time_seconds": "0.027"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "nativeArchiveActivityLoads",
+              "status": "passed",
+              "time_seconds": "0.684"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "databaseV1MigrationPreservesHistory",
+              "status": "passed",
+              "time_seconds": "0.103"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "nativeCreationStoresNewPostAndRelatedParentWithoutSyntheticOpens",
+              "status": "passed",
+              "time_seconds": "0.03"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "manualLocalSpaceSavesLinkWithoutFakeReadingHistory",
+              "status": "passed",
+              "time_seconds": "0.179"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "databaseV2UpgradeKeepsScopesMappingsAndUnknownLegacyDurations",
+              "status": "passed",
+              "time_seconds": "0.103"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "confirmedNativeFixtureRepostAndReversalKeepIndependentData",
+              "status": "passed",
+              "time_seconds": "0.03"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "historyFeedAndSearchAreAccountScoped",
+              "status": "passed",
+              "time_seconds": "0.002"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "officialPostsJsImportsOfflineWithoutFakeVisits",
+              "status": "passed",
+              "time_seconds": "0.055"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "favoritesNotesTagsAndHistoryErasureHaveSeparateScopes",
+              "status": "passed",
+              "time_seconds": "0.025"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "durationSourceAndFeedDateMustMatchTheSameExposure",
+              "status": "passed",
+              "time_seconds": "0.026"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "nativeNavigationAndExposureIdentitiesArePersistentAndIndependent",
+              "status": "passed",
+              "time_seconds": "0.027"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "largeHistoryCanPageWithoutLosingEarlierVisits",
+              "status": "passed",
+              "time_seconds": "0.179"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "databaseV3MigrationPreservesActionsWithoutInventingActorOrObservationTime",
+              "status": "passed",
+              "time_seconds": "0.101"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "foldersAndActionsDoNotLeakBetweenAccounts",
+              "status": "passed",
+              "time_seconds": "0.026"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "ambiguousRetweetTextRetainsSnapshotWithoutInventingRepostAndImportsParents",
+              "status": "passed",
+              "time_seconds": "0.027"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.LibraryUiTest",
+              "name": "nativeSearchFiltersMeasuredDwellAndNeverOpenedOffline",
+              "status": "passed",
+              "time_seconds": "0.96"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.LibraryUiTest",
+              "name": "nativeConfirmedActivityAndReversalAreSearchableInActualIndexUi",
+              "status": "passed",
+              "time_seconds": "0.651"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.LibraryUiTest",
+              "name": "batchFailureRollsBackFavoritesAndKeepsOtherScope",
+              "status": "passed",
+              "time_seconds": "0.08"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.LibraryUiTest",
+              "name": "batchFavoriteTagCategoryAndUnfavoriteUseActualNativeControls",
+              "status": "passed",
+              "time_seconds": "1.414"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.LibraryUiTest",
+              "name": "existingLibraryIntentSelectsSeparateScopeWithoutChangingDefault",
+              "status": "passed",
+              "time_seconds": "0.458"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.LibraryUiTest",
+              "name": "editExistingFavoriteTagsAndClearHistoryKeepLocalFavorite",
+              "status": "passed",
+              "time_seconds": "0.784"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.LibraryUiTest",
+              "name": "recordingPreferencesAreIndependentAndPersisted",
+              "status": "passed",
+              "time_seconds": "0.077"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.LibraryUiTest",
+              "name": "historicalTextSearchAndSnapshotBrowserDoNotReplaceCurrent",
+              "status": "passed",
+              "time_seconds": "0.985"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.LibraryUiTest",
+              "name": "snapshotPaginationReachesOldestBeyondTwoHundredAndSearchKeepsCurrent",
+              "status": "passed",
+              "time_seconds": "1.527"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.SnapshotVersionIntegrationTest",
+              "name": "clearingVisitsKeepsVersionsButDeletingScopeCascadesOnlyThatScope",
+              "status": "passed",
+              "time_seconds": "0.051"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.SnapshotVersionIntegrationTest",
+              "name": "partialLinkOnlyAndOutOfOrderBodiesDoNotReplaceCompleteCurrent",
+              "status": "passed",
+              "time_seconds": "0.026"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.SnapshotVersionIntegrationTest",
+              "name": "lateAuthorAndPublicationEnrichSameTextWithoutInventingNewCaptureOrVersion",
+              "status": "passed",
+              "time_seconds": "0.026"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.SnapshotVersionIntegrationTest",
+              "name": "v4MigrationPreservesBodyFtsRelationsAndUnknownCaptureTime",
+              "status": "passed",
+              "time_seconds": "0.102"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.SnapshotVersionIntegrationTest",
+              "name": "newerCompleteShortEditRetainsOldVersionAndBothSearchIndexes",
+              "status": "passed",
+              "time_seconds": "0.027"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.SnapshotVersionIntegrationTest",
+              "name": "deletedScopeRejectsDirectNativeWritesEvenAfterWaitingForDatabaseLock",
+              "status": "passed",
+              "time_seconds": "0.026"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.SnapshotVersionIntegrationTest",
+              "name": "archiveSnapshotHasImportProvenanceWithoutInventingWebsiteEditOrVisit",
+              "status": "passed",
+              "time_seconds": "0.027"
+            }
+          ]
+        },
+        "app-android": {
+          "xml_path": "app-android/build/outputs/androidTest-results/connected/debug/TEST-emulator-5554 - 16-_app-android-.xml",
+          "counts": {
+            "tests": 68,
+            "failures": 3,
+            "errors": 0,
+            "skipped": 0
+          },
+          "time_seconds": "186.098",
+          "class_counts": {
+            "dev.forcemind.xs.android.AssetLibraryUiTest": 4,
+            "dev.forcemind.xs.android.FullBackupIntegrationTest": 9,
+            "dev.forcemind.xs.android.MediaDownloadEngineTest": 4,
+            "dev.forcemind.xs.android.MediaDurabilityTest": 10,
+            "dev.forcemind.xs.android.VideoDownloadEngineTest": 6,
+            "dev.forcemind.xs.browser.BrowserContainerTest": 8,
+            "dev.forcemind.xs.browser.BrowserPrivacyIntegrationTest": 3,
+            "dev.forcemind.xs.browser.MediaSharingTest": 6,
+            "dev.forcemind.xs.browser.NativeCaptureIntegrationTest": 7,
+            "dev.forcemind.xs.browser.ObservationParserTest": 3,
+            "dev.forcemind.xs.browser.PageCleanupIntegrationTest": 4,
+            "dev.forcemind.xs.browser.PostImageSelectionTest": 2,
+            "dev.forcemind.xs.browser.PostVideoSelectionTest": 2
+          },
+          "cases": [
+            {
+              "class": "dev.forcemind.xs.android.AssetLibraryUiTest",
+              "name": "actualAssetsUiSearchesThenBatchCategorizesAndDeletesOnlySelected",
+              "status": "passed",
+              "time_seconds": "2.711"
+            },
+            {
+              "class": "dev.forcemind.xs.android.AssetLibraryUiTest",
+              "name": "failedFilePurgeRemainsRevokedAndStartupRetryCompletesOnlyPendingScope",
+              "status": "passed",
+              "time_seconds": "0.086"
+            },
+            {
+              "class": "dev.forcemind.xs.android.AssetLibraryUiTest",
+              "name": "failedPreferenceCommitRestoresCachedSetsWithoutRevokingWriter",
+              "status": "passed",
+              "time_seconds": "0.034"
+            },
+            {
+              "class": "dev.forcemind.xs.android.AssetLibraryUiTest",
+              "name": "wholeLibraryUiRequiresTypedConfirmationAndPreservesOtherScopeAndShareLease",
+              "status": "passed",
+              "time_seconds": "0.959"
+            },
+            {
+              "class": "dev.forcemind.xs.android.FullBackupIntegrationTest",
+              "name": "authenticatedMaliciousAssetDescriptorsAndInvalidMediaAreRejected",
+              "status": "passed",
+              "time_seconds": "33.663"
+            },
+            {
+              "class": "dev.forcemind.xs.android.FullBackupIntegrationTest",
+              "name": "encryptedRoundTripRestoresActualImageVideoMetadataAndShareableBytes",
+              "status": "passed",
+              "time_seconds": "7.832"
+            },
+            {
+              "class": "dev.forcemind.xs.android.FullBackupIntegrationTest",
+              "name": "sqliteFailureAfterResourceStagingRollsBackEveryNewResourceAndMarker",
+              "status": "passed",
+              "time_seconds": "7.604"
+            },
+            {
+              "class": "dev.forcemind.xs.android.FullBackupIntegrationTest",
+              "name": "startupRecoveryDeletesUnpublishedResourcesButPreservesACommittedResult",
+              "status": "passed",
+              "time_seconds": "7.857"
+            },
+            {
+              "class": "dev.forcemind.xs.android.FullBackupIntegrationTest",
+              "name": "clearingSourceExpiresPreparedFullRestoreWithoutResurrection",
+              "status": "passed",
+              "time_seconds": "7.475"
+            },
+            {
+              "class": "dev.forcemind.xs.android.FullBackupIntegrationTest",
+              "name": "publishedMarkerWaitsForACompleteRealWalCheckpointAndRetriesAfterBusyWriter",
+              "status": "passed",
+              "time_seconds": "0.129"
+            },
+            {
+              "class": "dev.forcemind.xs.android.FullBackupIntegrationTest",
+              "name": "wrongPasswordTamperingTruncationAndCancellationNeverCreateALibrary",
+              "status": "passed",
+              "time_seconds": "17.085"
+            },
+            {
+              "class": "dev.forcemind.xs.android.FullBackupIntegrationTest",
+              "name": "sourceEpochChangeStopsExportBeforeAuthenticatedCompletion",
+              "status": "passed",
+              "time_seconds": "7.126"
+            },
+            {
+              "class": "dev.forcemind.xs.android.FullBackupIntegrationTest",
+              "name": "rollbackJournalFullSyncRetainsMarkerAndExtraSyncCanRetireIt",
+              "status": "passed",
+              "time_seconds": "0.028"
+            },
+            {
+              "class": "dev.forcemind.xs.android.MediaDownloadEngineTest",
+              "name": "cancelAndErasureWhileReadingCannotRegisterAnAsset",
+              "status": "passed",
+              "time_seconds": "0.076"
+            },
+            {
+              "class": "dev.forcemind.xs.android.MediaDownloadEngineTest",
+              "name": "hostileRedirectIsRejectedBeforeOpeningItsDestination",
+              "status": "passed",
+              "time_seconds": "0.026"
+            },
+            {
+              "class": "dev.forcemind.xs.android.MediaDownloadEngineTest",
+              "name": "realEngineCompletesValidatedImageAndSharesEveryByte",
+              "status": "passed",
+              "time_seconds": "0.031"
+            },
+            {
+              "class": "dev.forcemind.xs.android.MediaDownloadEngineTest",
+              "name": "truncatedAndHtmlResponsesNeverBecomeCompletedAssets",
+              "status": "passed",
+              "time_seconds": "0.052"
+            },
+            {
+              "class": "dev.forcemind.xs.android.MediaDurabilityTest",
+              "name": "rejectedSchedulerAndTamperedCipherBecomeExplicitFailures",
+              "status": "passed",
+              "time_seconds": "0.051"
+            },
+            {
+              "class": "dev.forcemind.xs.android.MediaDurabilityTest",
+              "name": "networkRetriesAreBoundedAndRestartAtByteZero",
+              "status": "passed",
+              "time_seconds": "0.054"
+            },
+            {
+              "class": "dev.forcemind.xs.android.MediaDurabilityTest",
+              "name": "stopPolicyRespectsUserIntentAndLegacyLibraryLength",
+              "status": "passed",
+              "time_seconds": "0.0"
+            },
+            {
+              "class": "dev.forcemind.xs.android.MediaDurabilityTest",
+              "name": "erasureBarrierCancelsPersistedRequestAndLateJobStaysInert",
+              "status": "passed",
+              "time_seconds": "0.025"
+            },
+            {
+              "class": "dev.forcemind.xs.android.MediaDurabilityTest",
+              "name": "cancelClearsSecretAndOrphanCallbackCannotStartNetwork",
+              "status": "passed",
+              "time_seconds": "0.027"
+            },
+            {
+              "class": "dev.forcemind.xs.android.MediaDurabilityTest",
+              "name": "persistedJobContainsOnlyOpaqueNativeIdsAndProtectedService",
+              "status": "passed",
+              "time_seconds": "0.003"
+            },
+            {
+              "class": "dev.forcemind.xs.android.MediaDurabilityTest",
+              "name": "queuedUrlIsEncryptedBoundToTaskAndResumesAfterRepositoryRestart",
+              "status": "passed",
+              "time_seconds": "0.052"
+            },
+            {
+              "class": "dev.forcemind.xs.android.MediaDurabilityTest",
+              "name": "staleDeletedJobScopeIsRejectedWithoutStatusReentry",
+              "status": "passed",
+              "time_seconds": "0.025"
+            },
+            {
+              "class": "dev.forcemind.xs.android.MediaDurabilityTest",
+              "name": "systemStopPreservesEncryptedReferenceAndOldRunCannotComplete",
+              "status": "passed",
+              "time_seconds": "0.028"
+            },
+            {
+              "class": "dev.forcemind.xs.android.MediaDurabilityTest",
+              "name": "versionOneAndTwoMigrationPreservesAssetsAndLeaseRows",
+              "status": "passed",
+              "time_seconds": "0.051"
+            },
+            {
+              "class": "dev.forcemind.xs.android.VideoDownloadEngineTest",
+              "name": "mediaV1MigrationPreservesExistingImagesAndShareLeases",
+              "status": "passed",
+              "time_seconds": "0.027"
+            },
+            {
+              "class": "dev.forcemind.xs.android.VideoDownloadEngineTest",
+              "name": "codecTailFallbackReachesFinalPresentationBeyondPreviousSync",
+              "status": "passed",
+              "time_seconds": "0.354"
+            },
+            {
+              "class": "dev.forcemind.xs.android.VideoDownloadEngineTest",
+              "name": "fullMp4WithAudioCompletesPlaysAndSharesOriginalFile",
+              "status": "passed",
+              "time_seconds": "1.409"
+            },
+            {
+              "class": "dev.forcemind.xs.android.VideoDownloadEngineTest",
+              "name": "cancelAndEraseDuringVideoReadCannotComplete",
+              "status": "passed",
+              "time_seconds": "0.027"
+            },
+            {
+              "class": "dev.forcemind.xs.android.VideoDownloadEngineTest",
+              "name": "truncatedFragmentedHtmlAndPlaylistNeverRegisterVideo",
+              "status": "passed",
+              "time_seconds": "0.101"
+            },
+            {
+              "class": "dev.forcemind.xs.android.VideoDownloadEngineTest",
+              "name": "redirectPolicyBlocksPrivateDestinationBeforeOpeningIt",
+              "status": "passed",
+              "time_seconds": "0.029"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.BrowserContainerTest",
+              "name": "actualWebViewExecutesSyntheticPageWithoutNativeArchive",
+              "status": "passed",
+              "time_seconds": "1.742"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.BrowserContainerTest",
+              "name": "nonWebNavigationAndWebPermissionsAreDenied",
+              "status": "passed",
+              "time_seconds": "0.633"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.BrowserContainerTest",
+              "name": "configurationRecreationRetainsActualPageAndJavascriptState",
+              "status": "passed",
+              "time_seconds": "1.033"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.BrowserContainerTest",
+              "name": "realWebViewBackAndReloadUseSyntheticHttpsResponses",
+              "status": "passed",
+              "time_seconds": "0.759"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.BrowserContainerTest",
+              "name": "subframeErrorsDoNotReplacePageAndRendererLossIsRecoverable",
+              "status": "passed",
+              "time_seconds": "0.531"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.BrowserContainerTest",
+              "name": "httpFailureCallbackDisplaysNativeRetry",
+              "status": "passed",
+              "time_seconds": "0.934"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.BrowserContainerTest",
+              "name": "initialHostHasNoNavigationAndRestrictedSettings",
+              "status": "passed",
+              "time_seconds": "0.46"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.BrowserContainerTest",
+              "name": "sharedPostLinkRequiresExplicitSaveBeforeAnyLocalWrite",
+              "status": "passed",
+              "time_seconds": "0.532"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.BrowserPrivacyIntegrationTest",
+              "name": "confirmedSessionReplacesDOMClearsWebStateAndRejectsOldCallbacks",
+              "status": "failed",
+              "time_seconds": "1.218",
+              "diagnostic": "java.lang.AssertionError: expected:<1> but was:<0>\nat org.junit.Assert.fail(Assert.java:89)\nat org.junit.Assert.failNotEquals(Assert.java:835)\nat org.junit.Assert.assertEquals(Assert.java:647)\nat org.junit.Assert.assertEquals(Assert.java:633)\nat dev.forcemind.xs.browser.BrowserPrivacyIntegrationTest.assertNativeResources(BrowserPrivacyIntegrationTest.java:131)\nat dev.forcemind.xs.browser.BrowserPrivacyIntegrationTest.confirmedSessionReplacesDOMClearsWebStateAndRejectsOldCallbacks(BrowserPrivacyIntegrationTest.java:164)\n"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.BrowserPrivacyIntegrationTest",
+              "name": "cacheConfirmationKeepsWebsiteStateAndActualNativeFiles",
+              "status": "failed",
+              "time_seconds": "0.78",
+              "diagnostic": "java.lang.AssertionError: expected:<1> but was:<0>\nat org.junit.Assert.fail(Assert.java:89)\nat org.junit.Assert.failNotEquals(Assert.java:835)\nat org.junit.Assert.assertEquals(Assert.java:647)\nat org.junit.Assert.assertEquals(Assert.java:633)\nat dev.forcemind.xs.browser.BrowserPrivacyIntegrationTest.assertNativeResources(BrowserPrivacyIntegrationTest.java:131)\nat dev.forcemind.xs.browser.BrowserPrivacyIntegrationTest.cacheConfirmationKeepsWebsiteStateAndActualNativeFiles(BrowserPrivacyIntegrationTest.java:138)\n"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.BrowserPrivacyIntegrationTest",
+              "name": "destroyedActivityWithOldDeepLinkStaysEmptyUntilCurrentNativeConfirmation",
+              "status": "failed",
+              "time_seconds": "45.825",
+              "diagnostic": "java.lang.AssertionError: Activity never becomes requested state \"[DESTROYED]\" (last lifecycle transition = \"RESUMED\")\nat androidx.test.core.app.ActivityScenario.waitForActivityToBecomeAnyOf(ActivityScenario.java:454)\nat androidx.test.core.app.ActivityScenario.moveToState(ActivityScenario.java:689)\nat androidx.test.core.app.ActivityScenario.close(ActivityScenario.java:421)\nat dev.forcemind.xs.browser.BrowserPrivacyIntegrationTest.cleanup(BrowserPrivacyIntegrationTest.java:96)\n"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.MediaSharingTest",
+              "name": "singleImageSharesActualReadOnlyBytesAfterSourceDeletion",
+              "status": "passed",
+              "time_seconds": "0.025"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.MediaSharingTest",
+              "name": "providerRejectsRootTraversalExpiredAndUnfinishedFiles",
+              "status": "passed",
+              "time_seconds": "0.027"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.MediaSharingTest",
+              "name": "textSharingCanonicalizesSourceAndNeverAddsPrivateMetadata",
+              "status": "passed",
+              "time_seconds": "0.001"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.MediaSharingTest",
+              "name": "cacheAndOtherLibraryDeletionPreserveSavedImage",
+              "status": "passed",
+              "time_seconds": "0.002"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.MediaSharingTest",
+              "name": "failedBatchShareRollsBackOnlyItsOwnNewCopies",
+              "status": "passed",
+              "time_seconds": "0.002"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.MediaSharingTest",
+              "name": "multipleImageIntentContainsOnlyChosenCopies",
+              "status": "passed",
+              "time_seconds": "0.053"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.NativeCaptureIntegrationTest",
+              "name": "immediateOpenLateBodyReloadAndQuickReturn",
+              "status": "passed",
+              "time_seconds": "1.641"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.NativeCaptureIntegrationTest",
+              "name": "overlayAndBackgroundBreakContinuousIntervals",
+              "status": "passed",
+              "time_seconds": "9.409"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.NativeCaptureIntegrationTest",
+              "name": "transparentParentsAndVirtualRebindsNeverCreateNativeOpens",
+              "status": "passed",
+              "time_seconds": "1.014"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.NativeCaptureIntegrationTest",
+              "name": "screenOffBreaksDwellAndStopsTheFixtureObserver",
+              "status": "passed",
+              "time_seconds": "5.15"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.NativeCaptureIntegrationTest",
+              "name": "noClickDwellIsMeasuredAndOfflineNeverOpenedSearchWorks",
+              "status": "passed",
+              "time_seconds": "5.626"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.NativeCaptureIntegrationTest",
+              "name": "nativeTextEvidenceKeepsPartialAndAcceptsNewerShortCompleteBody",
+              "status": "passed",
+              "time_seconds": "1.207"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.NativeCaptureIntegrationTest",
+              "name": "pauseOverlayAndDestroyStopPageWorkAndOldConsentCannotRevive",
+              "status": "passed",
+              "time_seconds": "4.291"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.ObservationParserTest",
+              "name": "typedEnvelopeNeedsNativeMainFrameGestureAndScope",
+              "status": "passed",
+              "time_seconds": "0.027"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.ObservationParserTest",
+              "name": "onlyAllowedTypedPublicObservationsAreParsed",
+              "status": "passed",
+              "time_seconds": "0.0"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.ObservationParserTest",
+              "name": "rejectAccountControlAndUnauthorizedInstructions",
+              "status": "passed",
+              "time_seconds": "0.001"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.PageCleanupIntegrationTest",
+              "name": "independentDefaultsAndExactStyleRestorationKeepOrdinaryContent",
+              "status": "passed",
+              "time_seconds": "0.762"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.PageCleanupIntegrationTest",
+              "name": "nativePauseNavigationAndDestroyRestoreAndPreserveReadingAnchor",
+              "status": "passed",
+              "time_seconds": "0.809"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.PageCleanupIntegrationTest",
+              "name": "unknownStructuresSensitiveSpaAndPaidPagesFailClosed",
+              "status": "passed",
+              "time_seconds": "1.408"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.PageCleanupIntegrationTest",
+              "name": "hiddenPromotedCardCannotProduceFeedExposure",
+              "status": "passed",
+              "time_seconds": "2.467"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.PostImageSelectionTest",
+              "name": "untrustedImageListCannotChoosePrivateHostsOrExtraData",
+              "status": "passed",
+              "time_seconds": "0.0"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.PostImageSelectionTest",
+              "name": "selectedPostExcludesQuotedAndOtherPostImages",
+              "status": "passed",
+              "time_seconds": "0.81"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.PostVideoSelectionTest",
+              "name": "rawListCannotTurnBlobManifestOrPrivateAddressesIntoVideo",
+              "status": "passed",
+              "time_seconds": "0.001"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.PostVideoSelectionTest",
+              "name": "currentPostExcludesQuotedProtectedAndOtherPostVideos",
+              "status": "passed",
+              "time_seconds": "0.557"
+            }
+          ]
+        }
+      },
+      "totals": {
+        "tests": 120,
+        "failures": 6,
+        "errors": 0,
+        "skipped": 0
+      },
+      "job_local_apk_provenance": {
+        "schema_version": 1,
+        "recorded_at_utc": "2026-11-07T12:37:21.186391+00:00",
+        "evidence_scope": "Job-local APK availability and public signing certificates only; test execution/outcomes come from this job's instrumentation reports. This is not real-X, physical-device or recipient-app acceptance.",
+        "source": {
+          "head_commit": "67b594c27eda42de9782b692320bab51457dec81",
+          "head_tree": "cf99e2281e5e23e528d8b2bffd2845d1ff103549",
+          "working_tree_clean": true,
+          "working_tree_status": []
+        },
+        "apksigner": "/usr/local/lib/android/sdk/build-tools/37.0.0/apksigner",
+        "artifacts": [
+          {
+            "module": "app-android",
+            "role": "application",
+            "path": "app-android/build/outputs/apk/debug/app-android-debug.apk",
+            "availability": "present",
+            "bytes": 317135,
+            "sha256": "97032adfdb19a9c496fabf73f9ab31d6b20025ffdeac90c4f71ffe2b0528e356",
+            "signature_verification": {
+              "exit_code": 0,
+              "stdout": "V2 Signer: certificate DN: C=US, O=Android, CN=Android Debug\nV2 Signer: certificate SHA-256 digest: fe31e4debe12153f210667bcd93e09032b1b1139f88bdf0704a4f6c45eacbfa4\nV2 Signer: certificate SHA-1 digest: 186a6fb796a61dc673674930990ae70d0ded43e2\nV2 Signer: certificate MD5 digest: ebb07fe451c2878117b71e1020ca625b",
+              "stderr": "",
+              "status": "passed"
+            }
+          },
+          {
+            "module": "app-android",
+            "role": "instrumentation",
+            "path": "app-android/build/outputs/apk/androidTest/debug/app-android-debug-androidTest.apk",
+            "availability": "present",
+            "bytes": 1752947,
+            "sha256": "958f95f05d3f64036126deff03f31531aa260a662ef8722fc9ea8fc8b97849f4",
+            "signature_verification": {
+              "exit_code": 0,
+              "stdout": "V2 Signer: certificate DN: C=US, O=Android, CN=Android Debug\nV2 Signer: certificate SHA-256 digest: fe31e4debe12153f210667bcd93e09032b1b1139f88bdf0704a4f6c45eacbfa4\nV2 Signer: certificate SHA-1 digest: 186a6fb796a61dc673674930990ae70d0ded43e2\nV2 Signer: certificate MD5 digest: ebb07fe451c2878117b71e1020ca625b",
+              "stderr": "",
+              "status": "passed"
+            }
+          },
+          {
+            "module": "dev-harness",
+            "role": "application",
+            "path": "dev-harness/build/outputs/apk/debug/dev-harness-debug.apk",
+            "availability": "present",
+            "bytes": 273754,
+            "sha256": "fb7822d7e41b167d2afcd648b47b4479c7bf5b21de47a4100d953bdd610c55bd",
+            "signature_verification": {
+              "exit_code": 0,
+              "stdout": "V2 Signer: certificate DN: C=US, O=Android, CN=Android Debug\nV2 Signer: certificate SHA-256 digest: fe31e4debe12153f210667bcd93e09032b1b1139f88bdf0704a4f6c45eacbfa4\nV2 Signer: certificate SHA-1 digest: 186a6fb796a61dc673674930990ae70d0ded43e2\nV2 Signer: certificate MD5 digest: ebb07fe451c2878117b71e1020ca625b",
+              "stderr": "",
+              "status": "passed"
+            }
+          },
+          {
+            "module": "dev-harness",
+            "role": "instrumentation",
+            "path": "dev-harness/build/outputs/apk/androidTest/debug/dev-harness-debug-androidTest.apk",
+            "availability": "present",
+            "bytes": 1725941,
+            "sha256": "0b20b8acbf3c8125e21f8fd4c1c98282855c2ceca29187838ce7bdb88087ce73",
+            "signature_verification": {
+              "exit_code": 0,
+              "stdout": "V2 Signer: certificate DN: C=US, O=Android, CN=Android Debug\nV2 Signer: certificate SHA-256 digest: fe31e4debe12153f210667bcd93e09032b1b1139f88bdf0704a4f6c45eacbfa4\nV2 Signer: certificate SHA-1 digest: 186a6fb796a61dc673674930990ae70d0ded43e2\nV2 Signer: certificate MD5 digest: ebb07fe451c2878117b71e1020ca625b",
+              "stderr": "",
+              "status": "passed"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "total": {
+    "tests": 360,
+    "failures": 24,
+    "errors": 0,
+    "skipped": 0
+  },
+  "acceptance": "FAILED or incomplete; diagnostic evidence only",
+  "known_test_limitations": [
+    "API27 not executed",
+    "Physical devices and physical power loss not executed",
+    "Live X login/automatic capture/own actions/media source compatibility not executed",
+    "WeChat/QQ/Feishu/Telegram recipient sending not executed",
+    "CI debug signing certificates are job-local; production signing identity is not configured"
+  ],
+  "failure_groups": [
+    {
+      "class": "dev.forcemind.xs.android.GovernanceUiTest",
+      "apis": [
+        26,
+        30,
+        36
+      ],
+      "failures_per_api": 3,
+      "diagnosis": "Provider administration now succeeds. Same-time snapshot merge was checked with current-only keyword search instead of retained-version search. DocumentsUI non-clickable file row requires real touch input. That failed picker was left foreground and blocked the subsequent encrypted UI fixture.",
+      "source_lines": [
+        135,
+        235,
+        109
+      ]
+    },
+    {
+      "class": "dev.forcemind.xs.android.FullBackupIntegrationTest",
+      "apis": [
+        30
+      ],
+      "failures_per_api": 6,
+      "diagnosis": "API30 execPerConnectionSQL(PRAGMA busy_timeout=100) fails because the PRAGMA yields a row. Full-checkpoint housekeeping conservatively retained the first marker; later count and registered-marker setup failures cascade. Logcat confirms SQLiteConnectionPool reconfiguration exceptions. API26 and API36 all nine backup cases passed."
+    },
+    {
+      "class": "dev.forcemind.xs.browser.BrowserPrivacyIntegrationTest",
+      "apis": [
+        26,
+        30,
+        36
+      ],
+      "failures_per_api": 3,
+      "diagnosis": "All three tests first fail at native favorite/category/tag keyword search (assertNativeResources line 131); the third test logcat records that original failure at test line 177 before teardown masks it with ActivityScenario.close failing to reach DESTROYED. No cold-relaunch assertion was reached. The next assertion also calls the history-only timeline API with unsupported LOCAL_SAVE instead of querying user_actions; owner fixture correction pending.",
+      "source_lines": [
+        131,
+        96
+      ]
+    }
+  ]
+}

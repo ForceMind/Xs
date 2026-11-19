@@ -1,0 +1,26 @@
+{
+  "scope": "Pre-next-CI helper/fixture preparation compilation only; no new native outcome inferred",
+  "base_head": "ce9cae7c1102d1efb2156e1f55907dbbd3d423b3",
+  "production_runtime_changed": false,
+  "test_apks": "132 tasks,9s PASS",
+  "project_checks": "6 host checks PASS",
+  "python_syntax": "PASS",
+  "logs": {
+    "round-d-pre71-build.log": {
+      "sha256": "19846e131317bba67f6b9897cf0b04ab169e5f1d9e58985d9fb36bb49000be1f",
+      "bytes": 10182
+    },
+    "round-d-pre71-project.log": {
+      "sha256": "04e6d88764328cad5d6a26d77b6781a18a8b56fb83ccd77633db43205addfaac",
+      "bytes": 277
+    }
+  },
+  "ci70_actual_main_cases": {
+    "executed": 608,
+    "passed": 605,
+    "failed": 3,
+    "errors": 0,
+    "skipped": 0
+  },
+  "external_probes": "Not executed: instrumentation component unavailable after UTP cleanup; explicit installation added for next CI"
+}

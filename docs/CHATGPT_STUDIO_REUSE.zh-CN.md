@@ -53,3 +53,7 @@ Xs 保留现有 Android/Java 工程。参考模块若需要更高 Java/API/WebKi
 - [ ] 更新 Xs 双语 README 与来源台账；不冒用另一个 App 的包名、数据目录或签名。
 
 不导入另一个 App 的 Cookie、恢复密钥或用户数据。Xs 应建立自己的稳定测试/发布身份。详见 [许可决策](LICENSING.md)；本文不修改任何仓库的有效许可证。
+
+## 本轮实际复核与采用范围
+
+重新读取上述固定提交的 LICENSE、BrowserMemory.java、NavigationPolicy.java、PageRecoveryManager.java。Xs 本轮独立实现单页 MutableContextWrapper/配置重建保留、受控临时窗口路由、原生主动取回及写入失效；没有复制参考项目自定义非商业许可文件的源码，也没有移入其聊天/自动发送/密钥/工作流。保留 Xs 根GPL文本；多Profile仍待能力检测/验证。实际范围和测试见 [实施记录](IMPLEMENTATION_EVIDENCE.zh-CN.md)。

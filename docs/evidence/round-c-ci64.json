@@ -1,0 +1,1224 @@
+{
+  "schema_version": 1,
+  "repository": "ForceMind/Xs",
+  "recorded_at_utc": "2026-11-07T08:59:16.830653+00:00",
+  "run": {
+    "id": 42357220689,
+    "number": 64,
+    "event": "pull_request",
+    "status": "completed",
+    "conclusion": "success",
+    "url": "https://github.com/ForceMind/Xs/actions/runs/42357220689",
+    "head_branch": "feat/local-library-capture-media",
+    "head_sha": "4ee242ef1ca542e6bb997acdb3d5629761cbe8dd",
+    "created_at": "2026-11-07T08:51:10Z",
+    "updated_at": "2026-11-07T08:57:04Z"
+  },
+  "head_commit": "4ee242ef1ca542e6bb997acdb3d5629761cbe8dd",
+  "tested_merge_commit": "d5e6bb937dc508786d854dcfb64757a334beea7c",
+  "tested_tree": "5b26ecca9529948e22637b4eb66fd6b33217fe61",
+  "jobs": [
+    {
+      "id": 128357837034,
+      "name": "core",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 128357837134,
+      "name": "android-library",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 128358139718,
+      "name": "android-instrumentation (36)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 128358139753,
+      "name": "android-instrumentation (30)",
+      "status": "completed",
+      "conclusion": "success"
+    }
+  ],
+  "evidence_scope": "Synthetic offline fixtures executed on GitHub-hosted KVM Android emulators. This is not real-X login/observation/action/download, physical-device, or recipient-app acceptance. No signed download URLs are retained.",
+  "core": {
+    "jvm_assertions": 933,
+    "sqlite_schema_version": 4,
+    "preserving_migrations": [
+      1,
+      2,
+      3
+    ],
+    "observer_dom": "passed",
+    "reversible_cleanup_dom": "passed"
+  },
+  "per_api": {
+    "30": {
+      "android_api": 30,
+      "android_release": "11",
+      "webview": {
+        "package": "com.google.android.webview",
+        "version": "83.0.4103.106"
+      },
+      "device_configuration": "config: mcc310-mnc260-en-rUS-ldltr-sw320dp-w320dp-h616dp-normal-long-notround-nowidecg-lowdr-port-notnight-mdpi-finger-keysexposed-qwerty-navhidden-nonav-640x320-v30\nabi: x86_64,x86,arm64-v8a,armeabi-v7a,armeabi",
+      "locale_snapshot": "",
+      "night_mode": "Night mode: no",
+      "artifact": {
+        "id": 13567684808,
+        "name": "xs-android-test-reports-api-30",
+        "size_in_bytes": 190713,
+        "declared_digest": "sha256:4220e6fad5ad149ec76eb99d79181b16b71b98f3ec66cda11506ccd340dcae01",
+        "downloaded_zip_sha256": "4220e6fad5ad149ec76eb99d79181b16b71b98f3ec66cda11506ccd340dcae01",
+        "digest_verified": true
+      },
+      "modules": {
+        "dev-harness": {
+          "xml_path": "dev-harness/build/outputs/androidTest-results/connected/debug/TEST-emulator-5554 - 11-_dev-harness-.xml",
+          "counts": {
+            "tests": 36,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          "time_seconds": "7.818",
+          "class_counts": {
+            "dev.forcemind.xs.android.LibraryBackupIntegrationTest": 7,
+            "dev.forcemind.xs.android.LibraryConsolidationIntegrationTest": 8,
+            "dev.forcemind.xs.harness.ArchiveIntegrationTest": 16,
+            "dev.forcemind.xs.harness.LibraryUiTest": 5
+          },
+          "cases": [
+            {
+              "class": "dev.forcemind.xs.android.LibraryBackupIntegrationTest",
+              "name": "metadataRoundTripPreservesUnicodeTimesDwellAndSearchWithoutPrivateFiles",
+              "status": "passed",
+              "time_seconds": "0.087"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryBackupIntegrationTest",
+              "name": "generatedLongLabelIsUnicodeSafeAndRepeatedRestoreIsAlwaysSeparate",
+              "status": "passed",
+              "time_seconds": "0.044"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryBackupIntegrationTest",
+              "name": "schemaThreeRestoreProjectsUnknownOwnActionsWithoutInventedTimesOrActor",
+              "status": "passed",
+              "time_seconds": "0.076"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryBackupIntegrationTest",
+              "name": "restoreRollbackPreservesOriginalForEarlyAndLateGuardFailure",
+              "status": "passed",
+              "time_seconds": "0.158"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryBackupIntegrationTest",
+              "name": "libraryErasureInvalidatesQueuedRestoreAndCannotResurrectMetadata",
+              "status": "passed",
+              "time_seconds": "0.057"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryBackupIntegrationTest",
+              "name": "restoredMaximumOpenCountSaturatesAcrossBothOpenEntryPoints",
+              "status": "passed",
+              "time_seconds": "0.048"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryBackupIntegrationTest",
+              "name": "malformedMetadataFailsBeforeCreatingAnyLibrary",
+              "status": "passed",
+              "time_seconds": "0.155"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryConsolidationIntegrationTest",
+              "name": "undoProtectsDefaultEvenIfPreferenceWasChangedAfterCreation",
+              "status": "passed",
+              "time_seconds": "0.054"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryConsolidationIntegrationTest",
+              "name": "undoRefusesAnyMediaTaskWithoutDeletingItsMetadataOrSources",
+              "status": "passed",
+              "time_seconds": "0.079"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryConsolidationIntegrationTest",
+              "name": "explicitMergeKeepsEverySourceNoteFolderAndVisitInAnotherLibrary",
+              "status": "passed",
+              "time_seconds": "0.053"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryConsolidationIntegrationTest",
+              "name": "erasingEitherPreparedSourceExpiresPreviewWithoutCloningDeletedData",
+              "status": "passed",
+              "time_seconds": "0.053"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryConsolidationIntegrationTest",
+              "name": "undoRefusesResultWithLaterMetadataEditsAndKeepsSources",
+              "status": "passed",
+              "time_seconds": "0.051"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryConsolidationIntegrationTest",
+              "name": "sourceMustBeExplicitDistinctAndRegistered",
+              "status": "passed",
+              "time_seconds": "0.055"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryConsolidationIntegrationTest",
+              "name": "undoRemovesOnlyItsUnchangedNewResultAndCannotBeReused",
+              "status": "passed",
+              "time_seconds": "0.076"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryConsolidationIntegrationTest",
+              "name": "conflictingLegacyActionSourcesFailBeforePreviewAndKeepOriginals",
+              "status": "passed",
+              "time_seconds": "0.028"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "partialMetadataDoesNotTruncateStoredTextOrSearchIndex",
+              "status": "passed",
+              "time_seconds": "0.033"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "nativeArchiveActivityLoads",
+              "status": "passed",
+              "time_seconds": "0.833"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "databaseV1MigrationPreservesHistory",
+              "status": "passed",
+              "time_seconds": "0.104"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "nativeCreationStoresNewPostAndRelatedParentWithoutSyntheticOpens",
+              "status": "passed",
+              "time_seconds": "0.031"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "manualLocalSpaceSavesLinkWithoutFakeReadingHistory",
+              "status": "passed",
+              "time_seconds": "0.179"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "databaseV2UpgradeKeepsScopesMappingsAndUnknownLegacyDurations",
+              "status": "passed",
+              "time_seconds": "0.054"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "confirmedNativeFixtureRepostAndReversalKeepIndependentData",
+              "status": "passed",
+              "time_seconds": "0.029"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "historyFeedAndSearchAreAccountScoped",
+              "status": "passed",
+              "time_seconds": "0.001"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "officialPostsJsImportsOfflineWithoutFakeVisits",
+              "status": "passed",
+              "time_seconds": "0.056"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "favoritesNotesTagsAndHistoryErasureHaveSeparateScopes",
+              "status": "passed",
+              "time_seconds": "0.024"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "durationSourceAndFeedDateMustMatchTheSameExposure",
+              "status": "passed",
+              "time_seconds": "0.031"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "nativeNavigationAndExposureIdentitiesArePersistentAndIndependent",
+              "status": "passed",
+              "time_seconds": "0.025"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "largeHistoryCanPageWithoutLosingEarlierVisits",
+              "status": "passed",
+              "time_seconds": "0.203"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "databaseV3MigrationPreservesActionsWithoutInventingActorOrObservationTime",
+              "status": "passed",
+              "time_seconds": "0.159"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "foldersAndActionsDoNotLeakBetweenAccounts",
+              "status": "passed",
+              "time_seconds": "0.028"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "ambiguousRetweetTextRetainsSnapshotWithoutInventingRepostAndImportsParents",
+              "status": "passed",
+              "time_seconds": "0.027"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.LibraryUiTest",
+              "name": "nativeSearchFiltersMeasuredDwellAndNeverOpenedOffline",
+              "status": "passed",
+              "time_seconds": "1.089"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.LibraryUiTest",
+              "name": "nativeConfirmedActivityAndReversalAreSearchableInActualIndexUi",
+              "status": "passed",
+              "time_seconds": "0.586"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.LibraryUiTest",
+              "name": "existingLibraryIntentSelectsSeparateScopeWithoutChangingDefault",
+              "status": "passed",
+              "time_seconds": "0.532"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.LibraryUiTest",
+              "name": "editExistingFavoriteTagsAndClearHistoryKeepLocalFavorite",
+              "status": "passed",
+              "time_seconds": "0.734"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.LibraryUiTest",
+              "name": "recordingPreferencesAreIndependentAndPersisted",
+              "status": "passed",
+              "time_seconds": "0.028"
+            }
+          ]
+        },
+        "app-android": {
+          "xml_path": "app-android/build/outputs/androidTest-results/connected/debug/TEST-emulator-5554 - 11-_app-android-.xml",
+          "counts": {
+            "tests": 37,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          "time_seconds": "31.215",
+          "class_counts": {
+            "dev.forcemind.xs.android.MediaDownloadEngineTest": 4,
+            "dev.forcemind.xs.android.VideoDownloadEngineTest": 5,
+            "dev.forcemind.xs.browser.BrowserContainerTest": 8,
+            "dev.forcemind.xs.browser.MediaSharingTest": 6,
+            "dev.forcemind.xs.browser.NativeCaptureIntegrationTest": 3,
+            "dev.forcemind.xs.browser.ObservationParserTest": 3,
+            "dev.forcemind.xs.browser.PageCleanupIntegrationTest": 4,
+            "dev.forcemind.xs.browser.PostImageSelectionTest": 2,
+            "dev.forcemind.xs.browser.PostVideoSelectionTest": 2
+          },
+          "cases": [
+            {
+              "class": "dev.forcemind.xs.android.MediaDownloadEngineTest",
+              "name": "cancelAndErasureWhileReadingCannotRegisterAnAsset",
+              "status": "passed",
+              "time_seconds": "0.018"
+            },
+            {
+              "class": "dev.forcemind.xs.android.MediaDownloadEngineTest",
+              "name": "hostileRedirectIsRejectedBeforeOpeningItsDestination",
+              "status": "passed",
+              "time_seconds": "0.027"
+            },
+            {
+              "class": "dev.forcemind.xs.android.MediaDownloadEngineTest",
+              "name": "realEngineCompletesValidatedImageAndSharesEveryByte",
+              "status": "passed",
+              "time_seconds": "0.029"
+            },
+            {
+              "class": "dev.forcemind.xs.android.MediaDownloadEngineTest",
+              "name": "truncatedAndHtmlResponsesNeverBecomeCompletedAssets",
+              "status": "passed",
+              "time_seconds": "0.055"
+            },
+            {
+              "class": "dev.forcemind.xs.android.VideoDownloadEngineTest",
+              "name": "mediaV1MigrationPreservesExistingImagesAndShareLeases",
+              "status": "passed",
+              "time_seconds": "0.059"
+            },
+            {
+              "class": "dev.forcemind.xs.android.VideoDownloadEngineTest",
+              "name": "fullMp4WithAudioCompletesPlaysAndSharesOriginalFile",
+              "status": "passed",
+              "time_seconds": "2.031"
+            },
+            {
+              "class": "dev.forcemind.xs.android.VideoDownloadEngineTest",
+              "name": "cancelAndEraseDuringVideoReadCannotComplete",
+              "status": "passed",
+              "time_seconds": "0.026"
+            },
+            {
+              "class": "dev.forcemind.xs.android.VideoDownloadEngineTest",
+              "name": "truncatedFragmentedHtmlAndPlaylistNeverRegisterVideo",
+              "status": "passed",
+              "time_seconds": "0.08"
+            },
+            {
+              "class": "dev.forcemind.xs.android.VideoDownloadEngineTest",
+              "name": "redirectPolicyBlocksPrivateDestinationBeforeOpeningIt",
+              "status": "passed",
+              "time_seconds": "0.031"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.BrowserContainerTest",
+              "name": "actualWebViewExecutesSyntheticPageWithoutNativeArchive",
+              "status": "passed",
+              "time_seconds": "1.541"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.BrowserContainerTest",
+              "name": "nonWebNavigationAndWebPermissionsAreDenied",
+              "status": "passed",
+              "time_seconds": "0.602"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.BrowserContainerTest",
+              "name": "configurationRecreationRetainsActualPageAndJavascriptState",
+              "status": "passed",
+              "time_seconds": "0.859"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.BrowserContainerTest",
+              "name": "realWebViewBackAndReloadUseSyntheticHttpsResponses",
+              "status": "passed",
+              "time_seconds": "0.809"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.BrowserContainerTest",
+              "name": "subframeErrorsDoNotReplacePageAndRendererLossIsRecoverable",
+              "status": "passed",
+              "time_seconds": "0.377"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.BrowserContainerTest",
+              "name": "httpFailureCallbackDisplaysNativeRetry",
+              "status": "passed",
+              "time_seconds": "0.706"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.BrowserContainerTest",
+              "name": "initialHostHasNoNavigationAndRestrictedSettings",
+              "status": "passed",
+              "time_seconds": "0.41"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.BrowserContainerTest",
+              "name": "sharedPostLinkRequiresExplicitSaveBeforeAnyLocalWrite",
+              "status": "passed",
+              "time_seconds": "0.56"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.MediaSharingTest",
+              "name": "singleImageSharesActualReadOnlyBytesAfterSourceDeletion",
+              "status": "passed",
+              "time_seconds": "0.052"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.MediaSharingTest",
+              "name": "providerRejectsRootTraversalExpiredAndUnfinishedFiles",
+              "status": "passed",
+              "time_seconds": "0.052"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.MediaSharingTest",
+              "name": "textSharingCanonicalizesSourceAndNeverAddsPrivateMetadata",
+              "status": "passed",
+              "time_seconds": "0.022"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.MediaSharingTest",
+              "name": "cacheAndOtherLibraryDeletionPreserveSavedImage",
+              "status": "passed",
+              "time_seconds": "0.003"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.MediaSharingTest",
+              "name": "failedBatchShareRollsBackOnlyItsOwnNewCopies",
+              "status": "passed",
+              "time_seconds": "0.026"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.MediaSharingTest",
+              "name": "multipleImageIntentContainsOnlyChosenCopies",
+              "status": "passed",
+              "time_seconds": "0.024"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.NativeCaptureIntegrationTest",
+              "name": "immediateOpenLateBodyReloadAndQuickReturn",
+              "status": "passed",
+              "time_seconds": "0.832"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.NativeCaptureIntegrationTest",
+              "name": "overlayAndBackgroundBreakContinuousIntervals",
+              "status": "passed",
+              "time_seconds": "9.388"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.NativeCaptureIntegrationTest",
+              "name": "noClickDwellIsMeasuredAndOfflineNeverOpenedSearchWorks",
+              "status": "passed",
+              "time_seconds": "5.335"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.ObservationParserTest",
+              "name": "typedEnvelopeNeedsNativeMainFrameGestureAndScope",
+              "status": "passed",
+              "time_seconds": "0.001"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.ObservationParserTest",
+              "name": "onlyAllowedTypedPublicObservationsAreParsed",
+              "status": "passed",
+              "time_seconds": "0.027"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.ObservationParserTest",
+              "name": "rejectAccountControlAndUnauthorizedInstructions",
+              "status": "passed",
+              "time_seconds": "0.0"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.PageCleanupIntegrationTest",
+              "name": "independentDefaultsAndExactStyleRestorationKeepOrdinaryContent",
+              "status": "passed",
+              "time_seconds": "1.056"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.PageCleanupIntegrationTest",
+              "name": "nativePauseNavigationAndDestroyRestoreAndPreserveReadingAnchor",
+              "status": "passed",
+              "time_seconds": "0.857"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.PageCleanupIntegrationTest",
+              "name": "unknownStructuresSensitiveSpaAndPaidPagesFailClosed",
+              "status": "passed",
+              "time_seconds": "1.035"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.PageCleanupIntegrationTest",
+              "name": "hiddenPromotedCardCannotProduceFeedExposure",
+              "status": "passed",
+              "time_seconds": "2.165"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.PostImageSelectionTest",
+              "name": "untrustedImageListCannotChoosePrivateHostsOrExtraData",
+              "status": "passed",
+              "time_seconds": "0.025"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.PostImageSelectionTest",
+              "name": "selectedPostExcludesQuotedAndOtherPostImages",
+              "status": "passed",
+              "time_seconds": "0.555"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.PostVideoSelectionTest",
+              "name": "rawListCannotTurnBlobManifestOrPrivateAddressesIntoVideo",
+              "status": "passed",
+              "time_seconds": "0.0"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.PostVideoSelectionTest",
+              "name": "currentPostExcludesQuotedProtectedAndOtherPostVideos",
+              "status": "passed",
+              "time_seconds": "0.653"
+            }
+          ]
+        }
+      },
+      "totals": {
+        "tests": 73,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "job_local_apk_provenance": {
+        "schema_version": 1,
+        "recorded_at_utc": "2026-11-07T08:56:18.959564+00:00",
+        "evidence_scope": "Job-local APK availability and public signing certificates only; test execution/outcomes come from this job's instrumentation reports. This is not real-X, physical-device or recipient-app acceptance.",
+        "source": {
+          "head_commit": "d5e6bb937dc508786d854dcfb64757a334beea7c",
+          "head_tree": "5b26ecca9529948e22637b4eb66fd6b33217fe61",
+          "working_tree_clean": true,
+          "working_tree_status": []
+        },
+        "apksigner": "/usr/local/lib/android/sdk/build-tools/37.0.0/apksigner",
+        "artifacts": [
+          {
+            "module": "app-android",
+            "role": "application",
+            "path": "app-android/build/outputs/apk/debug/app-android-debug.apk",
+            "availability": "present",
+            "bytes": 221419,
+            "sha256": "ae78672566a1e6e85b761f4b27f5471c0695cd6e4a7e0bcccada301f157fc720",
+            "signature_verification": {
+              "exit_code": 0,
+              "stdout": "V2 Signer: certificate DN: C=US, O=Android, CN=Android Debug\nV2 Signer: certificate SHA-256 digest: cd5f655689abad1bc65d67ab3231016a48c7c9cd37ea6febc25200e65de0f828\nV2 Signer: certificate SHA-1 digest: c8e3ae392313d5d6d82ba9fbb1c7412a8a05d36b\nV2 Signer: certificate MD5 digest: ccc29eb849b67c1ac64d116bde280124",
+              "stderr": "",
+              "status": "passed"
+            }
+          },
+          {
+            "module": "app-android",
+            "role": "instrumentation",
+            "path": "app-android/build/outputs/apk/androidTest/debug/app-android-debug-androidTest.apk",
+            "availability": "present",
+            "bytes": 1710491,
+            "sha256": "4765ae3e9a471748e22953f029b2b86264b13602c1d4bc707b7b6afaa61f504d",
+            "signature_verification": {
+              "exit_code": 0,
+              "stdout": "V2 Signer: certificate DN: C=US, O=Android, CN=Android Debug\nV2 Signer: certificate SHA-256 digest: cd5f655689abad1bc65d67ab3231016a48c7c9cd37ea6febc25200e65de0f828\nV2 Signer: certificate SHA-1 digest: c8e3ae392313d5d6d82ba9fbb1c7412a8a05d36b\nV2 Signer: certificate MD5 digest: ccc29eb849b67c1ac64d116bde280124",
+              "stderr": "",
+              "status": "passed"
+            }
+          },
+          {
+            "module": "dev-harness",
+            "role": "application",
+            "path": "dev-harness/build/outputs/apk/debug/dev-harness-debug.apk",
+            "availability": "present",
+            "bytes": 187882,
+            "sha256": "e3b2cf0d28175bfa303d2360dc87b2b342ceae342db78cd3ad72726812d12e0f",
+            "signature_verification": {
+              "exit_code": 0,
+              "stdout": "V2 Signer: certificate DN: C=US, O=Android, CN=Android Debug\nV2 Signer: certificate SHA-256 digest: cd5f655689abad1bc65d67ab3231016a48c7c9cd37ea6febc25200e65de0f828\nV2 Signer: certificate SHA-1 digest: c8e3ae392313d5d6d82ba9fbb1c7412a8a05d36b\nV2 Signer: certificate MD5 digest: ccc29eb849b67c1ac64d116bde280124",
+              "stderr": "",
+              "status": "passed"
+            }
+          },
+          {
+            "module": "dev-harness",
+            "role": "instrumentation",
+            "path": "dev-harness/build/outputs/apk/androidTest/debug/dev-harness-debug-androidTest.apk",
+            "availability": "present",
+            "bytes": 1695453,
+            "sha256": "54305153bd8efc5d3cb27193bde314fa80be66662c1566185d1293379f62f427",
+            "signature_verification": {
+              "exit_code": 0,
+              "stdout": "V2 Signer: certificate DN: C=US, O=Android, CN=Android Debug\nV2 Signer: certificate SHA-256 digest: cd5f655689abad1bc65d67ab3231016a48c7c9cd37ea6febc25200e65de0f828\nV2 Signer: certificate SHA-1 digest: c8e3ae392313d5d6d82ba9fbb1c7412a8a05d36b\nV2 Signer: certificate MD5 digest: ccc29eb849b67c1ac64d116bde280124",
+              "stderr": "",
+              "status": "passed"
+            }
+          }
+        ]
+      }
+    },
+    "36": {
+      "android_api": 36,
+      "android_release": "16",
+      "webview": {
+        "package": "com.google.android.webview",
+        "version": "133.0.6943.137"
+      },
+      "device_configuration": "config: en-rUS-ldltr-sw320dp-w320dp-h640dp-normal-long-notround-nowidecg-lowdr-port-notnight-mdpi-finger-keysexposed-qwerty-navhidden-nonav-640x320-v36\nabi: x86_64,arm64-v8a",
+      "locale_snapshot": "",
+      "night_mode": "Night mode: no",
+      "artifact": {
+        "id": 13568108876,
+        "name": "xs-android-test-reports-api-36",
+        "size_in_bytes": 428686,
+        "declared_digest": "sha256:6b81e31ed3b1c6363a6a7b0f099e5c76d87292acec95afbdae47018416d93736",
+        "downloaded_zip_sha256": "6b81e31ed3b1c6363a6a7b0f099e5c76d87292acec95afbdae47018416d93736",
+        "digest_verified": true
+      },
+      "modules": {
+        "dev-harness": {
+          "xml_path": "dev-harness/build/outputs/androidTest-results/connected/debug/TEST-emulator-5554 - 16-_dev-harness-.xml",
+          "counts": {
+            "tests": 36,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          "time_seconds": "16.779",
+          "class_counts": {
+            "dev.forcemind.xs.android.LibraryBackupIntegrationTest": 7,
+            "dev.forcemind.xs.android.LibraryConsolidationIntegrationTest": 8,
+            "dev.forcemind.xs.harness.ArchiveIntegrationTest": 16,
+            "dev.forcemind.xs.harness.LibraryUiTest": 5
+          },
+          "cases": [
+            {
+              "class": "dev.forcemind.xs.android.LibraryBackupIntegrationTest",
+              "name": "metadataRoundTripPreservesUnicodeTimesDwellAndSearchWithoutPrivateFiles",
+              "status": "passed",
+              "time_seconds": "0.428"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryBackupIntegrationTest",
+              "name": "generatedLongLabelIsUnicodeSafeAndRepeatedRestoreIsAlwaysSeparate",
+              "status": "passed",
+              "time_seconds": "0.596"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryBackupIntegrationTest",
+              "name": "schemaThreeRestoreProjectsUnknownOwnActionsWithoutInventedTimesOrActor",
+              "status": "passed",
+              "time_seconds": "0.361"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryBackupIntegrationTest",
+              "name": "restoreRollbackPreservesOriginalForEarlyAndLateGuardFailure",
+              "status": "passed",
+              "time_seconds": "0.654"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryBackupIntegrationTest",
+              "name": "libraryErasureInvalidatesQueuedRestoreAndCannotResurrectMetadata",
+              "status": "passed",
+              "time_seconds": "0.155"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryBackupIntegrationTest",
+              "name": "restoredMaximumOpenCountSaturatesAcrossBothOpenEntryPoints",
+              "status": "passed",
+              "time_seconds": "0.306"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryBackupIntegrationTest",
+              "name": "malformedMetadataFailsBeforeCreatingAnyLibrary",
+              "status": "passed",
+              "time_seconds": "0.934"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryConsolidationIntegrationTest",
+              "name": "undoProtectsDefaultEvenIfPreferenceWasChangedAfterCreation",
+              "status": "passed",
+              "time_seconds": "0.536"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryConsolidationIntegrationTest",
+              "name": "undoRefusesAnyMediaTaskWithoutDeletingItsMetadataOrSources",
+              "status": "passed",
+              "time_seconds": "0.585"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryConsolidationIntegrationTest",
+              "name": "explicitMergeKeepsEverySourceNoteFolderAndVisitInAnotherLibrary",
+              "status": "passed",
+              "time_seconds": "0.332"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryConsolidationIntegrationTest",
+              "name": "erasingEitherPreparedSourceExpiresPreviewWithoutCloningDeletedData",
+              "status": "passed",
+              "time_seconds": "0.101"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryConsolidationIntegrationTest",
+              "name": "undoRefusesResultWithLaterMetadataEditsAndKeepsSources",
+              "status": "passed",
+              "time_seconds": "0.08"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryConsolidationIntegrationTest",
+              "name": "sourceMustBeExplicitDistinctAndRegistered",
+              "status": "passed",
+              "time_seconds": "0.103"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryConsolidationIntegrationTest",
+              "name": "undoRemovesOnlyItsUnchangedNewResultAndCannotBeReused",
+              "status": "passed",
+              "time_seconds": "0.181"
+            },
+            {
+              "class": "dev.forcemind.xs.android.LibraryConsolidationIntegrationTest",
+              "name": "conflictingLegacyActionSourcesFailBeforePreviewAndKeepOriginals",
+              "status": "passed",
+              "time_seconds": "0.153"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "partialMetadataDoesNotTruncateStoredTextOrSearchIndex",
+              "status": "passed",
+              "time_seconds": "0.033"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "nativeArchiveActivityLoads",
+              "status": "passed",
+              "time_seconds": "1.337"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "databaseV1MigrationPreservesHistory",
+              "status": "passed",
+              "time_seconds": "0.208"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "nativeCreationStoresNewPostAndRelatedParentWithoutSyntheticOpens",
+              "status": "passed",
+              "time_seconds": "0.078"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "manualLocalSpaceSavesLinkWithoutFakeReadingHistory",
+              "status": "passed",
+              "time_seconds": "0.556"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "databaseV2UpgradeKeepsScopesMappingsAndUnknownLegacyDurations",
+              "status": "passed",
+              "time_seconds": "0.204"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "confirmedNativeFixtureRepostAndReversalKeepIndependentData",
+              "status": "passed",
+              "time_seconds": "0.055"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "historyFeedAndSearchAreAccountScoped",
+              "status": "passed",
+              "time_seconds": "0.077"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "officialPostsJsImportsOfflineWithoutFakeVisits",
+              "status": "passed",
+              "time_seconds": "0.076"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "favoritesNotesTagsAndHistoryErasureHaveSeparateScopes",
+              "status": "passed",
+              "time_seconds": "0.078"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "durationSourceAndFeedDateMustMatchTheSameExposure",
+              "status": "passed",
+              "time_seconds": "0.102"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "nativeNavigationAndExposureIdentitiesArePersistentAndIndependent",
+              "status": "passed",
+              "time_seconds": "0.104"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "largeHistoryCanPageWithoutLosingEarlierVisits",
+              "status": "passed",
+              "time_seconds": "0.326"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "databaseV3MigrationPreservesActionsWithoutInventingActorOrObservationTime",
+              "status": "passed",
+              "time_seconds": "0.126"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "foldersAndActionsDoNotLeakBetweenAccounts",
+              "status": "passed",
+              "time_seconds": "0.028"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.ArchiveIntegrationTest",
+              "name": "ambiguousRetweetTextRetainsSnapshotWithoutInventingRepostAndImportsParents",
+              "status": "passed",
+              "time_seconds": "0.025"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.LibraryUiTest",
+              "name": "nativeSearchFiltersMeasuredDwellAndNeverOpenedOffline",
+              "status": "passed",
+              "time_seconds": "1.639"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.LibraryUiTest",
+              "name": "nativeConfirmedActivityAndReversalAreSearchableInActualIndexUi",
+              "status": "passed",
+              "time_seconds": "1.347"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.LibraryUiTest",
+              "name": "existingLibraryIntentSelectsSeparateScopeWithoutChangingDefault",
+              "status": "passed",
+              "time_seconds": "1.361"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.LibraryUiTest",
+              "name": "editExistingFavoriteTagsAndClearHistoryKeepLocalFavorite",
+              "status": "passed",
+              "time_seconds": "0.988"
+            },
+            {
+              "class": "dev.forcemind.xs.harness.LibraryUiTest",
+              "name": "recordingPreferencesAreIndependentAndPersisted",
+              "status": "passed",
+              "time_seconds": "0.029"
+            }
+          ]
+        },
+        "app-android": {
+          "xml_path": "app-android/build/outputs/androidTest-results/connected/debug/TEST-emulator-5554 - 16-_app-android-.xml",
+          "counts": {
+            "tests": 37,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          "time_seconds": "42.033",
+          "class_counts": {
+            "dev.forcemind.xs.android.MediaDownloadEngineTest": 4,
+            "dev.forcemind.xs.android.VideoDownloadEngineTest": 5,
+            "dev.forcemind.xs.browser.BrowserContainerTest": 8,
+            "dev.forcemind.xs.browser.MediaSharingTest": 6,
+            "dev.forcemind.xs.browser.NativeCaptureIntegrationTest": 3,
+            "dev.forcemind.xs.browser.ObservationParserTest": 3,
+            "dev.forcemind.xs.browser.PageCleanupIntegrationTest": 4,
+            "dev.forcemind.xs.browser.PostImageSelectionTest": 2,
+            "dev.forcemind.xs.browser.PostVideoSelectionTest": 2
+          },
+          "cases": [
+            {
+              "class": "dev.forcemind.xs.android.MediaDownloadEngineTest",
+              "name": "cancelAndErasureWhileReadingCannotRegisterAnAsset",
+              "status": "passed",
+              "time_seconds": "0.151"
+            },
+            {
+              "class": "dev.forcemind.xs.android.MediaDownloadEngineTest",
+              "name": "hostileRedirectIsRejectedBeforeOpeningItsDestination",
+              "status": "passed",
+              "time_seconds": "0.004"
+            },
+            {
+              "class": "dev.forcemind.xs.android.MediaDownloadEngineTest",
+              "name": "realEngineCompletesValidatedImageAndSharesEveryByte",
+              "status": "passed",
+              "time_seconds": "0.104"
+            },
+            {
+              "class": "dev.forcemind.xs.android.MediaDownloadEngineTest",
+              "name": "truncatedAndHtmlResponsesNeverBecomeCompletedAssets",
+              "status": "passed",
+              "time_seconds": "0.081"
+            },
+            {
+              "class": "dev.forcemind.xs.android.VideoDownloadEngineTest",
+              "name": "mediaV1MigrationPreservesExistingImagesAndShareLeases",
+              "status": "passed",
+              "time_seconds": "0.084"
+            },
+            {
+              "class": "dev.forcemind.xs.android.VideoDownloadEngineTest",
+              "name": "fullMp4WithAudioCompletesPlaysAndSharesOriginalFile",
+              "status": "passed",
+              "time_seconds": "2.084"
+            },
+            {
+              "class": "dev.forcemind.xs.android.VideoDownloadEngineTest",
+              "name": "cancelAndEraseDuringVideoReadCannotComplete",
+              "status": "passed",
+              "time_seconds": "0.051"
+            },
+            {
+              "class": "dev.forcemind.xs.android.VideoDownloadEngineTest",
+              "name": "truncatedFragmentedHtmlAndPlaylistNeverRegisterVideo",
+              "status": "passed",
+              "time_seconds": "0.106"
+            },
+            {
+              "class": "dev.forcemind.xs.android.VideoDownloadEngineTest",
+              "name": "redirectPolicyBlocksPrivateDestinationBeforeOpeningIt",
+              "status": "passed",
+              "time_seconds": "0.03"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.BrowserContainerTest",
+              "name": "actualWebViewExecutesSyntheticPageWithoutNativeArchive",
+              "status": "passed",
+              "time_seconds": "3.427"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.BrowserContainerTest",
+              "name": "nonWebNavigationAndWebPermissionsAreDenied",
+              "status": "passed",
+              "time_seconds": "0.882"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.BrowserContainerTest",
+              "name": "configurationRecreationRetainsActualPageAndJavascriptState",
+              "status": "passed",
+              "time_seconds": "2.227"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.BrowserContainerTest",
+              "name": "realWebViewBackAndReloadUseSyntheticHttpsResponses",
+              "status": "passed",
+              "time_seconds": "2.094"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.BrowserContainerTest",
+              "name": "subframeErrorsDoNotReplacePageAndRendererLossIsRecoverable",
+              "status": "passed",
+              "time_seconds": "1.03"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.BrowserContainerTest",
+              "name": "httpFailureCallbackDisplaysNativeRetry",
+              "status": "passed",
+              "time_seconds": "1.615"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.BrowserContainerTest",
+              "name": "initialHostHasNoNavigationAndRestrictedSettings",
+              "status": "passed",
+              "time_seconds": "1.164"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.BrowserContainerTest",
+              "name": "sharedPostLinkRequiresExplicitSaveBeforeAnyLocalWrite",
+              "status": "passed",
+              "time_seconds": "0.832"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.MediaSharingTest",
+              "name": "singleImageSharesActualReadOnlyBytesAfterSourceDeletion",
+              "status": "passed",
+              "time_seconds": "0.105"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.MediaSharingTest",
+              "name": "providerRejectsRootTraversalExpiredAndUnfinishedFiles",
+              "status": "passed",
+              "time_seconds": "0.078"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.MediaSharingTest",
+              "name": "textSharingCanonicalizesSourceAndNeverAddsPrivateMetadata",
+              "status": "passed",
+              "time_seconds": "0.026"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.MediaSharingTest",
+              "name": "cacheAndOtherLibraryDeletionPreserveSavedImage",
+              "status": "passed",
+              "time_seconds": "0.027"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.MediaSharingTest",
+              "name": "failedBatchShareRollsBackOnlyItsOwnNewCopies",
+              "status": "passed",
+              "time_seconds": "0.061"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.MediaSharingTest",
+              "name": "multipleImageIntentContainsOnlyChosenCopies",
+              "status": "passed",
+              "time_seconds": "0.158"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.NativeCaptureIntegrationTest",
+              "name": "immediateOpenLateBodyReloadAndQuickReturn",
+              "status": "passed",
+              "time_seconds": "2.627"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.NativeCaptureIntegrationTest",
+              "name": "overlayAndBackgroundBreakContinuousIntervals",
+              "status": "passed",
+              "time_seconds": "9.769"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.NativeCaptureIntegrationTest",
+              "name": "noClickDwellIsMeasuredAndOfflineNeverOpenedSearchWorks",
+              "status": "passed",
+              "time_seconds": "5.474"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.ObservationParserTest",
+              "name": "typedEnvelopeNeedsNativeMainFrameGestureAndScope",
+              "status": "passed",
+              "time_seconds": "0.03"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.ObservationParserTest",
+              "name": "onlyAllowedTypedPublicObservationsAreParsed",
+              "status": "passed",
+              "time_seconds": "0.0"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.ObservationParserTest",
+              "name": "rejectAccountControlAndUnauthorizedInstructions",
+              "status": "passed",
+              "time_seconds": "0.027"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.PageCleanupIntegrationTest",
+              "name": "independentDefaultsAndExactStyleRestorationKeepOrdinaryContent",
+              "status": "passed",
+              "time_seconds": "0.762"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.PageCleanupIntegrationTest",
+              "name": "nativePauseNavigationAndDestroyRestoreAndPreserveReadingAnchor",
+              "status": "passed",
+              "time_seconds": "0.779"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.PageCleanupIntegrationTest",
+              "name": "unknownStructuresSensitiveSpaAndPaidPagesFailClosed",
+              "status": "passed",
+              "time_seconds": "1.51"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.PageCleanupIntegrationTest",
+              "name": "hiddenPromotedCardCannotProduceFeedExposure",
+              "status": "passed",
+              "time_seconds": "2.265"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.PostImageSelectionTest",
+              "name": "untrustedImageListCannotChoosePrivateHostsOrExtraData",
+              "status": "passed",
+              "time_seconds": "0.003"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.PostImageSelectionTest",
+              "name": "selectedPostExcludesQuotedAndOtherPostImages",
+              "status": "passed",
+              "time_seconds": "0.752"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.PostVideoSelectionTest",
+              "name": "rawListCannotTurnBlobManifestOrPrivateAddressesIntoVideo",
+              "status": "passed",
+              "time_seconds": "0.002"
+            },
+            {
+              "class": "dev.forcemind.xs.browser.PostVideoSelectionTest",
+              "name": "currentPostExcludesQuotedProtectedAndOtherPostVideos",
+              "status": "passed",
+              "time_seconds": "0.616"
+            }
+          ]
+        }
+      },
+      "totals": {
+        "tests": 73,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "job_local_apk_provenance": {
+        "schema_version": 1,
+        "recorded_at_utc": "2026-11-07T08:56:59.958656+00:00",
+        "evidence_scope": "Job-local APK availability and public signing certificates only; test execution/outcomes come from this job's instrumentation reports. This is not real-X, physical-device or recipient-app acceptance.",
+        "source": {
+          "head_commit": "d5e6bb937dc508786d854dcfb64757a334beea7c",
+          "head_tree": "5b26ecca9529948e22637b4eb66fd6b33217fe61",
+          "working_tree_clean": true,
+          "working_tree_status": []
+        },
+        "apksigner": "/usr/local/lib/android/sdk/build-tools/37.0.0/apksigner",
+        "artifacts": [
+          {
+            "module": "app-android",
+            "role": "application",
+            "path": "app-android/build/outputs/apk/debug/app-android-debug.apk",
+            "availability": "present",
+            "bytes": 221419,
+            "sha256": "85d0b82ad2e042d681b3d9e83f896e6cdd3219611a126cb78f6e11ed0aa60148",
+            "signature_verification": {
+              "exit_code": 0,
+              "stdout": "V2 Signer: certificate DN: C=US, O=Android, CN=Android Debug\nV2 Signer: certificate SHA-256 digest: fd9f5c6cf1880e67f9dfc18bd187d35e92e1efcda49e13a549e9e214673a426f\nV2 Signer: certificate SHA-1 digest: 80931390fbe77ae6e36fb58e9f269f584622c4ab\nV2 Signer: certificate MD5 digest: e205fb1d316b511e724b1fded21652a5",
+              "stderr": "",
+              "status": "passed"
+            }
+          },
+          {
+            "module": "app-android",
+            "role": "instrumentation",
+            "path": "app-android/build/outputs/apk/androidTest/debug/app-android-debug-androidTest.apk",
+            "availability": "present",
+            "bytes": 1710491,
+            "sha256": "a844f5e8ffa9f8333459c73d1901e5fb8b2e73df47ebf3d2b7d8c3d385651740",
+            "signature_verification": {
+              "exit_code": 0,
+              "stdout": "V2 Signer: certificate DN: C=US, O=Android, CN=Android Debug\nV2 Signer: certificate SHA-256 digest: fd9f5c6cf1880e67f9dfc18bd187d35e92e1efcda49e13a549e9e214673a426f\nV2 Signer: certificate SHA-1 digest: 80931390fbe77ae6e36fb58e9f269f584622c4ab\nV2 Signer: certificate MD5 digest: e205fb1d316b511e724b1fded21652a5",
+              "stderr": "",
+              "status": "passed"
+            }
+          },
+          {
+            "module": "dev-harness",
+            "role": "application",
+            "path": "dev-harness/build/outputs/apk/debug/dev-harness-debug.apk",
+            "availability": "present",
+            "bytes": 187882,
+            "sha256": "ee2c4743b894df8abb3f28dc41719b7f0129b86d4c646a6c32865c733d6fb495",
+            "signature_verification": {
+              "exit_code": 0,
+              "stdout": "V2 Signer: certificate DN: C=US, O=Android, CN=Android Debug\nV2 Signer: certificate SHA-256 digest: fd9f5c6cf1880e67f9dfc18bd187d35e92e1efcda49e13a549e9e214673a426f\nV2 Signer: certificate SHA-1 digest: 80931390fbe77ae6e36fb58e9f269f584622c4ab\nV2 Signer: certificate MD5 digest: e205fb1d316b511e724b1fded21652a5",
+              "stderr": "",
+              "status": "passed"
+            }
+          },
+          {
+            "module": "dev-harness",
+            "role": "instrumentation",
+            "path": "dev-harness/build/outputs/apk/androidTest/debug/dev-harness-debug-androidTest.apk",
+            "availability": "present",
+            "bytes": 1695453,
+            "sha256": "d6a299da82727920570c1b059c6afbbd573333e8c1fc3705370f02802a0730de",
+            "signature_verification": {
+              "exit_code": 0,
+              "stdout": "V2 Signer: certificate DN: C=US, O=Android, CN=Android Debug\nV2 Signer: certificate SHA-256 digest: fd9f5c6cf1880e67f9dfc18bd187d35e92e1efcda49e13a549e9e214673a426f\nV2 Signer: certificate SHA-1 digest: 80931390fbe77ae6e36fb58e9f269f584622c4ab\nV2 Signer: certificate MD5 digest: e205fb1d316b511e724b1fded21652a5",
+              "stderr": "",
+              "status": "passed"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "total": {
+    "tests": 146,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "api26_verification": "NOT RUN",
+  "build_lint": {
+    "app_android_lintDebug": "passed",
+    "xs_runtime_lintDebug": "passed",
+    "source": "Completed android-library job log"
+  }
+}

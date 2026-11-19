@@ -1,0 +1,49 @@
+{
+  "baseline_commit": "ee119c24aa5e4ba77b0872e4abdf2bd950d74851",
+  "working_tree_clean": false,
+  "core_jvm_assertions": 1287,
+  "new_browser_policy_assertions": 132,
+  "sqlite_dom_20k": "PASS",
+  "bounded_512MiB_in_32MiB_jvm": "PASS",
+  "host_tests": {
+    "low_space_safety": 10,
+    "legacy_upgrade_safety": 10,
+    "failures": 0
+  },
+  "android_full_build": {
+    "result": "PASS",
+    "tasks": 196,
+    "seconds": 26
+  },
+  "final_test_build": {
+    "result": "PASS",
+    "tasks": 121,
+    "seconds": 17
+  },
+  "old_debug_build": {
+    "result": "PASS",
+    "tasks": 49,
+    "seconds": 10
+  },
+  "lint": {
+    "app-android": {
+      "Error": 0,
+      "Fatal": 0,
+      "Warning": 12
+    },
+    "xs-runtime": {
+      "Error": 0,
+      "Fatal": 0,
+      "Warning": 20
+    }
+  },
+  "log_sha256": {
+    "core": "1ce5165694d18651971e804d3bb4473a5fed9b1b0074a0bc4caa0d314d912586",
+    "project": "f055e3be6c700368dc09b12e0eed2d464819c5df912eccd856521813e91ad6c2",
+    "old_debug_build": "5f8461ffa3a131a58ef2349ac2416018caba6a252fb07683cffc0c358d25eb47",
+    "full_android_build": "fc55caa5259b8b1324f63bcd707d95303755ac73eedac0b3f2f4cc6deee09f57",
+    "final_test_apk_and_lint": "8c842e196a71a44bd5cb8ba655905690d36f71bab99644e8c33e1ed905078838",
+    "legacy_host": "e6f68ebe4a235a657df56f75d5034044c04436ef328a936555092e942d33d2bc"
+  },
+  "native_tests": "NOT RUN for this new source; await CI,624/20 are declarations only"
+}

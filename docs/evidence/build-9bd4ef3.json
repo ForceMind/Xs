@@ -1,0 +1,49 @@
+{
+  "source_commit": "9bd4ef3c15e1b506400615414f1f01f2951de730",
+  "source_clean": true,
+  "recorded_at_utc": "2026-11-07T06:33:44.038634+00:00",
+  "environment": {
+    "jdk": "17.0.21",
+    "gradle": "8.9",
+    "compile_sdk": 35,
+    "build_tools": "35.0.0"
+  },
+  "project_check": "PASS",
+  "jvm_assertions": {
+    "core": 73,
+    "observation_gate": 79,
+    "shared_post": 14,
+    "capture_and_queue": 166,
+    "media_policy": 111
+  },
+  "sqlite_regressions": "PASS (v1/v2->v3, FTS, namespaces, dedup, favorites, same-exposure duration/source/date)",
+  "packaged_dom_regressions": "PASS",
+  "android_build": "PASS (AAR, browser+harness APKs and both AndroidTest APKs); 162 tasks, 25s",
+  "lint": "PASS (no errors; warnings remain)",
+  "instrumentation": "NOT RUN for 9bd4ef3; prior 3068676 API30 attempt BLOCKED before all application tests (0 executed), no KVM; CI queued",
+  "live_x": "NOT RUN / automatic observer disabled",
+  "recipient_apps": "NOT RUN",
+  "ci": "https://github.com/ForceMind/Xs/actions/runs/42347473651",
+  "artifacts": [
+    {
+      "path": "app-android/build/outputs/apk/debug/app-android-debug.apk",
+      "sha256": "f930985f9fc1673a6811ea25cf183548f11375fe1889022ac613ff40887c3587"
+    },
+    {
+      "path": "xs-runtime/build/outputs/aar/xs-runtime-debug.aar",
+      "sha256": "c828f03245d5bb7bcc4d76d1f388a0dce6c8f535e024b826f2657bd824dace9f"
+    },
+    {
+      "path": "app-android/build/outputs/apk/androidTest/debug/app-android-debug-androidTest.apk",
+      "sha256": "16757bd47fac44dd8c5770828a3a80810e21ea73248d25bd9e2dd950eecc66a9"
+    },
+    {
+      "path": "dev-harness/build/outputs/apk/debug/dev-harness-debug.apk",
+      "sha256": "c74ec2db78ff96f11a315a4f95997c7893828440979b3f43dc0720fd42ba4c45"
+    },
+    {
+      "path": "dev-harness/build/outputs/apk/androidTest/debug/dev-harness-debug-androidTest.apk",
+      "sha256": "755ec6085d29c6475e1e8cccad837849f0a0f19836b0706159e8b56e58059924"
+    }
+  ]
+}

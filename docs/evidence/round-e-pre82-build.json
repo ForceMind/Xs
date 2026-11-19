@@ -1,0 +1,15 @@
+{
+  "baseline_commit": "e3990d5047c8e94f136c033fa7d92a6e5bfa882e",
+  "scope": "Synthetic native backup and Browser system List view presentation with official API-specific exact menu IDs only; production/provider/legacy/IME guards unchanged",
+  "command": [
+    ":app-android:assembleDebugAndroidTest",
+    ":dev-harness:assembleDebugAndroidTest",
+    ":app-android:lintDebug",
+    ":dev-harness:lintDebug"
+  ],
+  "result": "PASS",
+  "tasks": 171,
+  "seconds": 16,
+  "log_sha256": "f5cd37c23480551dd54ac199e1c8d8dcdab3dbefde0e65ea3cf3818187b064d9",
+  "native_result": "PENDING CI82; CI81 mixed-attempt effective623/624 retained with separate initial infrastructure failures"
+}

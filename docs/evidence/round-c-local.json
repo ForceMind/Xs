@@ -1,0 +1,54 @@
+{
+  "prior_head": "7777e1f9ee6d901a189eda73b40e056e1362adfd",
+  "source_identity": "pre-commit working tree; CI must record exact merge/tree and job-local packages",
+  "jdk": "17.0.21",
+  "gradle": "8.9",
+  "compile_sdk": 35,
+  "build_tools": "35.0.0",
+  "build": "PASS",
+  "tasks": 162,
+  "lint_errors": 0,
+  "lint_warnings": 11,
+  "jvm_assertions": 933,
+  "sqlite": "v1/v2/v3 preserving to v4 PASS",
+  "dom": "observer + reversible cleanup PASS",
+  "instrumentation_local": "NOT RUN: no KVM",
+  "apk": [
+    {
+      "path": "app-android/build/outputs/apk/androidTest/debug/app-android-debug-androidTest.apk",
+      "bytes": 1717459,
+      "sha256": "b74669fff1ebfa828c6438908c4c69da18358202ca63308560d71ecbd85bd146"
+    },
+    {
+      "path": "app-android/build/outputs/apk/debug/app-android-debug.apk",
+      "bytes": 342088,
+      "sha256": "4de027ea5d07fa6fb7759323707a640a7b94ac22f3efae4eb9d6e849648fbc14"
+    },
+    {
+      "path": "dev-harness/build/outputs/apk/androidTest/debug/dev-harness-debug-androidTest.apk",
+      "bytes": 1705147,
+      "sha256": "f53cb080e6d33242e5e9364a5689105accf62ad888ae406995b1b048745d95fe"
+    },
+    {
+      "path": "dev-harness/build/outputs/apk/debug/dev-harness-debug.apk",
+      "bytes": 225439,
+      "sha256": "945dd4f5cbcc0cdc652d3f2c35de3ddbee40663dd50989a239aa48d37d498efb"
+    }
+  ],
+  "build_log": {
+    "sha256": "c481c0b7eeccc253a6cf7b4657b3e8401049cfec53e075e9ef455d52d2d5c17e",
+    "tail": [
+      "",
+      "BUILD SUCCESSFUL in 24s",
+      "162 actionable tasks: 31 executed, 131 up-to-date"
+    ]
+  },
+  "core_log": {
+    "sha256": "4e53ebe5f9721f0f692e159c368f040821c814c41d255ecedb62ce9e2e6d14bf",
+    "tail": [
+      "PASS SQLite v4 DDL, v1/v2/v3 preserving migrations, honest own-action provenance/reversal and same-action filtering, scope mappings, FTS, exposure dedup, dwell/never-opened and same-exposure date/source queries, independent favorites",
+      "PASS packaged DOM observer: long-card geometry, 59/60%, overlays, sensitive routes, rebind/reentry, bounded escaped payload",
+      "PASS reversible cleanup: independent defaults, exact structures, restore/site edits, paid/sensitive exclusion, rebind, visibility, 128-node cap, observer exclusion"
+    ]
+  }
+}

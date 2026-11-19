@@ -1,0 +1,17 @@
+{
+  "baseline_commit": "c04d9738cbc3583f67f4d1872d7480248d2f11d6",
+  "scope": "GovernanceUiTest actual observed IME dismissal guarded by fixed SAF create form only; no production/Browser/provider/legacy changes",
+  "command": [
+    ":dev-harness:assembleDebugAndroidTest",
+    ":dev-harness:lintDebug"
+  ],
+  "result": "PASS",
+  "tasks": 88,
+  "seconds": 30,
+  "lint": {
+    "errors": 0,
+    "warnings": 16
+  },
+  "log_sha256": "15e861594903bcbceebd80895bcfc00c08ff9ae89fb2202b57466fb6c8af5077",
+  "native_result": "PENDING CI79; CI78 623 passed / 1 failed preserved separately"
+}

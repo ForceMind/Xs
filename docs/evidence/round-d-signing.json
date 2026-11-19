@@ -1,0 +1,43 @@
+{
+  "scope": "Synthetic ephemeral key only; not production key, stable device upgrade or release acceptance",
+  "same_key_versions": [
+    {
+      "schema_version": 1,
+      "scope": "Manually requested signed candidate only; NOT production release or real-device acceptance",
+      "recorded_at_utc": "2026-11-07T11:36:03.670836+00:00",
+      "source_commit": "a323b7cca2c760defd4b9b58a58e8f76431cdb96",
+      "source_tree": "2adc17d799633aa7bf7b2faf2697cb26b5fe82d5",
+      "working_tree_clean": false,
+      "apk": {
+        "package": "dev.forcemind.xs",
+        "version_code": 3,
+        "debuggable": false,
+        "bytes": 235281,
+        "sha256": "be0eb945776549a3cb2dd392a7e192413fca82288d3617a8df6cce04f3e2bbd0",
+        "certificate_sha256": "9ab1a9619d2cce57a99cb315562a950b467307cc6652a026f72f21a2772e7512",
+        "signature_verified": true
+      }
+    },
+    {
+      "schema_version": 1,
+      "scope": "Manually requested signed candidate only; NOT production release or real-device acceptance",
+      "recorded_at_utc": "2026-11-07T11:36:29.974363+00:00",
+      "source_commit": "a323b7cca2c760defd4b9b58a58e8f76431cdb96",
+      "source_tree": "2adc17d799633aa7bf7b2faf2697cb26b5fe82d5",
+      "working_tree_clean": false,
+      "apk": {
+        "package": "dev.forcemind.xs",
+        "version_code": 4,
+        "debuggable": false,
+        "bytes": 235280,
+        "sha256": "760acf22d0a01db2929be2ee9b4d62161e4674dfb0a16d3cbcd70dbb26629bdc",
+        "certificate_sha256": "9ab1a9619d2cce57a99cb315562a950b467307cc6652a026f72f21a2772e7512",
+        "signature_verified": true
+      }
+    }
+  ],
+  "wrong_certificate_pin": "REJECTED",
+  "missing_signing_inputs": "REJECTED by assembleRelease dry-run",
+  "private_key_uploaded": false,
+  "private_fixture_cleaned": true
+}
